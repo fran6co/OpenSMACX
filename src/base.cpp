@@ -5610,17 +5610,17 @@ int __cdecl base_growth() {
                 popb("LOWNUTRIENTFORMERS", 0, -1, "al_starv_sm.pcx", 0);
                 return 0;
             }
-            if (BaseCurrent->specialist_total <= 1
-                && (BaseCurrent->specialist_total == 0
-                    || BaseCurrent->population_size >= 3)) {
-                popb("LOWNUTRIENT", 0x80, 0x10, "al_starv_sm.pcx", 0);
+            if (BaseCurrent->specialist_total > 1
+                || (BaseCurrent->specialist_total != 0
+                    && BaseCurrent->population_size < 3)) {
+                if (BasePsychDrones[0]) {
+                    popb("LOWNUTRIENTSPEC1", 0, -1, "al_starv_sm.pcx", 0);
+                    return 0;
+                }
+                popb("LOWNUTRIENTSPEC2", 0, -1, "al_starv_sm.pcx", 0);
                 return 0;
             }
-            if (BasePsychDrones[0]) {
-                popb("LOWNUTRIENTSPEC1", 0, -1, "al_starv_sm.pcx", 0);
-                return 0;
-            }
-            popb("LOWNUTRIENTSPEC2", 0, -1, "al_starv_sm.pcx", 0);
+            popb("LOWNUTRIENT", 0x80, 0x10, "al_starv_sm.pcx", 0);
             return 0;
         }
         if (improvable && has_tech(VehPrototypes[1].preq_tech, owner)) {
@@ -5631,17 +5631,17 @@ int __cdecl base_growth() {
             popb("LOWNUTRIENTFORMERS", 0, -1, "starv_sm.pcx", 0);
             return 0;
         }
-        if (BaseCurrent->specialist_total <= 1
-            && (BaseCurrent->specialist_total == 0
-                || BaseCurrent->population_size >= 3)) {
-            popb("LOWNUTRIENT", 0x80, 0x10, "starv_sm.pcx", 0);
+        if (BaseCurrent->specialist_total > 1
+            || (BaseCurrent->specialist_total != 0
+                && BaseCurrent->population_size < 3)) {
+            if (BasePsychDrones[0]) {
+                popb("LOWNUTRIENTSPEC1", 0, -1, "starv_sm.pcx", 0);
+                return 0;
+            }
+            popb("LOWNUTRIENTSPEC2", 0, -1, "starv_sm.pcx", 0);
             return 0;
         }
-        if (BasePsychDrones[0]) {
-            popb("LOWNUTRIENTSPEC1", 0, -1, "starv_sm.pcx", 0);
-            return 0;
-        }
-        popb("LOWNUTRIENTSPEC2", 0, -1, "starv_sm.pcx", 0);
+        popb("LOWNUTRIENT", 0x80, 0x10, "starv_sm.pcx", 0);
         // WORKAROUND(decl): a read that both paths fold away keeps the dead
         // bad_farms counter alive. The image keeps its stack slot and both
         // increments (inc [ebp-8] at 0x004EF7D7) but never reads it; without
@@ -6687,44 +6687,10 @@ production_again:
                 parse_num(3, Rules.size_base_subspace_gen);
                 parse_says(0, BaseCurrent->name_string, -1, -1);
                 popp(ScriptPopupFile, "GENERATORME", 0, "subgen_sm.pcx", 0);
-            } else if (!(facility_id < FacilitySPStart
+            } else if (facility_id < FacilitySPStart
                        && !has_fac_announced(faction_id, facility_id)
                        && !(GameDataStateStorage.fields_.game_state_ & 1)
-                       && GameDataStateStorage.fields_.game_warnings_ & 1)) {
-                clear();
-                says("PRODUCE");
-                if (queued) {
-                    parse_num(1, BaseCurrent->queue_size + 1);
-                    says("Q");
-                } else if (BaseCurrent->governor & GOV_MANAGES_PRODUCTION
-                           && BaseCurrent->governor & GOV_ACTIVE) {
-                    says("G");
-                }
-                // Two calls, tail-merged after the flag test: each arm
-                // selects its picture and repeats the queued/governor test
-                // (0x4F26E6, 0x4F2712).
-                if (Players[faction_id].rule_flags & RFLAG_ALIEN) {
-                    popb(StringTemp,
-                         ((queued || (BaseCurrent->governor & GOV_MANAGES_PRODUCTION
-                                      && BaseCurrent->governor & GOV_ACTIVE))
-                          && !(GameDataStateStorage.fields_.game_warnings_ & 0x2000)) ? 0 : 1,
-                         -1,
-                         is_orbital ? "space_sm.pcx"
-                             : facility_id >= FacilitySPStart ? "secproj_sm.pcx"
-                             : "alfacblt_sm.pcx",
-                         0);
-                } else {
-                    popb(StringTemp,
-                         ((queued || (BaseCurrent->governor & GOV_MANAGES_PRODUCTION
-                                      && BaseCurrent->governor & GOV_ACTIVE))
-                          && !(GameDataStateStorage.fields_.game_warnings_ & 0x2000)) ? 0 : 1,
-                         -1,
-                         is_orbital ? "space_sm.pcx"
-                             : facility_id >= FacilitySPStart ? "secproj_sm.pcx"
-                             : "facblt_sm.pcx",
-                         0);
-                }
-            } else {
+                       && GameDataStateStorage.fields_.game_warnings_ & 1) {
                 parse_says(0, BaseCurrent->name_string, -1, -1);
                 popup.init(0, 0);
                 popup.set_width(500);
@@ -6780,6 +6746,40 @@ production_again:
                 if (GameDataStateStorage.fields_.game_more_preferences_ & 0x4000
                     && GameDataStateStorage.fields_.game_more_preferences_ & 0x20000) {
                     g_WAVE_GENERAL.Sound::fade(2000);
+                }
+            } else {
+                clear();
+                says("PRODUCE");
+                if (queued) {
+                    parse_num(1, BaseCurrent->queue_size + 1);
+                    says("Q");
+                } else if (BaseCurrent->governor & GOV_MANAGES_PRODUCTION
+                           && BaseCurrent->governor & GOV_ACTIVE) {
+                    says("G");
+                }
+                // Two calls, tail-merged after the flag test: each arm
+                // selects its picture and repeats the queued/governor test
+                // (0x4F26E6, 0x4F2712).
+                if (Players[faction_id].rule_flags & RFLAG_ALIEN) {
+                    popb(StringTemp,
+                         ((queued || (BaseCurrent->governor & GOV_MANAGES_PRODUCTION
+                                      && BaseCurrent->governor & GOV_ACTIVE))
+                          && !(GameDataStateStorage.fields_.game_warnings_ & 0x2000)) ? 0 : 1,
+                         -1,
+                         is_orbital ? "space_sm.pcx"
+                             : facility_id >= FacilitySPStart ? "secproj_sm.pcx"
+                             : "alfacblt_sm.pcx",
+                         0);
+                } else {
+                    popb(StringTemp,
+                         ((queued || (BaseCurrent->governor & GOV_MANAGES_PRODUCTION
+                                      && BaseCurrent->governor & GOV_ACTIVE))
+                          && !(GameDataStateStorage.fields_.game_warnings_ & 0x2000)) ? 0 : 1,
+                         -1,
+                         is_orbital ? "space_sm.pcx"
+                             : facility_id >= FacilitySPStart ? "secproj_sm.pcx"
+                             : "facblt_sm.pcx",
+                         0);
                 }
             }
         } else if (project_id >= 0) {
@@ -7734,13 +7734,6 @@ void __cdecl drone_riot() {
 // Native 0x009A658C is SecretProject.telepathic_matrix (SP_TELEPATHIC_MATRIX).
 // The native call enters the mapped drone_riot body below.
 
-// The image keeps a separate label cell per popb site (alien GOLDENAGE
-// 0x00689C84, GOLDENAGEOVER 0x00689CB8, DRONERIOTSOVER 0x00689D10 beside
-// the human arms' own copies). Pooled literals let VC6 cross-jump the arms.
-static const char BaseDronesAlienGoldenAgeLabel[] = "GOLDENAGE";
-static const char BaseDronesAlienGoldenAgeOverLabel[] = "GOLDENAGEOVER";
-static const char BaseDronesAlienRiotsOverLabel[] = "DRONERIOTSOVER";
-
 // ORIGINAL: 0x004F5CE0 ?base_drones@@YAXXZ 0x004F5CE0-0x004F5F25 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence":["original:0x004F5CE0-0x004F5F25:pinned base drone/riot lifecycle body","original:0x009A658C:SecretProject index 30 owns the telepathic-matrix faction id","source:src/alpha.h:SecretProject and SP_TELEPATHIC_MATRIX provide the typed project owner","source:src/base.h:BaseCurrent and Base-owned drone, talent, governor and state members","source:src/faction.h:Players owns faction rule_flags; LockEnableMask owns human-faction bits"],"reason":"Recover base drone state transitions using the existing Base, SecretProject, Player, and lock owners; retain native callback reloads and the separate drone-riot call."}
 void __cdecl base_drones() {
@@ -7749,7 +7742,7 @@ void __cdecl base_drones() {
         && BaseCurrent->talent_total >= (BaseCurrent->population_size + 1) / 2) {
         if (!(BaseCurrent->state & BSTATE_GOLDEN_AGE_ACTIVE)) {
             if (Players[BaseCurrent->faction_id_current].rule_flags & RFLAG_ALIEN) {
-                popb(BaseDronesAlienGoldenAgeLabel, 0x20, -1, "Alopdir.pcx", 0);
+                popb("GOLDENAGE", 0x20, -1, "Alopdir.pcx", 0);
             } else {
                 popb("GOLDENAGE", 0x20, -1, "talent_sm.pcx", 0);
             }
@@ -7759,7 +7752,7 @@ void __cdecl base_drones() {
         BaseCurrent->state &= ~BSTATE_GOLDEN_AGE_ACTIVE;
         if (BaseCurrent->drone_total <= BaseCurrent->talent_total) {
             if (Players[BaseCurrent->faction_id_current].rule_flags & RFLAG_ALIEN) {
-                popb(BaseDronesAlienGoldenAgeOverLabel, 0x40, -1, "Alopdir.pcx", 0);
+                popb("GOLDENAGEOVER", 0x40, -1, "Alopdir.pcx", 0);
             } else {
                 popb("GOLDENAGEOVER", 0x40, -1, "talent_sm.pcx", 0);
             }
@@ -7780,7 +7773,7 @@ void __cdecl base_drones() {
                 if (base->governor & GOV_MANAGES_CITIZENS_SPECS && base->governor & GOV_ACTIVE) {
                     popb("DRONERIOTSOVER2", 0, 0x33, "Alopdir.pcx", 0);
                 } else {
-                    popb(BaseDronesAlienRiotsOverLabel,
+                    popb("DRONERIOTSOVER",
                         (base->governor & GOV_MANAGES_CITIZENS_SPECS && base->governor & GOV_ACTIVE) ? 0 : 0x10, 0x33,
                         "Alopdir.pcx", 0);
                 }
