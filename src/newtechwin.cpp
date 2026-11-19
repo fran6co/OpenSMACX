@@ -215,11 +215,9 @@ void NewTechWin::on_redraw() {
     scratch = *rect;
     scratch.top += this->text_line_height() + 3;
     scratch.bottom -= 3;
-    const int image_height = scratch.bottom - scratch.top;
-    const int image_width = scratch.right - scratch.left;
     g_TECH_ICON_SPRITES[static_cast<int>(field_B24_)].draw_mono(this,
-                         scratch.left + (image_width - 0xA0) / 2,
-                         scratch.top + (image_height - 0xA0) / 2,
+                         scratch.left + (rect_width(&scratch) - 0xA0) / 2,
+                         scratch.top + (rect_height(&scratch) - 0xA0) / 2,
                          mandate_color(tech_category(static_cast<int>(field_B24_))),
                          0xA0, 0xD7);
 
