@@ -888,16 +888,24 @@ raw field access where the original used inline accessors.
   had at the function. So a pad moves a tie only when it sits before the
   declaration of a symbol of that tie, and "behind the includes" is simply
   after every header global.
-  - *Units.* `void f();`, `extern int x;`, `typedef`, a forward `struct S;`
-    and a file-scope definition are 1 each; `struct S {};` is 8, `struct S
-    { int a; };` 9 (each further data member +1), an in-class inline member
-    `void f() {}` 3, `void f(int) {}` 4. The round-6 table (struct 16,
-    parameterless member 5, one-parameter member 7, period 112) is this
-    counter in units of 4/7 symbol: 112 of them are 64 symbols. Confirmed on
-    base_energy with pads of every value 0..111 built from those three kinds
-    (one contiguous exact window, 41..101) and with prototypes (window of 34
-    of 64); "6 prototypes or externs never flip it" was only the width of
-    the window.
+  - *Units (read off the first `$SG` of a unit, one declaration added
+    before its includes).* 1: `void f();`, `extern int x;`, `int x;`,
+    `static const int k = 3;`, `typedef int T;`, a forward `struct S;`.
+    Each parameter of a prototype is 1 more, named or not (`int f(int,
+    char *);` is 3), each enumerator 1 (`enum E { a };` 2, three
+    enumerators 4). `struct S {};` is 8, each data member or member
+    prototype 1 (`struct S { int a; };` 9), an in-class body 2 more than the
+    prototype and 1 per parameter and per local (`void f() {}` 3,
+    `void f(int) {}` 4, with one local 5); a free `inline int f(int a)
+    { return a + 1; }` is 3; a class with a virtual destructor and one
+    member 17; a `#define` 0. So ADDING A LOCAL TO A HEADER INLINE BODY, or a
+    parameter to a prototype, renumbers every later symbol of every
+    includer. The round-6 table (struct 16, parameterless member 5,
+    one-parameter member 7, period 112) is this counter in units of 4/7
+    symbol: 112 of them are 64 symbols. Confirmed on base_energy with pads
+    of every value 0..111 built from those three kinds (one contiguous exact
+    window, 41..101) and with prototypes (34 of 64); "6 prototypes or
+    externs never flip it" was only the width of the window.
   - *Reading a number.* `char *p = "zq";` at any place takes two numbers,
     the pointer and then its literal, so the `$SG<n>` of that literal in the
     object is the counter there plus one (`declpad.py syms <unit> <addr>`
