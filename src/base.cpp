@@ -2959,7 +2959,7 @@ void __cdecl base_yield() {
             int food_bonus = 0;
             int needed = BaseCurrent->population_size * Rules.nutrient_req_citizen;
             if (BasePopulationUnassigned / Rules.nutrient_req_citizen + BaseCurrent->intake_2[0] < needed) {
-                food_bonus = (BaseCurrent->intake_2[0] + BasePopulationUnassigned >= needed) ? 2 : 8;
+                food_bonus = (BaseCurrent->intake_2[0] + BasePopulationUnassigned < needed) ? 8 : 2;
                 if (food_bonus) {
                     nutrients += range(nutrients, 0, food_bonus);
                 }
