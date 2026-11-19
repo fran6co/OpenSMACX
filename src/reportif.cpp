@@ -6937,6 +6937,7 @@ void ReportIf::draw_ops() {
         listBox1_.show(0);
         scroll_normal();
         MainInterfaceGlobal.Buffer::set_clip(MainInterfaceGlobal.buffer_working_rect());
+        MainInterfaceGlobal.Buffer::set_clip(&field_50_);
     } else {
         listBox1_.close();
         flatButton5_.show(0);
@@ -6946,8 +6947,8 @@ void ReportIf::draw_ops() {
         flatButton9_.show(0);
         flatButton10_.show(0);
         flatButton11_.show(0);
+        MainInterfaceGlobal.Buffer::set_clip(&field_50_);
     }
-    MainInterfaceGlobal.Buffer::set_clip(&field_50_);
     field_C_ = field_50_.left + (field_1E230_ ? 0x4C : 0);
     field_10_ = field_50_.top;
     field_14_ = rect_width(&field_50_) - (field_1E230_ ? 0x4C : 0);
