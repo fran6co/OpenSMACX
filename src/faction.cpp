@@ -2455,7 +2455,7 @@ void __cdecl diplomacy_check(int faction, int other, int update) {
         int other_bases = PlayersData[other].region_total_bases[region];
         int faction_vehicles = PlayersData[faction].region_total_combat_vehs[region];
         int other_vehicles = PlayersData[other].region_total_combat_vehs[region];
-        if ((!faction_vehicles && !faction_bases) || (!other_vehicles && !PlayersData[other].region_total_bases[region])) {
+        if ((!faction_vehicles && !faction_bases) || (!other_vehicles && !other_bases)) {
             continue;
         }
         int other_weapon = PlayersData[other].best_weapon_value + 1;

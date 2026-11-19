@@ -2085,8 +2085,7 @@ void DesignWin::draw_vehicle(int redraw) {
             if (protoArmorType_ == j_armor) {
                 adv = 1;
             }
-            int j_chassis = VehPrototypes[jj].chassis_id;     // edi
-            if (protoChassisType_ == j_chassis) {
+            if (protoChassisType_ == VehPrototypes[jj].chassis_id) {
                 chassis_ok = 1;
             }
             if (Weapon[protoWeaponType_].offense_rating > 0
@@ -2098,7 +2097,7 @@ void DesignWin::draw_vehicle(int redraw) {
                 adv = 1;
             }
             if (Chassis[protoChassisType_].triad == Chassis[VehPrototypes[jj].chassis_id].triad   // cmp dl(proto), bl(j)
-                && Chassis[j_chassis].speed >= Chassis[protoChassisType_].speed) { // cmp al(j), dl; jb
+                && Chassis[VehPrototypes[jj].chassis_id].speed >= Chassis[protoChassisType_].speed) { // cmp al(j), dl; jb
                 chassis_ok = 1;
             }
         }

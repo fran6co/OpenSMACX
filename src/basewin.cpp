@@ -2051,7 +2051,7 @@ draw_map:
                     const int base_y = BaseCurrent->y;
                     int base_alt = FarmMapWindow.get_alt(base_x, base_y, 4);
                     base_alt += FarmMapWindow.get_alt(base_x, base_y, 3);
-                    base_alt += FarmMapWindow.get_alt(base_x, BaseCurrent->y, 2);
+                    base_alt += FarmMapWindow.get_alt(base_x, base_y, 2);
                     base_alt += FarmMapWindow.get_alt(base_x, base_y, 1);
                     const int py = dy * half_tile - (tile_alt >> 2)
                         + (base_alt >> 2) + origin_y;
@@ -2606,7 +2606,7 @@ void BaseWin::draw_nutrients(int update_mode) {
     int index = 0;
     for (int row = 0; row < rows; row++) {
         for (int column = 0; column < columns; column++) {
-            if (index < BaseCurrent->nutrients_accumulated) {
+            if (index < stored) {
                 if (cell_height < 8) {
                     GraphicWin::fill(&cell, 0x95);
                 } else {

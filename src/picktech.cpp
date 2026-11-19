@@ -981,7 +981,7 @@ int PickTech::pick(int faction, int mode, int count, char *section_id) {
             cell_height_ = items <= 8 ? WinScreenHeight / rows - 40
                                       : (WinScreenHeight - 69) / rows;
         row_pitch_ = 10;
-        GraphicWin::init(0, 0, (cell_width + 1) * columns_by_count[items] + 1,
+        GraphicWin::init(0, 0, (cell_width + 1) * columns + 1,
             (cell_height_ + 1) * rows + 30, 0x05000800, 0);
         Win::center();
         field_16C_ = 29;
