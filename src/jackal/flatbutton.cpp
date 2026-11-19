@@ -529,13 +529,13 @@ void FlatButton::on_redraw() {
       }
     }
     if (field_A9C_ == 0) {
-      while (count < static_cast<int>(bevel_thickness_)) {
+      while (count < bevel_thickness_) {
         box(&rectangle, static_cast<int>(bevel_upper_), static_cast<int>(bevel_lower_));
         expand_rect(&rectangle, -1, -1);
         ++count;
       }
     } else {
-      while (count < static_cast<int>(bevel_thickness_)) {
+      while (count < bevel_thickness_) {
         box(&rectangle, static_cast<int>(bevel_lower_), static_cast<int>(bevel_upper_));
         expand_rect(&rectangle, -1, -1);
         ++count;

@@ -964,7 +964,7 @@ void BaseButton::timer_callback(int stage) {
             Win::set_bubble_text(bubble_text_, &area);
         }
     } else if (stage == 1) {
-        const uint32_t interval = static_cast<int>(field_A48_) > 0
+        const uint32_t interval = field_A48_ > 0
                                       ? field_A48_ : field_A44_;
         time2_.start(base_button_timer_callback, 2, this, interval, 5);
     } else {

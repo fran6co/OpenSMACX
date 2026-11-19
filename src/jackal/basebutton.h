@@ -155,7 +155,7 @@ class BaseButton : public GraphicWin {
  private:
   Time time1_;
   uint32_t field_A44_;
-  uint32_t field_A48_;
+  int field_A48_;
   Time time2_;
  public:
   // PUBLIC: BaseWin::update_gov_buttons clears it from BaseWin's this
@@ -184,7 +184,7 @@ class BaseButton : public GraphicWin {
   // RECOVERY_MEMBER: v1 BaseButton bevel_lower_ 0xA8C 0x006253D0
   uint32_t bevel_lower_;
   // RECOVERY_MEMBER: v1 BaseButton bevel_thickness_ 0xA90 0x006253D0
-  uint32_t bevel_thickness_;
+  int bevel_thickness_;
   // RECOVERY_MEMBER: v1 BaseButton field_A94_ 0xA94 0x006253D0
   uint32_t field_A94_;
   uint32_t field_A98_;

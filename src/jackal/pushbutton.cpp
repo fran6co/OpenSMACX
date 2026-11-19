@@ -106,8 +106,8 @@ void PushButton::on_redraw() {
 
     if (field_AC8_ != 0) {
         int draw_count = 0;
-        expand_rect(&rectangle, -static_cast<int>(bevel_thickness_),
-                               -static_cast<int>(bevel_thickness_));
+        expand_rect(&rectangle, -bevel_thickness_,
+                               -bevel_thickness_);
 
         // Keep the original signed, top-down DIB member at each bottom/tile
         // coordinate site. The pinned body reloads biHeight and adds it to
@@ -240,14 +240,14 @@ void PushButton::on_redraw() {
         }
 
         if (field_A9C_ == 0) {
-            while (bevel_count < static_cast<int>(bevel_thickness_)) {
+            while (bevel_count < bevel_thickness_) {
                 box(&rectangle, static_cast<int>(bevel_upper_),
                             static_cast<int>(bevel_lower_));
                 expand_rect(&rectangle, -1, -1);
                 ++bevel_count;
             }
         } else {
-            while (bevel_count < static_cast<int>(bevel_thickness_)) {
+            while (bevel_count < bevel_thickness_) {
                 box(&rectangle, static_cast<int>(bevel_lower_),
                             static_cast<int>(bevel_upper_));
                 expand_rect(&rectangle, -1, -1);

@@ -211,14 +211,14 @@ void ImageButton::on_redraw() {
     int x;
     int y;
     if (sprite_ != 0) {
-        x = (working->right - sprite_->width() - static_cast<int>(bevel_thickness_)
+        x = (working->right - sprite_->width() - bevel_thickness_
              - working->left) >> 1;
         y = (rect2_.bottom - sprite_->height() - rect2_.top
-             - static_cast<int>(bevel_thickness_)) >> 1;
+             - bevel_thickness_) >> 1;
     }
 
     if (field_A9C_ == 0) {
-        while (bevel_count < static_cast<int>(bevel_thickness_)) {
+        while (bevel_count < bevel_thickness_) {
             box(&rectangle, static_cast<int>(bevel_upper_),
                 static_cast<int>(bevel_lower_));
             expand_rect(&rectangle, -1, -1);
@@ -234,7 +234,7 @@ void ImageButton::on_redraw() {
             }
         }
     } else {
-        while (bevel_count < static_cast<int>(bevel_thickness_)) {
+        while (bevel_count < bevel_thickness_) {
             box(&rectangle, static_cast<int>(bevel_lower_),
                 static_cast<int>(bevel_upper_));
             expand_rect(&rectangle, -1, -1);
