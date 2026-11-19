@@ -276,7 +276,12 @@ int __cdecl veh_draw(Buffer * buffer, int veh_id, int screen_x, int screen_y, in
     int x;
     int y;
     if (!(flags & 0x1000)) {
-        x = screen_x + zoom_scale(Chassis[category].sprite_flag_x_off[variation], zoom);
+        // The x offset is scaled written out (the image reads the table
+        // entry once per arm: no inline parameter), the y offset through
+        // zoom_scale (one read); rotscan put the phase break here.
+        x = screen_x + (MapWinCaptionScale > 0
+            ? MapWinCaptionScale * Chassis[category].sprite_flag_x_off[variation] / MapWinCaptionDivisor
+            : (zoom + 16) * Chassis[category].sprite_flag_x_off[variation] / 16);
         y = screen_y + zoom_scale(Chassis[category].sprite_flag_y_off[variation], zoom);
     } else {
         x = screen_x;
