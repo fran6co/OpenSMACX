@@ -5717,7 +5717,7 @@ result over 64 symbol-counter pads, so none of these is a counter canary.
     temporary (four loop spellings), `= 0`/`= -1` initialisers (dead stores
     drop before counting), clamp `wh = avail; if (wh > 398) wh = 398;` (4,
     still a tie lost), ?: and raw-expression arms. The image has 3 frame
-    accesses (0x398 store, the tail-merged eax store 0x41EE92, one read
+    accesses (the 0x18E store, the tail-merged eax store 0x41EE92, one read
     0x41F4C7 shared by `top` and the init argument), so the missing count is
     in references the final code merges away.
   - **One variable for two exclusive-arm roles packs as one heavy unit**
