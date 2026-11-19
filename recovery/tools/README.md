@@ -448,6 +448,19 @@ an explicit `--pfx` is only needed to pick another lane.
   field_6C_); behavscan's paired IMG-ONLY/OURS-ONLY hit on two fields gave ReportWin::draw_ops. The rest were IV bases
   (`lea r,[esi+K]` from a relocated base), misaligned rows and ternary sense (`setg; dec; and -2; add 6` against
   `setle; dec; and 2; add 4`: the same values, the image's `c <= K ? a : b` spelling; setup_player 0x005B28AF).
+- `analysis/structscan.py [unit ...] [--addr A[,..]] [--json F] [--claimed]` set screen independent of instruction pairing
+  (35 s tree-wide with FE_JOBS=5). Our relocated fields are replaced by their source-bound image addresses (string
+  literals keyed by content, `__real@` by bytes, imports by IAT name), so both sides decode to absolute addresses. Prints
+  per non-BYTE_EXACT function: `REF` fe-aligned rows with identical text whose relocated target differs (refscan's question
+  on non-exact functions; rows whose two targets both balance elsewhere in the function are dropped as load-order swaps,
+  `SS_ALLREF=1` keeps them), `G_img`/`G_ours` globals (symbol+offset) one side touches and the other never does, `F_*` field
+  offsets by a linear taint type (`this`, a global's address, `*G` loaded pointer; `?` untyped) and `I_*` immediates on one
+  side only (byte/word/ah-high spellings folded to one key). Most one-sided rows are folding: a pointer IV biased by
+  another field (`Bases+0x810` against `+0x814` loop ends, `[eax-8]` against `[eax-0xc]`), indexed `[i*s + G + k]` (keyed
+  without k), load-order swaps and unbound names of ours (vtables, unmapped globals: `G_img` marked `?`). Read a lead against
+  the image before acting. 2026-11-19 first pass, four real ones: reset_territory RadiusOffsetX/Y against VehMoveDeltaX/Y
+  (G), communicate's tech split at Technology[89] against [87] (an in-loop IV compare, G), process_message TimeControl
+  `.extra` against `.event` (REF) and enemy_move `minerals_accumulated_2` against `unused_surplus` (REF).
 - `analysis/slotflow.py <unit> <addr> [--src ALT.cpp] [--pfx N]` transcription-error screen (MATCHING_GUIDE 3.5): for every
   image instruction that reads a frame slot and is aligned with one of ours reading a named variable v, it takes the
   image's reaching definitions of that slot, maps each through the fe alignment to our instruction and the variable it
