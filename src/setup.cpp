@@ -901,7 +901,11 @@ void __cdecl scenario_setup() {
         int x;
         int y;
         for (counter = 0; counter < 10000; counter++) {
-            x = bounded_crt_random(MapLongitudeBounds - (MapIsFlat & 1) * 4) + (MapIsFlat & 1) * 2;
+            // WORKAROUND(type): 0x005B0A7D reads the flag as a signed byte
+            // (movsx; the image's only byte-sign read of is_flat_) and computes
+            // the latitude bound before the x offset; a char-typed term gives
+            // both. The original operand's declared type is unknown.
+            x = bounded_crt_random(MapLongitudeBounds - (char)((MapIsFlat & 1) * 4)) + (MapIsFlat & 1) * 2;
             y = bounded_crt_random(MapLatitudeBounds - 4) + 2;
             if (x & 1) {
                 x--;
