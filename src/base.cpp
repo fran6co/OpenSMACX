@@ -2855,6 +2855,8 @@ static inline int base_yield_budget_probe(int x) {
 // RECOVERY_BINDING: v1 {"evidence": ["git:276d612614085e5d57743cf8cc92903d9468e346:src/unrecovered/004e80b0.cpp", "source:src/base.h", "image:0x004E80CC-0x004E80D9 signed population plus one publishes90E938;0x004E86D9 resets90E900 only on allocation, whereas0x004E8456 jumps to0x004E923D and retains it.", "image:0x004E83D9-0x004E8426 four resource calls per admitted tile;0x004E8E0C-0x004E923D performs one replacement with fresh-call undo;0x004E930C-0x004E954B publishes mask/specialists/intakes and accounts for all21valid radius positions."], "reason": "Recover the complete selected-base worker and specialist allocation pass with typed resource fields, real shared counters, original selection and replacement behavior, and final ecology accounting. Retain its seed identity and evidence; the former link-only placeholder is replaced, not accepted by a source binding."}
 // TRIED: literal register-machine transliteration (pseudo-regs eax..edi + stack slots v04..v58, goto per basic block); covers ~100% of instructions (5804 rebuilt vs 5275 original bytes). cdq/sub/sar-1 divide-by-2 idioms folded to `/2`; neg/sbb/not boolean tricks folded to ternaries; magic-const /3 folded to `/3`. Divergence is from stack/local layout (more temporaries than the original's register allocation), not from control flow or field offsets.
 void __cdecl base_yield() {
+    // [ebp-0x0c] (imgmerge.py, par-6): the image keeps the radius scan index and the best worker position in one home
+    int i_c;
     base_yield_budget_probe(2);  // WORKAROUND(inline): see base_yield_budget_probe
     farm_compute();
     int faction = BaseCurrent->faction_id_current;
@@ -2896,10 +2898,10 @@ void __cdecl base_yield() {
             BaseCurrent->specialist_total -= BaseCurrent->specialist_unk_1;
         }
         if (BasePopulationUnassigned >= bit_count(BaseCurrent->resource_sqr_radius)) {
-            for (int i = 0; i < 21; i++) {
-                if (!i || (BaseCurrent->resource_sqr_radius & (1 << i))) {
-                    worked |= 1 << i;
-                    radius_yield_add(i);
+            for (i_c = 0; i_c < 21; i_c++) {
+                if (!i_c || (BaseCurrent->resource_sqr_radius & (1 << i_c))) {
+                    worked |= 1 << i_c;
+                    radius_yield_add(i_c);
                     if (!--BasePopulationUnassigned) {
                         break;
                     }
@@ -2969,7 +2971,7 @@ void __cdecl base_yield() {
     for (;;) {
         BOOL replacing = BasePopulationUnassigned
             <= BaseCurrent->specialist_unk_1 + BaseCurrent->specialist_total;
-        int best_position = 0;
+        i_c = 0;
         int best_score = 0;
         int max_nutrients = 0;
         int worst_score = 9999;
@@ -3028,7 +3030,7 @@ void __cdecl base_yield() {
                 }
             } else if (score > best_score) {
                 best_score = score;
-                best_position = i;
+                i_c = i;
             }
         }
 
@@ -3051,19 +3053,19 @@ void __cdecl base_yield() {
                             / range(BaseCurrent->specialist_unk_1 + BaseCurrent->intake_2[2], 1, 99);
                     if (score > best_score) {
                         best_score = score;
-                        best_position = -s - 1;
+                        i_c = -s - 1;
                     }
                 }
             }
         }
 
         if (!replacing) {
-            if (best_position < 0) {
-                base_specialist_set(BaseCurrent->specialist_unk_1, -best_position - 1);
+            if (i_c < 0) {
+                base_specialist_set(BaseCurrent->specialist_unk_1, -i_c - 1);
                 BaseCurrent->specialist_unk_1++;
-            } else if (best_position > 0) {
-                worked |= 1 << best_position;
-                radius_yield_add(best_position);
+            } else if (i_c > 0) {
+                worked |= 1 << i_c;
+                radius_yield_add(i_c);
                 BasePopulationUnassigned--;
             } else {
                 break;
@@ -3075,16 +3077,16 @@ void __cdecl base_yield() {
         } else {
             // Every worker is placed: try one swap of the worst worked square
             // for the best free one, undone if the base would stop growing.
-            if (best_position > 0 && best_score > worst_score && worst_position > 0) {
+            if (i_c > 0 && best_score > worst_score && worst_position > 0) {
                 uint32_t worst_bit = 1 << worst_position;
-                uint32_t best_bit = 1 << best_position;
+                uint32_t best_bit = 1 << i_c;
                 worked = (worked & ~worst_bit) | best_bit;
                 radius_yield_sub(worst_position);
-                radius_yield_add(best_position);
+                radius_yield_add(i_c);
                 if (BaseCurrent->intake_2[0]
                     < (BaseCurrent->population_size + 1) * Rules.nutrient_req_citizen) {
                     worked = (worked & ~best_bit) | worst_bit;
-                    radius_yield_sub(best_position);
+                    radius_yield_sub(i_c);
                     radius_yield_add(worst_position);
                 }
             }
