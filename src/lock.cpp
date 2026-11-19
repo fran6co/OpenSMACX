@@ -22,28 +22,6 @@
 // 0x009A64E8, the faction human/alive status dword
 
 
-/*
-Purpose: Drop the movement bits (0x38) from the flag byte at offset 5 of every
-         map-tile record, at the record stride of 0x2C. Operates entirely on
-         the global map table, ignoring the Lock instance.
-// ORIGINAL: 0x00590140 ?reset_map@Lock@@QAEXXZ 0x00590140-0x0059016B BYTE_EXACT
-// size      43 bytes
-// prototype void (__thiscall ?reset_map@Lock@@QAEXXZ)(Lock* this)
-// callers   0   call targets   0
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     (none)
-Return Value: n/a
-Status: Complete
-*/
-void Lock::reset_map() {
-    // NOT CACHED: the image RE-READS *LockMapCount at every iteration's
-    // test rather than hoisting it into a local once.
-    Map *const table = map_tiles();
-    for (int32_t index = 0; index < MapArea; ++index) {
-        table[index].val3 &= 0xC7;
-    }
-}
 
 
 /*
@@ -81,45 +59,27 @@ void Lock::clear() {
     }
 }
 
-
 /*
-Purpose: Report whether any lock is engaged. The trailing dword at 0xE0 forces
-         a yes on its own; otherwise records 1 through 7 are scanned, but only
-         those whose slot bit is set in both the low and second bytes of the
-         enable mask, and a record counts when either of its two entries has
-         its flag's low bit set. Record 0 is never scanned.
-// ORIGINAL: 0x005904A0 ?any_locks@Lock@@QAEHXZ 0x005904A0-0x005904FE BYTE_EXACT
-// LEVER: `second_byte` read via a byte pointer into `mask` (not `(mask >> 8) & 0xFF`) is what lets VC6 test it as `bh` with no shift, matching the image's `test al, bh` exactly.
-// TRIED: the one remaining byte - image's inner-loop test is `test eax, edi` (85 F8), this tree compiles the same bits as `test edi, eax` (85 C7), same flags, different ModRM. Tried swapping `&` operand order both ways (`bit & low_byte` and `low_byte & bit`) and naming the AND result in its own local first - all three collapse to the same encoding, so it is not a source-order question; MNEMONIC_ONLY at 39/40 (only that one byte) is the plateau reached here.
-// size      94 bytes
-// prototype int (__thiscall ?any_locks@Lock@@QAEHXZ)(Lock* this)
-// callers   3   call targets   0
+Purpose: Drop the movement bits (0x38) from the flag byte at offset 5 of every
+         map-tile record, at the record stride of 0x2C. Operates entirely on
+         the global map table, ignoring the Lock instance.
+// ORIGINAL: 0x00590140 ?reset_map@Lock@@QAEXXZ 0x00590140-0x0059016B BYTE_EXACT
+// size      43 bytes
+// prototype void (__thiscall ?reset_map@Lock@@QAEXXZ)(Lock* this)
+// callers   0   call targets   0
 // kind      game
 // flags     hidden;sp_ready;purged_ok
 // calls     (none)
-Return Value: 1 when a lock is engaged, 0 otherwise
+Return Value: n/a
 Status: Complete
 */
-int Lock::any_locks() {
-    if (field_E0_ != 0) {
-        return 1;
+void Lock::reset_map() {
+    // NOT CACHED: the image RE-READS *LockMapCount at every iteration's
+    // test rather than hoisting it into a local once.
+    Map *const table = map_tiles();
+    for (int32_t index = 0; index < MapArea; ++index) {
+        table[index].val3 &= 0xC7;
     }
-    const GameDataLockMaskView mask = {
-        GameDataStateStorage.fields_.lock_masks_.enable_mask_
-    };
-    const uint8_t second_byte = mask.bytes_.alive_mask_;
-    for (int index = 1; index < 8; ++index) {
-        // Byte-cast mask on the right: the image tests `test eax, edi`.
-        if (((1 << index) & static_cast<uint8_t>(mask.enable_mask_)) &&
-            (second_byte & (1 << index))) {
-            for (int entry = 0; entry < 2; ++entry) {
-                if (records_[index].entries_[entry].flag & 1) {
-                    return 1;
-                }
-            }
-        }
-    }
-    return 0;
 }
 
 
@@ -151,26 +111,41 @@ void Lock::unlock(int slot) {
 
 
 /*
-Purpose: Take the global lock for an owner. Succeeds when the lock is free or
-         already held by that owner, recording the owner and marking it held;
-         fails without change when another owner holds it.
-// ORIGINAL: 0x005902C0 ?global_lock@Lock@@QAEHH@Z 0x005902C0-0x005902F3 BYTE_EXACT
-// size      51 bytes
-// prototype int (__thiscall ?global_lock@Lock@@QAEHH@Z)(Lock* this, int)
-// callers   1   call targets   0
+Purpose: On the server, when a held lock has no square still active, broadcast
+         its release and drop the held flag. Does nothing off the server, when
+         no lock is held, or while any slot record still has an active square.
+// ORIGINAL: 0x005901D0 ?check_global@Lock@@QAEXXZ 0x005901D0-0x00590239 BYTE_EXACT
+// size      105 bytes
+// prototype void (__thiscall ?check_global@Lock@@QAEXXZ)(Lock* this)
+// callers   15   call targets   2
 // kind      game
-// flags     frame;sp_ready;purged_ok
-// calls     (none)
-Return Value: 0 on success, 1 when another owner holds the lock
+// flags     hidden;sp_ready;purged_ok
+// calls     0x0052DBA0 0x00592EE0
+Return Value: n/a
 Status: Complete
 */
-int Lock::global_lock(int owner) {
-    if (field_E0_ != 0 && field_E0_ != static_cast<uint32_t>(owner)) {
-        return 1;
+void Lock::check_global() {
+    if (current_server() == 0) {
+        return;
     }
-    field_E0_ = static_cast<uint32_t>(owner);
-    field_E4_ = 1;
-    return 0;
+    if (field_E4_ == 0) {
+        return;
+    }
+    for (int index = 1; index < 8; ++index) {
+        // Skip the record whose slot IS the global lock's own owner.
+        if (index == static_cast<int>(field_E0_)) {
+            continue;
+        }
+        for (int entry = 0; entry < 2; ++entry) {
+            if (records_[index].entries_[entry].flag & 1) {
+                return;
+            }
+        }
+    }
+    // IMAGE ORDER: field_E4_ cleared BEFORE the call, though its arguments
+    // are already pushed by then.
+    field_E4_ = 0;
+    message_data(0x1205, static_cast<int>(field_E0_), 0, 0, 0, 0);
 }
 
 
@@ -216,60 +191,26 @@ int Lock::check_global_2(int owner) {
 
 
 /*
-Purpose: On the server, when a held lock has no square still active, broadcast
-         its release and drop the held flag. Does nothing off the server, when
-         no lock is held, or while any slot record still has an active square.
-// ORIGINAL: 0x005901D0 ?check_global@Lock@@QAEXXZ 0x005901D0-0x00590239 BYTE_EXACT
-// size      105 bytes
-// prototype void (__thiscall ?check_global@Lock@@QAEXXZ)(Lock* this)
-// callers   15   call targets   2
+Purpose: Take the global lock for an owner. Succeeds when the lock is free or
+         already held by that owner, recording the owner and marking it held;
+         fails without change when another owner holds it.
+// ORIGINAL: 0x005902C0 ?global_lock@Lock@@QAEHH@Z 0x005902C0-0x005902F3 BYTE_EXACT
+// size      51 bytes
+// prototype int (__thiscall ?global_lock@Lock@@QAEHH@Z)(Lock* this, int)
+// callers   1   call targets   0
 // kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     0x0052DBA0 0x00592EE0
-Return Value: n/a
+// flags     frame;sp_ready;purged_ok
+// calls     (none)
+Return Value: 0 on success, 1 when another owner holds the lock
 Status: Complete
 */
-void Lock::check_global() {
-    if (current_server() == 0) {
-        return;
+int Lock::global_lock(int owner) {
+    if (field_E0_ != 0 && field_E0_ != static_cast<uint32_t>(owner)) {
+        return 1;
     }
-    if (field_E4_ == 0) {
-        return;
-    }
-    for (int index = 1; index < 8; ++index) {
-        // Skip the record whose slot IS the global lock's own owner.
-        if (index == static_cast<int>(field_E0_)) {
-            continue;
-        }
-        for (int entry = 0; entry < 2; ++entry) {
-            if (records_[index].entries_[entry].flag & 1) {
-                return;
-            }
-        }
-    }
-    // IMAGE ORDER: field_E4_ cleared BEFORE the call, though its arguments
-    // are already pushed by then.
-    field_E4_ = 0;
-    message_data(0x1205, static_cast<int>(field_E0_), 0, 0, 0, 0);
-}
-
-
-/*
-Purpose: Add a lock on one slot - forward to SquareLock::lock on the slot
-         record's second square entry, with the mask bit 0x10 forced into the
-         flags argument.
-// ORIGINAL: 0x00590470 ?add_lock@Lock@@QAEHHHHH@Z 0x00590470-0x0059049B BYTE_EXACT
-// size      43 bytes
-// prototype int (__thiscall ?add_lock@Lock@@QAEHHHHH@Z)(Lock* this, int, int, int, int)
-// callers   1   call targets   1
-// kind      game
-// flags     frame;hidden;sp_ready;purged_ok
-// calls     0x0058FE80
-Return Value: whatever SquareLock::lock returns
-Status: Complete
-*/
-int Lock::add_lock(int slot, int flags, int x, int y) {
-    return records_[slot].entries_[1].lock(slot, flags | 0x10, x, y);
+    field_E0_ = static_cast<uint32_t>(owner);
+    field_E4_ = 1;
+    return 0;
 }
 
 
@@ -345,6 +286,66 @@ failed:
         }
         field_E4_ = 0;
         message_data(0x1205, static_cast<int>(owner), 0, 0, 0, 0);
+    }
+    return 0;
+}
+
+
+/*
+Purpose: Add a lock on one slot - forward to SquareLock::lock on the slot
+         record's second square entry, with the mask bit 0x10 forced into the
+         flags argument.
+// ORIGINAL: 0x00590470 ?add_lock@Lock@@QAEHHHHH@Z 0x00590470-0x0059049B BYTE_EXACT
+// size      43 bytes
+// prototype int (__thiscall ?add_lock@Lock@@QAEHHHHH@Z)(Lock* this, int, int, int, int)
+// callers   1   call targets   1
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x0058FE80
+Return Value: whatever SquareLock::lock returns
+Status: Complete
+*/
+int Lock::add_lock(int slot, int flags, int x, int y) {
+    return records_[slot].entries_[1].lock(slot, flags | 0x10, x, y);
+}
+
+
+/*
+Purpose: Report whether any lock is engaged. The trailing dword at 0xE0 forces
+         a yes on its own; otherwise records 1 through 7 are scanned, but only
+         those whose slot bit is set in both the low and second bytes of the
+         enable mask, and a record counts when either of its two entries has
+         its flag's low bit set. Record 0 is never scanned.
+// ORIGINAL: 0x005904A0 ?any_locks@Lock@@QAEHXZ 0x005904A0-0x005904FE BYTE_EXACT
+// LEVER: `second_byte` read via a byte pointer into `mask` (not `(mask >> 8) & 0xFF`) is what lets VC6 test it as `bh` with no shift, matching the image's `test al, bh` exactly.
+// TRIED: the one remaining byte - image's inner-loop test is `test eax, edi` (85 F8), this tree compiles the same bits as `test edi, eax` (85 C7), same flags, different ModRM. Tried swapping `&` operand order both ways (`bit & low_byte` and `low_byte & bit`) and naming the AND result in its own local first - all three collapse to the same encoding, so it is not a source-order question; MNEMONIC_ONLY at 39/40 (only that one byte) is the plateau reached here.
+// size      94 bytes
+// prototype int (__thiscall ?any_locks@Lock@@QAEHXZ)(Lock* this)
+// callers   3   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+Return Value: 1 when a lock is engaged, 0 otherwise
+Status: Complete
+*/
+int Lock::any_locks() {
+    if (field_E0_ != 0) {
+        return 1;
+    }
+    const GameDataLockMaskView mask = {
+        GameDataStateStorage.fields_.lock_masks_.enable_mask_
+    };
+    const uint8_t second_byte = mask.bytes_.alive_mask_;
+    for (int index = 1; index < 8; ++index) {
+        // Byte-cast mask on the right: the image tests `test eax, edi`.
+        if (((1 << index) & static_cast<uint8_t>(mask.enable_mask_)) &&
+            (second_byte & (1 << index))) {
+            for (int entry = 0; entry < 2; ++entry) {
+                if (records_[index].entries_[entry].flag & 1) {
+                    return 1;
+                }
+            }
+        }
     }
     return 0;
 }
