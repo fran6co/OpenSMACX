@@ -2181,10 +2181,10 @@ int __cdecl shoot_it(int attacker, int defender, int x, int y,
                 } else {
                     dismissed = popp(ScriptPopupFile, "TECTONICSAC", 0, "space_sm.pcx", 0);
                 }
-                if (dismissed) {
-                    goto flechette_failed;
-                }
+                if (dismissed) goto flechette_failed;
+                goto sacrifice;
             }
+        sacrifice:
             PlayersData[defender].satellites_[sat]--;
             if ((PlayersData[defender].satellites_[sat] - PlayersData[defender].sat_odp_deployed) < 0) {
                 PlayersData[defender].sat_odp_deployed = PlayersData[defender].satellites_[sat];
