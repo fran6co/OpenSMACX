@@ -966,8 +966,7 @@ int Console::upgrade(int veh_id) { // 0x004D06C0
     parse_num(1, PlayersData[faction_id].energy_reserves);
     if (cost <= PlayersData[faction_id].energy_reserves) {
         if (Players[faction_id].rule_flags & RFLAG_ALIEN) {
-            if (popp(ScriptPopupFile,
-                     (VehPrototypes[choice].flags & 4) ? "THISUPGRADE" : "THISUPGRADE2", 0,
+            if (popp((VehPrototypes[choice].flags & 4) ? "THISUPGRADE" : "THISUPGRADE2",
                      get_proto_triad(choice) == TRIAD_AIR
                          ? "alair_sm.pcx"
                          : get_proto_triad(choice) == TRIAD_SEA
@@ -1000,8 +999,7 @@ int Console::upgrade(int veh_id) { // 0x004D06C0
                 }
             }
         } else {
-            if (popp(ScriptPopupFile,
-                     (VehPrototypes[choice].flags & 4) ? "THISUPGRADE" : "THISUPGRADE2", 0,
+            if (popp((VehPrototypes[choice].flags & 4) ? "THISUPGRADE" : "THISUPGRADE2",
                      get_proto_triad(choice) == TRIAD_AIR
                          ? "air_sm.pcx"
                          : get_proto_triad(choice) == TRIAD_SEA
