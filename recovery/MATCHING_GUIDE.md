@@ -2350,7 +2350,13 @@ Using it
   owned or spelled (or what range costs inside veh_health), not the size
   of the caller. Rewriting the round loop as
   `while (veh_health(veh_id) && veh_health(def_id))` with merged
-  `continue` guards has no effect on the calls.
+  `continue` guards has no effect on the calls. `ownerhunt.py` over lines
+  3478-3830 (the outcome display through the base consequences, 400
+  ranges up to 25 statements) found no single owner that lowers the call
+  distance below 3. The best ones are one-statement owners such as
+  `clear()` (rows 2038 -> 2030), and none moves the round-region range
+  site. Next: owners of the round-loop and pre-round veh_health sites
+  (lines 3296-3336), and the spelling of veh_health/range themselves.
 - **When to stop.** Dead probes that change other teardowns before they move
   the target mean that pass 1 is the binding limit, not pass 2. Look for a
   structural difference: which object owns the teardown, or a per-TU header
