@@ -1608,13 +1608,13 @@ int __cdecl action_airdrop(int veh_id, int x, int y, int mode) {
             int owner_radius = base_who(x_radius, y_radius);
             if (owner_radius > 0 && owner_radius != faction_id
                 && PlayersData[faction_id].diplo_treaties[owner_radius] & DTREATY_VENDETTA) {
-                int base_id = base_at(x_radius, y_radius);
-                if (base_id >= 0
-                    && (has_fac(FAC_AEROSPACE_COMPLEX, base_id, 0)
+                mode = base_at(x_radius, y_radius);
+                if (mode >= 0
+                    && (has_fac(FAC_AEROSPACE_COMPLEX, mode, 0)
                         || has_project(SP_CLOUDBASE_ACADEMY, owner_radius)
                         || stack_check(veh_at(x_radius, y_radius), 2, PLAN_AIR_SUPERIORITY, -1, -1))) {
                     if (NetDaemonNet.action_mode_ & 1 && faction_id == ConsoleGlobal.faction_id_) {
-                        parse_says(0, Bases[base_id].name_string, -1, -1);
+                        parse_says(0, Bases[mode].name_string, -1, -1);
                         if (Players[faction_id].rule_flags & 0x80) {
                             NetMsgPrimary.pop(VehLabelAIRDEFENSES, VehIconALAIR_SM_PCX);
                             return 0;
