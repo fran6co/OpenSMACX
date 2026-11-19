@@ -889,9 +889,12 @@ static inline void pick_pass_budget_probe(int x) {
     if (x == 5) x = 6;
 }
 int NetWin::pick_pass(int payload) {
-    // Native 47C9A2..47C9C2 resets the copy row before the popup exists.
-    NetWinLobbyRow updated;
-    updated.reset();
+    // Native 47C9A2..47C9C2 resets the copy row before the popup exists:
+    // the constructed row (0x00483820's constructor expanded, reset one inline
+    // level below pick_pass). Written as a plain row plus reset() the BADPASSWORD
+    // teardown and its neighbour swap depths (EH runs 5,5,5,5,2,2 against the
+    // image's 5,5,5,2,5,2) whatever the dead spend.
+    NetWinConstructedLobbyRow updated;
     Popup popup;
     const int slot = NetDaemonNet.pid_2_idx(NetDaemonNet.local_player_id());
     int faction_mode;
@@ -970,8 +973,8 @@ int NetWin::pick_pass(int payload) {
         break;
     }
     NetWinLobbyRows.rows_[slot].owner_ = entered_hash;
-    memcpy(&updated, &NetWinLobbyRows.rows_[slot], 0x17C);
-    sub_47b1d0(slot, &updated);
+    memcpy(&updated.payload_, &NetWinLobbyRows.rows_[slot], 0x17C);
+    sub_47b1d0(slot, &updated.payload_);
     return 1;
 }
 
