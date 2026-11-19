@@ -2406,7 +2406,7 @@ void SocialWin::init(int faction_id) {
     font9_.init(DefaultLargeFontFace, 0xe, 1);
 
     if (!effectIcons_[0].has_pixel_pointer()) {
-// RECOVERY_LITERAL: v1 0x006874B0 0x006874BB $SG59650 0x004B2740
+// RECOVERY_LITERAL: v1 0x006874B0 0x006874BB $SG59651 0x004B2740
         sheet.load_pcx("socwin.pcx", 0, 10, 0xec);
         // Ten rows of three triplets; x restarts in the row clause.
         Sprite *icon = effectIcons_;
@@ -2707,7 +2707,7 @@ void SocialWin::init(int faction_id) {
             // 0x4B3C0B: test; jne to the vbase adjustment, null arm first.
             GraphicWin *graphics = window == 0
                 ? 0 : static_cast<GraphicWin *>(window);
-// RECOVERY_LITERAL: v1 0x006874BC 0x006874C3 $SG59758 0x004B2740
+// RECOVERY_LITERAL: v1 0x006874BC 0x006874C3 $SG59759 0x004B2740
             TutorialWindow.tut_win(graphics, "SOCWIN", out_a, out_b,
                 0, 1, -1, -1);
         }
