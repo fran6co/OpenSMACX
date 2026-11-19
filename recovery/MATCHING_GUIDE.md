@@ -2357,6 +2357,28 @@ Using it
   `clear()` (rows 2038 -> 2030), and none moves the round-region range
   site. Next: owners of the round-loop and pre-round veh_health sites
   (lines 3296-3336), and the spelling of veh_health/range themselves.
+  Round 14 (2026-11-19 par-2). The image's veh_health vector in
+  battle_fight: 29 sites, every one expanded; the inner (reactor) range is
+  called at the first 8 and expanded from the rounds' boom (0x509022) on, a
+  suffix as 2.8 rule 4 predicts for a free reactor_power over a charged
+  range; the last site 0x50AB1E expands veh_health and the reactor range but
+  calls the outer range (pass-2 refusal, deep expansion; draw_active
+  0x4B5A39 shows the same split). Copy-exact alternative bodies
+  (named hp/power local in veh_health, named result in reactor_power,
+  guard-clause proto_power, dmg-first operand order, proto-id reactor_power,
+  `__forceinline` levels) are all equal or worse there and in every other
+  caller; the current three-level body stays. The lever was an invented
+  level elsewhere: get_triad/is_missile/get_offense_rating/get_defense_rating
+  forwarded to their proto twins, an extra /Ob2 level at 19+4 battle_fight
+  sites. Written on the fields (landed, veh.h) the call distance falls
+  5 -> 3 and only battle_fight and probe move tree-wide. Open-coding the
+  triad reads in battle_fight instead gives too much deep room (inner range
+  called at 4-6 sites) and too little pass-1 room. Screens on top (not
+  source): without the nerve-gas owner, plain-global spelling and 16 brace
+  strips, the vector is the image's except the 0x50AB1E veh_health (called);
+  the nerve-gas owner's level-2 spend is the deep room the rounds lack. So
+  the remaining gap is caller size against the owner's nested spend, not the
+  veh_health/range spelling.
 - **When to stop.** Dead probes that change other teardowns before they move
   the target mean that pass 1 is the binding limit, not pass 2. Look for a
   structural difference: which object owns the teardown, or a per-TU header
