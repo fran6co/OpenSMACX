@@ -81,6 +81,14 @@ void AlphaNetStringStruct::on_remove(NetAllocationNode *) { }
 // net_class): the image pushes 0x00682700 and 0x00682724 from all of them.
 // RECOVERY_LITERAL: v2 merged 0x00682700 0x00682722 ??_C@_0CC@JCEM@out?5of?5heap?5space?5in?5new?5functio@ 0x00401D80
 // RECOVERY_LITERAL: v2 merged 0x00682724 0x0068272D ??_C@_08JLBK@Aborting?$AA@ 0x00401D80
+// WORKAROUND(inline): the payload's fallback placement argument is a value,
+// not an lvalue: the cleanup for the second payload fallback (state 2,
+// 0x0065050E) pushes the owner the body spilled at 0x00401F4A, and the last
+// one keeps it in [ebp+8] (0x0040220B); `new(allocation_owner_)` re-reads the
+// virtual base in the funclet instead. Same shape as JackalVoiceRx::add_player
+// (voice_owner, net_class.cpp). The original's spelling is not known.
+static inline Heap *ledger_owner(AlphaNetStringStruct *list) { return list->allocation_owner_; }
+
 /*
 Purpose: Build and link one selection node for the container this owns:
          the same two-stage allocate (0x1c node, 0x60 payload) with the
@@ -122,9 +130,13 @@ int AlphaNetStringStruct::add(int id) {
         head_->id_ = id;
         head_->next_ = head_;
         head_->previous_ = head_;
-        head_->payload_ = allocator_ != 0
-            ? new(allocator_) NetAllocationNode
-            : new(this) NetAllocationNode;
+        // If/else, as ServiceProviderList::add: the image tail-merges both
+        // arms into one ??0NetUnk72C call (0x00401FCE).
+        // WORKAROUND(inline): the image spills this fallback's owner too
+        // (0x00401F4A), but ledger_owner() here costs the /Ob2 budget that
+        // lets the last payload site expand NetUnk72C() (0x00402270).
+        if (allocator_) head_->payload_ = new(allocator_) NetAllocationNode;
+        else head_->payload_ = new(allocation_owner_) NetAllocationNode;
         if (head_->payload_ == 0) return 4;
         on_insert(head_->payload_);
         current_ = head_;
@@ -144,7 +156,7 @@ int AlphaNetStringStruct::add(int id) {
             if (current_->payload_ == 0) return 4;
             on_insert(current_->payload_);
         } else {
-            current_->payload_ = new(static_cast<StringAllocationBase *>(this)) NetAllocationNode;
+            current_->payload_ = new(ledger_owner(this)) NetAllocationNode;
             if (current_->payload_ == 0) return 4;
             on_insert(current_->payload_);
         }
