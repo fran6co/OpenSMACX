@@ -82,6 +82,15 @@ void __cdecl filefind_set_alternative(LPCSTR path) {
 /*
 Purpose: Initialize the Filefind global along with a CD check if there isn't a complete install. 
          Optimized logic since most installs will be on a HDD making the CD check less important.
+// The image's nine 0x90 bytes at 0x600545..0x60054D are a post-link patch
+// over `popup->exec(0, 0)`: a nop run is not something VC6 emits mid-body,
+// it is exactly the length of that call sequence, it sits between
+// BasePop::start's result test and the read of the popup's +0x3100 response
+// that only exec sets, the catalogue's call list for this function still
+// names BasePop::exec 0x00602600 (see `calls` below) although no call to it
+// remains in the image, and SMAC's terran.exe has the same nine nops at the
+// same point of its separately compiled copy.
+// RECOVERY_IMAGE_PATCH: v1 0x00600545 0x0060054E nop
 // ORIGINAL: 0x00600400 ?filefind_init@@YAHPADH@Z 0x00600400-0x006005C5
 // LEVER: `strcat`/plain `[0]=0` clears in place of the bounded
 //        `strcpy_s`/`strcat_s` forms, matching the sibling
@@ -206,14 +215,12 @@ int __cdecl filefind_init(LPCSTR file_check, BOOL is_complete) {
             return response;
         }
         // The popup's own input state is independent of start's return.
-        // The image has nine 0x90 bytes here (0x600545..0x60054D) in place
-        // of `popup->exec(0, 0);`: writing that call compiles to
-        // `push ebx; push ebx; mov ecx, edi; call BasePop::exec` (exactly
-        // nine bytes) and makes every other byte of this function equal the
-        // image. SMAC's terran.exe has the same nine nops at the same point
-        // of its separately compiled copy. The shipped executables were
-        // patched after linking so the NOCD popup is never run modally;
-        // the call is left out to keep the shipped behaviour.
+        // The shipped image has nine 0x90 bytes at 0x600545..0x60054D in
+        // place of this call (RECOVERY_IMAGE_PATCH above): it was patched
+        // after linking so the NOCD popup is never run modally. The source
+        // is the code as compiled, `push ebx; push ebx; mov ecx, edi;
+        // call BasePop::exec`, exactly nine bytes.
+        popup->exec(0, 0);
         switch (popup->input_poll_state()) {
         case 1:
             // if user response is to retry -> loop around again

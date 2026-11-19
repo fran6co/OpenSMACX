@@ -3032,8 +3032,12 @@ result over 64 symbol-counter pads, so none of these is a counter canary.
 - **The last `break` in source order places a loop's after-loop block**:
   end with `if (flag) { label: ...; return; } break;` to lay it last.
 - **Mid-body nop runs matching a call sequence's length are post-link
-  patches**: write the call; if only those bytes then differ, it is an
-  exclusion candidate, not a matching target (filefind_init). An `__asm`
+  patches**: write the call; if only those bytes then differ, declare the
+  span with `RECOVERY_IMAGE_PATCH` (docs/DECOMP_MAP.md) and keep the call in
+  the source (filefind_init 0x00600400 measures exact outside the declared
+  span). Stale base-relocation entries inside the span say where the
+  replaced code had absolute fields (Caviar::init_class: 0x0061874F and
+  0x00618756, a `push offset` and a `call [import]`). An `__asm`
   nop block is not a stand-in: any `__asm` forces an ebp frame in VC6 and
   stops enregistering locals (measured 2026-11-19 on filefind_init
   0x00600400: original `popup->exec(0, 0)` call 0.957, only the nine
@@ -3044,8 +3048,8 @@ result over 64 symbol-counter pads, so none of these is a counter canary.
   Caviar::init_class 0x006185A0 (18 nops, `jmp 0x618873`, nop at
   0x61874B..0x618762) reacts the same way: one `__asm { nop }` turns its
   esp frame into an ebp frame. The user allowed an `__asm` stand-in for
-  filefind_init on 2026-11-19; VC6 cannot express it, so both stay
-  unmatched until the patch can be declared to the comparator or excluded.
+  filefind_init on 2026-11-19; VC6 cannot express it, so the patch is
+  declared to the comparator instead.
 - **A signed `jl` loop test against a strength-reduced element pointer** means
   the source bound was `i < N`; `i != N` gives `jne` (menu_init 0x0045FB20).
 - **Block placement follows the successor, not source position.** A shared
