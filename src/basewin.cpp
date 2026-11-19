@@ -5789,7 +5789,8 @@ again:
         popup.set_ok_text(StringTable.get(Labels.strings_ptr[0xFC0 / 4]));
         for (int facility = 1; facility < 65; ++facility) {
             StringTemp[0] = 0;
-            strcat(StringTemp, StringTable.get(Facility[facility].name));
+            char *name = Facility[facility].name;
+            strcat(StringTemp, StringTable.get(name));
             strcat(StringTemp, "|");
             // The image calls the out-of-line has_fac here (0x0041B88F) and
             // inlines the one after the menu.
@@ -5800,12 +5801,14 @@ again:
             if (built_now) {
                 // Unlike the old seed, retain the facility-name prefix on
                 // the already-built branch (original41B859..41B8A6).
-                strcat(StringTemp, StringTable.get(Labels.strings_ptr[0xD50 / 4]));
+                char *built = Labels.strings_ptr[0xD50 / 4];
+                strcat(StringTemp, StringTable.get(built));
             } else if (facility_avail(facility, BaseCurrent->faction_id_current,
                                       BaseIDCurrentSelected, 0)) {
                 // This clear and rebuild are in both original branches.
                 StringTemp[0] = 0;
-                strcat(StringTemp, StringTable.get(Facility[facility].name));
+                char *again = Facility[facility].name;
+                strcat(StringTemp, StringTable.get(again));
                 strcat(StringTemp, "|");
                 strcat(StringTemp, StringTable.get(Labels.strings_ptr[0x3DC / 4]));
             } else {
