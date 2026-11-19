@@ -15,10 +15,12 @@
  * You should have received a copy of the GNU General Public License
  * along with OpenSMACX. If not, see <http://www.gnu.org/licenses/>.
  */
+
 // ORIGINAL: 0x006256D0 ??_GImageButton@@UAEPAXI@Z 0x006256D0-0x006256EE FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["historical deleting-thunk source src/deleting_thunks.cpp; original full spans retained: 0x006256D0-0x006256EE", "Pinned class constructor ??0ImageButton@@QAE@XZ at 0x006252E0 stores original class/view table VA 0x670a94 at 0x006252E8 (mov dword ptr [esi], 0x670a94); the current genuine owner vftable ??_7ImageButton@@6BWin@@@ selects generated ??_GImageButton@@UAEPAXI@Z in slot 0 (+0x0) through weak entry ??_EImageButton@@UAEPAXI@Z (mode 2).", "Pinned ??_GImageButton@@UAEPAXI@Z at 0x006256D0 calls the source-mapped ??1ImageButton@@QAE@XZ at 0x00625310, then tests byte ptr [esp + 8], 1; je 0x6256e8 bypasses scalar delete when bit 0 is clear, while bit 0 set calls 0x0064557F; it save original this; call destructor; delete only when flags bit 0 is set; return saved this with ret 4.", "The real class lifetime is owned by src/imagebutton.cpp; its compiler-emitted deleting symbol and vftable slot carry this original identity. Hand-written adapter bodies with live adjustor callers remain until those callers are independently qualified and transferred. The linked weak/COMDAT copy is not used to choose source ownership.", "the source writer preserves the historical mapping's exactness state (historical exactness obligation retained); current compiler extent is not asserted equal to the original span"], "reason": "Bind the original ImageButton scalar deleting-destructor identity to the actual compiler-emitted class deleting destructor in its genuine owner translation unit. The original constructor's pinned vptr store and the current owner's physical table slot identify this class/view; no callback/thunk body is hand-authored here."}
 // symbol    ??_GImageButton@@UAEPAXI@Z
 // kind      game
+
 #include "stdafx.h"
 #include "palette.h"
 #include <cstring>
@@ -67,61 +69,6 @@ Return Value: n/a
 Status: Complete
 */
 ImageButton::~ImageButton() {
-}
-
-/*
-Purpose: Step the receiver back to the subobject ??_GImageButton@@UAEPAXI@Z
-         expects, then forward unchanged.
-// ORIGINAL: 0x006256F0 ??_GImageButton@@WEEE@AEPAXI@Z 0x006256F0-0x006256FB BYTE_EXACT
-// symbol    ??_EImageButton@@WEEE@AEPAXI@Z
-// CORRECTED from ??3ImageButton@@SAXPAXI@Z
-//   11 bytes, `sub ecx, 0x444; jmp 0x006256D0` into
-//   ??_GImageButton@@UAEPAXI@Z, which executes `ret 4`; no stack access
-//   and the receiver stays in ECX. `WEEE@` re-demangles to
-//   adjustor{1092} and 1092 == 0x444, the constant subtracted
-// size      11 bytes
-// prototype 
-// callers   0   call targets   0
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     (none)
-Return Value: the forwarded call's
-Status: Complete
-*/
-
-/*
-Purpose: Initialise the button from a borrowed Sprite. Store it in sprite_,
-         as the explicit-size overload does, then pass its displayed width
-         and height at 0x18 and 0x1c to the base initialiser.
-// ORIGINAL: 0x00625380 sub_625380 0x00625380-0x006253C6 BYTE_EXACT
-// symbol    ?init@ImageButton@@QAEHPAVSprite@@PBDHHHPAVWin@@H@Z
-// size      70 bytes
-// prototype int (__thiscall sub_625380)(ImageButton* this, const int*, LPCSTR, int, int, int, Win*, int)
-// callers   0   call targets   1
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     0x00607210
-// LEVER: the receiver is an ImageButton, not a Texture and not BaseButton.
-//   Three facts, and the last one is the one the shortlist missed: the store
-//   lands at [this+0xAB8], which is `field_AB8_` - a member BaseButton does
-//   not have, because sizeof(BaseButton) is exactly 0xAB8 and 0xAB8 is
-//   therefore PAST the end of one; 0x00625380 sits immediately after
-//   0x00625340, ?init@ImageButton@@QAEHHPADHHHHHPAUWin@@H@Z, in the image;
-//   and the same slot is what the nine-argument overload stores. Spelled as
-//   a member, the body needs no `this` pun and no ButtonInit stand-in class.
-Return Value: whatever BaseButton::init returns
-Status: Complete
-*/
-int ImageButton::init(Sprite *sprite, LPCSTR name, int id, int x, int y,
-                      Win *parent, int style_flag) {
-    if (sprite == 0) {
-        return 3;
-    }
-    sprite_ = sprite;
-    int height = sprite->height();
-    int width = sprite->width();
-    return BaseButton::init(name, id, x, y, width, height, parent,
-                            style_flag);
 }
 
 /*
@@ -177,6 +124,41 @@ int ImageButton::init(Sprite *sprite, LPCSTR name, int id, int x, int y,
                       int width, int height, Win *parent, int style_flag) {
     sprite_ = sprite;
     return BaseButton::init(name, id, x, y, width, height, parent, style_flag);
+}
+
+/*
+Purpose: Initialise the button from a borrowed Sprite. Store it in sprite_,
+         as the explicit-size overload does, then pass its displayed width
+         and height at 0x18 and 0x1c to the base initialiser.
+// ORIGINAL: 0x00625380 sub_625380 0x00625380-0x006253C6 BYTE_EXACT
+// symbol    ?init@ImageButton@@QAEHPAVSprite@@PBDHHHPAVWin@@H@Z
+// size      70 bytes
+// prototype int (__thiscall sub_625380)(ImageButton* this, const int*, LPCSTR, int, int, int, Win*, int)
+// callers   0   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x00607210
+// LEVER: the receiver is an ImageButton, not a Texture and not BaseButton.
+//   Three facts, and the last one is the one the shortlist missed: the store
+//   lands at [this+0xAB8], which is `field_AB8_` - a member BaseButton does
+//   not have, because sizeof(BaseButton) is exactly 0xAB8 and 0xAB8 is
+//   therefore PAST the end of one; 0x00625380 sits immediately after
+//   0x00625340, ?init@ImageButton@@QAEHHPADHHHHHPAUWin@@H@Z, in the image;
+//   and the same slot is what the nine-argument overload stores. Spelled as
+//   a member, the body needs no `this` pun and no ButtonInit stand-in class.
+Return Value: whatever BaseButton::init returns
+Status: Complete
+*/
+int ImageButton::init(Sprite *sprite, LPCSTR name, int id, int x, int y,
+                      Win *parent, int style_flag) {
+    if (sprite == 0) {
+        return 3;
+    }
+    sprite_ = sprite;
+    int height = sprite->height();
+    int width = sprite->width();
+    return BaseButton::init(name, id, x, y, width, height, parent,
+                            style_flag);
 }
 
 // Superseded seed deleted; seed paths below are historical Git provenance.
@@ -256,3 +238,23 @@ void ImageButton::on_redraw() {
 
     write_cent_l(name_, &rectangle);
 }
+
+/*
+Purpose: Step the receiver back to the subobject ??_GImageButton@@UAEPAXI@Z
+         expects, then forward unchanged.
+// ORIGINAL: 0x006256F0 ??_GImageButton@@WEEE@AEPAXI@Z 0x006256F0-0x006256FB BYTE_EXACT
+// symbol    ??_EImageButton@@WEEE@AEPAXI@Z
+// CORRECTED from ??3ImageButton@@SAXPAXI@Z
+//   11 bytes, `sub ecx, 0x444; jmp 0x006256D0` into
+//   ??_GImageButton@@UAEPAXI@Z, which executes `ret 4`; no stack access
+//   and the receiver stays in ECX. `WEEE@` re-demangles to
+//   adjustor{1092} and 1092 == 0x444, the constant subtracted
+// size      11 bytes
+// prototype 
+// callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+Return Value: the forwarded call's
+Status: Complete
+*/
