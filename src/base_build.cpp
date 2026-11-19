@@ -117,17 +117,13 @@ int __cdecl base_claimed(int x, int y, int site1_free, int site2_free,
 // probes (bb_probe_store, cheaper than a branch) spend the amount in between: no
 // probe call and the image's call multiset. 2026-11-19: three + two; after the
 // 2026-11-19 integration the range at 0x4FD528 expanded again,
-// and four + one (or five + none) is the window again.
+// and four + one (or five + none) is the window again. With the secret-project
+// ternary (a_130[j] = l_84 ? 5 : -l_d8) only five + none keeps the multiset.
 static inline int bb_probe(int x) {
     if (x == 1) {
         x = 2;
     }
     return x;
-}
-
-// WORKAROUND(inline): pure-store budget probe; see bb_probe.
-static inline void bb_probe_store(int *p) {
-    *p = 0;
 }
 
 // Complete base_build was moved here from its retired seed:
@@ -1874,10 +1870,7 @@ L_4fbd3d:
         bb_probe(0);
         bb_probe(0);
         bb_probe(0);
-        {
-            int probe_;
-            bb_probe_store(&probe_);
-        }
+        bb_probe(0);
         if (!(GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & l_1c)) {
             if (has_tech(Chassis[5].preq_tech, target) && !has_tech(Chassis[5].preq_tech, l_8)) {
                 w /= 2;
@@ -3530,8 +3523,7 @@ L_4ff11f:
                     }
                     if (s < a_114[j]) {
                         a_114[j] = s;
-                        if (l_84) a_130[j] = 5;
-                        else a_130[j] = -l_d8;
+                        a_130[j] = l_84 ? 5 : -l_d8;
                         l_9c = l_ac;
                     }
                 }
