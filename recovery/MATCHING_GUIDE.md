@@ -2748,6 +2748,21 @@ What the model does not predict (2026-11-19)
   copies are tuned around another missing charge in that function; not
   landed. Read `show` before editing: below score 0.9 shared parse_says/pop
   runs and show_all/hide_all pairs score as hits.
+- **Referenced owners too: an invented helper is often a real header inline**
+  (high; 2026-11-19 par-4). orphanowner only tries unreferenced markers, so it
+  misses header inlines that also have an out-of-line copy. Reverse the scan
+  (every marker's image body against ONE host's image body, min 3 tokens) and
+  compare each invented `static inline` helper's body with what comes back.
+  Console::go_to 0x004D61A0: its go_to_refuse helper was netmsg.h's
+  veh_battle_msg (0x0050B9C0, `pop(label, 5000, 0, icon)`); with all four
+  refusals through it and the waypoint/sort-button helpers written out, EH,
+  named calls, jcc/jmp/call/ret counts and the closing teardown's
+  remove_all call/expansion order all equal the image's (181 -> 118 rows),
+  where every invented-helper combination left EH 3-6. The invented helpers
+  were tuned to imitate the real inline's charge with a different
+  parameter list. BaseWin's compute_selected_base was the real focus()
+  0x00415DD0 (expanded at 24 sites; spell the real body with the twin's node
+  count: `!= 0` tests charged at every expansion moved production/hurry).
 - **Popup::start, five arguments (0x0043EF70), editor_who copies**
   (2026-11-19 par-6, screen only). With editor_diplomacy calling the plain
   `editor_who` (auto-inlined, as in the image) instead of the
