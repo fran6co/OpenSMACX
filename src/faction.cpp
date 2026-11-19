@@ -2589,9 +2589,9 @@ void __cdecl diplomacy_check(int faction, int other, int update) {
         for (int census_faction = 1; census_faction < 8; census_faction++) {
             // Unconditional store: a ternary, not a guarded assignment.
             {
-                int &adj3 = maximum_bases[census_faction];
-                adj3 = adj3 > PlayersData[census_faction].region_total_bases[census_region]
-                ? adj3
+                int &max_bases = maximum_bases[census_faction];
+                max_bases = max_bases > PlayersData[census_faction].region_total_bases[census_region]
+                ? max_bases
                     : PlayersData[census_faction].region_total_bases[census_region];
             }
         }
