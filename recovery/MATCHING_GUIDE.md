@@ -2968,9 +2968,18 @@ result over 64 symbol-counter pads, so none of these is a counter canary.
 - **Mid-body nop runs matching a call sequence's length are post-link
   patches**: write the call; if only those bytes then differ, it is an
   exclusion candidate, not a matching target (filefind_init). An `__asm`
-  nop block is not a stand-in: any `__asm` forces an ebp frame in VC6
-  (measured 0.90, popup spilled). filefind_init stays unmatched until the
-  cleanup pass (user decision, 2026-11-17).
+  nop block is not a stand-in: any `__asm` forces an ebp frame in VC6 and
+  stops enregistering locals (measured 2026-11-19 on filefind_init
+  0x00600400: original `popup->exec(0, 0)` call 0.957, only the nine
+  patched bytes 0x600545..0x60054D differ, frame 0x24C; nine `nop`s in an
+  `__asm` block 0.703, `[ebp-4]` popup). Moving the block into a
+  `__forceinline`, `inline` or `static` helper changes nothing: /Ob2
+  expands the helper and the caller inherits the ebp frame (0.703 each).
+  Caviar::init_class 0x006185A0 (18 nops, `jmp 0x618873`, nop at
+  0x61874B..0x618762) reacts the same way: one `__asm { nop }` turns its
+  esp frame into an ebp frame. The user allowed an `__asm` stand-in for
+  filefind_init on 2026-11-19; VC6 cannot express it, so both stay
+  unmatched until the patch can be declared to the comparator or excluded.
 - **A signed `jl` loop test against a strength-reduced element pointer** means
   the source bound was `i < N`; `i != N` gives `jne` (menu_init 0x0045FB20).
 - **Block placement follows the successor, not source position.** A shared
