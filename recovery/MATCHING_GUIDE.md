@@ -5712,7 +5712,7 @@ skeleton keeps only branches, `ret` and numbered `use(K)` markers)
   rows): the satellite loop's shared `attack_type = 3` block sits behind the
   `ret` in the image and jumps back to the `action_sat_attack` call, with
   the loop latch as `jge OUT | jmp HEAD`; ours lays it in front of the call
-  and the latch as `jl HEAD | jmp OUT`. Thirteen CFG-equal spellings (goto
+  and the latch as `jl HEAD | jmp OUT`. Nine CFG-equal spellings (goto
   to a label at either site, either site hosting the label, the last arm
   negated or nested, the block after the `break`, `for (;;)` with a break
   test, the arm with its own call and `break`) compile to our bytes or
@@ -5819,7 +5819,7 @@ the test); `+r` only loop-head reload skips differ (allocation):
 
 No rung-4 function differs in its jump-table count (`sw` equal in all 113),
 and only 7 differ in their loop set; 17 more differ only in loop-head
-reload skips. The bulk is b:jmp / b:tgt (69 functions, 15,290 rows): the
+reload skips. The bulk is b:jmp / b:tgt (69 functions, 15,457 rows): the
 same branches with a tail merged, duplicated or cross-jumped at another
 depth, i.e. the cross-jump and join-host rules of 3.7, which follow
 register allocation as often as source shape. Real loop-set cases to read
