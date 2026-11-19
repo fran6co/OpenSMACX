@@ -30,8 +30,6 @@ extern int MapEditorPaintId;
 extern int MapEditorBrushId;
 extern int MapFocusX;
 extern int MapFocusY;
-uint32_t map_editor_paint_mask(int tool_id);
-uint32_t map_editor_erase_mask(int tool_id);
 
 // One owned terrain-cache record per map tile. The resets at
 // 46FDA9..46FDC4 and 46FDDC..46FDF8 walk twelve-byte records, writing

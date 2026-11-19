@@ -1707,7 +1707,6 @@ void __cdecl veh_site_scan(int x, int y) {
         }
     }
 }
-int __cdecl morale_veh_call(int veh_id, int check_drone_riot, int faction_id);
 
 
 

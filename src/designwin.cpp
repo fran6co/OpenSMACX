@@ -40,29 +40,10 @@
 // WORKAROUND(decl): DesignWin::draw_armor 0x00435400 ties on how many declarations precede
 // map.h's (pads here or before stdafx.h move it; pads after the last
 // include never do). fe sweep 2026-11-19, 0-63 pads: exact at 14-25 and 30-53, no
-// other function of the unit changes. The original header declaration
+// other function of the unit changes; after the dead-declaration batch exact
+// at 0-9, 13-31 and 55-63, so no pads. The original header declaration
 // set is unknown; re-tune after header batches.
 // HEADER-PADS: function DesignWinHeaderPad
-void DesignWinHeaderPad0();
-void DesignWinHeaderPad1();
-void DesignWinHeaderPad2();
-void DesignWinHeaderPad3();
-void DesignWinHeaderPad4();
-void DesignWinHeaderPad5();
-void DesignWinHeaderPad6();
-void DesignWinHeaderPad7();
-void DesignWinHeaderPad8();
-void DesignWinHeaderPad9();
-void DesignWinHeaderPad10();
-void DesignWinHeaderPad11();
-void DesignWinHeaderPad12();
-void DesignWinHeaderPad13();
-void DesignWinHeaderPad14();
-void DesignWinHeaderPad15();
-void DesignWinHeaderPad16();
-void DesignWinHeaderPad17();
-void DesignWinHeaderPad18();
-void DesignWinHeaderPad19();
 #include "font_metrics.h"
 #include "interface_fonts.h"
 #include "map.h"

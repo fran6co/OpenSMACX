@@ -104,10 +104,8 @@ extern BOOL PluralityDefault;   // 0x009BBFF0
 MEASURED inline LPSTR __cdecl purge_leading(LPSTR input);
 void __cdecl purge_spaces(LPSTR input);
 void __cdecl kill_lf(LPSTR str);
-void __cdecl kill_nl(LPSTR str);
 void __cdecl add_lf(LPSTR str);
 LPVOID __cdecl mem_get(int size);
-FILE *__cdecl env_open_old(LPCSTR source, LPCSTR mode);
 FILE *__cdecl env_open(LPCSTR source, LPCSTR mode);
 int __cdecl parse_num(int id, int value);
 int __cdecl parse_say(int id, LPSTR input, int gender, int pluralality);
@@ -141,15 +139,10 @@ uint32_t __cdecl checksum_password(LPCSTR password);
 void __cdecl danger(LPCSTR msg1, LPCSTR msg2, int num1, int num2, int num3);
 void __cdecl kill_auto_save();
 void __cdecl auto_save();
-// auto_save_debug was an OpenSMACX debug helper (no original; its body is
-// gone from game.cpp). The declaration stays until a header pass, since a
-// header declaration moves every including unit's symbol counter.
-void __cdecl auto_save_debug();
 void __cdecl load_undo(int type);
 void __cdecl wipe_undo();
 void __cdecl auto_undo();
 void __cdecl sort(int count, int *id, int *value);
-void __cdecl sort_descending(uint32_t count, int *id, int *value);
 
 // WIP
 int __cdecl filefind_init(LPCSTR file_check, BOOL is_complete);
@@ -288,7 +281,6 @@ void __cdecl sub_62d1a0();
 int __cdecl sub_62d0f0();
 void __cdecl sub_62d1e0(RECT *rect);
 void __cdecl sub_62d2c0();
-void *__fastcall sub_63bb20(void *this_ptr);
 
 // Source-owned original helper; identity and behavior evidence are in its TU.
 void __cdecl read_and_parse_text_line();

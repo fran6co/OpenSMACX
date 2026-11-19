@@ -758,7 +758,6 @@ void __cdecl prefs_put(LPCSTR key_name, LPCSTR value);
 void __cdecl prefs_put(LPCSTR key_name, int value, BOOL tgl_binary);
 void __cdecl prefs_save(BOOL save_factions);
 void __cdecl prefs_use();
-LPSTR __cdecl prefs_get_binary(int value);
 BOOL __cdecl labels_init();
 // Alpha owns Compass storage and populates it from #COMPASS.
 // say_orders indexes this parsed eight-direction table by waypoint direction.
@@ -853,5 +852,4 @@ namespace NetDaemonSyncRules {
 bool copy_rule_wire_chunk(int opcode, size_t offset, unsigned char *chunk,
                           size_t count, bool packet_to_owner,
                           unsigned char *shared_staging);
-bool commit_staged_rules(int opcode, const unsigned char *staging);
 }

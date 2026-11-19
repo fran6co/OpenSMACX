@@ -108,29 +108,6 @@
 // src/turn.cpp` computes the pad count (none needed now).
 // CANARY: 0x00524870 ?end_of_game@@YAHH@Z residues 1-4,6-19,21-23,27-34,39-49,52,54-60,62-63
 // CANARY-PADS: function TurnDeclFnPad
-void TurnDeclFnPad0();
-void TurnDeclFnPad1();
-void TurnDeclFnPad2();
-void TurnDeclFnPad3();
-void TurnDeclFnPad4();
-void TurnDeclFnPad5();
-void TurnDeclFnPad6();
-void TurnDeclFnPad7();
-void TurnDeclFnPad8();
-void TurnDeclFnPad9();
-void TurnDeclFnPad10();
-void TurnDeclFnPad11();
-void TurnDeclFnPad12();
-void TurnDeclFnPad13();
-void TurnDeclFnPad14();
-void TurnDeclFnPad15();
-void TurnDeclFnPad16();
-void TurnDeclFnPad17();
-void TurnDeclFnPad18();
-void TurnDeclFnPad19();
-void TurnDeclFnPad20();
-void TurnDeclFnPad21();
-void TurnDeclFnPad22();
 
 extern int BaseAtDebugPopupFlag;  // base.cpp, original93A94C
 extern char *InterludeTextFile;  // interlude.cpp

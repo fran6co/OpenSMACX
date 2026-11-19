@@ -38,6 +38,48 @@
 // symbol    _$E14
 #define DIALOGS_DTOR_INLINE  // stand-in: see ~Dialogs in dialogs.h
 #include "stdafx.h"
+// WORKAROUND(decl): Datalink::set_cat_social 0x0042B630 is a header-position tie (guide 2.5): it
+// flipped when the dead non-original declarations (kill_nl, env_open_old,
+// sort_descending, auto_save_debug, sub_63bb20, ...) left general.h and the
+// other headers. fe sweep 2026-11-19, 0-63 pads: exact at 21-51, 53-56, no other
+// function of the unit changes. Re-tune after header batches.
+// HEADER-PADS: function DatalinkHeaderPad
+void DatalinkHeaderPad0();
+void DatalinkHeaderPad1();
+void DatalinkHeaderPad2();
+void DatalinkHeaderPad3();
+void DatalinkHeaderPad4();
+void DatalinkHeaderPad5();
+void DatalinkHeaderPad6();
+void DatalinkHeaderPad7();
+void DatalinkHeaderPad8();
+void DatalinkHeaderPad9();
+void DatalinkHeaderPad10();
+void DatalinkHeaderPad11();
+void DatalinkHeaderPad12();
+void DatalinkHeaderPad13();
+void DatalinkHeaderPad14();
+void DatalinkHeaderPad15();
+void DatalinkHeaderPad16();
+void DatalinkHeaderPad17();
+void DatalinkHeaderPad18();
+void DatalinkHeaderPad19();
+void DatalinkHeaderPad20();
+void DatalinkHeaderPad21();
+void DatalinkHeaderPad22();
+void DatalinkHeaderPad23();
+void DatalinkHeaderPad24();
+void DatalinkHeaderPad25();
+void DatalinkHeaderPad26();
+void DatalinkHeaderPad27();
+void DatalinkHeaderPad28();
+void DatalinkHeaderPad29();
+void DatalinkHeaderPad30();
+void DatalinkHeaderPad31();
+void DatalinkHeaderPad32();
+void DatalinkHeaderPad33();
+void DatalinkHeaderPad34();
+void DatalinkHeaderPad35();
 #include "interface_fonts.h"
 #include "game.h"  // shared state-window owner
 #include "datalink.h"

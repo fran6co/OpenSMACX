@@ -71,9 +71,6 @@ class AutoSound {
   void close();
   void close2();
   void init();
-  // ??_GAutoSound@@UAEPAXI@Z as a member: re-installs the vfptr, runs
-  // close(), deletes only when the caller's flag says so.
-  void *scalar_delete(unsigned int mode);
 
   // Scroll's mouse-move and button-pressed paths use this word through Sound
   // slots 23/7. This is an observed interface view, not ownership or lifetime.

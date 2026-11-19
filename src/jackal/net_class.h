@@ -799,6 +799,5 @@ extern uint32_t NetKeepAliveBusy;
 // capacity initialized by Net::init, not the old four-byte scalar declaration.
 extern unsigned char NetGetScratch[0x2000];  // 0x009BC4BC
 
-// Shared node allocation contracts; original handoff semantics are retained.
-void *allocate_net_node(size_t size, Heap *owner);
+// Original handoff semantics are retained.
 void cleanup_failed_net_construction(void *memory);

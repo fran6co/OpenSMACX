@@ -213,7 +213,6 @@ class BaseWin : public GraphicWin, public SubInterface {
   void init();                                          // 0x0041E8D0
   void compute_selected_base();
   int displayed_production_id() const { return displayed_production_id_; }
-  void update_drag_cursor(int spot_type, int spot_pos, int x, int y, int large);
 
   // UNK2 calls the garrison interaction; on_scrolled repaints facilities.
   // garrison_click's arguments select a vehicle and screen coordinates, with

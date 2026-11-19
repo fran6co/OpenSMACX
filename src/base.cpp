@@ -7124,7 +7124,6 @@ int __cdecl generators(int faction_id, int *count_out);
 
 
 static int base_yield_add(int left, int right);
-static int base_yield_mul(int left, int right);
 
 enum ProductionReportResume {
     PRODUCTION_REPORT_RESUME_274F,

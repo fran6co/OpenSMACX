@@ -55,9 +55,11 @@
 #include "worldwin.h"
 // Counter canary: PrefWin::init 0x0048D840 flips with the front-end symbol
 // counter (guide 2.5; fe sweep 2026-11-19: exact at 0-7, 10, 12, 14-15, 17-18,
-// 20-41, 46, 49-50, 52-53, 55-56, 59, 62 pads). No pads needed now.
+// 20-41, 46, 49-50, 52-53, 55-56, 59, 62 pads). After the dead-declaration
+// batch: exact at 2-4, 6-9, 12, 14, 16-17, 19-20, 22-43, ... (0 and 1 flip it), so 2.
 // CANARY-PADS: function PrefWinDeclFnPad
 void PrefWinDeclFnPad0();
+void PrefWinDeclFnPad1();
 
 int __cdecl X_text_open(char *src_file_id, const char *section_id);
 void __cdecl slide_show(GraphicWin *window, int mode);

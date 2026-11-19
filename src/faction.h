@@ -949,7 +949,6 @@ BOOL __cdecl society_avail(int soc_category, int soc_model, int faction_id);
 void __cdecl social_ai(int faction_id, int growth_val, int tech_val, int wealth_val,
                                  int power_val, SocialCategory *output);
 void __cdecl enemy_capabilities(int faction_id);
-void __cdecl enemy_capabilities_t(uint32_t faction_id);
 
 // THE AI DIPLOMACY MOVES. Each one is a `?name@@YAXHH@Z`-shaped free
 // function that reads the pair's treaty/agenda state, opens a popup speaking
@@ -1128,9 +1127,6 @@ extern int DiploScratchFA3C, DiploScratchFA88, DiploScratchFA98;
 void __cdecl tech_analysis(int faction_id, int faction_id_with);
 void __cdecl diplomacy_caption(int faction_id, int faction_id_with);
 int __cdecl wants_to_speak(int faction_id, int other_faction_id);
-// Prepare the shared parser arguments for NetDaemon's contact prompt.
-void __cdecl prepare_contact_dialog_arguments(int faction_id);
-
 void __cdecl introduce(int faction_id, int other_faction_id);
 void __cdecl enemy_strategy(int faction_id);
 

@@ -32,7 +32,6 @@ class Net;
 class Win;
 class GraphicWin;
 
-int __cdecl game_data_transfer_block(FILE *file, void *buffer, unsigned int size);
 int __cdecl game_data_plain_transfer(FILE *file, void *buffer, unsigned int byte_count, int write_mode);
 
 // Original save/load daemon entry points, implemented in game.cpp.

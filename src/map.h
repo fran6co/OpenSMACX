@@ -397,9 +397,6 @@ static_assert(sizeof(void *) != 4 || sizeof(MapStorageWindow) == 0xAA4,
 // beside the evidence.
 extern uint32_t MapTileFlagClearMask;          // 0x006919EC
 inline Map *&map_tiles() { return MapTiles; }
-// Byte-oriented legacy consumers view the same Map allocation; no second
-// pointer cell or pointer-to-pointer alias is maintained.
-inline uint8_t *map_tile_bytes() { return reinterpret_cast<uint8_t *>(MapTiles); }
 inline uint8_t *&MapAbstract() { return MapAbstractTiles; }
 void __cdecl map_resample(int width, int height);
 extern int MapBaseSubmergedCount[8];
@@ -720,11 +717,6 @@ inline int __cdecl altitude_at(uint32_t x, uint32_t y) {
 // siblings. Unsigned gives `jb`, one opcode different in each of them.
 inline int __cdecl owner_at(int x, int y) {
   return map_loc(x, y)->val2 & 0xF;
-}
-
-// INLINE: the image has no using_at - it open-codes what this names.
-inline uint32_t __cdecl using_at(uint32_t x, uint32_t y) {
-    return map_loc(x, y)->val3 & 7;
 }
 
 // INLINE: the image has no lock_at - it open-codes what this names.

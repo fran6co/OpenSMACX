@@ -134,11 +134,44 @@ void __cdecl vox_matrix_inverse(const float (*matrix)[3], float (*out)[3]) {
 // their x87 operand order after vox_matrix_inverse's cofactor array.
 // Re-tuned 2026-11-19 after caviar.h's `friend class StatusWin;` (fe sweep,
 // this block 0-23 x caviar_symbol_pad_ 0-7): all three exact only at
-// (1, 3-5), (3, 2-4), (17, 3-5) and (19, 2-4); 6 flips all three.
+// (1, 3-5), (3, 2-4), (17, 3-5) and (19, 2-4); 6 flips all three. After the
+// dead-declaration batch (this block 0-63 with caviar_symbol_pad_ at 4;
+// that block 0-63 at 3 fixes nothing): exact only at 34, 36, 50 and 52, so 34.
 // CANARY-PADS: extern vox_geometry_pad_
 extern float vox_geometry_pad_0;
 extern float vox_geometry_pad_1;
 extern float vox_geometry_pad_2;
+extern float vox_geometry_pad_3;
+extern float vox_geometry_pad_4;
+extern float vox_geometry_pad_5;
+extern float vox_geometry_pad_6;
+extern float vox_geometry_pad_7;
+extern float vox_geometry_pad_8;
+extern float vox_geometry_pad_9;
+extern float vox_geometry_pad_10;
+extern float vox_geometry_pad_11;
+extern float vox_geometry_pad_12;
+extern float vox_geometry_pad_13;
+extern float vox_geometry_pad_14;
+extern float vox_geometry_pad_15;
+extern float vox_geometry_pad_16;
+extern float vox_geometry_pad_17;
+extern float vox_geometry_pad_18;
+extern float vox_geometry_pad_19;
+extern float vox_geometry_pad_20;
+extern float vox_geometry_pad_21;
+extern float vox_geometry_pad_22;
+extern float vox_geometry_pad_23;
+extern float vox_geometry_pad_24;
+extern float vox_geometry_pad_25;
+extern float vox_geometry_pad_26;
+extern float vox_geometry_pad_27;
+extern float vox_geometry_pad_28;
+extern float vox_geometry_pad_29;
+extern float vox_geometry_pad_30;
+extern float vox_geometry_pad_31;
+extern float vox_geometry_pad_32;
+extern float vox_geometry_pad_33;
 
 // 0x006280E0. A 3x3 times a vector: three rows of three multiplies and a
 // store, 107 bytes, no calls of its own.

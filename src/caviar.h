@@ -617,12 +617,7 @@ class Caviar {
   ~Caviar() { close(); }
   void set_camera_direct(const VOX_Vect *camera, const VOX_Matrix *matrix);
   void set_scaling(float scaling);
-  void set_scaling_bits(uint32_t scaling_bits);
   float get_scaling();
-  // Side-effect-free live reads for the renderer's protected Buffer
-  // DIB fields; Caviar is already Buffer's friend.
-  static void *render_color_dib_bits();
-  static void *render_shadow_dib_bits();
 
   // 0x00618520 and 0x00618560 - the image's UNK13 and UNK14, named from what
   // both bodies do: they read the created render record's clip bounds, one to

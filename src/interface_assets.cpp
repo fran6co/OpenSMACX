@@ -170,7 +170,6 @@
 
 extern int __cdecl tech_advance(int faction_id);
 extern int __cdecl game_data(FILE *file, int load_request);
-extern int __cdecl veh_game_data_bunglist(FILE *file, int format_version);
 extern StringList MessageWinDeferredBaseMessages[MaxPlayerNum];
 extern uint32_t FactionDiplomacyFlags[MaxPlayerNum];
 extern Sprite g_TECH_ICON_SPRITES[89];

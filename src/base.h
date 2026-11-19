@@ -752,7 +752,6 @@ BOOL __cdecl redundant(int facility_id, int faction_id);
 // ?facility_avail@@YAHHHHH@Z - the definition already takes int.
 BOOL __cdecl facility_avail(int facility_id, int faction_id, int base_id,
                                       int queue_count);
-int __cdecl facility_offset(LPCSTR facil_search);
 int __cdecl suggest_plan(int faction_id, int faction_id_2);
 
 void __cdecl set_base(int base_id);

@@ -101,7 +101,6 @@ extern int ChatShadowColors[8];
 extern int IfaceIdToSlotStorage[30];  // 0x007AE778, before registry at 0x007AE7F0
 extern int ActiveIfaceIdStorage;      // 0x007D392C
 extern SubInterface *InterfaceRegistry[12];
-void register_iface_mode(int slot, SubInterface *interface_entry);
 
  /*
   * MainInterface class
@@ -468,11 +467,6 @@ class MainInterface : public GraphicWin, public SubInterface {
 void __cdecl desktop_update();
 
 extern MainInterface MainInterfaceGlobal;
-
-// The active interface's registry slot is owned by the interface dispatcher.
-// Other windows ask this owner rather than duplicating its provisional
-// fixed-address bindings.
-bool __cdecl active_interface_slot_occupied();
 
 void __stdcall main_interface_bubble_callback(char *text, int x, int y);
 

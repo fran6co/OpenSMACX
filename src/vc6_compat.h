@@ -111,33 +111,11 @@ inline int strcpy_s(char *destination, const char *source) {
   return 0;
 }
 
-inline int sprintf_s(char *destination, size_t, const char *format, ...) {
-  va_list arguments;
-  va_start(arguments, format);
-  int written = vsprintf(destination, format, arguments);
-  va_end(arguments);
-  return written;
-}
-
-/*
- * THERE IS DELIBERATELY NO SIZELESS OVERLOAD. On a real CRT the two-argument
- * spelling is a template that deduces the bound from an array parameter, and
- * adding a plain `sprintf_s(char *, const char *, ...)` here to serve it does
- * not work on VC6: given `sprintf_s(buf, "Faction %d", i)` the compiler still
- * selects the four-parameter form and reports
- * `C2664: cannot convert parameter 2 from 'char [11]' to 'unsigned int'`,
- * because its overload resolution ranks the ellipsis candidate below one that
- * needs an impossible conversion. Measured on cl 12.00.8168, not reasoned.
- *
- * So the bound is written at the call site, which is what every other
- * sprintf_s in this tree already does.
- */
-
 /*
  * The rest of the `_s` family the tree reaches for, on the same terms as the
- * four above: the bound is dropped, not honoured, because the binary being
- * matched had no bounds checks either and these call sites were `strncpy`,
- * `_itoa` and `memcpy` before the names existed.
+ * ones above: the bound is dropped, not honoured, because the binary being
+ * matched had no bounds checks either and these call sites were `strncpy`
+ * and `_itoa` before the names existed.
  *
  * `strncpy_s` comes in both spellings the tree uses - with an explicit
  * destination size and without, which on a real CRT is the template overload
@@ -158,30 +136,9 @@ inline int _itoa_s(int value, char *destination, size_t, int radix) {
   _itoa(value, destination, radix);
   return 0;
 }
-inline int memcpy_s(void *destination, size_t, const void *source, size_t count) {
-  memcpy(destination, source, count);
-  return 0;
-}
 inline int fopen_s(FILE **stream, const char *name, const char *mode) {
   *stream = fopen(name, mode);
   return *stream ? 0 : -1;
-}
-/*
- * `_snprintf_s(buffer, size, _TRUNCATE, ...)` IS THE ONE WHERE THE RETURN
- * VALUE IS LOAD-BEARING. runtime_oracle.cpp:179 relies on a truncated write
- * reporting -1 so an overflowing report is caught instead of silently
- * standing as a short one - the comment there says so. VC6's `_vsnprintf`
- * has exactly that contract, returning -1 rather than the length it wanted,
- * so the check keeps working; it also leaves the buffer unterminated on
- * truncation, which is fine because that path is taken as a failure.
- */
-#define _TRUNCATE ((size_t)-1)
-inline int _snprintf_s(char *destination, size_t size, size_t, const char *format, ...) {
-  va_list arguments;
-  va_start(arguments, format);
-  int written = _vsnprintf(destination, size, format, arguments);
-  va_end(arguments);
-  return written;
 }
 
 /*

@@ -30,11 +30,3 @@ extern int ConsoleControlTurnActive;
 extern Console ConsoleGlobal;
 
 typedef int (__cdecl *NullCallback)(void);
-
-// Local source utility, not a separately mapped original entry: both
-// original UI/editor callers repeat the formatting operation.
-static void parse_field_number(int index, int value) {
-    StringTemp[0] = 0;
-    say_num(value);
-    parse_says(index, StringTemp, -1, -1);
-}

@@ -147,7 +147,6 @@ void __cdecl sub_5cea09(const BYTE *component_rows,
                         BYTE *destination, int row_pitch_bytes);
 
 // Shared concrete consumers used by the two native macroblock decoders.
-void movie_media_transform_block_pair(int phase);
 void movie_media_write_macroblock_rows(unsigned char *destination,
                                        int row_pitch_bytes,
                                        int sixteen_bit);

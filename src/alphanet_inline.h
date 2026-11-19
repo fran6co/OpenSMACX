@@ -30,24 +30,6 @@ inline AlphaNetStringStruct::AlphaNetStringStruct() {
 }
 #pragma optimize("", on)
 
-// The ordinary allocation and construction definitions are shared by the
-// actual node callers; C++ owns base/member construction and unwind.
-inline void *allocate_net_node(size_t size, Heap *owner) {
-    void *memory;
-    if (owner != 0) {
-        memory = owner->get(size);
-        if (memory == 0) {
-            MessageBoxA(0, "out of heap space in new function", "Aborting", MB_OK);
-            exit(3);
-        }
-    } else {
-        memory = mem_get(size);
-        if (memory == 0) return 0;
-    }
-    StringAllocationHeap = owner;
-    return memory;
-}
-
 inline void *NetAllocationNode::operator new(size_t size, Heap *owner) throw() {
     void *memory;
     if (owner != 0) {
