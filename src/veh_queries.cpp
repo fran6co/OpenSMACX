@@ -29,6 +29,15 @@
 #include "terraforming.h"
 
 
+// WORKAROUND(inline): the image keeps two literals no instruction references
+// between veh_at's log line and veh_init's: VEHBIT 0x00691D8C, then "1"
+// 0x00691D94 (the label-and-suffix pair other notices build with strcat).
+// They are the remains of code that left no instructions, most likely a
+// debug notice beside the log line; its form is unknown. Two calls keep the
+// image's order (one call's arguments are numbered right to left).
+static inline void veh_bit_label(const char *) {
+}
+
 /*
 Purpose: Check the coordinates for units and if at least one is found return the top most id.
 // ORIGINAL: 0x005BFE90 ?veh_at@@YAHHH@Z 0x005BFE90-0x005BFF9E BYTE_EXACT
@@ -73,6 +82,8 @@ int __cdecl veh_at(int x, int y) {
     }
     if (!VehBitError) {
         log_say("Vehicle Bit Error  (x, y)", x, y, 0);
+        veh_bit_label("VEHBIT");
+        veh_bit_label("1");
     }
     if (GameDataStateStorage.fields_.game_state_ & STATE_SCENARIO_EDITOR || GameDataStateStorage.fields_.game_state_ & STATE_DEBUG_MODE || IsMultiplayerNet) {
         if (VehBitError) {
