@@ -261,8 +261,7 @@ void DiploPop::start(int faction_id) {
     field_20B0_ = 0;
     time1_.start();
     time2_.start();
-    flic1_.decode_stored_frame();
-    MainInterfaceGlobal.soft_update(flic1_.update_rect());
+    portrait_anim();
 }
 
 // ORIGINAL: 0x0043F5C0 ?stop@DiploPop@@QAEXXZ 0x0043F5C0-0x0043F5F0 BYTE_EXACT
