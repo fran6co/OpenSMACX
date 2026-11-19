@@ -2196,7 +2196,7 @@ void BaseWin::draw_facilities(int update_mode) {
         RECT scroll_rect = content;
         scroll_rect.left = scroll_rect.right - 12;
         scroll_small(); scroll1_.init(&scroll_rect, this, 1, 0);
-        scroll1_.set_range(0, count - 1); scroll1_.set_pos(static_cast<int>(field_40B10_));
+        scroll1_.set_range(0, count - 1); scroll1_.set_pos(field_40B10_);
         scroll1_.set_paging(capacity - 1); scroll1_.show(0); scroll_normal();
     } else scroll1_.close();
     int ordinal = -1, y = content.top;
@@ -2209,8 +2209,8 @@ void BaseWin::draw_facilities(int update_mode) {
                 && !redundant(facility, BaseCurrent->faction_id_current)) continue;
         } else if (base_project(row - 70) != BaseIDCurrentSelected) continue;
         ++ordinal;
-        if (ordinal < static_cast<int>(field_40B10_)
-            || ordinal >= static_cast<int>(field_40B10_) + capacity) continue;
+        if (ordinal < field_40B10_
+            || ordinal >= field_40B10_ + capacity) continue;
         StringTemp[0] = 0;
         if (redundant(facility, BaseCurrent->faction_id_current)) {
             if (has_fac(facility, BaseIDCurrentSelected, 0)) strcat(StringTemp, "*");
