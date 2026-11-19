@@ -2387,7 +2387,7 @@ void __cdecl name_proto(char *output, int prototype_id, int faction_id,
     *output = '\0';
     for (int ability_id = 0; ability_id < MaxAbilityNum; ability_id++) {
         if (ability_flags & (1 << ability_id)
-            && strlen(table_text(Ability[ability_id].abbreviation))
+            && strlen(StringTable.get(Ability[ability_id].abbreviation))
             && (ability_id != abil_index(ABL_AIR_SUPERIORITY)
                 || Chassis[chassis_id].triad != TRIAD_AIR)
             && ability_id != abil_index(ABL_ARTILLERY)
