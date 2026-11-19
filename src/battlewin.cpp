@@ -394,8 +394,8 @@ again:
             } else {
                 say_num(offense_proto(Vehs[first_vehicle_id].proto_id, -1, 0));
             }
+            row_y = MainInterfaceGlobal.wrap(StringTemp, column_x, row_y, half_width);
         }
-        row_y = MainInterfaceGlobal.wrap(StringTemp, column_x, row_y, half_width);
     }
 
     StringTemp[0] = '\0';
