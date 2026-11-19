@@ -916,10 +916,9 @@ Candidates and order
      K = 16 (measured 16). Add a parameter read twice in the entry block: entry
      = 2, `c` = 2(K+1)+2, threshold 8 (measured 8). Put those reads in the last
      block instead: last = 3, threshold 24 (measured 24).
-5. **Ties** (medium). Exact ties under rule 4 went to the candidate referenced
-   first in single-block probes (`c_2222`, `early`, `dfirst`), but to the later,
-   shorter candidate in most multi-block probes of blockn.spec. Treat a tie as
-   unknown and change a count instead.
+5. **Ties: there are few; a live-through penalty decides most** (high,
+   2026-11-19 par-2; "Tie-breaking" below). The "later, shorter candidate" of
+   the multi-block probes was rule 4b, not a tie-break.
 6. **Register names follow the same priority with or without contention**
    (high). Two candidates and three free registers still get esi and edi in
    rule-4 order (blockn.spec `N*`, `L_*`, `W_*`), so a role in edi in the image
@@ -930,6 +929,71 @@ Candidates and order
    the field itself and assigning `state` only in the in-range arm gave the
    image's ebp/ebx order, exact); a block split or merged by `&&`/`?:`; a value
    reread from its source instead of a named copy.
+
+Tie-breaking (2026-11-19 par-2; `regalloc/ties.py`, `tiegen.py`, `tiemodel.py`)
+
+Measured with one probe function per translation unit, so the symbol counter,
+the function's position and the earlier functions are controlled. About 3,000
+probes: hand families varying one factor at a time, plus 1,800 random
+straight/if/else/while programs whose two candidates tie exactly under rule 4,
+each checked by adding one reference to either side.
+The score of `tiemodel.py` predicts 1,775 of the 1,776 checked random ties
+(two, three and four candidates, if/else and while); the miss is register
+reuse by a candidate that does not interfere. It also predicts all 19
+non-constant blockn.spec thresholds, where plain rule 4 gets 15 (N3, loopd,
+loop2d and armd were the "ties"). Rerun: `python3 ties.py ties.spec --n 1-30`.
+
+4b. **Live-through penalty** (high). A candidate loses half the rule-4 weight
+   of every block it is live *through* without being referenced, if any other
+   candidate is referenced in that block:
+   `score = sum over refs n_b * 2^depth - 1/2 * sum over live-through blocks n_b * 2^depth`.
+   Blocks where nothing is referenced cost nothing. Parameters pay it like
+   locals. It is part of the score, not a tie-break, so it can overturn a
+   lead of several references (8 in `L8`). Example: four `if` blocks each referencing `d`
+   once, with `c` live through them, cost `c` 2. With the blocks inside loops
+   (weight 2) and `d` gaining 2 per loop, `c` needs 3H extra references, not 2H.
+   Measured with hole blocks holding 1, 2 or 3 references of `d` (penalty
+   independent of the count), and with 1, 2 or 3 candidates referenced (penalty
+   scales with n_b). Families `h_*` and `L*` in ties.spec; the random sets
+   come from `tiegen.py`.
+4c. **Exact ties of the full score** (high). Adding or removing one reference
+   always decides (no epsilon; the B/T ladders over 1 to 16 blocks). An exact
+   tie goes to the candidate whose first reference is in the **later block**
+   (`S7`, `B4`);
+   in the same block, to the **earlier first reference** (definition order for
+   locals, first read for parameters; `int` declarations, parameter position,
+   names and loop-free code between them do not matter; `cd4`, `dc4`, `decl`,
+   `par_first_read`).
+4d. **The symbol counter does not touch callee-saved ranking** (high). 64-pad
+   sweeps of three tie families, 0-40 earlier functions, renamed locals and
+   three scratch-register probes gave one result each. The counter canaries
+   are other ties: at failing pads buy_council_vote 0x0053EB50 merges one
+   `mov edx,[ebp+0x10]` block tail into its jump target and end_of_game
+   0x00524870 compares `cmp esi,[mem]` instead of loading `eax`, and drops
+   a cached `ecx` reload (block layout and peephole, not register ranking).
+   Pad sweeps cannot fix a callee-saved register swap.
+
+Using it (regprio.py uses 4b and 4c by default; `--model old` is rule 4 only):
+
+- A pair swapped between the image and ours is either an exact tie of the
+  full score (regprio prints `TIE` and which order 4c picks) or a near tie
+  (`NEAR TIE`, with each side's live-through blocks). Levers, by how they
+  act:
+  - start block (4c): the winner of an exact tie starts later. Defining a
+    variable after the branch that precedes its first use, or a parameter's
+    first read after it, gives it the tie.
+  - first reference in one block (4c): the earlier definition wins, so swap
+    two adjacent definitions.
+  - live-through penalty (4b): a variable kept across a stretch where other
+    candidates work pays 1/2 per such block. Rereading the value from its
+    source (a member, a global, a parameter) after the stretch ends the range
+    and removes the penalty; one reference inside the stretch removes it in
+    that block.
+  - otherwise one reference in a heavy block, as before.
+- Pair accuracy of regprio on 90 exact functions (two per unit, 0x120-0x600
+  bytes): 250 of 413 interfering register pairs with rule 4 alone, 260 of 412
+  with 4b/4c. The remaining misses are candidate-set errors (temporaries,
+  `this`, cached pieces), not tie order.
 
 Losers: memory home, cached pieces, write-back
 
@@ -1031,7 +1095,7 @@ not see, and those are the levers:
   Same instruction-level reference counts on both sides (this 7, faction_id
   18), so the difference is a candidate or block weight we do not see. Nested
   ifs, a named bit, declaration moves and `height` scope do not move it.
-- **Exact ties stay unknown** (rule 5): success_rates is morale 17 against
+- **Exact ties** (rule 5, now "Tie-breaking" 4b/4c): success_rates is morale 17 against
   diff_modifier 17. In the image diff_modifier is a loser whose first piece is
   coalesced with success_rate (edi) and whose second read comes from memory;
   ours keeps diff_modifier in ebx. `int success_rate = diff_modifier;` before

@@ -31,3 +31,6 @@ two definitions: a threshold that moves by one between them is an exact tie.
 | g_temps | cached pieces against whole variables, `this`, address temporaries, globals |
 | p04..p08 | the shape of success_rates (0x0059EEE0), which the model does not predict |
 | blockn.spec (homes.py) | rule 4: a reference weighs the number of distinct candidates referenced in its block |
+| ties.spec (ties.py) | tie-breaking: live-through penalty (4b), exact-tie order (4c), symbol counter (4d); one function per TU |
+| tiegen.py, tiemodel.py | random exact-tie probes and the scoring model they validate (`tiegen.py --count 300 --seed 7 [--others 2] [--loops]`) |
+| tiescan.py | non-exact functions whose diff is a pure permutation of callee-saved registers (`uv run python tiescan.py feall.json`) |

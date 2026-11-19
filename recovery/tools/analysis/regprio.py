@@ -470,6 +470,8 @@ def main():
     ap.add_argument('--min', type=float, default=0, help='hide webs below this priority in the table')
     ap.add_argument('--pairs', type=int, default=25, help='disagreeing pairs shown')
     ap.add_argument('--quiet', action='store_true', help='summary lines only (validation runs)')
+    ap.add_argument('--model', default='new', choices=('new', 'old'),
+                    help='new: rule 4 minus the live-through penalty, rule-4c tie order (2026-11-19); old: rule 4 only')
     a = ap.parse_args()
     unit = a.unit if a.unit.startswith('src/') else 'src/' + a.unit
     addr = int(a.addr, 16)
@@ -673,7 +675,26 @@ def main():
         wgt = len(B['cands']) * 2 ** B['depth'] * (0.5 if B['case'] else 1)
         prio[webof[i]] += wgt
         contrib[webof[i]][rf['block']] += wgt
-    order = sorted(cands, key=lambda w: (-prio[w], F.blocks[refs[webs[w]['refs'][0]]['block']]['start']))
+    holes = collections.defaultdict(list)
+    if a.model != 'old':
+        # live-through penalty (guide 2.7 rule 4b): half the weight of every block the web is live through
+        # without a reference while other candidates are referenced there
+        for w in cands:
+            own = {refs[i]['block'] for i in webs[w]['refs']}
+            for b in webs[w]['live'] - own:
+                B = F.blocks[b]
+                if B['cands']:
+                    pen = 0.5 * len(B['cands']) * 2 ** B['depth'] * (0.5 if B['case'] else 1)
+                    prio[w] -= pen
+                    contrib[w][b] -= pen
+                    holes[w].append((b, pen))
+    first_ref = lambda w: min(webs[w]['refs'], key=lambda i: (F.blocks[refs[i]['block']]['start'], refs[i]['seq']))
+    if a.model == 'old':
+        order = sorted(cands, key=lambda w: (-prio[w], F.blocks[refs[webs[w]['refs'][0]]['block']]['start']))
+    else:
+        # exact ties (rule 4c): the web starting in the later block first, then the earlier first reference
+        order = sorted(cands, key=lambda w: (-prio[w], -F.blocks[refs[first_ref(w)]['block']]['start'],
+                                             refs[first_ref(w)]['seq']))
     pred = {}
     for w in order:
         taken = {pred[o] for o in pred if pred[o] != 'mem' and webs[o]['live'] & webs[w]['live']}
@@ -825,6 +846,28 @@ def main():
             print('  [%x d%d n%d%s x%d =%.0f L%s]' % (B['start'], B['depth'], len(B['cands']), ' case' if B['case'] else '', B['refs'][w], wgt,
                                                    ','.join(str(x) for x in lines)), end='')
         print()
+    def tie_advice(hi_, lo_):
+        """the image wants hi_ above lo_: say which tie-break or near-tie lever (guide 2.7 'Tie-breaking') does it"""
+        d = prio[hi_] - prio[lo_]
+        fh, fl = first_ref(hi_), first_ref(lo_)
+        bh, bl = refs[fh]['block'], refs[fl]['block']
+        sh, sl = F.blocks[bh]['start'], F.blocks[bl]['start']
+        tie_hi = (-sh, refs[fh]['seq']) < (-sl, refs[fl]['seq'])
+        pen = lambda w: sum(p for b, p in holes[w])
+        if d == 0:
+            print('    TIE (delta 0): tie order (later start block, then earlier first reference) puts %s first: %s'
+                  % (nm(hi_) if tie_hi else nm(lo_), 'the image agrees, so ours is not an exact tie (check the candidate set)'
+                     if tie_hi else 'to give the image order, start %s in a later block than %s (define it after the branch '
+                     'that precedes %s) or, in one block, reference it first' % (nm(hi_), nm(lo_), nm(lo_))))
+        elif abs(d) <= 2 * max(1, min(len(F.blocks[refs[i]['block']]['cands']) for i in webs[lo_]['refs'] + webs[hi_]['refs'])):
+            print('    NEAR TIE (delta %+.1f): one reference moves it.' % d, end='')
+            if pen(hi_) or pen(lo_):
+                print(' live-through penalty %s %.1f [%s], %s %.1f [%s]: ending a range before those blocks (reread its'
+                      ' source instead of keeping the variable) or referencing it there removes the penalty.' % (
+                          nm(hi_), pen(hi_), ' '.join('%x' % F.blocks[b]['start'] for b, p in holes[hi_][:6]),
+                          nm(lo_), pen(lo_), ' '.join('%x' % F.blocks[b]['start'] for b, p in holes[lo_][:6])), end='')
+            print(' Tie order would put %s first.' % (nm(hi_) if tie_hi else nm(lo_)))
+
     print('--- disagreements (image order vs ours, interfering webs)')
     shown = set()
     npairs = 0
@@ -849,6 +892,8 @@ def main():
                     if k not in shown:
                         show(k)
                         shown.add(k)
+                if a.model != 'old':
+                    tie_advice(hi_, lo_)
     if npairs > a.pairs:
         print('(%d more pairs; --pairs N)' % (npairs - a.pairs))
     for k in a.cand.split(','):
