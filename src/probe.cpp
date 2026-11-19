@@ -390,6 +390,7 @@ int __cdecl probe(int veh_id, int base_id, int veh_id_tgt, int mode) {
     int tech_id;
     int action;
     int home_base_id;
+    int morale;
     if (is_ocean(Vehs[veh_id].x, Vehs[veh_id].y)
         && (base_id >= 0 ? !is_ocean(Bases[base_id].x, Bases[base_id].y)
                          : !is_ocean(Vehs[veh_id_tgt].x, Vehs[veh_id_tgt].y))
@@ -1363,11 +1364,11 @@ L_5a2dcd:
             bonus = 0;
         }
         if (morale_veh(veh_id, 1, 0) < 1) {
-            local_4c = 1;
+            morale = 1;
         } else {
-            local_4c = morale_veh(veh_id, 1, 0);
+            morale = morale_veh(veh_id, 1, 0);
         }
-        if ((int)rnd(local_4c / 2
+        if ((int)rnd(morale / 2
                 - range(PlayersData[faction_tgt].soc_effect_active.values_[SocialEffect::PROBE]
                         + bonus, -2, 0) + 1, "PROBEBUST") < diff_modifier) {
             if (!ProbeHasAlgoEnhancement || ProbeTargetHasHSA || (probe_time() & 1)) {
