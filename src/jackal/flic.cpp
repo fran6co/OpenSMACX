@@ -724,7 +724,7 @@ Purpose: Decode a type-7 (FLC DELTA) chunk: word-run deltas. Per line a
          positive one copies that many words, staged through a scratch
          row when a colour offset is set. The dirty rectangle tracks the
          first and last line touched and the least and greatest column.
-// ORIGINAL: 0x0062A720 ?decode_delta_flc@Flic@@QAEXXZ 0x0062A720-0x0062AAE7
+// ORIGINAL: 0x0062A720 ?decode_delta_flc@Flic@@QAEXXZ 0x0062A720-0x0062AAE7 BYTE_EXACT
 // size      967 bytes
 // prototype void (__thiscall ?decode_delta_flc@Flic@@QAEXXZ)(Flic* this)
 // callers   1   call targets   5
