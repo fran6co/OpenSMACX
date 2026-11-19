@@ -4835,6 +4835,67 @@ Accessors, folded helpers and unit order (par-1 2026-11-19)
   the writers' own unit: `treaty_off(f, i, 0x200)` and the hand-written pair
   compile to the same code (enemy_diplomacy, eight sites; enemies_unpact's
   0x01100001 clear is `treaty_off(f, w, DTREATY_PACT)`).
+Prologue saves and return tails (par-5 2026-11-19; `analysis/prosave.py`,
+`analysis/probes/prosave/run.py`)
+- **A callee-saved push is deferred only when the code that needs the
+  register reaches the epilogue through ONE edge.** VC6 places each save at
+  the entry of the region that uses the register and its pop at that region's
+  single exit; a second edge from the region to the exit moves the save into
+  the prologue. The guard's spelling does not matter: `if (!c) return; body`,
+  `if (c) { body }`, a trailing explicit `return;`, `goto end` and
+  `if (!c) return 0; body; return k;` all defer the same way (probes
+  er_var, wrap_var, er_trail, goto_var, er_val; two guards in a row and a
+  call before the guard defer too). What forces every push up front, each
+  measured on the same body:
+  - a `return` inside the body (er_inret; also `goto end` or an `else` arm,
+    which VC6 turns into a second epilogue copy);
+  - a body whose LAST statement is conditional: an `if` without `else`
+    (er_var_if), a `for`/`while` whose entry test can skip it (er_loop), a
+    `switch` (er_sw), a compound `||`/`&&` test (er_tmp, check_veh
+    0x0041A8B0). Putting one unconditional statement after it defers again
+    (er_if_then, er_loop_then, er_sw_then); so does `do { } while`, a
+    `for (;;)` left by `break`, or a `return` written inside the loop when
+    the loop is the last statement (er_do_ret, er_for_ret, er_for_brk);
+  - a second early-out after the register is in use (er_er_reg);
+  - a result variable initialised before the guard (`int r = 0; if (c) {..}
+    return r;`, res_val): the register is live across the guard.
+  A deferred save is per register and nests (sub_441040 0x00441040: edi
+  after the first test, ebx/esi inside the loop). Census of the 2,338 exact
+  functions that save a register: 285 defer; 231 of them (81%) have exactly
+  one edge into the deferred pops, the other 54 are an epilogue copied after
+  allocation (farm_get 0x00409100: the if/else arms each end in their own
+  copy). Of the 287 that push everything up front although the entry block
+  leaves a saved register untouched and its first branch is an early exit,
+  278 have three or more edges into their epilogues. This replaces the
+  "single exit" reading of 2.6 "Deferred register saves" and of "Deferred
+  callee-saved pushes mean a single exit" above: the count that matters is
+  edges from the register's region, not `return` statements (control_game
+  0x0052AA30: the labelled failure tail is entered by `goto` from the
+  guard, so the loop needed its own `return` to add the second edge).
+- **Push order is not a lever.** Within the prologue, and within each
+  deferred group, the order is always ebx, ebp, esi, edi (2,049 of 2,054
+  exact functions without a deferred save; the five others set up ebp
+  late). A different order always means a different register set or a
+  different deferral: fix the allocation, not the order.
+- **Tree screen, 2026-11-19 (354 non-exact functions):** a (image up front,
+  ours deferred) 4, b (the reverse) 2, c (different number of `ret` tails)
+  13, d (order only) 0, saved set differs 8. None of the a/b cases is a
+  guard spelling: each has a value the image keeps in a callee-saved
+  register that ours keeps in ecx/edx or in memory (Console::chat
+  0x00515770: `field_1BD0_` in esi for one `and`; success_rates 0x0059EEE0:
+  `morale` in ebx where ours enregisters `diff_modifier`; Buffer::
+  write_vertical 0x005DB450 and polygon_gouraud 0x00626A00: ebx/ebp/esi
+  roles swapped), so the save follows the allocation (2.7) and the prologue
+  is the symptom. The c cases are tail-merge cases: read them with
+  `analysis/tailscan.py` (Net::drop_player 0x00632350: the image keeps a
+  lone `return 0` copy after the search loop that ours folds into the
+  switch arms' shared tail; NetDaemon::init 0x0052DF30: the image's
+  fall-off path has its own epilogue, ours tests between the shared pops).
+- **`return K` copies.** An unconditional path to the exit gets its own copy
+  of the epilogue (er_inret: 2 `ret`); two paths ending in the same
+  statements are cross-jumped back into one (er_inret_same: 1 `ret`); a
+  conditional branch to the exit never gets a copy, it targets a surviving
+  one. An if/else as the last statement gives two copies (er_ifelse).
 
 ## 4. Measured and neutral (do not retry without new evidence)
 

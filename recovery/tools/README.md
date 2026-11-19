@@ -355,3 +355,9 @@ worker-21..34 (the queue uses 20) and never touch the worktree's build.
   ~40 kinds, rows inside the image window per k (period 8 = one frame symbol, 4 = two, one step = /Ob2 caller budget).
 - `analysis/sympad.py FEALL.json maxrows OUT.jsonl` the budget twin of locpad.py: block-scope `(void)&extern` pads, which grow
   the caller's size and never move a tie; a function that moves under both at the same count is a budget case.
+- `analysis/prosave.py [unit ...] [--addr A,..] [--src ALT] [--class abcd] [--census] [--json F]` prologue-save and
+  return-tail screen (MATCHING_GUIDE 3.7 "Prologue saves and return tails"; 60 s tree-wide with FE_JOBS=5): per non-exact
+  function the callee-saved pushes before the first branch (`up`), the deferred ones (`def`) and every `pop ..; ret` tail with
+  the number of ways into it, image over ours; classes a (image up front, ours deferred), b (reverse), c (tail count), d (order),
+  s (saved set). `--census` tabulates the exact functions' shape against the source guard spelling (7 s, no compile).
+  `analysis/probes/prosave/run.py` is the probe family behind the rule (one edge from the register's region to the exit).
