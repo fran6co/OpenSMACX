@@ -2158,7 +2158,7 @@ void NetWin::draw_session_info() {
     say_colon();
     strcat(StringTemp, "}");
     space();
-    strcat(StringTemp, StringTable.get(Difficulty[range(
+    strcat(StringTemp, table_text(Difficulty[range(
         NetWinSessionOptions.fields_.difficulty_, 0, 6)]));
     written = Buffer::write_l(StringTemp, col, row);
     if (NetDaemonNet.primary_state_.leading_words_[0] != 0) {
@@ -2172,11 +2172,11 @@ void NetWin::draw_session_info() {
     // Time controls.
     StringTemp[0] = 0;
     strcat(StringTemp, "{");
-    strcat(StringTemp, StringTable.get(Labels.strings_ptr[0x100C / 4]));
+    strcat(StringTemp, label_get(0x100C / 4));
     say_colon();
     strcat(StringTemp, "}");
     space();
-    strcat(StringTemp, StringTable.get(
+    strcat(StringTemp, table_text(
         TimeControl[NetWinSessionOptions.fields_.time_control_].name));
     written = Buffer::write_l(StringTemp, col, row);
     if (NetDaemonNet.primary_state_.leading_words_[0] != 0) {
@@ -2190,7 +2190,7 @@ void NetWin::draw_session_info() {
     // Rules or scenario, with the game mode in parentheses.
     StringTemp[0] = 0;
     strcat(StringTemp, "{");
-    strcat(StringTemp, StringTable.get(Labels.strings_ptr[0x1078 / 4]));
+    strcat(StringTemp, label_get(0x1078 / 4));
     say_colon();
     strcat(StringTemp, "}");
     space();
@@ -2234,7 +2234,7 @@ void NetWin::draw_session_info() {
     // Planet size, or the scenario map's dimensions.
     StringTemp[0] = 0;
     strcat(StringTemp, "{");
-    strcat(StringTemp, StringTable.get(Labels.strings_ptr[0xFAC / 4]));
+    strcat(StringTemp, label_get(0xFAC / 4));
     say_colon();
     strcat(StringTemp, "}");
     space();
