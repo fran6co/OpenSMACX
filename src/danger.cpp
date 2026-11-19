@@ -17,6 +17,10 @@
  */
 // The pinned diagnostic wrapper calls the parsing helpers out of line.
 // This separate recovery owner preserves that boundary; its historical TU name is unknown.
+// Its two literals sit in ordinary .data between netdaemon's and my_srand's
+// ("Reseed to", 0x0068D430), followed by the diplomacy unit's: under /Ob2 VC6
+// keeps them in the unit's ordinary .data, under /Ob1 it moves them into a
+// COMDAT .data section, so the unit is compiled /Ob2 like its neighbours.
 #include "stdafx.h"
 #include "general.h"
 #include "game.h"
@@ -45,7 +49,7 @@ void __cdecl danger(LPCSTR msg1, LPCSTR msg2, int num1, int num2, int num3) {
     log_say(msg1, msg2, num1, num2, num3);
     // The original immediates at 0x00538F90 and 0x00538F97 point to the
     // independently bounded DANGER and hasty_sm.pcx literals below.
-// RECOVERY_LITERAL: v1 0x0068D428 0x0068D42F ??_C@_06LCPB@DANGER?$AA@ 0x00538F30
-// RECOVERY_LITERAL: v1 0x0068D418 0x0068D425 ??_C@_0N@LFMH@hasty_sm?4pcx?$AA@ 0x00538F30
+// RECOVERY_LITERAL: v1 0x0068D428 0x0068D42F $SG49023 0x00538F30
+// RECOVERY_LITERAL: v1 0x0068D418 0x0068D425 $SG49022 0x00538F30
     popp(ScriptPopupFile, "DANGER", 0, "hasty_sm.pcx", 0);
 }

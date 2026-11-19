@@ -1812,14 +1812,19 @@
       },
       "src/danger.cpp": {
         "flags": [
-          "/c",
+          "/nologo",
+          "/TP",
+          "/Zm200",
+          "/GX",
           "/Og",
           "/Ot",
           "/Gs",
           "/Gy",
-          "/GR-",
+          "/Ob2",
+          "-MT",
+          "/W4",
           "/Oy-",
-          "/GX"
+          "-c"
         ]
       },
       "src/jackal/log.cpp": {

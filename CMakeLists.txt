@@ -514,11 +514,6 @@ set_source_files_properties(
     src/technology_queries.cpp
     src/uv2player.cpp
     PROPERTIES COMPILE_OPTIONS "/Oy-")
-# Danger's measurement recipe is plain /O2 (VC6: /Ob1); keep the build equal.
-# This optimized matching exception must not override Debug's /Ob0.
-set_property(SOURCE
-    src/danger.cpp
-    APPEND PROPERTY COMPILE_OPTIONS "$<$<NOT:$<CONFIG:Debug>>:/Ob1>")
 # Preserve the original frame-based AlphaMovie owner context without changing
 # its independently measured /Ob2 inlining policy.
 set_source_files_properties(src/alphamovie.cpp PROPERTIES COMPILE_OPTIONS "/Oy-")
