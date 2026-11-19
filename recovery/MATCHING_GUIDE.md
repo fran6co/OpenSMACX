@@ -541,6 +541,26 @@ raw field access where the original used inline accessors.
   original's count modulo 64, to its residue set, and the whole header stack
   (vc6_compat.h alone is 1,334 symbols, windows.h 16,655 lean or 41,878 full)
   only matters modulo 64. So pads are alignment, not missing declarations.
+- **Unit boundaries from the image (measured 2026-11-19, `analysis/tumap.py`).**
+  Our files are already in image order, so "adjacent in .text and in the
+  literal run" holds for every neighbouring pair and proves nothing. What
+  does show a boundary:
+  - a static-initializer thunk (`mov ecx, obj; call ctor; push thunk; call
+    atexit`, listed in the CRT table 0x00682004-0x006826CC) sits at its
+    object's definition point, so the first one of a run is a unit start and
+    whatever lies between it and the next function is in that unit
+    (sub_584d30 between the Wave thunk 0x00584D00 and tech_name);
+  - a small callee the image calls where /Ob2 expands it once both share a
+    unit: merging enemy into veh expands into enemy_capabilities,
+    enemy_strategy and compute_odds (11,235 -> 13,792 rows); my_srand in
+    netdaemon's unit is expanded into process_message (27 image call sites);
+    danger beside add_site is expanded there. The same test rejected
+    aggression+battle, base_build+base, netdaemon_message_data+orders,
+    uv2player+tutwin, picktech+newtechwin, console_commands+terraforming;
+  - a file whose functions lie in runs far apart is not one unit (alpha.cpp
+    0x00584D60 and 0x0059D980; map.cpp's eleven runs).
+  A merge that changes no function is not evidence for it. wants_to_attack
+  flips with any unit change (header-position canary), so it is not either.
 - **Pad sweeps do not fix general register ties (measured 2026-11-18).**
   Full 64-step `extern int` pad sweeps over about 33 units holding
   MNEMONIC_ONLY and register-cause functions flipped no non-exact function,
