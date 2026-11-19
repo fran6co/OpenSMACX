@@ -6419,8 +6419,7 @@ void Win::on_redraw_nc(RECT * area, int flags) {
                 r.left--; r.right++; r.top--; r.bottom++;
             }
             if (this->field_E0_ != 0) {
-                int inset = this->field_128_;
-                make_rect(&r, inset, inset, clientW - (inset << 1), capHeight - (inset << 1));
+                make_rect(&r, this->field_128_, this->field_128_, clientW - (this->field_128_ << 1), capHeight - (this->field_128_ << 1));
                 this->buffer1_->set_text_color(this->field_104_, this->field_108_, this->field_10C_, this->field_110_);
                 this->buffer1_->set_font(this->field_F8_, 0, 0, 0);
                 this->buffer1_->set_clip(&r);
