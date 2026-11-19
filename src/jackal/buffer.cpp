@@ -3248,6 +3248,8 @@ void Buffer::line(int x1, int y1, int x2, int y2, int color) {
                 *pixel = static_cast<unsigned char>(color);
             }
         }
+        free_data(1);
+        return;
     }
 done:
     free_data(1);
