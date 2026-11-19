@@ -1899,11 +1899,11 @@ Font *__cdecl find_font(int size, int style) {
     int best_delta = 9999;
     for (size_t index = 0; index < FontSizeTableCount; ++index) {
         const int candidate = FontSizeTable[index];
-        // Absolute difference, branching on sign. The unbraced arm is the
-        // spelling whose /Ob2 cost lets config_popups expand ten of its
-        // searches (the braced form left the tenth, (16, 0), a call).
-        int delta = candidate - size;
-        if (delta < 0) delta = size - candidate;
+        // Absolute difference as one conditional expression: in config_popups'
+        // ten expansions best_index keeps ESI and candidate stays a scratch
+        // register (0x00588C0D mov ecx,[edx]); the if-assigned delta promoted
+        // candidate to ESI and tied main_size/interlude_size the other way.
+        int delta = candidate - size < 0 ? size - candidate : candidate - size;
         if (delta < best_delta) {
             best_delta = delta;
             best_index = static_cast<int>(index);
