@@ -1791,11 +1791,9 @@ void __cdecl enemy_diplomacy(int faction_id) {
         PlayersData[faction_id].diplo_treaties[i] &= ~0x100u;
         if (PlayersData[faction_id].diplo_agenda[i] & 0x20) {
             if (!(PlayersData[faction_id].diplo_agenda[i] & 0x40)) {
-                PlayersData[faction_id].diplo_agenda[i] |= 0x40;
-                PlayersData[i].diplo_agenda[faction_id] |= 0x40;
+                agenda_on(faction_id, i, 0x40);
             } else {
-                PlayersData[faction_id].diplo_agenda[i] &= ~0x20;
-                PlayersData[i].diplo_agenda[faction_id] &= ~0x20;
+                agenda_off(faction_id, i, 0x20);
             }
         }
     }
@@ -1841,8 +1839,7 @@ void __cdecl enemy_diplomacy(int faction_id) {
             }
         }
         if ((GameDataStateStorage.fields_.turn_current_num_ & 0xF) == faction_id * 2 + 1) {
-            PlayersData[faction_id].diplo_treaties[i] &= ~0x8000u;
-            PlayersData[i].diplo_treaties[faction_id] &= ~0x8000u;
+            treaty_off(faction_id, i, 0x8000);
         }
         if (is_human(i) && GameDataStateStorage.fields_.sunspot_duration_ <= 0) {
             if (i == ConsoleGlobal.faction_id_
@@ -1906,18 +1903,15 @@ void __cdecl enemy_diplomacy(int faction_id) {
                        || (PlayersData[faction_id].diplo_treaties[i] & 0x2000))) {
             if ((PlayersData[faction_id].diplo_treaties[i] & 0x80000000)
                 && !(PlayersData[faction_id].diplo_treaties[i] & 0x2000)) {
-                PlayersData[faction_id].diplo_treaties[i] &= ~0x80000000u;
-                PlayersData[i].diplo_treaties[faction_id] &= ~0x80000000u;
+                treaty_off(faction_id, i, 0x80000000);
                 for (j = 1; j < MaxPlayerNum; j++) {
                     if (is_human(j) && ((PlayersData[faction_id].diplo_treaties[j] & DTREATY_VENDETTA)
                                         || (PlayersData[i].diplo_treaties[j] & DTREATY_VENDETTA))) {
-                        PlayersData[faction_id].diplo_treaties[i] &= ~0x4000000u;
-                        PlayersData[i].diplo_treaties[faction_id] &= ~0x4000000u;
+                        treaty_off(faction_id, i, 0x4000000);
                     }
                 }
             } else {
-                PlayersData[faction_id].diplo_treaties[i] &= ~0x2000u;
-                PlayersData[i].diplo_treaties[faction_id] &= ~0x2000u;
+                treaty_off(faction_id, i, 0x2000);
                 if (PlayersData[faction_id].diplo_treaties[i] & DTREATY_PACT) {
                     enemies_trade_tech(faction_id, i);
                 } else if (((PlayersData[faction_id].diplo_treaties[i] & DTREATY_TREATY)
@@ -1930,8 +1924,7 @@ void __cdecl enemy_diplomacy(int faction_id) {
                     encounter(faction_id, i, -1, -1, 0, 0);
                 }
                 treaty_on(faction_id, i, 0x80000000);
-                PlayersData[faction_id].diplo_treaties[i] &= ~0x4000000u;
-                PlayersData[i].diplo_treaties[faction_id] &= ~0x4000000u;
+                treaty_off(faction_id, i, 0x4000000);
             }
         }
     }
@@ -2096,8 +2089,7 @@ void __cdecl enemy_diplomacy(int faction_id) {
             && GameDataStateStorage.fields_.turn_current_num_ >= 200) {
             score = score > 0 ? 0 : score;
         }
-        PlayersData[faction_id].diplo_treaties[i] &= ~0x200u;
-        PlayersData[i].diplo_treaties[faction_id] &= ~0x200u;
+        treaty_off(faction_id, i, 0x200);
         if (!(PlayersData[faction_id].diplo_treaties[i] & DTREATY_VENDETTA) || score >= 0) {
             cause_friction(faction_id, i, score);
         }
