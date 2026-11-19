@@ -5066,12 +5066,16 @@ int __cdecl pop_goal_fac(int base_id) {
 // kind      game
 // TRIED: near-verbatim transcription of the (clean, non-SEH) Ghidra output with DAT_/FUN_ substituted for the catalogued globals and callees, and `*(char**)g_0090ea30` for the base-pointer dereference; the two duplicated "pick best doctor" loops are written out twice (matching the original's own duplication) rather than factored into a helper, to avoid the one-external-symbol risk seen on 0x00405140. Reaches MISMATCH #6 ('xor' vs 'push'); did not chase the exact register/stack layout further given the function's size.
 // Defined after best_specialist and pop_goal_fac: the image inlines both.
-// stand-in: the image calls has_fac (0x421670) out of line in base_doctors.
+// WORKAROUND(decl): the image calls has_fac (0x421670) out of line in
+// base_doctors. It is an inline owner, not a pointer: as a plain call inside
+// this helper, has_fac becomes a pass-2 (nested) site that base_doctors' /Ob2
+// budget refuses, as in the image (measured 2026-11-19: the former local
+// function pointer is redundant; writing has_fac at the call site instead
+// expands it, 0 -> 28 rows). The helper's original name is unknown.
 // The two helpers also shrink base_doctors, so its /Ob2 budget leaves the
 // has_fac calls in its pop_goal_fac copy out of line as in the image.
 static inline BOOL selected_base_has_fac_call(int facility_id) {
-    BOOL (__cdecl *const has_fac_call)(int, int, int) = has_fac;
-    return has_fac_call(facility_id, BaseIDCurrentSelected, 0);
+    return has_fac(facility_id, BaseIDCurrentSelected, 0);
 }
 
 void __cdecl base_doctors() {
