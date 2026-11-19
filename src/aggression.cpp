@@ -361,7 +361,7 @@ void __cdecl capture_base(int base_id, int faction_id, int mode) {
     PlayersData[faction_id].diplo_unk3[faction_id_def] += Bases[base_id].population_size * 2;
     strcpy(base_name, Bases[base_id].name_string);
     treaty_off(faction_id, faction_id_def, DTREATY_UNK_40);
-    if (is_human(faction_id) || is_human(faction_id_def)) {
+    if ((GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & (1 << faction_id)) || (GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & (1 << faction_id_def))) {
         treaty_on(faction_id, faction_id_def, DTREATY_WANT_TO_TALK);
     }
     for (int player_id = 1; player_id < MaxPlayerNum; player_id++) {
@@ -472,7 +472,7 @@ void __cdecl capture_base(int base_id, int faction_id, int mode) {
                 } else if (IsMultiplayerNet) {
                     NetMsgPrimary.pop("ESCAPED2", 5000, 0, 0);
                 }
-                if (!is_human(faction_id_def)) {
+                if (!(GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & (1 << faction_id_def))) {
                     base_reset(best_base, 0);
                 }
             }
@@ -640,7 +640,7 @@ void __cdecl capture_base(int base_id, int faction_id, int mode) {
     label[0] = '\0';
     strcat(label, liberated ? "LIBERATE" : "SEIZE");
     strcat(label, "BASE");
-    if (is_human(faction_id_def) && !is_human(faction_id) && base_id >= 0
+    if ((GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & (1 << faction_id_def)) && !(GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & (1 << faction_id)) && base_id >= 0
         && !(Bases[base_id].state & BSTATE_UNK_80) && !liberated) {
         Bases[base_id].state |= BSTATE_UNK_10000;
     }
@@ -753,7 +753,7 @@ void __cdecl capture_base(int base_id, int faction_id, int mode) {
         }
     }
 
-    if (!is_human(faction_id_def)) {
+    if (!(GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & (1 << faction_id_def))) {
         bases_reset(faction_id_def, region, 0);
     }
     mon_conquer_base(faction_id, base_name);
