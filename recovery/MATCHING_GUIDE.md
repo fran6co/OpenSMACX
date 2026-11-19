@@ -4062,6 +4062,41 @@ result over 64 symbol-counter pads, so none of these is a counter canary.
   reverse order homed every later `def_id` read in `stack_id`'s slot and gave
   the walker a third slot.
 
+- **A 4-byte frame difference is often one register decision, not a missing
+  variable** (par-6 2026-11-19; read the two slot maps with `framescan.py
+  --addr` and the slot timeline with `imgmerge.py --sites` before renaming
+  anything). Measured causes, none of them solved by a variable-set edit:
+  - *ours spills a temporary the image keeps in a callee-saved register.*
+    order_veh 0x005947C0 (+4): the bound of the inlined
+    `rnd(turn / 5 + 100, "ORDER2")` lives in edi across `rand()` (0x595DB1,
+    `idiv edi`); ours has edi on the `Vehs[target_veh]` offset (the image has
+    ebx there and reloads `target_veh` after) and spills the bound to the slot
+    that should take has_fac's `is_built` and a later temporary, which then
+    need a slot of their own. enemy_strategy 0x00561080 (+4): `sites` stays in
+    bl from 0x562D6F to 0x562E6C because the image takes edi/esi (cached,
+    reloadable homes) as scratch for the tile counts; ours takes ebx and
+    stores `sites`. social_ai 0x005B4790 (+4): one unnamed temporary.
+  - *ours keeps in a register a value the image homes.* can_terraform
+    0x00565320 (-4): `solar_tech` is stored to has_fungus' dead home
+    (0x5659F0) and ebx is reused for `order` from 0x565A4A (`mov ebx,7; mov
+    [order],ebx`, reload at the join); ours keeps `solar_tech` in ebx for its
+    whole range and `order` in memory, so `mine_tech` takes has_fungus' home
+    and `bonus` the inlined mask's. repair_phase 0x00526030 (-4):
+    `repair_rate` is stored on the Nano Factory arm and multiplied from
+    memory (0x526548, 0x526565) while ebx already holds `faction_id`; ours
+    forwards it through ebx on both arms, so `reactor_id` packs into
+    `repair_rate`'s home. battle_fight 0x00506AF0 (-4 after the two fixes
+    above): the withdraw scan index is homed and cached in ebx with x/y in
+    esi/edi; ours has x in esi, the index in edi and y in ebx, so
+    `best_angle` packs into the index's free home. Writing both copies after
+    both computations (`x; y; rx = x; ry = y;`) gives the image's frame and
+    loop tail but the wrong x/y registers and store order (2405 rows against
+    1856): an exact tie between y and the index, left open.
+  The packing itself is first-fit over live ranges (see "Slot sharing
+  follows live ranges"), so one extra or one missing memory value shifts
+  every later low-priority local by a slot; fix the register decision and the
+  slot map follows.
+
 ### 3.4 Arithmetic idioms
 - **Signedness of a field (movsx/movzx, jl/jb, idiv/div, sar/shr) is its
   declaration, not a cast.** Run `analysis/typescan.py` (about 2 min): it lists
