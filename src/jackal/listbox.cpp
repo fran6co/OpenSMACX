@@ -1443,7 +1443,7 @@ void ListBox::on_left_down(int x, int y) {
 // the changed hover state. Its live list traversal also updates the cursor
 // when the eventual hovered position is outside the list.
 // Superseded seed deleted; seed paths below are historical Git provenance.
-// ORIGINAL: 0x0060CBC0 ?on_mouse_move@ListBox@@QAEXHH@Z 0x0060CBC0-0x0060CE0B
+// ORIGINAL: 0x0060CBC0 ?on_mouse_move@ListBox@@QAEXHH@Z 0x0060CBC0-0x0060CE0B BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/0060cbc0.cpp"], "reason": "Rehome seed catalogue identity and original extents into compiled owning class; native-emitted symbol is separate and no new byte claim granted."}
 // symbol    ?on_mouse_move@ListBox@@UAEXHH@Z
 void ListBox::on_mouse_move(int x, int y) {

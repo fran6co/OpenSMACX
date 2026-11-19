@@ -494,7 +494,7 @@ int __cdecl Font::init_font_class(Font *font) {
         }
         FontDefault = font;
         if (!font->font_obj_) {
-            // RECOVERY_LITERAL: v1 0x006972B4 0x006972C4 $SG37919 0x006195B0
+            // RECOVERY_LITERAL: v1 0x006972B4 0x006972C4 $SG37920 0x006195B0
             int const result = font->init("Times New Roman", 12, 0);
             if (result) {
                 return result;
