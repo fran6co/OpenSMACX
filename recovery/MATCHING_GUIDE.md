@@ -4488,6 +4488,24 @@ result over 64 symbol-counter pads, so none of these is a counter canary.
   ebx and `d` in esi in the image, ours gives ebx to `best_id` and esi to
   `faction_id` and spills the pointer (same family as the entry's `T`).
 
+- **A loop counter the image keeps in memory while a callee-saved register
+  holds a per-iteration conversion** (par-2 2026-11-19, ReportWin::draw_ops
+  0x0049D540). The image's specialist loops store the counter in [ebp-0x10]
+  and keep `this ? &this->buffer : 0` (neg/sbb/and) in ebx across
+  `best_specialist()`; ours formed the conversion first in a scratch register
+  and gave ebx to the counter. Routing the sprite index through an inline
+  helper (`table[type_of(n - i - 1)].draw(this, x, y)`, the twin of basewin's
+  psych_specialist_type) moves the conversion into ebx and the counter into
+  its home (319 -> 253). A named index local, a `Buffer *dest` local, or
+  helper bodies with if/else, `<` or `/ %` were neutral or worse. Loop
+  counters the image homes in another variable's slot (NetDaemon::
+  process_message: the notify and name loops count with the function-scope
+  `slot`, image [ebp+0x10]) are the reuse rule above, not packing.
+- **Two equal radii squared** (ReportWin::draw_sat 0x0049F350): the image's
+  `imul eax,eax / lea ecx,[eax+eax]` is closest to `2 * r * r` (45 -> 25);
+  `rx*rx + ry*ry` with `ry = rx` folds to `add eax,eax`, and no spelling tried
+  (helpers, locals, `<< 1`, `r*r + r*r`, mixed rx/ry) gives the `lea`.
+
 - **One reused function-scope variable per image home** (par-6 2026-11-19,
   air_power 0x005678C0, `analysis/imgmerge.py`). A body transcribed from a
   decompiler declares one block-local per role (`unseen`, `pick`, `score`,
