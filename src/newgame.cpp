@@ -1116,7 +1116,8 @@ int __cdecl custom_planet(int show_preview, int use_saved_choices) {
 // failure and success returns but expand them at the custom-map returns
 // (0x0058D072, 0x0058D248, 0x0058D3F7, 0x0058D5BB); sixteen two-test
 // expansions at entry reproduce that EH topology exactly (a single 32-test
-// chain did too). The original spent the same budget on inline calls not yet
+// chain did too); ten do with size_of_planet_number below. The original
+// spent the same budget on inline calls not yet
 // identified.
 static inline int size_of_planet_budget_probe(int x)
 {
@@ -1126,6 +1127,17 @@ static inline int size_of_planet_budget_probe(int x)
 }
 
 
+
+// WORKAROUND(decl): size_of_planet's two custom-size "StringTemp = number"
+// runs as one inline helper (no out-of-line copy in the image; name and home
+// unknown). Its /Ob2 cost replaces six of the sixteen entry probes above
+// (runscan --try; ten probes plus the helper give the same fe rows and
+// teardown decisions as sixteen without it).
+static inline void size_of_planet_number(int value, char *number) {
+    StringTemp[0] = 0;
+    _itoa(value, number, 10);
+    strcat(StringTemp, number);
+}
 
 // ORIGINAL: 0x0058CED0 ?size_of_planet@@YAHH@Z 0x0058CED0-0x0058D6A4;0x006607D7-0x00660989
 // RECOVERY_BINDING: v1 {"evidence": ["task:newgame-menu-owner", "historical seed:src/unrecovered/0058ced0.cpp", "pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf:complete mapped native control flow", "source:existing SetupWin/Popup/Buffer/NetDaemon owner declarations; provisional bounded945820 and9B2074 objects, not raw image aliases"], "reason": "Source-owned new-game/menu family preserving complete original identity, auxiliary spans and historical seed findings; existing genuine object lifetimes and typed member owners. Unfinished bodies remain explicit, not implementation coverage."}
@@ -1141,12 +1153,6 @@ int __cdecl size_of_planet(int mode) {
     size_of_planet_budget_probe(1007);  // WORKAROUND(inline)
     size_of_planet_budget_probe(1008);  // WORKAROUND(inline)
     size_of_planet_budget_probe(1009);  // WORKAROUND(inline)
-    size_of_planet_budget_probe(1010);  // WORKAROUND(inline)
-    size_of_planet_budget_probe(1011);  // WORKAROUND(inline)
-    size_of_planet_budget_probe(1012);  // WORKAROUND(inline)
-    size_of_planet_budget_probe(1013);  // WORKAROUND(inline)
-    size_of_planet_budget_probe(1014);  // WORKAROUND(inline)
-    size_of_planet_budget_probe(1015);  // WORKAROUND(inline)
     Popup popup;
     SetupWin setup;
     popup.start(WorldSizePopupLabel, mode != 2 ? 0x40 : 0);
@@ -1210,16 +1216,12 @@ int __cdecl size_of_planet(int mode) {
             const int pref_x = prefs_get(CustomMapXKey, 0x28, 0);
             const int pref_y = prefs_get(CustomMapYKey, 0x50, 0);
             char number[80];
-            StringTemp[0] = 0;
-            _itoa(pref_x, number, 10);
-            strcat(StringTemp, number);
+            size_of_planet_number(pref_x, number);
             {
                 LPSTR label = StringTable.get(Labels.strings_ptr[0x1108 / 4]);
                 popup.dialogs().edit(label, StringTemp, 8);
             }
-            StringTemp[0] = 0;
-            _itoa(pref_y, number, 10);
-            strcat(StringTemp, number);
+            size_of_planet_number(pref_y, number);
             {
                 LPSTR label = label_get(0x110C / 4);
                 popup.dialogs().edit(label, StringTemp, 8);
