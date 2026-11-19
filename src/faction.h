@@ -852,20 +852,6 @@ extern char DiploLabelSendingDOUBLECROSS[];
 extern char DiploLabelGettingDIPLOMATICLOCK[];
 extern char DiploLabelNEEDGLOBAL[];
 extern char DiploLabelReleasingDIPLOMATICLOCK[];
-extern char DiploLabelPACTATTACKS[];
-extern char DiploLabelPACTUNPACT[];
-extern char DiploLabelPACTTRUCE[];
-extern char DiploLabelTEAM[];
-extern char DiploLabelMAJORATROCITY[];
-extern char DiploLabelCouncilSmPcx[];
-extern char DiploLabelBreakSmPcx[];
-extern char DiploLabelBREAKINGPACT[];
-extern char DiploLabelBreakSmPcx_7C0[];
-extern char DiploLabelBREAKINGTREATY[];
-extern char DiploLabelBreakSmPcx_7E0[];
-extern char DiploLabelBREAKINGTRUCE[];
-extern char DiploLabelBreakSmPcx_800[];
-extern char DiploLabelBEGINVENDETTA[];
 // The sound ambience an event asks for by id. Declared here because
 // treaty_on is the homed caller that needs it; the body is still an
 // unrecovered pending_bodies forwarder.

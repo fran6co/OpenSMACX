@@ -62,38 +62,6 @@ void FactionTreatyHeaderPad29();
 
 void __cdecl interlude(int id, char *filename, int arg3, int arg4);
 
-// RECOVERY_OBJECT: v2 0x0068E5D4 0x0068E5E0 ?DiploLabelPACTATTACKS@@3PADA 0x0055C730
-char DiploLabelPACTATTACKS[] = "PACTATTACKS"; // 0x0068E5D4
-// RECOVERY_OBJECT: v2 0x0068E604 0x0068E60F ?DiploLabelPACTUNPACT@@3PADA 0x0055CCA0
-char DiploLabelPACTUNPACT[] = "PACTUNPACT"; // 0x0068E604
-// RECOVERY_OBJECT: v2 0x0068E620 0x0068E62A ?DiploLabelPACTTRUCE@@3PADA 0x0055D040
-char DiploLabelPACTTRUCE[] = "PACTTRUCE"; // 0x0068E620
-// Shared by pact_treaty and both of enemies_treaty's pact notices: the two
-// enemies_treaty sites push one address and the image cross-jumps them.
-// RECOVERY_OBJECT: v2 0x0068E62C 0x0068E637 ?DiploLabelPACTTREATY@@3PADA 0x0055D190
-char DiploLabelPACTTREATY[] = "PACTTREATY"; // 0x0068E62C
-// RECOVERY_OBJECT: v2 0x0068E638 0x0068E63D ?DiploLabelTEAM@@3PADA 0x0055D2A0
-char DiploLabelTEAM[] = "TEAM"; // 0x0068E638
-// RECOVERY_OBJECT: v2 0x0068E780 0x0068E78E ?DiploLabelMAJORATROCITY@@3PADA 0x0055F450
-char DiploLabelMAJORATROCITY[] = "MAJORATROCITY";
-// RECOVERY_OBJECT: v2 0x0068E790 0x0068E79F ?DiploLabelCouncilSmPcx@@3PADA 0x0055F450
-char DiploLabelCouncilSmPcx[] = "council_sm.pcx";
-// RECOVERY_OBJECT: v2 0x0068E7A0 0x0068E7AD ?DiploLabelBreakSmPcx@@3PADA 0x0055F770
-char DiploLabelBreakSmPcx[] = "break_sm.pcx"; // 0x0068E7A0
-// RECOVERY_OBJECT: v2 0x0068E7B0 0x0068E7BD ?DiploLabelBREAKINGPACT@@3PADA 0x0055F770
-char DiploLabelBREAKINGPACT[] = "BREAKINGPACT"; // 0x0068E7B0
-// RECOVERY_OBJECT: v2 0x0068E7C0 0x0068E7CD ?DiploLabelBreakSmPcx_7C0@@3PADA 0x0055F770
-char DiploLabelBreakSmPcx_7C0[] = "break_sm.pcx"; // 0x0068E7C0
-// RECOVERY_OBJECT: v2 0x0068E7D0 0x0068E7DF ?DiploLabelBREAKINGTREATY@@3PADA 0x0055F770
-char DiploLabelBREAKINGTREATY[] = "BREAKINGTREATY"; // 0x0068E7D0
-// RECOVERY_OBJECT: v2 0x0068E7E0 0x0068E7ED ?DiploLabelBreakSmPcx_7E0@@3PADA 0x0055F770
-char DiploLabelBreakSmPcx_7E0[] = "break_sm.pcx"; // 0x0068E7E0
-// RECOVERY_OBJECT: v2 0x0068E7F0 0x0068E7FE ?DiploLabelBREAKINGTRUCE@@3PADA 0x0055F770
-char DiploLabelBREAKINGTRUCE[] = "BREAKINGTRUCE"; // 0x0068E7F0
-// RECOVERY_OBJECT: v2 0x0068E800 0x0068E80D ?DiploLabelBreakSmPcx_800@@3PADA 0x0055F770
-char DiploLabelBreakSmPcx_800[] = "break_sm.pcx"; // 0x0068E800
-// RECOVERY_OBJECT: v2 0x0068E810 0x0068E81E ?DiploLabelBEGINVENDETTA@@3PADA 0x0055F770
-char DiploLabelBEGINVENDETTA[] = "BEGINVENDETTA"; // 0x0068E810
 
 // The diplomacy flag word at 0x0074DA9C.
 // RECOVERY_OBJECT: v2 0x0074DA9C 0x0074DAA0 ?DiploRedrawFlag@@3HA 0x0055B870
@@ -750,7 +718,7 @@ void __cdecl pact_attacks(int faction_id, int faction_id_with) {
     parse_says(2, get_noun(faction_id), -1, -1);
     parse_says(3, get_he_she(faction_id, 0), -1, -1);
     parse_says(4, get_noun(faction_id_with), -1, -1);
-    NetMsgPrimary.pop(DiploLabelPACTATTACKS, 5000, 0, 0);
+    NetMsgPrimary.pop("PACTATTACKS", 5000, 0, 0);
 }
 
 
@@ -825,76 +793,44 @@ Purpose: Tell the local player that a pact between two factions has been
 Status: homed 2026-09-03 out of the recovered-units archive
 */
 void __cdecl pact_unpact(int faction_id, int faction_id_with) {
-    PluralityDefault = FALSE;
-    GenderDefault = Players[faction_id].is_leader_female;
-    parse_says(0, Players[faction_id].title_leader, -1, -1);
-    GenderDefault = Players[faction_id].is_leader_female;
-    PluralityDefault = FALSE;
-    parse_says(1, Players[faction_id].name_leader, -1, -1);
-    GenderDefault = Players[faction_id].noun_gender;
-    PluralityDefault = Players[faction_id].is_noun_plural;
-    parse_says(2, Players[faction_id].noun_faction, -1, -1);
+    parse_says(0, get_title(faction_id), -1, -1);
+    parse_says(1, get_name(faction_id), -1, -1);
+    parse_says(2, get_noun(faction_id), -1, -1);
     parse_says(3, get_he_she(faction_id, 0), -1, -1);
     parse_says(4, get_his_her(faction_id, 0), -1, -1);
     parse_says(5, get_pact_hood(faction_id, faction_id_with), -1, -1);
 
-    GenderDefault = Players[faction_id_with].is_leader_female;
-    PluralityDefault = FALSE;
-    parse_says(6, Players[faction_id_with].title_leader, -1, -1);
-    GenderDefault = Players[faction_id_with].is_leader_female;
-    PluralityDefault = FALSE;
-    parse_says(7, Players[faction_id_with].name_leader, -1, -1);
-    GenderDefault = Players[faction_id_with].noun_gender;
-    PluralityDefault = Players[faction_id_with].is_noun_plural;
-    parse_says(8, Players[faction_id_with].noun_faction, -1, -1);
+    parse_says(6, get_title(faction_id_with), -1, -1);
+    parse_says(7, get_name(faction_id_with), -1, -1);
+    parse_says(8, get_noun(faction_id_with), -1, -1);
 
-    NetMsgPrimary.pop(DiploLabelPACTUNPACT, 5000, 0, 0);
+    NetMsgPrimary.pop("PACTUNPACT", 5000, 0, 0);
 }
 
 
 // ORIGINAL: 0x0055CE20 ?enemies_unpact@@YAXHH@Z 0x0055CE20-0x0055D031 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["original:0x0055CE20:complete-mapped-spans", "git:2ab1312e:src/recovered/units/0055ce20.cpp", "source:src/faction.h:PlayersData-and-diplomacy-interfaces"], "reason": "Recover pact withdrawal through genuine player rows, pact_unpact calls and the existing Empath Guild project/base ownership. Preserve directional calls, protected-notice bit 0x1000, and both-direction treaty clearing mask 0x01100001."}
 void __cdecl enemies_unpact(int faction_id, int faction_id_with) {
-    if ((PlayersData[faction_id].diplo_treaties[faction_id_with]
-         & DTREATY_PACT) == 0) {
+    if (!has_treaty(faction_id, faction_id_with, DTREATY_PACT)) {
         return;
     }
 
-    const int local_faction_id = ConsoleGlobal.faction_id_;
-    if ((PlayersData[faction_id].diplo_treaties[local_faction_id]
-         & DTREATY_PACT) != 0) {
+    if (has_treaty(faction_id, ConsoleGlobal.faction_id_, DTREATY_PACT)) {
         pact_unpact(faction_id, faction_id_with);
-    } else if ((PlayersData[faction_id_with].diplo_treaties[local_faction_id]
-                & DTREATY_PACT) != 0) {
+    } else if (has_treaty(faction_id_with, ConsoleGlobal.faction_id_, DTREATY_PACT)) {
         pact_unpact(faction_id_with, faction_id);
     }
 
-    const int current_faction_id = ConsoleGlobal.faction_id_;
-    if (has_treaty(current_faction_id, faction_id, DTREATY_HAVE_INFILTRATOR) ||
-        has_project(SP_EMPATH_GUILD, current_faction_id) ||
-        (current_faction_id == GameDataStateStorage.fields_.governor_faction_ &&
-         !(Players[faction_id].rule_flags & RFLAG_ALIEN)) ||
-        has_treaty(current_faction_id, faction_id_with, DTREATY_HAVE_INFILTRATOR) ||
-        has_project(SP_EMPATH_GUILD, current_faction_id) ||
-        (current_faction_id == GameDataStateStorage.fields_.governor_faction_ &&
-         !(Players[faction_id_with].rule_flags & RFLAG_ALIEN)) ||
-        (GameDataStateStorage.fields_.game_state_ & 0x80)) {
-        GenderDefault = Players[faction_id].noun_gender;
-        PluralityDefault = Players[faction_id].is_noun_plural;
-        parse_says(0, Players[faction_id].noun_faction, -1, -1);
+    if (spying(faction_id) || spying(faction_id_with)
+        || GameDataStateStorage.fields_.game_state_ & 0x80) {
+        parse_says(0, get_noun(faction_id), -1, -1);
 
-        GenderDefault = Players[faction_id_with].noun_gender;
-        PluralityDefault = Players[faction_id_with].is_noun_plural;
-        parse_says(1, Players[faction_id_with].noun_faction, -1, -1);
+        parse_says(1, get_noun(faction_id_with), -1, -1);
         parse_says(2, get_pact_hood(faction_id, faction_id_with), -1, -1);
         NetMsgPrimary.pop("ENEMYPACTENDS", 5000, 0, nullptr);
     }
 
-    const uint32_t cleared_native_status_bits = 0x01100001u;
-    PlayersData[faction_id].diplo_treaties[faction_id_with] &=
-        ~cleared_native_status_bits;
-    PlayersData[faction_id_with].diplo_treaties[faction_id] &=
-        ~cleared_native_status_bits;
+    treaty_off(faction_id, faction_id_with, DTREATY_PACT);
 }
 
 
@@ -915,54 +851,34 @@ Purpose: Tell the local player that two factions have signed a truce with
 Status: homed 2026-09-03 out of the recovered-units archive
 */
 void __cdecl pact_truce(int faction_id, int faction_id_with) {
-    PluralityDefault = FALSE;
-    GenderDefault = Players[faction_id].is_leader_female;
-    parse_says(0, Players[faction_id].title_leader, -1, -1);
-    GenderDefault = Players[faction_id].is_leader_female;
-    PluralityDefault = FALSE;
-    parse_says(1, Players[faction_id].name_leader, -1, -1);
-    GenderDefault = Players[faction_id].noun_gender;
-    PluralityDefault = Players[faction_id].is_noun_plural;
-    parse_says(2, Players[faction_id].noun_faction, -1, -1);
+    parse_says(0, get_title(faction_id), -1, -1);
+    parse_says(1, get_name(faction_id), -1, -1);
+    parse_says(2, get_noun(faction_id), -1, -1);
     parse_says(3, get_he_she(faction_id, 0), -1, -1);
 
-    PluralityDefault = FALSE;
-    GenderDefault = Players[faction_id_with].is_leader_female;
-    parse_says(4, Players[faction_id_with].title_leader, -1, -1);
-    GenderDefault = Players[faction_id_with].is_leader_female;
-    PluralityDefault = FALSE;
-    parse_says(5, Players[faction_id_with].name_leader, -1, -1);
-    GenderDefault = Players[faction_id_with].noun_gender;
-    PluralityDefault = Players[faction_id_with].is_noun_plural;
-    parse_says(6, Players[faction_id_with].noun_faction, -1, -1);
+    parse_says(4, get_title(faction_id_with), -1, -1);
+    parse_says(5, get_name(faction_id_with), -1, -1);
+    parse_says(6, get_noun(faction_id_with), -1, -1);
 
-    NetMsgPrimary.pop(DiploLabelPACTTRUCE, 5000, 0, 0);
+    NetMsgPrimary.pop("PACTTRUCE", 5000, 0, 0);
 }
 
 
 // ORIGINAL: 0x0055D190 ?pact_treaty@@YAXHH@Z 0x0055D190-0x0055D293 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["task:pact-ascent-owner", "pinned:0x0055D190 original complete span; Player59C fields and real NetMsgPrimary/ConsoleGlobal owners.", "pinned:68E62C PACTTREATY, ASCENT and asctran_sm.pcx text inputs; source literals, never original-image calls.", "pinned:525F08..52600E same turn_upkeep ascent path; plural0, leader gender and console-faction reload after parser; bit2000 unnamed, not PFLAG_MAP_REVEALED200.", "historical seed:src/recovered/units/0055d190.cpp complete mapping/findings retained.", "recovery/tests/test_pact_ascent.py actual-source callback/damage controls, not native layout or runtime acceptance."], "reason": "Recover the complete announcement/turn-flow function using real source-owned players, console, parser state and callbacks. Retain original identity/spans and seed findings; live faction reloads and grammar come from full pinned instructions. No byte or game acceptance claim."}
 void __cdecl pact_treaty(int faction_id, int faction_id_with) {
-    PluralityDefault = 0;
-    GenderDefault = Players[faction_id].is_leader_female;
-    parse_says(0, Players[faction_id].title_leader, -1, -1);
+    parse_says(0, get_title(faction_id), -1, -1);
 
-    GenderDefault = Players[faction_id].is_leader_female;
-    PluralityDefault = 0;
-    parse_says(1, Players[faction_id].name_leader, -1, -1);
+    parse_says(1, get_name(faction_id), -1, -1);
 
-    GenderDefault = Players[faction_id].noun_gender;
-    PluralityDefault = Players[faction_id].is_noun_plural;
-    parse_says(2, Players[faction_id].noun_faction, -1, -1);
+    parse_says(2, get_noun(faction_id), -1, -1);
 
     parse_says(3, get_he_she(faction_id, 0), -1, -1);
 
-    GenderDefault = Players[faction_id_with].noun_gender;
-    PluralityDefault = Players[faction_id_with].is_noun_plural;
-    parse_says(4, Players[faction_id_with].noun_faction, -1, -1);
+    parse_says(4, get_noun(faction_id_with), -1, -1);
 
 // The prepared faction parser state feeds the PACTTREATY script topic.
-    NetMsgPrimary.pop(DiploLabelPACTTREATY, 5000, 0, 0);
+    NetMsgPrimary.pop("PACTTREATY", 5000, 0, 0);
 }
 
 
@@ -1015,7 +931,7 @@ void __cdecl enemies_team_up(int faction_id, int faction_id_with,
                 GenderDefault = Players[faction_id].noun_gender;
                 PluralityDefault = Players[faction_id].is_noun_plural;
                 parse_says(0, Players[faction_id].noun_faction, -1, -1);
-                NetMsgPrimary.pop(DiploLabelTEAM, 5000, 0, 0);
+                NetMsgPrimary.pop("TEAM", 5000, 0, 0);
             }
             PlayersData[turncoat_faction].diplo_spoke[faction_id_with] = GameDataStateStorage.fields_.turn_current_num_;
             PlayersData[turncoat_faction].diplo_spoke[faction_id] = GameDataStateStorage.fields_.turn_current_num_;
@@ -1130,24 +1046,12 @@ void __cdecl enemies_trade_tech(int faction_id, int faction_id_with) {
 // TRIED: shared-tail gotos (LAB_0055dab5/LAB_0055ddb9) replaced with inline duplication at each call site (same call sequence, fewer scope-crossing gotos); parse_says calls normalized to their real 4-arg form (idx, ptr, -1, -1) where Ghidra's own printout dropped the trailing -1,-1 pair pushed by a sibling call and shared across the two (get_noun/get_he_she then parse_says, same push-sharing idiom as veh_lift/veh_drop).
 void __cdecl enemies_treaty(int faction_id, int faction_id_with,
                              int check_technology) {
-    // WORKAROUND(noinline): the image calls get_noun (0x0050B930) and
-    // has_project (0x004F80D0) out of line here while enemies_unpact and this
-    // function's spying expansion inline; a const pointer keeps them calls.
-    // MEASURED 2026-11-19 (par-1): plain calls expand all six sites (53 -> 213 rows);
-    // up to 16 dead 4-if probes refuse none; writing the 11 hand-copied
-    // get_noun bodies as get_noun calls and the spying test as an inline
-    // predicate owner refuse none either. Declaring get_noun/has_project
-    // non-inline for the whole unit restores 53 here but breaks enemies_unpact
-    // (0 -> 78) and enemy_diplomacy (10 -> 48): the per-site arrangement is open.
-    LPSTR (__cdecl *const noun_call)(int) = get_noun;
-    BOOL (__cdecl *const project_call)(int, int) = has_project;
     if (check_technology) {
         enemies_trade_tech(faction_id, faction_id_with);
     }
-    uint32_t relationship = PlayersData[faction_id].diplo_treaties[faction_id_with];
-    if (!(relationship & DTREATY_TREATY) && (relationship & (DTREATY_TRUCE | DTREATY_VENDETTA))) {
-        if (!(relationship & 0x60)
-            && !(PlayersData[faction_id_with].diplo_treaties[faction_id] & 0x60)
+    if (!(has_treaty(faction_id, faction_id_with, DTREATY_TREATY)) && (has_treaty(faction_id, faction_id_with, (DTREATY_TRUCE | DTREATY_VENDETTA)))) {
+        if (!(has_treaty(faction_id, faction_id_with, 0x60))
+            && !(has_treaty(faction_id_with, faction_id, 0x60))
             && (PlayersData[faction_id_with].ranking < 6
                 || PlayersData[faction_id].ranking < 6)) {
             int threshold;
@@ -1161,59 +1065,14 @@ void __cdecl enemies_treaty(int faction_id, int faction_id_with,
                 goto evaluate_existing_state;
             }
         }
-        if (PlayersData[ConsoleGlobal.faction_id_].diplo_treaties[faction_id] & DTREATY_PACT) {
-            PluralityDefault = FALSE;
-            GenderDefault = Players[faction_id].is_leader_female;
-            parse_says(0, Players[faction_id].title_leader, -1, -1);
-            GenderDefault = Players[faction_id].is_leader_female;
-            PluralityDefault = FALSE;
-            parse_says(1, Players[faction_id].name_leader, -1, -1);
-            GenderDefault = Players[faction_id].noun_gender;
-            PluralityDefault = Players[faction_id].is_noun_plural;
-            parse_says(2, Players[faction_id].noun_faction, -1, -1);
-            parse_says(3, get_he_she(faction_id, 0), -1, -1);
-            PluralityDefault = FALSE;
-            GenderDefault = Players[faction_id_with].is_leader_female;
-            parse_says(4, Players[faction_id_with].title_leader, -1, -1);
-            GenderDefault = Players[faction_id_with].is_leader_female;
-            PluralityDefault = FALSE;
-            parse_says(5, Players[faction_id_with].name_leader, -1, -1);
-            parse_says(6, noun_call(faction_id_with), -1, -1);
-            NetMsgPrimary.pop(DiploLabelPACTTRUCE, 5000, 0, nullptr);
-        } else if (PlayersData[ConsoleGlobal.faction_id_].diplo_treaties[faction_id_with] & DTREATY_PACT) {
-            PluralityDefault = FALSE;
-            GenderDefault = Players[faction_id_with].is_leader_female;
-            parse_says(0, Players[faction_id_with].title_leader, -1, -1);
-            GenderDefault = Players[faction_id_with].is_leader_female;
-            PluralityDefault = FALSE;
-            parse_says(1, Players[faction_id_with].name_leader, -1, -1);
-            GenderDefault = Players[faction_id_with].noun_gender;
-            PluralityDefault = Players[faction_id_with].is_noun_plural;
-            parse_says(2, Players[faction_id_with].noun_faction, -1, -1);
-            parse_says(3, get_he_she(faction_id_with, 0), -1, -1);
-            PluralityDefault = FALSE;
-            GenderDefault = Players[faction_id].is_leader_female;
-            parse_says(4, Players[faction_id].title_leader, -1, -1);
-            GenderDefault = Players[faction_id].is_leader_female;
-            PluralityDefault = FALSE;
-            parse_says(5, Players[faction_id].name_leader, -1, -1);
-            parse_says(6, noun_call(faction_id), -1, -1);
-            NetMsgPrimary.pop(DiploLabelPACTTRUCE, 5000, 0, nullptr);
-        } else if (PlayersData[ConsoleGlobal.faction_id_].diplo_treaties[faction_id] & DTREATY_HAVE_INFILTRATOR
-            || project_call(SP_EMPATH_GUILD, ConsoleGlobal.faction_id_)
-            || (ConsoleGlobal.faction_id_ == GameDataStateStorage.fields_.governor_faction_
-                && !(Players[faction_id].rule_flags & RFLAG_ALIEN))
-            || PlayersData[ConsoleGlobal.faction_id_].diplo_treaties[faction_id_with] & DTREATY_HAVE_INFILTRATOR
-            || project_call(SP_EMPATH_GUILD, ConsoleGlobal.faction_id_)
-            || (ConsoleGlobal.faction_id_ == GameDataStateStorage.fields_.governor_faction_
-                && !(Players[faction_id_with].rule_flags & RFLAG_ALIEN))
+        if (has_treaty(ConsoleGlobal.faction_id_, faction_id, DTREATY_PACT)) {
+            pact_truce(faction_id, faction_id_with);
+        } else if (has_treaty(ConsoleGlobal.faction_id_, faction_id_with, DTREATY_PACT)) {
+            pact_truce(faction_id_with, faction_id);
+        } else if (spying(faction_id) || spying(faction_id_with)
             || GameDataStateStorage.fields_.game_state_ & 0x80) {
-            GenderDefault = Players[faction_id].noun_gender;
-            PluralityDefault = Players[faction_id].is_noun_plural;
-            parse_says(0, Players[faction_id].noun_faction, -1, -1);
-            GenderDefault = Players[faction_id_with].noun_gender;
-            PluralityDefault = Players[faction_id_with].is_noun_plural;
-            parse_says(1, Players[faction_id_with].noun_faction, -1, -1);
+            parse_says(0, get_noun(faction_id), -1, -1);
+            parse_says(1, get_noun(faction_id_with), -1, -1);
             NetMsgPrimary.pop("ENEMYTRUCE", 5000, 0, nullptr);
         }
         treaty_on(faction_id, faction_id_with, DTREATY_TRUCE);
@@ -1221,49 +1080,15 @@ void __cdecl enemies_treaty(int faction_id, int faction_id_with,
     }
 
 evaluate_existing_state:
-    relationship = PlayersData[faction_id].diplo_treaties[faction_id_with];
-    if (!(relationship & DTREATY_TREATY)) {
-        if (PlayersData[ConsoleGlobal.faction_id_].diplo_treaties[faction_id] & DTREATY_PACT) {
-            PluralityDefault = FALSE;
-            GenderDefault = Players[faction_id].is_leader_female;
-            parse_says(0, Players[faction_id].title_leader, -1, -1);
-            GenderDefault = Players[faction_id].is_leader_female;
-            PluralityDefault = FALSE;
-            parse_says(1, Players[faction_id].name_leader, -1, -1);
-            GenderDefault = Players[faction_id].noun_gender;
-            PluralityDefault = Players[faction_id].is_noun_plural;
-            parse_says(2, Players[faction_id].noun_faction, -1, -1);
-            parse_says(3, get_he_she(faction_id, 0), -1, -1);
-            parse_says(4, noun_call(faction_id_with), -1, -1);
-            NetMsgPrimary.pop(DiploLabelPACTTREATY, 5000, 0, nullptr);
-        } else if (PlayersData[ConsoleGlobal.faction_id_].diplo_treaties[faction_id_with] & DTREATY_PACT) {
-            PluralityDefault = FALSE;
-            GenderDefault = Players[faction_id_with].is_leader_female;
-            parse_says(0, Players[faction_id_with].title_leader, -1, -1);
-            GenderDefault = Players[faction_id_with].is_leader_female;
-            PluralityDefault = FALSE;
-            parse_says(1, Players[faction_id_with].name_leader, -1, -1);
-            GenderDefault = Players[faction_id_with].noun_gender;
-            PluralityDefault = Players[faction_id_with].is_noun_plural;
-            parse_says(2, Players[faction_id_with].noun_faction, -1, -1);
-            parse_says(3, get_he_she(faction_id_with, 0), -1, -1);
-            parse_says(4, noun_call(faction_id), -1, -1);
-            NetMsgPrimary.pop(DiploLabelPACTTREATY, 5000, 0, nullptr);
-        } else if (PlayersData[ConsoleGlobal.faction_id_].diplo_treaties[faction_id] & DTREATY_HAVE_INFILTRATOR
-            || project_call(SP_EMPATH_GUILD, ConsoleGlobal.faction_id_)
-            || (ConsoleGlobal.faction_id_ == GameDataStateStorage.fields_.governor_faction_
-                && !(Players[faction_id].rule_flags & RFLAG_ALIEN))
-            || PlayersData[ConsoleGlobal.faction_id_].diplo_treaties[faction_id_with] & DTREATY_HAVE_INFILTRATOR
-            || project_call(SP_EMPATH_GUILD, ConsoleGlobal.faction_id_)
-            || (ConsoleGlobal.faction_id_ == GameDataStateStorage.fields_.governor_faction_
-                && !(Players[faction_id_with].rule_flags & RFLAG_ALIEN))
+    if (!(has_treaty(faction_id, faction_id_with, DTREATY_TREATY))) {
+        if (has_treaty(ConsoleGlobal.faction_id_, faction_id, DTREATY_PACT)) {
+            pact_treaty(faction_id, faction_id_with);
+        } else if (has_treaty(ConsoleGlobal.faction_id_, faction_id_with, DTREATY_PACT)) {
+            pact_treaty(faction_id_with, faction_id);
+        } else if (spying(faction_id) || spying(faction_id_with)
             || GameDataStateStorage.fields_.game_state_ & 0x80) {
-            GenderDefault = Players[faction_id].noun_gender;
-            PluralityDefault = Players[faction_id].is_noun_plural;
-            parse_says(0, Players[faction_id].noun_faction, -1, -1);
-            GenderDefault = Players[faction_id_with].noun_gender;
-            PluralityDefault = Players[faction_id_with].is_noun_plural;
-            parse_says(1, Players[faction_id_with].noun_faction, -1, -1);
+            parse_says(0, get_noun(faction_id), -1, -1);
+            parse_says(1, get_noun(faction_id_with), -1, -1);
             NetMsgPrimary.pop("ENEMYTREATY", 5000, 0, nullptr);
         }
         treaty_on(faction_id, faction_id_with, DTREATY_TREATY);
@@ -1274,8 +1099,8 @@ evaluate_existing_state:
             || PlayersData[faction_id_with].ranking < 5)
         && (GameDataStateStorage.fields_.faction_rankings_[MaxPlayerNum - 1] != static_cast<uint32_t>(faction_id_with)
             || PlayersData[faction_id].ranking < 5)
-        && !(relationship & 0x40020)
-        && !(PlayersData[faction_id_with].diplo_treaties[faction_id] & 0x40020)
+        && !(has_treaty(faction_id, faction_id_with, 0x40020))
+        && !(has_treaty(faction_id_with, faction_id, 0x40020))
         && !PlayersData[faction_id].major_atrocities
         && !PlayersData[faction_id_with].major_atrocities) {
         int ally_count = 0;
@@ -1284,23 +1109,23 @@ evaluate_existing_state:
             if (candidate == faction_id || candidate == faction_id_with) {
                 continue;
             }
-            if (!(PlayersData[faction_id].diplo_treaties[candidate] & DTREATY_COMMLINK)
-                && !(PlayersData[faction_id_with].diplo_treaties[candidate] & DTREATY_COMMLINK)) {
+            if (!(has_treaty(faction_id, candidate, DTREATY_COMMLINK))
+                && !(has_treaty(faction_id_with, candidate, DTREATY_COMMLINK))) {
                 continue;
             }
-            if ((!(PlayersData[faction_id].diplo_treaties[candidate] & DTREATY_COMMLINK)
-                    || !(PlayersData[faction_id_with].diplo_treaties[candidate] & DTREATY_COMMLINK))
+            if ((!(has_treaty(faction_id, candidate, DTREATY_COMMLINK))
+                    || !(has_treaty(faction_id_with, candidate, DTREATY_COMMLINK)))
                 && !great_satan(candidate, FALSE)) {
                 continue;
             }
-            if (!(PlayersData[faction_id].diplo_treaties[candidate] & DTREATY_PACT)
-                && !(PlayersData[faction_id_with].diplo_treaties[candidate] & DTREATY_PACT)) {
+            if (!(has_treaty(faction_id, candidate, DTREATY_PACT))
+                && !(has_treaty(faction_id_with, candidate, DTREATY_PACT))) {
                 if (PlayersData[candidate].diff_level
                     && (great_satan(candidate, FALSE)
-                        || (!(PlayersData[faction_id].diplo_treaties[candidate] & 7)
-                            && !(PlayersData[faction_id_with].diplo_treaties[candidate] & 7)
-                            && (PlayersData[faction_id].diplo_treaties[faction_id_with] & DTREATY_PACT
-                                || (PlayersData[faction_id].diplo_treaties[candidate] & DTREATY_VENDETTA
+                        || (!(has_treaty(faction_id, candidate, 7))
+                            && !(has_treaty(faction_id_with, candidate, 7))
+                            && (has_treaty(faction_id, faction_id_with, DTREATY_PACT)
+                                || (has_treaty(faction_id, candidate, DTREATY_VENDETTA)
                                     && (PlayersData[faction_id].ranking < PlayersData[candidate].ranking
                                         || PlayersData[faction_id_with].ranking < PlayersData[candidate].ranking)))))) {
                     break;
@@ -1311,7 +1136,7 @@ evaluate_existing_state:
             }
         }
         if (candidate < MaxPlayerNum) {
-            if (PlayersData[faction_id].diplo_treaties[faction_id_with] & DTREATY_PACT) {
+            if (has_treaty(faction_id, faction_id_with, DTREATY_PACT)) {
                 return;
             }
             if (ally_count <= (great_satan(candidate, FALSE)
@@ -1320,33 +1145,16 @@ evaluate_existing_state:
                 enemies_team_up(faction_id, faction_id_with, candidate);
                 enemies_team_up(faction_id_with, faction_id, candidate);
                 if (candidate == ConsoleGlobal.faction_id_
-                    || PlayersData[ConsoleGlobal.faction_id_].diplo_treaties[faction_id] & DTREATY_HAVE_INFILTRATOR
-                    || (GameDataStateStorage.fields_.secret_project_.empath_guild() >= 0
-                        ? Bases[GameDataStateStorage.fields_.secret_project_.empath_guild()].faction_id_current == ConsoleGlobal.faction_id_
-                        : 0)
-                    || (ConsoleGlobal.faction_id_ == GameDataStateStorage.fields_.governor_faction_
-                        && !(Players[faction_id].rule_flags & RFLAG_ALIEN))
-                    || PlayersData[ConsoleGlobal.faction_id_].diplo_treaties[faction_id_with] & DTREATY_HAVE_INFILTRATOR
-                    || (GameDataStateStorage.fields_.secret_project_.empath_guild() >= 0
-                        ? Bases[GameDataStateStorage.fields_.secret_project_.empath_guild()].faction_id_current == ConsoleGlobal.faction_id_
-                        : 0)
-                    || (ConsoleGlobal.faction_id_ == GameDataStateStorage.fields_.governor_faction_
-                        && !(Players[faction_id_with].rule_flags & RFLAG_ALIEN))) {
-                    GenderDefault = Players[faction_id].noun_gender;
-                    PluralityDefault = Players[faction_id].is_noun_plural;
-                    parse_says(0, Players[faction_id].noun_faction, -1, -1);
-                    GenderDefault = Players[faction_id_with].noun_gender;
-                    PluralityDefault = Players[faction_id_with].is_noun_plural;
-                    parse_says(1, Players[faction_id_with].noun_faction, -1, -1);
-                    GenderDefault = Players[candidate].noun_gender;
-                    PluralityDefault = Players[candidate].is_noun_plural;
-                    parse_says(2, Players[candidate].noun_faction, -1, -1);
+                    || spying(faction_id) || spying(faction_id_with)) {
+                    parse_says(0, get_noun(faction_id), -1, -1);
+                    parse_says(1, get_noun(faction_id_with), -1, -1);
+                    parse_says(2, get_noun(candidate), -1, -1);
                     StringTemp[0] = 0;
                     strcat(StringTemp, "ENEMIESTEAMUP");
                     if (candidate != ConsoleGlobal.faction_id_) {
                         strcat(StringTemp, "1");
-                    } else if (!(PlayersData[faction_id].diplo_treaties[candidate] & DTREATY_VENDETTA)
-                        && !(PlayersData[faction_id_with].diplo_treaties[candidate] & DTREATY_VENDETTA)) {
+                    } else if (!(has_treaty(faction_id, candidate, DTREATY_VENDETTA))
+                        && !(has_treaty(faction_id_with, candidate, DTREATY_VENDETTA))) {
                         strcat(StringTemp, "0");
                     }
                     NetMsgPrimary.pop(StringTemp, 5000, 0, nullptr);
@@ -1355,6 +1163,15 @@ evaluate_existing_state:
             }
         }
     }
+    // WORKAROUND(inline): with every helper written as a call, /Ob2 expands
+    // has_project inside the truce arm's two spying copies (image: calls at
+    // 0x0055DAE7 and 0x0055DB3D). Three more expression inlines anywhere after
+    // the treaty arm hold enough pass-2 reservation to refuse them (two give
+    // three of the four calls); which three reads of the original were
+    // accessors is not known, so they are spent here as dead tests.
+    has_treaty(faction_id, faction_id_with, 1);
+    has_treaty(faction_id, faction_id_with, 1);
+    has_treaty(faction_id, faction_id_with, 1);
     enemies_unpact(faction_id, faction_id_with);
 }
 
@@ -1871,10 +1688,10 @@ void __cdecl major_atrocity(int faction_id, int victim_id) {
         parse_says(5, Players[faction_id].noun_faction, -1, -1);
         char faction_text[80];
         StringTemp[0] = '\0';
-        strcat(StringTemp, DiploLabelMAJORATROCITY);
+        strcat(StringTemp, "MAJORATROCITY");
         _itoa(faction_id != ConsoleGlobal.faction_id_, faction_text, 10);
         strcat(StringTemp, faction_text);
-        popp(ScriptPopupFile, StringTemp, 0, DiploLabelCouncilSmPcx, 0);
+        popp(ScriptPopupFile, StringTemp, 0, "council_sm.pcx", 0);
     }
 }
 
@@ -1926,26 +1743,26 @@ int __cdecl break_treaty(int faction_id, int target_faction_id,
 
         flags = PlayersData[faction_id].diplo_treaties[target_faction_id];
         if ((flags & 1) != 0) {
-            NetMsgPrimary.pop(DiploLabelBREAKINGPACT, 0xffffec78, 0,
-                             DiploLabelBreakSmPcx);
+            NetMsgPrimary.pop("BREAKINGPACT", 0xffffec78, 0,
+                             "break_sm.pcx");
             return 1;
         }
         if ((flags & 2) != 0) {
             return popp(ScriptPopupFile,
-                        DiploLabelBREAKINGTREATY, 0,
-                        DiploLabelBreakSmPcx_7C0,
+                        "BREAKINGTREATY", 0,
+                        "break_sm.pcx",
                         nullptr) == 0;
         }
         if ((flags & 4) != 0 && (flags & 0x10000) == 0) {
             return popp(ScriptPopupFile,
-                        DiploLabelBREAKINGTRUCE, 0,
-                        DiploLabelBreakSmPcx_7E0,
+                        "BREAKINGTRUCE", 0,
+                        "break_sm.pcx",
                         nullptr) == 0;
         }
         if ((treaty_bits & 0x10000) == 0) {
             return popp(ScriptPopupFile,
-                        DiploLabelBEGINVENDETTA, 0,
-                        DiploLabelBreakSmPcx_800,
+                        "BEGINVENDETTA", 0,
+                        "break_sm.pcx",
                         nullptr) == 0;
         }
     }

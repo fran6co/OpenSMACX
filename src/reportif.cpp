@@ -79,6 +79,21 @@ void ReportIfDeclFnPad0();
 void ReportIfDeclFnPad1();
 void ReportIfDeclFnPad2();
 void ReportIfDeclFnPad3();
+void ReportIfDeclFnPad4();
+void ReportIfDeclFnPad5();
+void ReportIfDeclFnPad6();
+void ReportIfDeclFnPad7();
+void ReportIfDeclFnPad8();
+void ReportIfDeclFnPad9();
+void ReportIfDeclFnPad10();
+void ReportIfDeclFnPad11();
+void ReportIfDeclFnPad12();
+void ReportIfDeclFnPad13();
+void ReportIfDeclFnPad14();
+void ReportIfDeclFnPad15();
+void ReportIfDeclFnPad16();
+void ReportIfDeclFnPad17();
+void ReportIfDeclFnPad18();
 
 // Shared punctuation objects the image pushes instead of unit literals.
 extern char SocialWinCloseParenText[];
