@@ -56,7 +56,8 @@ an explicit `--pfx` is only needed to pick another lane.
 - `objdis.py <unit> <src> <addr>` raw listing of our function with real jump targets (unit as `picktech`, `picktech.cpp`,
   `src/picktech.cpp`, or a basename found in a subdirectory; lane FE_PFX_BASE).
 - `analysis/sdeck.py` (`sdeck.run(unit, addr, lo, hi, [(key, text), ...])`) structural deck runner: ranks whole-file
-  variants by (named call multiset distance, jcc/jmp/call/ret count distance, control-flow hunks, fe rows), so a
+  variants by (EH unwind-depth edit distance, named call multiset distance, jcc/jmp/call/ret count distance,
+  control-flow hunks, fe rows), so a
   spelling is judged by its /Ob2 and block decisions before its rows (MATCHING_GUIDE 2.8 "Judge by decisions").
   `sdeck.WATCH = ['remove_all', ...]` adds per-callee image/ours counts to the key.
 - `analysis/jseq.py <unit> <src> <addr> [<lo> <hi>]` control-flow token diff (jcc/jmp/call/ret) of one function:
