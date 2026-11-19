@@ -4149,6 +4149,57 @@ Large-function region pass (par-5 2026-11-19)
 - **A lookup whose offset is loaded into a register and pushed is a named
   inline parameter** (`table_text(Mood[get_mood(...)])`), not a local plus
   `StringTable.get` (setup_text 0x456E04).
+Accessors, folded helpers and unit order (par-1 2026-11-19)
+- **Accessor inlines in tests take pass-2 room.** A nested inline the image
+  keeps as a call while ours expands it (or the reverse) is often decided by
+  how the surrounding tests are spelled, not by the nested site. enemies_war
+  0x0055C840: with the treaty tests as raw `PlayersData[a].diplo_treaties[b]
+  & K` reads, `get_noun` expanded inside both `pact_attacks` copies (1 call
+  against the image's 3; 101 rows). With every test written
+  `has_treaty(a, b, K)` the call multiset is the image's and the function is
+  byte-exact with no `#pragma inline_depth` region. When a call multiset is
+  off by a nested inline, respell the function's raw field tests and writes
+  through their header accessors first (`analysis/callees.py` NAMED 0 is the
+  target), before any pragma or budget probe.
+- **A plain function called with a constant can be a whole statement run.**
+  `treaty_off(a, b, DTREATY_WANT_REVENGE)` expanded and folded on the
+  constant is exactly four statements (the two agenda clears and the two
+  treaty clears). A run of adjacent field writes on a faction pair whose
+  constants line up with one helper's switch arm is that helper called with a
+  constant, not hand-written stores (enemies_war, both revenge blocks).
+- **A local copy of a global inside an inline helper shows as a frame slot
+  kept across calls.** `spying` 0x0055BC00 read `ConsoleGlobal.faction_id_`
+  into a local; at its two expansions in enemies_war the copy lived in
+  `[ebp+8]` across `has_project` where the image reloads the global
+  (0x0055CA2A, 0x0055CA7C; 47 rows). The helper reads the global at each
+  use. A slot ours keeps and the image reloads from a global, inside an
+  expanded helper, is a local in the helper's body.
+- **Literal order inside a function gives source arm order.** The unit's
+  literal run follows first textual use. encounter 0x0055E370: GUYMEETSAL
+  before GUYMEETSALNOPSYCH (0x0068E6A4..) means the psych test is written
+  positively with the NOPSYCH message in the else arm, although both arm
+  orders compile to the same code. Unreferenced literals in the run are
+  arguments of expanded inlines that ignore them (`rnd(n, "ENEMIESWAR")`,
+  `rnd(bound, "RANKINGS")`, the six console preference-page labels):
+  `analysis/unitlits.py --who` names the owning function by address order.
+- **Whole-file moves renumber `_$E<n>` thunks.** A static object's dynamic
+  initialiser and atexit thunks are numbered by the front-end counter at the
+  object's definition, so reordering the definitions of a unit changes their
+  names (battlewin.cpp: `_$E12/_$E10` became `_$E14/_$E12`; 0x004219B0 and
+  0x004219D0 read inexact until the symbol facts were rewritten through
+  `match_recovery.source.writer.write_symbols`). After any reorder of a unit
+  with file-scope objects, compare the thunk names. A `#pragma` that closes a
+  region also travels with the chunk that followed it: check that each
+  region still wraps the same functions (veh.cpp name_proto, netwin.cpp
+  exec, tutwin.cpp tour*).
+- **A function inside an `auto_inline(off)` region puts its literals in a
+  trailing .data section.** VC6 compiles such a function at once instead of
+  deferring it, and its literals go to a separate .data section laid after
+  the deferred functions' section, so they leave the unit's literal run
+  (tutwin.cpp tour6/7/5/1; console.cpp chat, ~Console, governor_directives).
+  A region must wrap only the function it is evidence for; literals that are
+  in address order in the image argue against the function being in such a
+  region at all.
 
 ## 4. Measured and neutral (do not retry without new evidence)
 
