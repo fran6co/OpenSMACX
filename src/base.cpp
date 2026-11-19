@@ -21,11 +21,8 @@
 // 5, a one-member struct 16; exact for 38..100), declarations after it (the usual pad place behind the
 // includes, any kind, 0..63) do not. Whole-unit fe sweep of this block: 3..6 structs give base_energy and
 // change no other marker of the unit (MATCHING_GUIDE 2.5 "Declaration position of a referenced global").
-// HEADER-PADS: struct BaseTypePad
-struct BaseTypePad0 { int a; };
-struct BaseTypePad1 { int a; };
-struct BaseTypePad2 { int a; };
-struct BaseTypePad3 { int a; };
+// Re-tuned 2026-11-19 against the sprite.h/popup.h headers (declpad.py padfree, prototypes before the first
+// line): exact at 55..5 and 7..24, so the pad block is empty.
 #define DIALOGS_DTOR_INLINE  // stand-in: see ~Dialogs in dialogs.h
 #include "stdafx.h"
 #include "popup.h"
@@ -285,7 +282,7 @@ int __cdecl base_at(int x, int y) {
     }
     if (!BaseAtErrorGuard) {
         // This base_at diagnostic passes its own format literal to log_say, with x and y as separate values.
-// RECOVERY_LITERAL: v1 0x00689390 0x006893A8 $SG62154 0x004E3A50
+// RECOVERY_LITERAL: v1 0x00689390 0x006893A8 $SG62118 0x004E3A50
         log_say("Base Bits Error  (x, y)", x, y, 0);
     }
     if (!(GameDataStateStorage.fields_.game_state_ & STATE_DEBUG_MODE)) {
@@ -300,7 +297,7 @@ int __cdecl base_at(int x, int y) {
         parse_num(0, x);
         parse_num(1, y);
         // This base_at popup key is a separate literal argument from the diagnostic format string above.
-// RECOVERY_LITERAL: v1 0x006893A8 0x006893B0 $SG62158 0x004E3A50
+// RECOVERY_LITERAL: v1 0x006893A8 0x006893B0 $SG62122 0x004E3A50
         X_pop("BASEBIT", NULL);
     }
     BaseAtErrorGuard = 0;
@@ -8557,7 +8554,7 @@ void __cdecl make_base_unique(int base_id) {
     if (collisions != 0) {
         Bases[base_id].name_string[21] = 0;
         // make_base_unique passes this one-byte delimiter to strcat; collision digits use a separate buffer.
-// RECOVERY_LITERAL: v1 0x00689F08 0x00689F0A $SG65699 0x004F7FE0
+// RECOVERY_LITERAL: v1 0x00689F08 0x00689F0A $SG65663 0x004F7FE0
         strcat(Bases[base_id].name_string, "-");
         char digits[0x50];
         _itoa(collisions + 1, digits, 10);
