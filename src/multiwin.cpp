@@ -319,9 +319,9 @@ void MultiWin::draw_time(RECT *bounds, int draw_type) {
     signed_time = council_time < 0 ? 0 : council_time;
   }
   countdown_ms = static_cast<uint32_t>(signed_time);
-  const int total_seconds = (signed_time + 999) / 1000;
-  minutes = total_seconds / 60;
-  local_c = total_seconds - minutes * 60;
+  local_c = (signed_time + 999) / 1000;
+  minutes = local_c / 60;
+  local_c -= minutes * 60;
 
   if (council != 0) {
     StringTemp[0] = 0;
