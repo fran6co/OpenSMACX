@@ -367,6 +367,9 @@ int __cdecl get_plan(int faction_id, int plan) {
 // are get_plan() expanded by /Ob2; research count, facility order, energy bonus
 // and ai_* field choices restored from the image.
 void __cdecl time_warp() {
+    // [ebp-0x1c] (imgmerge.py, par-6): the image stores the best landing score, the
+    // smallest-base scan index and the best site quality in one home
+    int v_1c;
     int scenario_turn;
     int initial_research;
     int research_adjustment;
@@ -506,7 +509,7 @@ void __cdecl time_warp() {
         GameDataStateStorage.fields_.secret_project_.project_base[project] = base_id;
 
         for (int round = 0; round < expansion_count - 1; ++round) {
-            int best_score = 0;
+            v_1c = 0;
             int best_x;
             int best_y;
             for (base_id = 0; base_id < GameDataStateStorage.fields_.base_current_count_;
@@ -566,15 +569,15 @@ void __cdecl time_warp() {
                         if (region_at(cx, cy) == region) continue;
                         score /= 2;
                     }
-                    if (score > best_score) {
-                        best_score = score;
+                    if (score > v_1c) {
+                        v_1c = score;
                         best_x = cx;
                         best_y = cy;
                     }
                 }
             }
 
-            if (best_score) {
+            if (v_1c) {
                 int new_base_id = base_init(faction_id, best_x, best_y);
                 Bases[new_base_id].population_size =
                     static_cast<int8_t>(expansion_count - round);
@@ -623,11 +626,11 @@ void __cdecl time_warp() {
             } else {
                 int smallest_id = -1;
                 int smallest_pop = 999;
-                for (int i = 0; i < GameDataStateStorage.fields_.base_current_count_; ++i) {
-                    if (Bases[i].faction_id_current == faction_id
-                        && Bases[i].population_size < smallest_pop) {
-                        smallest_pop = Bases[i].population_size;
-                        smallest_id = i;
+                for (v_1c = 0; v_1c < GameDataStateStorage.fields_.base_current_count_; ++v_1c) {
+                    if (Bases[v_1c].faction_id_current == faction_id
+                        && Bases[v_1c].population_size < smallest_pop) {
+                        smallest_pop = Bases[v_1c].population_size;
+                        smallest_id = v_1c;
                     }
                 }
                 if (smallest_id >= 0) {
@@ -719,7 +722,7 @@ void __cdecl time_warp() {
                     continue;
             } else if (Chassis[VehPrototypes[Vehs[veh_id].proto_id].chassis_id].triad != TRIAD_LAND)
                 continue;
-            int best_quality = 0;
+            v_1c = 0;
             for (int dir = 0; dir < 8; ++dir) {
                 int tx = wrap_map_x(VehMoveDeltaX[dir] + Vehs[veh_id].x);
                 int ty = VehMoveDeltaY[dir] + Vehs[veh_id].y;
@@ -734,8 +737,8 @@ void __cdecl time_warp() {
                 if (rocky == 0x40 && (map_loc(tx, ty)->climate & 0x18)
                     && max(0, alt_at(tx, ty) - 2))
                     quality += 2;
-                if (quality > best_quality) {
-                    best_quality = quality;
+                if (quality > v_1c) {
+                    v_1c = quality;
                     veh_drop(veh_lift(veh_id), tx, ty);
                 }
             }
