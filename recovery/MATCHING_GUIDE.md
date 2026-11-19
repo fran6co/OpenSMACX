@@ -3886,7 +3886,26 @@ result over 64 symbol-counter pads, so none of these is a counter canary.
   literal sites): two exact, Buffer::draw_pie 101 -> 34 (the zero `dx` of one
   `offset_rect`: `thickness` moves from its parameter slot to ebx), farm_click
   54 -> 45 (any of the `range(.., 1, 99)` bounds), boom 127 -> 114
-  (`tile_in_view(x, y, 0)`), nothing else.
+  (`tile_in_view(x, y, 0)`), nothing else. Decided from the image
+  (2026-11-19): farm_click and boom are kept (the rows that move are folds
+  the image does not have, 0x40A60A..0x40A629 and the rectangle sums at
+  0x504FDE / 0x5051CD / 0x5052C3; a dead local and a local passed to an
+  out-of-line call are neutral controls; boom's is the only one of 14 sites
+  that moves them); PullDown::on_redraw 24 -> 22 is rejected (only the load
+  order of the two paddings shifts, the window stays wrong and the image
+  holds no zero). Above 250 rows (42 of the 54 functions, 1,060 sites): no
+  site hit. What moves there moves for EVERY site of the function by the
+  same amount (base_build -4 at 113 of 113 sites, order_veh -3 at 87 of
+  103, give_hints -5 at 6 of 6, draw_expenses -1), and a dead local gives
+  the same result (give_hints: one dead local -5, two 0): that is the
+  frame-symbol count (`locpad.py`), not this lever. Always run a dead-local
+  control before reading a sitek hit in a large function.
+  The inverse screen (`analysis/foldk.py`: each plain single-assignment
+  literal local of a non-exact body replaced by its literal) finds six such
+  locals tree-wide and every fold is worse (farm_click 45 -> 54, boom 114 ->
+  129, draw_pie 34 -> 101, shoot 46 -> 175, shoot_it 95 -> 180,
+  SocialWin::init 319 -> 335): no site where ours names a value the image
+  folded.
 - **A struct copied from an accessor that returns a reference**
   (MapWin::draw_base_names 0x00467DE0): `RECT saved = current_clip();` and
   `const RECT &clip = current_clip(); RECT saved = clip;` differ in the order
@@ -5337,6 +5356,76 @@ Prologue saves and return tails (par-5 2026-11-19; `analysis/prosave.py`,
     `offset`/`mask` into the homes of facility_id and base_id. Seven
     spellings of the statement, eight of the guard and four of the Ascent
     arm leave the 8 rows.
+Block order: which arm is in line, which is moved after the `ret` (par-2
+2026-11-19; `analysis/probes/blockorder/run.py`, 70 one-function probes whose
+skeleton keeps only branches, `ret` and numbered `use(K)` markers)
+- **Source arm order is emitted order.** `if (c) A else B` emits A, then B
+  (`je B`); negating the test and swapping the arms swaps the emitted blocks
+  (ie, ie_neg). An arm that ends in `return` does not move: `if (c) { A;
+  return 0; } rest` keeps A in line behind a `jncc` over it, with its own
+  epilogue copy (ie_ret_then = ie_ret_noelse, same code with or without
+  `else`). So an in-line arm that the image jumps over is the *then* arm of
+  the test as written; fix the test's sense, not the layout.
+- **A `goto` to a join copies the join.** `if (c) { A; goto done; } B; done:
+  C; return` gives `A C ret | B C ret` (ie_goto), the same code as the
+  if/else whose arms each end the function (ie_last). A labelled block
+  placed after the function and entered by `goto` (`if (c) goto away; ...
+  away: A; goto back;`) is pulled back in line as the then arm (if_goto_far
+  = ie): label position is not a layout lever for a small arm.
+- **Inside a loop only an arm that leaves the loop is moved out of line.**
+  `if (c) break;` and `if (c) continue;` are plain branches (lp_break; lp_cont
+  = the wrapped `if (!c) { body }`, lp_wrap). An arm with a body that ends in
+  `break` or `return` is emitted AFTER the function's `ret`, and the code
+  after the loop is duplicated: the normal exit falls into one copy, the
+  moved arm falls into the other (lp_brk_body `je X | body | jl loop | tail
+  ret | X: arm | tail ret`; lp_ret_body, lp_ret, lp_while). In a `do { }
+  while` the same arm sits directly behind the loop and the normal exit
+  jumps over it (lp_do). An arm that ends in `continue` stays in line with a
+  `jmp` to the step, identical to the if/else (lp_cont_body = lp_ie). So an
+  out-of-line block behind the `ret` that falls into a second copy of the
+  post-loop code is `{ ...; break; }`; the same block in line with a `jmp`
+  to the step is `continue` or an else arm.
+- **Switch against if-chain.** An if-chain tests and emits each body in
+  source order (`jne next | body | jmp end`, chain; with returns `jne next |
+  body ret`, chain_ret). A `switch` emits all compares first (`je c1 | je c2
+  | je c3`), then the default or the code after the switch, then the case
+  bodies in REVERSE source order (sw, sw_ret, sw_sparse). Bodies in reverse
+  order behind a compare cluster are a switch; bodies in test order are an
+  if-chain. (Cases ending in `return` each keep their epilogue copy.)
+- **Early returns: copy or branch.** With a final statement `return K1`, an
+  early `if (c) return K1;` is a conditional branch to the final block,
+  while `if (c) return K0;` (another value) gets its own epilogue copy in
+  line behind `jncc over` (ret2, reg0; with one saved register or three and
+  a frame). When the final statement returns K0 too, every early `return K0`
+  branches to one shared block, which sits at the first guard that cannot be
+  inverted (reg0_end0), and wrapping the body in `if (a) { ... } return 0;`
+  is the same code (end0_wrap, last0_neg). `if (a || b) return 0;` at the
+  head puts its one `return 0` block after the function (ret2_or): an
+  `||` guard is the only head guard whose return leaves the line. An `&&`
+  guard whose last test is threaded past the next statements (`jg` beyond
+  the following tests that the first operand already decides) can never be
+  inverted, so its copy always stays (facility_avail 0x005BA0E0 second
+  guard, `jg 0x5BA13D`).
+- **Open: when identical epilogue copies are merged in a large function**
+  (facility_avail, 16 `ret` in the image, 15 in ours; hand-over to the
+  return-tail work). There every invertible `jncc over | copy` is turned into
+  `jcc shared`, the non-invertible ones keep their copy, and the image keeps
+  one more copy than ours: the first guard `if (!facility_id) return false;`
+  (`jne +9 | copy` at 0x5BA0EC, where ours has `je` to the last block). What
+  was measured on our source: (1) no spelling of that guard changes it
+  (`== 0`, `return 0`, `return facility_id`, `else`, a named local, the
+  guard doubled); (2) the merging is all-or-nothing per function and not
+  monotonic in size: cutting statements off the END of the function gives
+  merged (full, and minus the last statement), then 26..15 separate copies
+  for the next nine cuts, then merged again; the three-statement head alone
+  gives separate copies, as do all the probes; (3) appending guards after
+  the last statement leaves the outer `return false` guards (33-34 branches)
+  on the copy of the last *original* statement, moves the eight branches
+  that come out of has_fac / has_project expansions to the new last block,
+  and gives the appended guards own copies, although all these tails are
+  byte-identical. So the merge is not driven by the tail's bytes, by the
+  register holding the tested value (ebx, esi and edi variants on both
+  sides) or by distance. Unit pads do not move the function (census above).
 
 ## 4. Measured and neutral (do not retry without new evidence)
 
