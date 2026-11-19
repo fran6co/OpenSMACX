@@ -151,7 +151,7 @@ void AlphaSave::init() {
     file_win_.edit_box_.field_B28_ = TextColourTable[8];
     file_win_.edit_box_.field_B2C_ = TextColourTable[8];
     file_win_.edit_box_.field_B20_ = TextColourTable[6];
-    file_win_.edit_box_.field_B24_ = TextColourTable[8];
+    file_win_.edit_box_.set_field_B24(TextColourTable[8]);
     file_win_.edit_box_.on_dialog_focus(1);
     file_win_.edit_box_.redraw();
 

@@ -68,6 +68,14 @@ class EditBox : public GraphicWin {
   int init_with_font(Font *font, int x, int y, int width, Win *parent,
                      int unused);
   void add_window_flags(uint32_t flags) { iFlags_ |= flags; }
+  // WORKAROUND(decl): names are ours (the fields are unnamed). Dialogs set these through
+  // one-value setters: the parameter is a named value and the store is scheduled before the next
+  // call's pushes (MATCHING_GUIDE 3.6, "A member setter's parameter schedules the store early"):
+  // AlphaSave::init 0x0040786B (B24), NetWin::exec 0x00482490 (B1C, B20, B24), DiploWin::exec
+  // 0x00444720 (B20). EditGroup::attach 0x00611AF0 measures the same with either spelling.
+  void set_field_B1C(uint32_t value) { field_B1C_ = value; }
+  void set_field_B20(uint32_t value) { field_B20_ = value; }
+  void set_field_B24(uint32_t value) { field_B24_ = value; }
 
   // 0x006151E0, a pending_bodies forwarder; EditGroup calls it directly.
   void set_text(char *text);

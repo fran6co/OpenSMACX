@@ -3057,11 +3057,11 @@ int NetWin::exec() {
     // Existing EditBox members preserve the native field stores; window
     // flags belong to its actual Win base, not the separate CheckBox.
     editBox_.add_window_flags(0x01000100);
-    editBox_.field_B1C_ = 9;
+    editBox_.set_field_B1C(9);
     editBox_.field_B30_ = 0;
     editBox_.Buffer::set_text_color(0xE1, -1, 1, 1);
-    editBox_.field_B20_ = 0x41;
-    editBox_.field_B24_ = 0xE1;
+    editBox_.set_field_B20(0x41);
+    editBox_.set_field_B24(0xE1);
     editBox_.field_B14_ = 0x80;
     editBox_.show(0);
 

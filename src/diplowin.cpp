@@ -1816,7 +1816,7 @@ void DiploWin::exec(int faction_id, int faction_id_with) {
   Buffer &edit_canvas = static_cast<Buffer &>(editBox_);
   edit_canvas.set_text_color(ChatItemIdTable[faction_id_],
                              ChatShadowColors[faction_id_], 1, 1);
-  editBox_.field_B20_ = 0x41;
+  editBox_.set_field_B20(0x41);
   editBox_.field_B24_ = ChatItemIdTable[faction_id_];
   editBox_.field_B14_ = 0x80;
 
