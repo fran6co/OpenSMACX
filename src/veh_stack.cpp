@@ -1274,8 +1274,11 @@ int __cdecl stack_veh(int veh_id, int mode) {
     }
     if (!veh_cargo(veh_id) && !has_abil(Vehs[veh_id].proto_id, ABL_CARRIER)) {
         // Neither a transport nor a carrier: nothing can be stacked onto it.
+        // The lift is written out here and reached by goto from the base
+        // case below: the written-out copy (cross-jumped into the shared
+        // tail) is what ranks veh_id as the image does (MATCHING_GUIDE 2.7).
         if (mode) {
-            goto lift;
+            return veh_drop(veh_lift(veh_id), -2, -2);
         }
         return 0;
     }
