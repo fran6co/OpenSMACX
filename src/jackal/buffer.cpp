@@ -738,7 +738,7 @@ void Buffer::line(int x1, int y1, int x2, int y2, int first_color,
             error = 2 * dy - dx;
             along = dy << 1;
             diagonal = (dy - dx) << 1;
-            while (clip.left > x1 || y1 >= clip.bottom) {
+            while (x1 < clip.left || y1 >= clip.bottom) {
                 if (error <= 0) {
                     error += along;
                 } else {
