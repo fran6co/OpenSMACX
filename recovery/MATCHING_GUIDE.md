@@ -6945,6 +6945,51 @@ skeleton keeps only branches, `ret` and numbered `use(K)` markers)
   register holding the tested value (ebx, esi and edi variants on both
   sides) or by distance. Unit pads do not move the function (census above).
 
+Finish-line round (par-1 2026-11-19, round 14):
+- **A `goto` into a shared case tail is one copy at allocation; the original
+  wrote the tail out** (high; ProdPicker::on_right_click 0x00493EA0, exact).
+  The obsolete case ended `goto refresh;` into the loop case's `calculate();
+  redraw(); break;`. The image cross-jumps that tail too (0x494112 jumps into
+  the refresh block), but cross-jumping runs after allocation: the written-out
+  copy's scratch loads were allocated and rotate the cursor (S1), so the next
+  case's vtable load sits in edx (0x494114) where ours had eax, and that case
+  no longer merges into the last case's identical call. When an image keeps
+  a call ours cross-jumped and the scratch phase differs only after a block
+  that ends in a `goto` to a shared tail, write the tail out at the goto
+  site. armwo (t) and gotowo cover tails ending in `return`; tails ending in
+  `break` inside a switch are not in either (base_editor's refresh_population,
+  netdaemon's move_veh_ack/next_found and base_build's L_4fef0c are the other
+  sites in non-exact functions; base_editor's moves the wrong way).
+- **The named-sum `lea` order (planet_busting rule) also closed world_site
+  0x005C4FD0**: `const int column = x + RadiusOffsetX[i]; wrap_map_x(column)`
+  in the inner ring gives the image's `lea esi,[ecx+eax]` (0x5C50F7); the
+  outer ring stays anonymous. Neutral elsewhere: CouncWin::draw_leader's two
+  `lea` (`rank = preceding + rankBase + 1`: six orders, groupings, `rankBase
+  + 1` folded, an unnamed rankBase, a non-const one), SpriteBox::draw_item's
+  `lea ecx,[edx+ebx+4]` (`field_54_ + x + 4`: seven orders and two named
+  forms) and CouncWin::set_vote's `lea ecx,[ebx+0x4610]` against ours `add
+  ebx,0x4610; mov ecx,ebx` (`buttons_[5].show(0)` as a reference, a pointer,
+  `buttons_ + 5`, an early return, a function-scope counter).
+- **BaseWin::base_editor 0x0041C7A0's fifteen label sites are all written
+  out in the image** (every Labels load/index pair follows the S1 cursor:
+  ecx/edx, eax/ecx, edx/eax ... from 0xD40 to 0xE18). Our six label_get
+  sites are budget stand-ins: writing them out fixes the label region but
+  the freed /Ob2 budget expands two later teardowns that the image calls
+  (24 -> about 60 rows). The open question is the original's spend, a 2.8
+  budget problem, not an S7 choice; the best pair of flips is 18 rows.
+- **BaseWin::init 0x0041E8D0's last slot tie is packing order** (12 rows).
+  Image: [ebp-0x10] = window_height + the sprite-run pointer, [ebp-0x14] =
+  load_inverts' inlined `dest` + the camera's `yy` + the strength-reduced
+  loop counter. Ours packs dest and yy with the sprite pointer and
+  window_height with the counter. Neutral: all 720 orders of the six
+  function-scope declarations, the clamp of window_height as a ternary,
+  `<=`, a self clamp, no `available`; left/top named or inline in the
+  GraphicWin::init call; x/yy/z declared together or as self-negations
+  (StatusWin's spelling gives 113); declaration order inside load_inverts;
+  the sprite loops indexed instead of walked (92-112: y then takes the
+  pointer's slot). The remaining push/store schedule at 0x41F3C2 is neutral
+  to all 24 orders of the camera-angle stores and four pointer/cast forms.
+
 ## 4. Measured and neutral (do not retry without new evidence)
 
 ### 4.0 Rung-ladder census: the work list (2026-11-19, `analysis/rungs.py`)
