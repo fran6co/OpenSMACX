@@ -15,6 +15,7 @@
  * You should have received a copy of the GNU General Public License
  * along with OpenSMACX. If not, see <http://www.gnu.org/licenses/>.
  */
+
 // ORIGINAL: 0x00428E60 ??_GCredits@@UAEPAXI@Z 0x00428E60-0x00428E81 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["historical deleting-thunk source src/deleting_thunks.cpp; original full spans retained: 0x00428E60-0x00428E81", "Pinned class constructor ??0Credits@@QAE@XZ at 0x00428780 stores original class/view table VA 0x66ac58 at 0x00428800 (mov dword ptr [esi], 0x66ac58); the current genuine owner vftable ??_7Credits@@6BWin@@@ selects generated ??_GCredits@@UAEPAXI@Z in slot 0 (+0x0) through weak entry ??_ECredits@@UAEPAXI@Z (mode 2).", "Pinned ??_GCredits@@UAEPAXI@Z at 0x00428E60 calls the source-mapped ??1Credits@@QAE@XZ at 0x00428E90, then tests byte ptr [ebp + 8], 1; je 0x428e7a bypasses scalar delete when bit 0 is clear, while bit 0 set calls 0x0064557F; it save original this; call destructor; delete only when flags bit 0 is set; return saved this with ret 4.", "The real class lifetime is owned by src/credits.cpp; its compiler-emitted deleting symbol and vftable slot carry this original identity. Hand-written adapter bodies with live adjustor callers remain until those callers are independently qualified and transferred. The linked weak/COMDAT copy is not used to choose source ownership.", "the source writer preserves the historical mapping's exactness state (historical exactness obligation retained); current compiler extent is not asserted equal to the original span"], "reason": "Bind the original Credits scalar deleting-destructor identity to the actual compiler-emitted class deleting destructor in its genuine owner translation unit. The original constructor's pinned vptr store and the current owner's physical table slot identify this class/view; no callback/thunk body is hand-authored here."}
 // symbol    ??_GCredits@@UAEPAXI@Z
@@ -50,14 +51,6 @@ Credits::Credits() {
   }
   line_count_ = 0;
   frame_count_ = 0;
-}
-
-// ORIGINAL: 0x00428E90 ??1Credits@@QAE@XZ 0x00428E90-0x00428F72;0x00653170-0x006531D0 FILE BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["retired seed git:2911e1d2:src/recovered/units/00428e90.cpp records close followed by reverse member/base teardown", "The class declares the original typed owned subobjects"], "reason": "Let VC6 destroy the real C++ members and base after the image's explicit close phase."}
-// symbol    ??1Credits@@UAE@XZ
-// GraphicWin's inherited virtual destructor makes this destructor virtual.
-Credits::~Credits() {
-  close();
 }
 
 // Credits' list is populated with owned C-heap strings by load(); unload()
@@ -163,24 +156,6 @@ void Credits::exec() {
   close();
 }
 
-// The timer entry points and renderer are expressed through the Credits
-// members and embedded GraphicWin/Buffer rather than seed pointer arithmetic.
-// ORIGINAL: 0x00428DC0 ?timer_callback_daemon@Credits@@QAEXXZ 0x00428DC0-0x00428DCB BYTE_EXACT
-void Credits::timer_callback_daemon() {
-  ++frame_count_;
-  draw_credits();
-}
-
-// ORIGINAL: 0x00428DD0 ?timer_callback_daemon@Credits@@QAAXH@Z 0x00428DD0-0x00428DE7 BYTE_EXACT
-// symbol    ?timer_callback_daemon@Credits@@SAXH@Z
-void __cdecl Credits::timer_callback_daemon(int a1) {
-  Credits *credits = reinterpret_cast<Credits *>(a1);
-  if (credits != 0) {
-    ++credits->frame_count_;
-    credits->draw_credits();
-  }
-}
-
 // ORIGINAL: 0x00428C00 ?draw_credits@Credits@@QAEXXZ 0x00428C00-0x00428D5C BYTE_EXACT
 void Credits::draw_credits() {
   graphicWin2_.fill(9);
@@ -217,6 +192,69 @@ void Credits::draw_credits() {
     x += 2;
   }
   graphicWin2_.on_update();
+}
+
+// ===== MANAGED GLOBALS - real objects, homed to their domain =====
+// In the shipped image these live at fixed data addresses and are
+// constructed before WinMain by the CRT's dynamic-initializer walk
+// (winedbg-confirmed: walker return 0x00644EEB, table at 0x682568..).
+// Here the same recovered constructors run through this build's own
+// startup, and the matching destructors close them at exit. Addresses of
+// the ones documented individually live beside their definitions.
+// Pinned init 0x00428750 and registered fini 0x00428770 load this same
+// Wave receiver; start identity only, not complete bounds or startup order.
+// RECOVERY_OBJECT: v1 0x00703E30 ?g_CREDITS_WAVE@@3VWave@@A
+Wave g_CREDITS_WAVE;  // 0x00703E30
+// ===== MANAGED GLOBALS - real objects, homed to their domain =====
+// In the shipped image these live at fixed data addresses and are
+// constructed before WinMain by the CRT's dynamic-initializer walk
+// (winedbg-confirmed: walker return 0x00644EEB, table at 0x682568..).
+// Here the same recovered constructors run through this build's own
+// startup, and the matching destructors close them at exit.
+
+/*
+Purpose: ?on_key_click@Credits@@QAEXHH@Z - dispatch to slot 0xe8 of this object's OWN
+         vtable with NO arguments: the original pushes nothing between the
+         vtable load and the call, so the parameters this function declares are
+         discarded and only the `ret` cleans them up.
+// ORIGINAL: 0x00428D60 ?on_key_click@Credits@@QAEXHH@Z 0x00428D60-0x00428D70 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["pinned original own table 0x0066AC58, pointer word at +0x64, identifies original entry 0x00428D60", "source:src/win.h inherited virtual interface; actual emitted method ?on_key_click@Credits@@UAEHHH@Z in primary Win table ??_7Credits@@6BWin@@@"], "reason": "The original own Win table binds this entry as virtual slot 25. Use genuine member dispatch, not an opaque redirect; retain the catalogued original spelling as historical evidence. The catalogued void prototype conflicts with Win slot 25 and the original EAX=1 return; the source therefore uses int."}
+// symbol    ?on_key_click@Credits@@UAEHHH@Z
+// size      16 bytes
+// prototype void (__thiscall ?on_key_click@Credits@@QAEXHH@Z)(Credits* this, int, int)
+// callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+// indirect  0x00428D62
+Return Value: 0x1, a constant
+Status: Complete
+*/
+int Credits::on_key_click(int, int) {
+  release_modal();
+  return 1;
+}
+
+/*
+Purpose: ?on_left_click@Credits@@QAEXHH@Z - dispatch to slot 0xe8 of this object's OWN
+         vtable with NO arguments: the original pushes nothing between the
+         vtable load and the call, so the parameters this function declares are
+         discarded and only the `ret` cleans them up.
+// ORIGINAL: 0x00428D70 ?on_left_click@Credits@@QAEXHH@Z 0x00428D70-0x00428D7B BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["pinned original own table 0x0066AC58, pointer word at +0x4C, identifies original entry 0x00428D70", "Prior native snapshot: ?on_left_click_event@Credits@@UAEXHH@Z was emitted for this slot before the source rename. The candidate now names the same Win slot-19 override on_left_click; its current emitted symbol still requires fresh COFF observation."], "reason": "The original own Win table binds this entry as virtual slot 19. Use genuine member dispatch, not an opaque redirect; retain the catalogued original spelling as historical evidence."}
+// symbol    ?on_left_click@Credits@@UAEXHH@Z
+// size      11 bytes
+// prototype void (__thiscall ?on_left_click@Credits@@QAEXHH@Z)(Credits* this, int, int)
+// callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+// indirect  0x00428D72
+Return Value: n/a
+Status: Complete
+*/
+void Credits::on_left_click(int, int) {
+  release_modal();
 }
 
 /*
@@ -291,72 +329,23 @@ Status: Complete
 void Credits::on_button_clicked(int) {
 }
 
-// ===== MANAGED GLOBALS - real objects, homed to their domain =====
-// In the shipped image these live at fixed data addresses and are
-// constructed before WinMain by the CRT's dynamic-initializer walk
-// (winedbg-confirmed: walker return 0x00644EEB, table at 0x682568..).
-// Here the same recovered constructors run through this build's own
-// startup, and the matching destructors close them at exit. Addresses of
-// the ones documented individually live beside their definitions.
-// Pinned init 0x00428750 and registered fini 0x00428770 load this same
-// Wave receiver; start identity only, not complete bounds or startup order.
-// RECOVERY_OBJECT: v1 0x00703E30 ?g_CREDITS_WAVE@@3VWave@@A
-Wave g_CREDITS_WAVE;  // 0x00703E30
-// ===== MANAGED GLOBALS - real objects, homed to their domain =====
-// In the shipped image these live at fixed data addresses and are
-// constructed before WinMain by the CRT's dynamic-initializer walk
-// (winedbg-confirmed: walker return 0x00644EEB, table at 0x682568..).
-// Here the same recovered constructors run through this build's own
-// startup, and the matching destructors close them at exit.
-
-/*
-Purpose: ?on_key_click@Credits@@QAEXHH@Z - dispatch to slot 0xe8 of this object's OWN
-         vtable with NO arguments: the original pushes nothing between the
-         vtable load and the call, so the parameters this function declares are
-         discarded and only the `ret` cleans them up.
-// ORIGINAL: 0x00428D60 ?on_key_click@Credits@@QAEXHH@Z 0x00428D60-0x00428D70 BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["pinned original own table 0x0066AC58, pointer word at +0x64, identifies original entry 0x00428D60", "source:src/win.h inherited virtual interface; actual emitted method ?on_key_click@Credits@@UAEHHH@Z in primary Win table ??_7Credits@@6BWin@@@"], "reason": "The original own Win table binds this entry as virtual slot 25. Use genuine member dispatch, not an opaque redirect; retain the catalogued original spelling as historical evidence. The catalogued void prototype conflicts with Win slot 25 and the original EAX=1 return; the source therefore uses int."}
-// symbol    ?on_key_click@Credits@@UAEHHH@Z
-// size      16 bytes
-// prototype void (__thiscall ?on_key_click@Credits@@QAEXHH@Z)(Credits* this, int, int)
-// callers   0   call targets   0
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     (none)
-// indirect  0x00428D62
-Return Value: 0x1, a constant
-Status: Complete
-*/
-int Credits::on_key_click(int, int) {
-  release_modal();
-  return 1;
+// The timer entry points and renderer are expressed through the Credits
+// members and embedded GraphicWin/Buffer rather than seed pointer arithmetic.
+// ORIGINAL: 0x00428DC0 ?timer_callback_daemon@Credits@@QAEXXZ 0x00428DC0-0x00428DCB BYTE_EXACT
+void Credits::timer_callback_daemon() {
+  ++frame_count_;
+  draw_credits();
 }
 
-/*
-Purpose: ?on_left_click@Credits@@QAEXHH@Z - dispatch to slot 0xe8 of this object's OWN
-         vtable with NO arguments: the original pushes nothing between the
-         vtable load and the call, so the parameters this function declares are
-         discarded and only the `ret` cleans them up.
-// ORIGINAL: 0x00428D70 ?on_left_click@Credits@@QAEXHH@Z 0x00428D70-0x00428D7B BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["pinned original own table 0x0066AC58, pointer word at +0x4C, identifies original entry 0x00428D70", "Prior native snapshot: ?on_left_click_event@Credits@@UAEXHH@Z was emitted for this slot before the source rename. The candidate now names the same Win slot-19 override on_left_click; its current emitted symbol still requires fresh COFF observation."], "reason": "The original own Win table binds this entry as virtual slot 19. Use genuine member dispatch, not an opaque redirect; retain the catalogued original spelling as historical evidence."}
-// symbol    ?on_left_click@Credits@@UAEXHH@Z
-// size      11 bytes
-// prototype void (__thiscall ?on_left_click@Credits@@QAEXHH@Z)(Credits* this, int, int)
-// callers   0   call targets   0
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     (none)
-// indirect  0x00428D72
-Return Value: n/a
-Status: Complete
-*/
-void Credits::on_left_click(int, int) {
-  release_modal();
+// ORIGINAL: 0x00428DD0 ?timer_callback_daemon@Credits@@QAAXH@Z 0x00428DD0-0x00428DE7 BYTE_EXACT
+// symbol    ?timer_callback_daemon@Credits@@SAXH@Z
+void __cdecl Credits::timer_callback_daemon(int a1) {
+  Credits *credits = reinterpret_cast<Credits *>(a1);
+  if (credits != 0) {
+    ++credits->frame_count_;
+    credits->draw_credits();
+  }
 }
-// ORIGINAL: 0x00428F80 ??_GCredits@@WEEE@AEPAXI@Z 0x00428F80-0x00428F8B FILE BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["Pinned terranx_original.exe SHA-256 01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf.", "Pinned vftable slot 0: 0x0066AC50 -> 0x00428F80.", "the Credits constructor stores secondary Buffer table 0x0066AC50 at object+0x444", "The original 11-byte adjustor corrects the earlier mistaken `??3Credits@@SAXPAXI@Z` interpretation: it subtracts 0x444 from ECX and tail-transfers to primary scalar-deleting entry 0x00428E60; the corrected `WEEE` signature describes the compiler's adjusting-deleting entry.", "The historical disassembly note records that the primary path returns with ret 4, tests deletion flag bit 0, and invokes scalar operator delete only when that bit is set.", "The historical demangling note identifies adjustment 1092, equal to 0x444; the adjustor does not otherwise access the stack or change the receiver view.", "Source owner: src/credits.cpp; generated entry name is compiler-observed as ??_ECredits@@WEEE@AEPAXI@Z."], "reason": "Retain the original Credits secondary-Buffer deleting-adjustor identity as a compiler-generated entry owned by the real Credits destructor and GraphicWin hierarchy. The pinned secondary view at 0x0066AC50, slot 0, targets 0x00428F80; this entry adjusts the Buffer receiver by 0x444 and reaches the primary scalar-deleting destructor, whose original path tests flag bit 0 before releasing storage. The current compiler-emitted symbol is recorded from the retained owner COFF, not handwritten."}
-// symbol    ??_ECredits@@WEEE@AEPAXI@Z
-// kind      game
 
 /*
 Purpose: Start the credit roll: construct the 0x2D6C Credits object, run
@@ -381,5 +370,19 @@ void __cdecl show_credits() {
     credits->exec();
     delete credits;
 }
+
+// ORIGINAL: 0x00428E90 ??1Credits@@QAE@XZ 0x00428E90-0x00428F72;0x00653170-0x006531D0 FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["retired seed git:2911e1d2:src/recovered/units/00428e90.cpp records close followed by reverse member/base teardown", "The class declares the original typed owned subobjects"], "reason": "Let VC6 destroy the real C++ members and base after the image's explicit close phase."}
+// symbol    ??1Credits@@UAE@XZ
+// GraphicWin's inherited virtual destructor makes this destructor virtual.
+Credits::~Credits() {
+  close();
+}
+
+// ORIGINAL: 0x00428F80 ??_GCredits@@WEEE@AEPAXI@Z 0x00428F80-0x00428F8B FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned terranx_original.exe SHA-256 01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf.", "Pinned vftable slot 0: 0x0066AC50 -> 0x00428F80.", "the Credits constructor stores secondary Buffer table 0x0066AC50 at object+0x444", "The original 11-byte adjustor corrects the earlier mistaken `??3Credits@@SAXPAXI@Z` interpretation: it subtracts 0x444 from ECX and tail-transfers to primary scalar-deleting entry 0x00428E60; the corrected `WEEE` signature describes the compiler's adjusting-deleting entry.", "The historical disassembly note records that the primary path returns with ret 4, tests deletion flag bit 0, and invokes scalar operator delete only when that bit is set.", "The historical demangling note identifies adjustment 1092, equal to 0x444; the adjustor does not otherwise access the stack or change the receiver view.", "Source owner: src/credits.cpp; generated entry name is compiler-observed as ??_ECredits@@WEEE@AEPAXI@Z."], "reason": "Retain the original Credits secondary-Buffer deleting-adjustor identity as a compiler-generated entry owned by the real Credits destructor and GraphicWin hierarchy. The pinned secondary view at 0x0066AC50, slot 0, targets 0x00428F80; this entry adjusts the Buffer receiver by 0x444 and reaches the primary scalar-deleting destructor, whose original path tests flag bit 0 before releasing storage. The current compiler-emitted symbol is recorded from the retained owner COFF, not handwritten."}
+// symbol    ??_ECredits@@WEEE@AEPAXI@Z
+// kind      game
+
 // RECOVERY_GENERATED: v1 vtable 0x0066AC58 ? ??_7Credits@@6BWin@@@ 0x00428E90
 // RECOVERY_GENERATED: v1 vtable 0x0066AC50 ? ??_7Credits@@6BBuffer@@@ 0x00428E90
