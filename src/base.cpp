@@ -6404,12 +6404,11 @@ production_again:
         } else {
             int queued = base_queue(BaseIDCurrentSelected);
             parse_says(1, VehPrototypes[proto_id].veh_name, -1, -1);
-            uint32_t warnings = GameDataStateStorage.fields_.game_warnings_;
             int popup_flags;
             if ((!queued && !(BaseCurrent->governor & GOV_MANAGES_PRODUCTION
                               && BaseCurrent->governor & GOV_ACTIVE))
-                || (new_proto && warnings & 4) || warnings & 0x2000) {
-                if (new_proto && warnings & 4) {
+                || (new_proto && GameDataStateStorage.fields_.game_warnings_ & 4) || GameDataStateStorage.fields_.game_warnings_ & 0x2000) {
+                if (new_proto && GameDataStateStorage.fields_.game_warnings_ & 4) {
                     parse_num(0, cost_factor(BaseCurrent->faction_id_current,
                                              RSC_MINERALS, -1)
                                  * veh_cost(proto_id, BaseIDCurrentSelected, 0));
@@ -7712,10 +7711,9 @@ void __cdecl drone_riot() {
     }
     owner_set(x, y, target);
     base_compute(1);
-    int console_faction = ConsoleGlobal.faction_id_;
-    if (faction_id == console_faction || target == console_faction
-        || Bases[BaseIDCurrentSelected].faction_id_current == console_faction
-        || Bases[BaseIDCurrentSelected].visibility & (1 << console_faction)) {
+    if (faction_id == ConsoleGlobal.faction_id_ || target == ConsoleGlobal.faction_id_
+        || Bases[BaseIDCurrentSelected].faction_id_current == ConsoleGlobal.faction_id_
+        || Bases[BaseIDCurrentSelected].visibility & (1 << ConsoleGlobal.faction_id_)) {
         MapWinTable[0]->set_center(x, y, 1);
         draw_map(1);
         parse_says(0, BaseCurrent->name_string, -1, -1);
