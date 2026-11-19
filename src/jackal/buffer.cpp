@@ -10462,7 +10462,7 @@ int Buffer::write_strings_height(StringList *strings, int width, int flags) {
         total_height = text_line_height();
         wrap_height_flying(nullptr, width);
     } else if (payload == 2) {
-        total_height = wrap_height(strings->current_text(), width);
+        total_height += wrap_height(strings->current_text(), width);
         wrap_height_flying(nullptr, width);
     } else {
         wrap_height_flying(strings->current_text(), width);
