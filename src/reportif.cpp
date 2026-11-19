@@ -6211,9 +6211,11 @@ void ReportIf::draw_labs() {
         levels[MaxTechnologyNum] = 999999;
         for (int iteration = 0; iteration < MaxTechnologyNum; ++iteration) {
             int best = MaxTechnologyNum;
-            for (int candidate = 0; candidate < MaxTechnologyNum; ++candidate) {
-                if (levels[candidate] && levels[candidate] < levels[best]) {
-                    best = candidate;
+            // The scan reuses the function-scope index: one named local fewer gives the inset block
+            // its `right - inset - left` order (0x004A760A; locals mod 8, see draw_intel).
+            for (tech = 0; tech < MaxTechnologyNum; ++tech) {
+                if (levels[tech] && levels[tech] < levels[best]) {
+                    best = tech;
                 }
             }
             if (best < MaxTechnologyNum) {
