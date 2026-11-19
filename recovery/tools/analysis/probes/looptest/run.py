@@ -78,6 +78,27 @@ V = {
  'for_g_cont':  'int i; for (i = 0; i < g; i++) { if (ga[i]) continue; use(i); } return 1;',
  'for_gwrite':  'int i; for (i = 0; i < g; i++) { g2 = i; use(i); } return 1;',
  'for_first':   'int i; for (i = 0; i < g; i++) { use(i); } for (i = 0; i < g; i++) { use(i + 1); } return 1;',
+ # a re-test after a do-while with break (drone_riot 0x004F4FB0): which block follows the latch
+ 'rt_do':      'int i = 0; do { use(1); if (ga[i]) break; } while (++i <= a); if (i <= a) { use(2); return 0; } use(3); return 1;',
+ 'rt_do_v':    'int i = 0; do { use(1); if (ga[i]) break; } while (++i <= a); if (i <= a) { use(2); return; } if (b) return; use(3); use(4);',
+ 'rt_do_rv':   'int i = 0; do { use(1); if (ga[i]) break; } while (++i <= a); if (i > a) { if (b) return; use(3); use(4); return; } use(2);',
+ 'rt_for':     'int i; for (i = 0; i <= a; i++) { use(1); if (ga[i]) break; } if (i <= a) { use(2); return; } if (b) return; use(3); use(4);',
+ 'rt_do_mid':  'int i = 0; do { use(1); if (ga[i] && ga[i+1]) break; } while (++i <= a); if (i <= a) { use(2); return; } if (b) return; use(3); use(4);',
+ 'rt_do_f':    'int i = 0; int f; do { f = cond(); int ok = 1; for (int k = 0; k < b; k++) { if (ga[k] == f) { ok = 0; break; } } if (f > 1 && cond() && ok) break; } while (++i <= a); if (i <= a) { use(f); return; } if (c) return; use(3); use(4);',
+  'rd_and': 'int i = 0; int f; do { f = cond(); int ok = 1; for (int k = 0; k < b; k++) { if (ga[k] == f) { ok = 0; break; } } if (f > 1 && cond() && ok) break; } while (++i <= a); if (i <= a) { use(f); return; } if (c) return; use(3); use(4);',
+  'rd_nest': 'int i = 0; int f; do { f = cond(); int ok = 1; for (int k = 0; k < b; k++) { if (ga[k] == f) { ok = 0; break; } } if (f > 1) { if (cond()) { if (ok) break; } } } while (++i <= a); if (i <= a) { use(f); return; } if (c) return; use(3); use(4);',
+  'rd_cont': 'int i = 0; int f; do { f = cond(); int ok = 1; for (int k = 0; k < b; k++) { if (ga[k] == f) { ok = 0; break; } } if (f <= 1) continue; if (!cond()) continue; if (ok) break; } while (++i <= a); if (i <= a) { use(f); return; } if (c) return; use(3); use(4);',
+  'rd_one': 'int i = 0; int f; do { f = cond(); int ok = 1; for (int k = 0; k < b; k++) { if (ga[k] == f) { ok = 0; break; } } if (ok) break; } while (++i <= a); if (i <= a) { use(f); return; } if (c) return; use(3); use(4);',
+  'rd_two': 'int i = 0; int f; do { f = cond(); int ok = 1; for (int k = 0; k < b; k++) { if (ga[k] == f) { ok = 0; break; } } if (f > 1 && ok) break; } while (++i <= a); if (i <= a) { use(f); return; } if (c) return; use(3); use(4);',
+  'rd_callfirst': 'int i = 0; int f; do { f = cond(); int ok = 1; for (int k = 0; k < b; k++) { if (ga[k] == f) { ok = 0; break; } } if (cond() && ok) break; } while (++i <= a); if (i <= a) { use(f); return; } if (c) return; use(3); use(4);',
+  'rd_noinner': 'int i = 0; int f; do { f = cond(); if (f > 1 && cond() && ga[f]) break; } while (++i <= a); if (i <= a) { use(f); return; } if (c) return; use(3); use(4);',
+  'rd_for': 'int i; int f; for (i = 0; i <= a; i++) { f = cond(); int ok = 1; for (int k = 0; k < b; k++) { if (ga[k] == f) { ok = 0; break; } } if (f > 1 && cond() && ok) break; } if (i <= a) { use(f); return; } if (c) return; use(3); use(4);',
+  'rd_forever': 'int i = 0; int f; for (;;) { f = cond(); int ok = 1; for (int k = 0; k < b; k++) { if (ga[k] == f) { ok = 0; break; } } if (f > 1 && cond() && ok) break; if (++i > a) break; } if (i <= a) { use(f); return; } if (c) return; use(3); use(4);',
+  'rd_goto': 'int i = 0; int f; top: { f = cond(); int ok = 1; for (int k = 0; k < b; k++) { if (ga[k] == f) { ok = 0; break; } } if (f > 1 && cond() && ok) goto out; } if (++i <= a) goto top; out: if (i <= a) { use(f); return; } if (c) return; use(3); use(4);',
+  'rd_inv': 'int i = 0; int f; do { f = cond(); int ok = 1; for (int k = 0; k < b; k++) { if (ga[k] == f) { ok = 0; break; } } if (f > 1 && cond() && ok) break; } while (++i <= a); if (i > a) { if (c) return; use(3); use(4); return; } use(f);',
+  'rd_for1': 'int i; int f; for (i = 0; i <= a || i == 0; i++) { f = cond(); int ok = 1; for (int k = 0; k < b; k++) { if (ga[k] == f) { ok = 0; break; } } if (f > 1 && cond() && ok) break; } if (i <= a) { use(f); return; } if (c) return; use(3); use(4);',
+  'rd_whi': 'int i = 0; int f; while (i <= a) { f = cond(); int ok = 1; for (int k = 0; k < b; k++) { if (ga[k] == f) { ok = 0; break; } } if (f > 1 && cond() && ok) break; i++; } if (i <= a) { use(f); return; } if (c) return; use(3); use(4);',
+  'rd_dobrk': 'int i = 0; int f; do { f = cond(); int ok = 1; for (int k = 0; k < b; k++) { if (ga[k] == f) { ok = 0; break; } } if (f > 1 && cond() && ok) break; i++; } while (i <= a); if (i <= a) { use(f); return; } if (c) return; use(3); use(4);',
 }
 def klass(sk):
     """skeleton -> entry class of the first loop"""
@@ -100,7 +121,7 @@ def klass(sk):
     return 'NOLOOP'
 if __name__ == '__main__':
     sel = sys.argv[1:] or list(V)
-    src = HDR + ''.join('int %s(int a, int b, int c) {\n%s\n}\n' % (n, V[n]) for n in sel)
+    src = HDR + ''.join(('void' if 'return;' in V[n] or V[n].rstrip().endswith(');') else 'int') + ' %s(int a, int b, int c) {\n%s\n}\n' % (n, V[n]) for n in sel)
     asm, out = ib.compile_asm(None, PFX, text=src)
     F = {f[1]: f[2] for f in ib.functions(asm)}
     for n in sel:

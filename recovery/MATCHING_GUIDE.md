@@ -5078,6 +5078,84 @@ Layout
     0x4D61A0: the image cross-jumps the three Psi Gate `NetMsgPrimary.pop`
     calls into the first and lays the `finish:` unlock right after it; ours
     keeps three identical `mov ecx; call pop; jmp finish` copies.
+- **Cross-jumping ground truth** (par-2 2026-11-19,
+  `analysis/probes/crossjump/run.py`, one-function probes with `use(K)`
+  markers; names below are its variants).
+  - *Per instruction, after allocation, across statements and calls.* The
+    merge walks back from the common successor as long as the instructions
+    are byte-identical, ignoring statement boundaries: `if (a) { use(1);
+    g = 5; } else { use(2); g = 5; }` keeps only `push 1` / `push 2` private
+    and shares `call use; add esp,4; mov g,5` (store_k; f0_tail, ret_goto1
+    the same). Two arms calling one function with different arguments merge
+    at the `call` (argdiff_k: `push c; push 1 | push c; push 2` then one
+    `call f2`), so a jump that lands between a push and its call is the
+    ordinary result, not a ternary argument necessarily.
+  - *Identical statements rarely stay identical: scratch registers rotate.*
+    A value loaded from a frame slot or a global into a scratch register
+    gets eax, ecx, edx, eax, ... in source order, per load, across the whole
+    function (rot6g: `f1(b)` in six arms loads b into eax, ecx, edx, eax,
+    ecx, edx; rot_2stmt: `f1(b); f1(c)` rotates b and c together). Two
+    copies of a statement merge whole only when their operands live in
+    callee-saved registers or are constants (jd_noret: b in ebx, both
+    `g = b` arms merge; jd_esi), or when they sit a multiple of three loads
+    apart (rot6r: switch cases 1/4, 2/5, 3/6 share one block each; the jump
+    table points twice at each). Otherwise the merge starts after the loads.
+    So one scratch load added or removed anywhere earlier re-pairs every
+    later site, which is the mechanism behind "tail cross-jumping depends on
+    the whole function" (3.2) and facility_avail's non-monotonic merging
+    above. A merge the image lacks or adds far from any edit: count the
+    scratch loads between the sites (a multiple of three = same register).
+  - *Pending pops must match.* Arms whose deferred `add esp` differ (one more
+    pushing call earlier in one arm: `add esp,12` against `add esp,16`)
+    never merge their tails (X_both, X_else). One flushed `add esp` in front
+    of the tail is enough to align them (pop_diff, pop_flush).
+  - *A one-statement return join is copied into each arm* when the arms do
+    not merge (jd1: `use(9); return 1;` after the if/else appears twice;
+    jd_retv `return c;` too). From two calls on (jd2..jd6) the join stays
+    one block behind a `jmp`. A join that does not end the function is never
+    copied (jd_if, mid_goto2).
+  - *Same successor required.* Identical tails before different successors
+    never merge (difffollow).
+  - *`if (a) { X; } else { Y; X; }` is not `if (!a) Y; X;`.* With pushing
+    calls in X the first keeps two copies of X (pending pops differ) and
+    copies a small return join into both arms (X_both, X_else); the second,
+    the `goto` form and the if/else with an empty arm all give one X after a
+    `jmp` join (X_after, X_elseonly, X_goto). Two copies of a multi-call tail
+    in the image = the statements were written in both arms.
+  - *`return f(x)` per arm and `r = f(x); ... return r;` are the same code*
+    (ret_val = ret_var); identical `return r1(b)` in two arms still keep two
+    copies because b rotates (ret_valsame).
+  - *Whole return blocks* are cross-jumped into the LAST identical copy, the
+    earlier guards becoming `je` to it (thr_f1kk: four `f1(1); f1(2);
+    return 1;` arms, one copy; rot_2stmt, thr_bk pair the rotation-equal
+    sites), but only above a size that is not an instruction count:
+    `f1(1); f1(2);` and `f1(1); f1(2); f0();` merge, `f1(1);`, `f1(1); f0();`,
+    up to eight argless `f0();` and four constant stores do not; two calls
+    with two stores between them do (thr_f0g). Measured, not explained.
+  - *Destructor teardown* (dtor_*): return sites with one value at one depth
+    share a single teardown (dtor_ret: three `return 1` arms merge at
+    `call use`, one `~D`); different values give each site its own teardown
+    and epilogue (dtor_retk); a return from an inner scope runs the inner
+    destructor in place and jumps into the outer teardown of the normal path
+    (dtor_ret2, dtor_nest).
+  - *Census* (`crossjump/census.py`, image only, 3,060 BYTE_EXACT game
+    functions): 692 have a `jmp` into fall-through code, 3,312 sites (most
+    are plain if/else joins). 348 jumping blocks end with a `push` (an arm
+    that leaves inside a call's argument list: a ternary argument or a
+    cross-jumped call), 122 targets are a `call` and 55 an `add esp`; the
+    image cross-jumps at the call as the probes do.
+  - Real cases read with these rules (2026-11-19): ReportWin::labs_line
+    0x0049B450's first layout difference (0x49B550) is allocation, not arm
+    structure: the image keeps `host` in ebx, so its two `box_sprite` arms
+    are identical but have no host to merge into (the third site uses edx),
+    while ours spills host to [ebp+0x14] and the arm cross-jumps into the
+    third site after its push. BasePop::exec 0x00602600 (jmp 26/22): the
+    image converts to the Dialog virtual base in each set_width/set_height
+    arm (`lea ecx,[vb+esi+0x21d0]`, scheduled into the arithmetic of one
+    arm, so only the store merges); ours holds `&dialogs_` in ebp for the
+    whole function, the conversions become identical and merge into one
+    after the join. Binding `Dialogs &d` in the attach block does not remove
+    ebp (303 -> 306..314 rows): the candidate comes from the vbase accesses.
 - **Which predecessor hosts a join (measured, `analysis/tailmerge/tm7*.py`,
   2026-11-19).** When no arm falls into the join in source order (the last
   arm leaves with `return`/`goto`), VC6 places the join after one
@@ -5744,7 +5822,14 @@ skeleton keeps only branches, `ret` and numbered `use(K)` markers)
   is rotated). A break test at the bottom of `while (1)` is a do-while
   (`wh_1b`), and `for (i = 1; ; i++) { if (i >= K) break; ...` is the plain
   `for` (enemy_diplomacy, three spellings, same bytes). No probe gives
-  `jmp TEST` into the loop. Where the image has a `jmp` over the first
+  `jmp TEST` into the loop. A `do { ... if (c) break; } while (++i <= n);
+  if (i <= n) A; B` always closes with `jg B | jmp HEAD` and lays the
+  re-test after the loop; `&&`/nested/`continue`/goto spellings of the
+  break, `while (1)`/`for (;;)` with a bottom break and a goto loop are the
+  same code (looptest rd_*). Only a rotated `for`/`while` (with its guard)
+  ends `jle HEAD`, falls into B and moves the re-test and A after the `ret`
+  (rd_for, rd_whi). drone_riot 0x004F4FB0's image has that rotated latch
+  with no guard before the loop: not found. Where the image has a `jmp` over the first
   instructions of a loop, they are register loads the entry already holds
   (`mov ebx, [BaseCurrent]` in BaseWin::draw_pop 0x414CF2 / 0x414E80,
   `mov edx, [ebp+8]` in ours for wants_prototype): the value is reloaded on
