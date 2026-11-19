@@ -384,9 +384,9 @@ void __cdecl capture_base(int base_id, int faction_id, int mode) {
                     if (survivor != base_id
                         && Bases[survivor].faction_id_current == faction_id_def
                         && Bases[survivor].queue_production_id[0] == Bases[base_id].queue_production_id[0]) {
-                        int survivor_item = Bases[survivor].queue_production_id[0];
+                        best_base = Bases[survivor].queue_production_id[0];
                         parse_says(0, get_adjective(faction_id_def), -1, -1);
-                        parse_say(1, Facility[survivor_item].name, -1, -1);
+                        parse_say(1, Facility[best_base].name, -1, -1);
                         popp(ScriptPopupFile, "SURVIVEPROJECT", 0, "secproj_sm.pcx", 0);
                         break;
                     }
