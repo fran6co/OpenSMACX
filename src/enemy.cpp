@@ -8283,7 +8283,9 @@ L_57717f:
     if (!at_sea && !near_hostile && region != faction_bit
         && PlayersData[faction_id].region_total_bases[region]) {
         if (!Weapon[VehPrototypes[Vehs[veh_id].proto_id].weapon_id].offense_rating) {
-            if (plan != 8 || PlayersData[faction_id].unk_82[region])
+            if (plan != 8)
+                goto L_578ae1;
+            if (PlayersData[faction_id].unk_82[region])
                 goto L_578ae1;
         } else if (plan != 3) {
             if (region_plan <= 2 || (PlayersData[faction_id].unk_77[region] & 0x20))
