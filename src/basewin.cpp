@@ -5821,12 +5821,16 @@ again:
                 char *again = Facility[facility].name;
                 strcat(StringTemp, StringTable.get(again));
                 strcat(StringTemp, "|");
-                strcat(StringTemp, StringTable.get(Labels.strings_ptr[0x3DC / 4]));
+                // table_text (alpha.h stand-in): the label value reaches eax
+                // in all three arms, so VC6 cross-jumps their common
+                // push/get/strcat tail (0x41B8A6 and 0x41B907 jump to 0x41B937).
+                strcat(StringTemp, table_text(Labels.strings_ptr[0x3DC / 4]));
             } else {
                 StringTemp[0] = 0;
-                strcat(StringTemp, StringTable.get(Facility[facility].name));
+                char *again = Facility[facility].name;
+                strcat(StringTemp, StringTable.get(again));
                 strcat(StringTemp, "|");
-                strcat(StringTemp, StringTable.get(Labels.strings_ptr[0x4D8 / 4]));
+                strcat(StringTemp, table_text(Labels.strings_ptr[0x4D8 / 4]));
             }
             popup.item(StringTemp, facility);
         }
