@@ -456,6 +456,21 @@ raw field access where the original used inline accessors.
   lets VC6 derive its own (read_rules' social effects: a pointer IV and a
   dec/jne counter became the image's two byte offsets, 59 -> 14 rows; eight
   more functions closer).
+- **Hand-stepped pointer against the plain nested index (2026-11-19).** A
+  pointer stepped by hand (`*out++`, `out += W`) is a basic IV whose
+  increment sits where the source puts it; VC6's own IV derived from a plain
+  `dst[K + row*W + col] = src[f(row)*W + col]` is stepped at the end of the
+  enclosing loop body, after the counters (`inc edi; inc ebx` before the
+  back-edge). Image increments the column pointer last: write the linear
+  subscript, not the pointer (vox_expand_palette 0x006391F0, 2 -> 0 rows).
+- **Cached field against a late element pointer (2026-11-19).** A field read
+  into an `int` local is one load into a register or slot; the image
+  re-reading it at each use through a pointer register anchored at that field
+  (`[ebx]`, neighbours at `[ebx-0xC]`, `[ebx+0xC]`) is `T *p = &A[i];` taken
+  late in the body (after the calls that would otherwise kill it) with every
+  use spelled `p->field`. It can also change /Ob2 spend: the int local had
+  made the closing StringList teardown expand where the image calls it
+  (DesignWin::select_special 0x0043AC70, 30 -> 5 rows).
 - **One counter for sibling loops.** Several non-nested `for (int i ...)` loops
   were often one function-scope `int i;` (game_data 298 -> 240,
   world_rainfall 311 -> 271, eight more).
