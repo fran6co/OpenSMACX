@@ -90,7 +90,7 @@ def lines_of(cod, sym, unitbase):
         if m:
             fname = re.split(r'[\\/]', m.group(1).strip())[-1].lower()
             continue
-        m = re.match(r'; (\d+)\s+:', l)
+        m = re.match(r'; (\d+)\s*:', l)
         if m:
             line = int(m.group(1))
             continue

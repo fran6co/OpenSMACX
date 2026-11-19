@@ -84,7 +84,7 @@ def cod_listing(unit, src, pfx, sym):
     pend = None
     lastoff = -1
     for l in t[i:e].split('\n'):
-        m = re.match(r'; (\d+)\s+:', l)
+        m = re.match(r'; (\d+)\s*:', l)
         if m:
             items.append(('line', int(m.group(1))))
             continue

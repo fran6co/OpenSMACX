@@ -29,7 +29,7 @@ byoff = {}
 pend = None
 for l in t[i:e].split('\n'):
     l = l.rstrip('\r')
-    m = re.match(r'; (\d+)\s+:', l)
+    m = re.match(r'; (\d+)\s*:', l)
     if m:
         line = int(m.group(1))
         continue
