@@ -12,7 +12,7 @@ def run(u,src,pfx):
     return {m.group(1):(m.group(2)=='True',int(m.group(3))) for m in re.finditer(r'FE ([0-9A-F]{8}) \S+ exact=(\w+) diff=(\d+)',p.stdout)}
 jobs=[]
 for i,u in enumerate(sys.argv[1:]):
-    h='%s/head_%s'%(P,u.replace('/','_')); open(h,'w',encoding='latin-1').write(subprocess.run(['git','show','HEAD:src/'+u],capture_output=True,text=True,encoding='latin-1',cwd=R).stdout)
+    h='%s/head_%s'%(P,u.replace('/','_')); open(h,'w',encoding='latin-1').write(subprocess.run(['git','show',os.environ.get('UCMP_REV','HEAD')+':src/'+u],capture_output=True,text=True,encoding='latin-1',cwd=R).stdout)
     jobs.append((u,h)); jobs.append((u,R+'/src/'+u))
 res=[None]*len(jobs)
 def lane(k):  # one wine prefix per lane, each lane serial
