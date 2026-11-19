@@ -2889,20 +2889,20 @@ void __cdecl diplomacy_check(int faction, int other, int update) {
     }
     if (update) {
         scan_prototypes(faction, other);
-        int special = PlayersData[other].flags_ext & 0x20;
-        if (!((PlayersData[faction].diff_level <= 1 && !special)
+        update = PlayersData[other].flags_ext & 0x20;
+        if (!((PlayersData[faction].diff_level <= 1 && !update)
                 || DiploScratchFA50 || has_treaty(other, faction, 1)
                 || has_agenda(other, faction, 8)
-                || (has_treaty(other, faction, 0x10) && DiploScratchFA2C <= 1 && !special)
+                || (has_treaty(other, faction, 0x10) && DiploScratchFA2C <= 1 && !update)
                 || (!DiploScratchFA64 && !DiploScratchFA60 && !ideology
-                    && (!special || DiploScratchFA98)
+                    && (!update || DiploScratchFA98)
                     && (!DiploScratchFA4C || !has_treaty(other, faction, 0x800000)
                         || DiploFriction < 12))
-                || (!has_treaty(other, faction, 0x20) && (!special || !DiploScratchFA60)
+                || (!has_treaty(other, faction, 0x20) && (!update || !DiploScratchFA60)
                     && DiploScratchFA78 <= 5
                     && ((!DiploScratchFA60 && ideology <= 1)
                         || (PlayersData[faction].mil_strength_1 <= PlayersData[other].mil_strength_1
-                            && !special))))) {
+                            && !update))))) {
             DiploScratchFA70 = 1;
         } else {
             DiploScratchFA70 = 0;
@@ -5066,15 +5066,15 @@ void __cdecl battle_plans(int faction_a, int faction_b) {
         popup.set_picture(FactionDiplomacyPortraits[faction_b], faction_b, 0);
 
         int count = 0;
-        for (int base_id = 0; base_id < GameDataStateStorage.fields_.base_current_count_; base_id++) {
-            int owner = Bases[base_id].faction_id_current;
+        for (plan_a = 0; plan_a < GameDataStateStorage.fields_.base_current_count_; plan_a++) {
+            int owner = Bases[plan_a].faction_id_current;
             if (owner != faction_a && owner != faction_b
                 && has_treaty(faction_a, owner, DTREATY_VENDETTA)
                 && has_treaty(faction_b, owner, DTREATY_VENDETTA)
-                && (battle_base_seen(base_id, faction_a) || battle_base_seen(base_id, faction_b))) {
-                popup.dialogs().item(Bases[base_id].name_string, base_id);
+                && (battle_base_seen(plan_a, faction_a) || battle_base_seen(plan_a, faction_b))) {
+                popup.dialogs().item(Bases[plan_a].name_string, plan_a);
                 if (!count) {
-                    battle_routine(base_id);
+                    battle_routine(plan_a);
                 }
                 count++;
             }
@@ -5106,9 +5106,9 @@ void __cdecl battle_plans(int faction_a, int faction_b) {
             naval:
                 base_find(Bases[plan_b].x, Bases[plan_b].y, faction_b);
                 {
-                    int plan_dist = BaseFindDist;
+                    attack_a = BaseFindDist;
                     base_find(Bases[selected].x, Bases[selected].y, faction_b);
-                    if (BaseFindDist >= plan_dist * 2) {
+                    if (BaseFindDist >= attack_a * 2) {
                         X_pops(BattlePlansDistanceRejectedLabel, 0x100000,
                                FactionDiplomacyPortraits[faction_b], pop_wait);
                         goto done;
