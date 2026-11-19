@@ -1687,12 +1687,11 @@ int __cdecl game_data(FILE *file, int write_mode) {
     if (game_data_candidate_transfer(
             file, &ConsoleGlobal.selected_vehicle_, 4) == 0)
         return 1;
-    const int history_index = ConsoleGlobal.cursor_history_index_;
     if (game_data_candidate_transfer(
-            file, &ConsoleGlobal.cursor_history_x_[history_index], 4) == 0)
+            file, &ConsoleGlobal.cursor_history_x_[ConsoleGlobal.cursor_history_index_], 4) == 0)
         return 1;
     if (game_data_candidate_transfer(
-            file, &ConsoleGlobal.cursor_history_y_[history_index], 4) == 0)
+            file, &ConsoleGlobal.cursor_history_y_[ConsoleGlobal.cursor_history_index_], 4) == 0)
         return 1;
     if (GameDataWriteMode) ConsoleGlobal.message_count_ = 0;
     if (game_data_candidate_transfer(
