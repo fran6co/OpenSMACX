@@ -1910,7 +1910,7 @@ setup:
                     popup.start(PopupStartCaption, StringTemp, -1, 0, 0, 0);
                     if (BaseCurrent->queue_size == 0)
                         popup.item(StringTable.get(Labels.strings_ptr[0xB0C / 4]), 2);
-                    popup.item(StringTable.get(Labels.strings_ptr[0xB10 / 4]), 3);
+                    popup.item(label_get(0xB10 / 4), 3);
                     switch (popup.exec()) {
                     case 0:
                         if (a2 == 0)
