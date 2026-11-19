@@ -1434,7 +1434,7 @@ search:
         if (PlayersData[faction].ai_power || PlayersData[faction].ai_fight > 0) {
             if (Continents[region].tile_count >= 400 && rand() % 4 == 0) PlayersData[faction].flags |= 0x4000000;
             // 5B28BB: guarded CRT draw, so a bound of 1 would always pass.
-            if (!bounded_crt_random(Continents[region].tile_count > 250 ? 6 : 4)) PlayersData[faction].flags |= 0x8000000;
+            if (!bounded_crt_random(Continents[region].tile_count <= 250 ? 4 : 6)) PlayersData[faction].flags |= 0x8000000;
             if (rand() % 4 == 0) PlayersData[faction].flags |= 0x10000000;
         }
     }
