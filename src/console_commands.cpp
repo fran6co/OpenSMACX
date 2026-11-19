@@ -1426,40 +1426,29 @@ activate:
 // ORIGINAL: 0x004D3470 ?terraform@Console@@QAEXHH@Z 0x004D3470-0x004D5277;0x0065A559-0x0065AB02 FILE
 // RECOVERY_BINDING: v1 {"evidence": ["git:276d612614085e5d57743cf8cc92903d9468e346:src/unrecovered/004d3470.cpp", "image:terranx_original.exe:0x004D3470", "image:terranx_original.exe:0x004D4973,0x004D4CA6"], "reason": "Recover terraforming through the Console receiver, Map bit storage, typed order descriptors and real vehicle/network lock lifecycle. Native lock failure refunds without unlocking; conflict names distinguish sea and land. Popup owns teardown, not handwritten vtable cleanup."}
 // TRIED: full-function transcription (all ~30 validation branches, the 6-way terraform-type switch incl. borehole/aquifer neighbor scans and the raise/lower-terrain payment+territory/treaty flow, the post-switch lock/exec/unlock tail) using validated Veh/Map/VehPrototype/Chassis record layouts from src/veh.h and src/map.h; Popup RAII lever (`Popup popup;` + plain `return;`) for all teardown/SEH machinery, never hand-written. MISMATCH #2: rebuilt frame is 4 bytes larger than the original's 0x5398, so every ebp-relative offset drifts from the prologue on - not a control-flow or call-order defect, a local-variable-count difference in the /O2 stack layout that was not tracked down further. Two inline uses of a materialized `VehRec *veh` pointer were already removed in favor of re-deriving `g_vehs[a1].field` at each site (matched the original's shape and recovered 8 of that 12-byte gap); the remaining 4 bytes are still open. Approximated without full confidence: the exact terraformID reassignment thresholds in the a2==0/a2==5 auto-select block, the case-0x10/0x11 payment/steps-count arithmetic, and which register (`edx`) still holds `altBits` vs a freshly reloaded value at a few of the later bit tests - transcribed as re-reads of tile fields rather than a persisted local where raw-disasm register lineage got ambiguous after ~40 intervening instructions.
-// WORKAROUND(inline): dead /Ob2 budget probe, not recovered code; a constant
-// argument folds it away. It spends the budget the image spends before this
-// function's Popup teardown (found by recover permute --probe-sweep); the
-// original's spend is not identified.
-static inline int terraform_budget_probe(int x) {
-    if (x == 0) x = 1;
-    if (x == 1) x = 4;
-    if (x == 2) x = 7;
-    if (x == 3) x = 10;
-    if (x == 4) x = 13;
-    if (x == 5) x = 16;
-    if (x == 6) x = 19;
-    if (x == 7) x = 22;
-    if (x == 8) x = 25;
-    if (x == 9) x = 28;
-    if (x == 10) x = 31;
-    if (x == 11) x = 34;
-    if (x == 12) x = 37;
-    if (x == 13) x = 40;
-    if (x == 14) x = 43;
-    if (x == 15) x = 46;
-    return x;
-}
-// WORKAROUND(inline): the three "StringTemp[0] = 0; say_tech; parse_says"
-// runs of terraform as one inline helper (no out-of-line copy in the image);
-// as a helper /Ob2 refuses ~Scroll at two more early teardown sites, toward
-// the image's suffix. The original helper's name and home are unknown.
+// WORKAROUND(inline): the two fungus-tech "StringTemp[0] = 0; say_tech;
+// parse_says" runs of terraform as one inline helper (no out-of-line copy in
+// the image); as a helper /Ob2 refuses ~Scroll at one more early teardown
+// site each, toward the image's suffix (the terrain_avail run stays written
+// out: as a helper call it moves nothing and costs 12 rows). The original
+// helper's name and home are unknown.
 static inline void terraform_say_tech(int tech) {
     StringTemp[0] = 0;
     say_tech(StringTemp, tech, 0);
     parse_says(0, StringTemp, -1, -1);
 }
+// WORKAROUND(inline): the two refunds after a failed territory lock or a
+// refused treaty break as one inline helper (no out-of-line copy in the
+// image; possibly a Console member). With it /Ob2's teardown decisions no
+// longer need the dead budget probe this function carried.
+static inline void terraform_refund(Console *console, int payment) {
+    if (payment != 0) {
+        PlayersData[console->faction_id_].energy_reserves += payment;
+        synch_energy(console->faction_id_);
+        console->update_data(0);
+    }
+}
 void Console::terraform(int vehicle_id, int terraform_id) {
-    terraform_budget_probe(2);  // WORKAROUND(inline): see terraform_budget_probe // 0x004D3470
     Popup popup;
 
     const int proto_id = Vehs[vehicle_id].proto_id;
@@ -1520,7 +1509,9 @@ void Console::terraform(int vehicle_id, int terraform_id) {
     if (!terrain_avail(terraform_id, is_sea, faction_id_) &&
         (terraform_id != TERRA_REMOVE_FUNGUS ||
          !has_abil(Vehs[vehicle_id].proto_id, 0x2000))) {
-        terraform_say_tech(Terraforming[terraform_id].prerequisite_tech[is_sea]);
+        StringTemp[0] = 0;
+        say_tech(StringTemp, Terraforming[terraform_id].prerequisite_tech[is_sea], 0);
+        parse_says(0, StringTemp, -1, -1);
         if (terraform_id == TERRA_MAGTUBE) {
             veh_battle_msg("HASROAD", nullptr);
         } else if (terraform_id == TERRA_SOIL_ENR) {
@@ -1753,19 +1744,11 @@ void Console::terraform(int vehicle_id, int terraform_id) {
             }
             // A failed lock refunds without unlocking.
             if (NetDaemonNet.lock_veh(&vehicle_id, 2, -1, -1, 0) != 0) {
-                if (payment != 0) {
-                    PlayersData[faction_id_].energy_reserves += payment;
-                    synch_energy(faction_id_);
-                    update_data(0);
-                }
+                terraform_refund(this, payment);
                 return;
             }
             if (break_treaty(faction_id_, target_faction, 7) != 0) {
-                if (payment != 0) {
-                    PlayersData[faction_id_].energy_reserves += payment;
-                    synch_energy(faction_id_);
-                    update_data(0);
-                }
+                terraform_refund(this, payment);
                 NetDaemonNet.unlock_veh();
                 return;
             }
