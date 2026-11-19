@@ -2428,6 +2428,7 @@ What the model does not predict (2026-11-19)
   early sites expands (image E,c / c,E against ours c,E / E,c); pick_pass
   also keeps `payload` in memory where ours enregisters it in edx and
   gives its slot [ebp+8] to faction_mode (image: to verify_hash).
+  (Solved for go_to and pick by late free helpers, below; terraform open.)
 - **Helper screen: real runs retire probes, but not the suffix**
   (2026-11-19, par-1; `analysis/runscan.py --try`). Each statement run
   repeated inside a function, as a template inline helper with and without
@@ -2448,10 +2449,50 @@ What the model does not predict (2026-11-19)
   - No helper the screen finds refuses ~Scroll at the earliest teardowns of
     go_to or PickTech::pick (pick: seven windows, also the score/best,
     say_tech, box and modal runs; all leave ~Scroll E at every site). The
-    suffix shortfall above stays open.
+    suffix shortfall above stays open. (Superseded: the existing header
+    helpers, not new runs, close it; see "late free helpers" below.)
   - A run can be a helper at one site and not another: the label/item
     helper breaks DiploWin::on_button_clicked 0x004415C0 (refuses its
     ~RadioButton), so keep such helpers file-local to the sites that gain.
+- **Early refusals with late third-level expansions: late free helpers**
+  (high; PickTech::pick 0x00486510 and Console::go_to 0x004D61A0,
+  2026-11-19 par-4). When the image refuses a level-2 callee (~Scroll) at
+  the *earliest* teardowns yet keeps level-3 expansions (~FlatButton) at
+  later ones, caller size cannot supply both: more statements raise B and
+  add level-3 room, dead spend leaves level 3 first (rule 5). What the
+  original had is reservation (rule 4): more first-level FREE inlines
+  *after* the refused sites. Our source writes those expansions raw. The
+  usual ones are the header helpers that already exist: strings.h `says`,
+  `clear`, `say_num`, alpha.h `say_label`/`table_text`/`label_get`,
+  faction_inline.h `has_treaty`, map.h accessors, rect_width/height. A free
+  helper expands to exactly the raw code, so the image cannot refute the
+  spelling at the site; the evidence is the decisions at the refused sites
+  (and a matching frame, e.g. say_num's `char[0x50]` is the 80-byte local
+  buffer go_to wrote out). Single sites rarely move anything: screen the
+  whole family per function (`analysis/spellsweep.py <unit> <addr> --rules
+  says_fn,sayl_fn,clear_fn,table_fn,human_fn` prints `ALL:<rule>` rows),
+  then greedy on top. Results: pick ten `say_label` + `says("+")` + one
+  table_text: EH max 198 -> 191 (image 192), calls 4 -> 3 differences,
+  rows 653 -> 395, and the popup frame slots back in image order. go_to
+  `says`/`clear`/`say_label`/`table_text` then two `has_treaty`: ~Scroll
+  called at the first three returns, EH 43 -> 37 (= image), named call
+  multiset equal, frame equal. Its "site 2 has no ~Scroll" was only
+  cross-jumping: once sites 2 and 3 both call ~Scroll, their identical
+  tails merge (jmp 0x4D64CE) with no special source shape. No effect in
+  terraform, config_game, queue_click, pick_player, base_editor_proj,
+  popb or save_game (all single-site and ALL rows equal or worse).
+- **A helper with a literal inside its body is refuted by per-site
+  literals** (high; 2026-11-19 par-4). An argument-free inline such as
+  `say_plus() { strcat(StringTemp, "+"); }` emits ONE literal
+  (`??_C@_01PJOB@?$CL?$AA@`, a COMDAT shared by every expansion and every
+  unit), while a literal argument (`says("+")`) or a raw strcat stays a
+  `$SG` of the caller per site. fe masks relocations and cannot tell them
+  apart; check `tumap.literal_owners` (or the image's pushes): pick pushes
+  eleven distinct "+" (0x686A60..0x686A88, plus an unreferenced twelfth
+  for the constant-false first joiner), and every "+" in the image is
+  per-site and per-unit. So no "+" helper belongs in strings.h; the
+  shared-literal family (`" "`, `", "`, `": "`, `"("`, `")"`, `"%"`,
+  `". "`) is exactly the texts the image shares across units.
 - The units are approximate. Costs come from fitted counts, not node
   counts, so a prediction is good to about one expansion. Use it to choose
   the *kind* and *place* of a missing spend, then confirm with fe.
