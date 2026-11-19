@@ -5364,6 +5364,22 @@ result over 64 symbol-counter pads, so none of these is a counter canary.
   scope and merges tried, none moves them). Offsets follow weighted priority
   (previous entry); leave a pure slot permutation once the homes hold the
   right variables.
+- **Parameter copies: declaration order decides which home each copy takes**
+  (par-5 2026-11-19, Buffer::write_multi_font_raw_l 0x005DCAE0; an exception
+  to the entry above and to "packs locals into dead parameter slots in an
+  order declarations do not control"). A local initialised from a parameter
+  (`int x = x_coord;`) packs into that parameter's dead home only if no other
+  local's definition precedes it while the parameter is still read. A
+  parameter that a LATER copy still reads is live at an earlier copy's
+  definition, so the earlier copy cannot take that home and, by the last-fit
+  rule below, takes the most recently created free home instead. The image
+  keeps `str` in `text`'s home and `x` in `x_coord`'s (0x5DCAF0, 0x5DCAF9):
+  with `int x = x_coord; LPSTR str = text;` x interferes with `text` (still
+  read by str's initialiser), str then fits `x_coord`'s home, and x opens a
+  slot of its own; `LPSTR str = text; int x = x_coord;` gives the image's
+  homes (104 -> 81 rows with the strchr fix). Read the image's homes of the
+  copies and order the copy declarations so that each parameter's last read
+  is its own copy's initialiser.
 
 - **Frame offsets follow the packed slot's total, and spilled induction
   temporaries join a named variable's free slot** (par-4 2026-11-19; which
