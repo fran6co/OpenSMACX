@@ -743,9 +743,9 @@ reconstruct:
             cur_threat_mode = 0;
             for (int j = 0; j < 9; j++) {
                 int x_threat = wrap_map_x(x_src + RadiusOffsetX[j]);
-                int y_threat = y_src + RadiusOffsetY[j];
-                if (on_map(x_threat, y_threat) && (!j || j & 1)
-                    && (mask_vendetta & (1 << map_loc(x_threat, y_threat)->territory))) {
+                best_cost = y_src + RadiusOffsetY[j];
+                if (on_map(x_threat, best_cost) && (!j || j & 1)
+                    && (mask_vendetta & (1 << map_loc(x_threat, best_cost)->territory))) {
                     cur_threat_mode = (j != 0) + 1;
                     break;
                 }
@@ -760,8 +760,8 @@ reconstruct:
             if (x_next == x_dst && y_next == y_dst) {
                 return i; // the destination is one step away
             }
-            int cost = map_table_[((int)MapLongitudeBounds >> 1) * y_next + (x_next >> 1)];
-            if (!cost) {
+            x_cur = map_table_[((int)MapLongitudeBounds >> 1) * y_next + (x_next >> 1)];
+            if (!x_cur) {
                 continue;
             }
             if (!(unk1 & 0x1)) {
@@ -769,14 +769,14 @@ reconstruct:
                 if (unk1 & 0x8) {
                     hex = max(hex, Rules.move_rate_roads - 1);
                 }
-                cost += hex * 16;
+                x_cur += hex * 16;
                 if (!is_sea
                     && (map_loc(x_next, y_next)->climate & ~0x1F)
                         >= (map_loc(x_src, y_src)->climate & ~0x1F)) {
-                    cost = range(cost - 1, 0, 999999);
+                    x_cur = range(x_cur - 1, 0, 999999);
                 }
                 if (goody_at(x_next, y_next)) {
-                    cost += Rules.move_rate_roads;
+                    x_cur += Rules.move_rate_roads;
                 }
             }
             if (faction_id >= 0 && !(unk1 & 0x200)) {
@@ -788,9 +788,9 @@ reconstruct:
                 if ((unk1 & 0x40) && faction_id > 0
                     && (zoc || territory_dist(x_next, y_next, x_dst, y_dst) > 2)
                     && owner_next < 0 && zoc_path(x_next, y_next, faction_id)) {
-                    cost += 1000;
+                    x_cur += 1000;
                     if (zoc) {
-                        cost += 2000;
+                        x_cur += 2000;
                     }
                 }
                 // Unlike the search pass, 0x0059B7D7 does not exclude occupied tiles.
@@ -800,28 +800,28 @@ reconstruct:
                             || VehPrototypes[proto_id].plan == PLAN_COLONIZATION)) {
                         for (int j = 0; j < 9; j++) {
                             int x_threat = wrap_map_x(x_next + RadiusOffsetX[j]);
-                            int y_threat = y_next + RadiusOffsetY[j];
-                            if (!on_map(x_threat, y_threat)
+                            owner = y_next + RadiusOffsetY[j];
+                            if (!on_map(x_threat, owner)
                                 || !(mask_vendetta
-                                    & (1 << map_loc(x_threat, y_threat)->territory))) {
+                                    & (1 << map_loc(x_threat, owner)->territory))) {
                                 continue;
                             }
                             if (!j) {
                                 if (dst_threat_mode == 1) {
                                     continue;
                                 }
-                                cost += 2500; // the enemy holds the tile itself
+                                x_cur += 2500; // the enemy holds the tile itself
                                 break;
                             }
                             if (j & 1) {
                                 if (cur_threat_mode == 1 || dst_threat_mode) {
                                     continue;
                                 }
-                                cost += 500; // one cardinal step from the enemy
+                                x_cur += 500; // one cardinal step from the enemy
                                 break;
                             }
                             if (!cur_threat_mode && !dst_threat_mode) {
-                                cost += 100; // diagonal step
+                                x_cur += 100; // diagonal step
                             }
                             break;
                         }
@@ -860,7 +860,7 @@ reconstruct:
                                     }
                                 }
                             }
-                            cost += penalty;
+                            x_cur += penalty;
                         }
                     }
                     if (get_proto_triad(proto_id) == TRIAD_SEA
@@ -879,7 +879,7 @@ reconstruct:
                                         && has_treaty(faction_id, Vehs[veh_arty].faction_id,
                                             DTREATY_VENDETTA)
                                         && can_arty(Vehs[veh_arty].proto_id, TRUE)) {
-                                        cost += 100;
+                                        x_cur += 100;
                                     }
                                 }
                             }
@@ -888,9 +888,9 @@ reconstruct:
                 }
             }
             if (unk2 >= 0 && unk2 < 8 && i == (unk2 ^ 4)) {
-                cost += Rules.move_rate_roads * 20; // do not double back
+                x_cur += Rules.move_rate_roads * 20; // do not double back
             }
-            int score = cost * 2 + (i & 1); // prefer cardinal steps on ties
+            int score = x_cur * 2 + (i & 1); // prefer cardinal steps on ties
             if (score <= best_score) {
                 best_score = score;
                 best_dir = i;
