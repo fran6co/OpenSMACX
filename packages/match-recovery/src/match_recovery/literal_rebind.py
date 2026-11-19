@@ -38,6 +38,7 @@ is already resolved. A pooled name the fresh object still defines is skipped.
 
 import hashlib
 import re
+from collections import Counter
 from dataclasses import replace
 from pathlib import Path
 
@@ -244,8 +245,23 @@ def plan_unit(bindings, obj, image, contexts=None) -> tuple[list[dict], int | No
             item.intersection_update({_number(binding.symbol)})
     feasible = _ordered(feasible)
     if any(not item for item in feasible):
-        for _, _, row in proven:
-            row.update(status="unproven", reason="no assignment keeps the TU's existing binding order")
+        # The labels no longer rise in the bindings' old order (definitions
+        # were reordered in the source). Order then proves nothing, but a
+        # binding whose bytes (or whose context function's relocation) leave
+        # exactly one fresh label, claimed by no other binding, is still
+        # identified by content alone. Identical duplicates stay unproven.
+        claims = Counter(value for _, candidates, _ in proven for value in set(candidates))
+        for binding, candidates, row in proven:
+            if len(candidates) == 1 and claims[candidates[0]] == 1:
+                value, = candidates
+                if value == _number(binding.symbol):
+                    row["status"] = "valid"
+                else:
+                    row.update(status="rebind", symbol=f"$SG{value}", basis="unique_content")
+            else:
+                row.update(status="unproven", reason="no assignment keeps the TU's existing binding order"
+                           " and identical duplicate labels remain ambiguous: "
+                           + ", ".join(f"$SG{value}" for value in sorted(candidates)))
         return rows, None
     for (binding, _, row), item in zip(proven, feasible):
         if len(item) != 1:

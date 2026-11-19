@@ -146,6 +146,24 @@ def test_nonuniform_shift_uses_a_unique_order_preserving_assignment(project):
     assert {row["basis"] for row in report["units"][0]["bindings"]} == {"order_preserving"}
 
 
+def test_reordered_definitions_rebind_by_unique_content_and_leave_duplicates(project):
+    # The source's definitions were reordered: the fresh labels no longer rise
+    # in the bindings' old order, so no order-preserving assignment exists.
+    source(project, literal(HELLO, HELLO + 6, "$SG100"), literal(ZZ, ZZ + 3, "$SG101"))
+    report = run(project, (104, b"zz\0"), (105, b"x\0"), (110, b"hello\0"))
+    assert rows(report) == [("$SG100", "$SG110", "rebind"), ("$SG101", "$SG104", "rebind")]
+    assert {row["basis"] for row in report["units"][0]["bindings"]} == {"unique_content"}
+
+    # An identical duplicate is still not guessed, and a label two bindings
+    # could claim identifies neither; the unique one beside them is rebound.
+    source(project, literal(ABC1, ABC1 + 4, "$SG100"), literal(HELLO, HELLO + 6, "$SG101"))
+    report = run(project, (200, b"hello\0"), (201, b"abc\0"), (202, b"abc\0"))
+    assert rows(report) == [("$SG100", "$SG100", "unproven"), ("$SG101", "$SG200", "rebind")]
+    reason = report["units"][0]["bindings"][0]["reason"]
+    assert "existing binding order" in reason and reason.endswith("$SG201, $SG202")
+    assert report["result"] == "unknown"
+
+
 def test_ambiguous_duplicates_and_missing_bytes_are_reported_not_guessed(project):
     path = source(project, literal(ABC1, ABC1 + 4, "$SG100"))
     before = path.read_bytes()
