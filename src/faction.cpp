@@ -8452,13 +8452,13 @@ parse_says(5, get_title(faction_id), -1, -1);
 parse_says(6, get_pact(DiploScratchF7E8), -1, -1);
 clear();
 says("PROPOSE");
-if (!(PlayersData[faction_id].diplo_treaties[DiploScratchF7E8] & 1)) {
-    parse_says(8, get_adjective_insult_faction(DiploScratchF7E8), -1, -1);
-    parse_says(9, get_phrase(DiploScratchF7E8, 5), -1, -1);
-} else {
+if (PlayersData[faction_id].diplo_treaties[DiploScratchF7E8] & 1) {
     says("PACT");
     parse_says(8, get_title(faction_id_with), -1, -1);
     parse_says(9, get_phrase(DiploScratchF7E8, 2), -1, -1);
+} else {
+    parse_says(8, get_adjective_insult_faction(DiploScratchF7E8), -1, -1);
+    parse_says(9, get_phrase(DiploScratchF7E8, 5), -1, -1);
 }
 if (X_pops(StringTemp, 0x100000,
             FactionDiplomacyPortraits[faction_id_with], pop_wait)) {
