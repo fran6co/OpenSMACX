@@ -1556,9 +1556,8 @@ reroll:
         if (VehPrototypes[Vehs[veh_id].proto_id].plan == 12) goto reroll;
         if (IsMultiplayerNet) {
             int any = 0;
-            const uint32_t alive = GameDataStateStorage.fields_.lock_masks_.bytes_.alive_mask_;
             for (int i = 1; i < MaxPlayerNum; i++) {
-                if (alive & (1 << i) && is_human(i) && i != faction_id) {
+                if (GameDataStateStorage.fields_.lock_masks_.bytes_.alive_mask_ & (1 << i) && is_human(i) && i != faction_id) {
                     if (is_sea) {
                         if (PlayersData[i].unk_70 >= PlayersData[faction_id].unk_70) {
                             any = 1;
