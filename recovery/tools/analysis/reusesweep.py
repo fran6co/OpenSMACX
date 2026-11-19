@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""reusesweep.py <unit> <0xADDR> [--write] [--iter N] [--show KEY] | --from FEALL.json [--min 100] [--skip A,B] [--write]
+"""reusesweep.py <unit> <0xADDR> [--write] [--iter N] [--show KEY] [--screen-only] | --from FEALL.json [--min 100] [--skip A,B] [--write]
 Variable-reuse screen (MATCHING_GUIDE 3.3 "Reused function-scope variable"): renames each block-local
 int/BOOL of a function into each existing function-scope int/BOOL (a depth-1 declaration before it, or a
 parameter) that is DEAD over the block-local's whole scope, and fingerprints every rename.
@@ -14,6 +14,9 @@ The rename variants of qualifying pairs are fe'd with their frame and slot maps 
 also with candset.py (one-side roles + disputed pairs). Ranking key: frame difference, slot-map difference
 (sum over frame offsets of |image refs - our refs|), candset count, rows. --write keeps the best rename when
 its key beats the base and repeats (--iter rounds), so chained renames are found one at a time.
+--screen-only skips the pairs the volatile screen cannot judge (packed slots, address-taken targets): on a
+giant function they cost hours (enemy_move: 1,405 such pairs; each variant's 17,440-row alignment takes about
+15 s and is serialised, so even the 450 screened pairs need about two hours).
 Env: FE_PFX_BASE (first lane prefix, default 21), FE_JOBS (lanes, default 5)."""
 import sys, os, re, io, json, argparse, collections, contextlib, threading, queue
 H = os.path.dirname(os.path.abspath(__file__))
@@ -33,6 +36,7 @@ TYPES = ('int', 'BOOL')
 SCR = R + '/build/recovery/fe/reuse'
 LOCK = threading.Lock()
 NEAR = 40  # a scope's code is entered from a marker at most NEAR lines above it
+SCREEN_ONLY = False  # --screen-only: only the pairs the volatile screen proves (giant functions)
 LBASE = 20000  # above every header (win.h 1,413 lines), below the 65,535 CodeView line limit
 FDECL = []  # keyword offsets of the depth-1 declarations of the last analyse()
 
@@ -406,7 +410,7 @@ def sweep(unit, addr, write=False, top=6, log=print):
     dead = dead_pairs(unit, addr, text, vdead, bsig, log) if vdead else []
     if len(dead) != len(vdead):
         log('  kill probe keeps %d of the screen\'s dead pairs: %s' % (len(vdead) - len(dead), sorted(set(vdead) - set(dead))[:8]))
-    if rest:
+    if rest and not SCREEN_ONLY:
         dead += dead_pairs(unit, addr, text, rest, bsig, log)
     log('  pairs %d dead %d' % (len(keyed), len(dead)))
     if not dead:
@@ -462,7 +466,10 @@ def main():
     ap.add_argument('--iter', type=int, default=3)
     ap.add_argument('--json')
     ap.add_argument('--show')
+    ap.add_argument('--screen-only', action='store_true')
     a = ap.parse_args()
+    global SCREEN_ONLY
+    SCREEN_ONLY = a.screen_only
     todo = []
     if a.frm:
         skip = {s.upper().replace('0X', '').zfill(8) for s in a.skip.split(',') if s}
