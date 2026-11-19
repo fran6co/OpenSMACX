@@ -30,155 +30,315 @@ static void __fastcall stop_edit_timer(Time *timer) {
     timer->stop();
 }
 
-// Superseded seed deleted; seed paths below are historical Git provenance.
-// ORIGINAL: 0x00615E40 ?caret_callback@EditBox@@QAEXH@Z 0x00615E40-0x00615E5F BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["Pinned disassembly 0x00615E40 reads its only receiver from [esp+4] and ends with a tail jump through the receiver's redraw slot", "git:276d612614085e5d57743cf8cc92903d9468e346:src/unrecovered/00614fe0.cpp passes EditBox this as Time's integer callback payload", "src/editbox.h field_B48_ is the caret visibility state"], "reason": "Treat the timer entry as a free callback taking an EditBox pointer payload, not a member with an invented implicit receiver."}
-// symbol    ?edit_box_caret_callback@@YAXH@Z
-void __cdecl edit_box_caret_callback(int edit_box_address) {
-    EditBox *const box = reinterpret_cast<EditBox *>(edit_box_address);
-    box->field_B48_ = box->field_B48_ == 0;
-    box->redraw();
+
+
+
+/*
+ * THE SEVEN GLOBALS EditBox::close REPUBLISHES, and why they are named after
+ * their DESTINATIONS rather than after anything they mean.
+ *
+ * Every member they land in is `field_BXX_` - the class carries no recovered
+ * name for any of them - so a name claiming a purpose would be invented. What
+ * IS known is which field each one feeds, and that all seven are read at close
+ * time to republish per-instance defaults, the same role EditGroupDefault
+ * plays for EditGroup.
+ *
+ * 0x006971DC-0x006971F8 is one contiguous run in .data; 0x009B90B8 and
+ * 0x009B90BC sit apart from it, in the zero-filled range.
+ *
+ * Independent DWORD reads at 614EA4..614EEE establish each four-byte extent.
+ * These bindings identify the original targets, not just masked operands.
+ */
+// RECOVERY_OBJECT: v2 0x006971DC 0x006971E0 ?EditBoxDefaultB1C@@3IA 0x00614E50
+uint32_t EditBoxDefaultB1C = 255;
+// RECOVERY_OBJECT: v2 0x006971F8 0x006971FC ?EditBoxDefaultB20@@3IA 0x00614E50
+uint32_t EditBoxDefaultB20 = -1;
+// RECOVERY_OBJECT: v2 0x006971F4 0x006971F8 ?EditBoxDefaultB24@@3IA 0x00614E50
+uint32_t EditBoxDefaultB24 = -1;
+// RECOVERY_OBJECT: v2 0x009B90B8 0x009B90BC ?EditBoxDefaultB28@@3IA 0x00614E50
+uint32_t EditBoxDefaultB28;
+// RECOVERY_OBJECT: v2 0x009B90BC 0x009B90C0 ?EditBoxDefaultB2C@@3IA 0x00614E50
+uint32_t EditBoxDefaultB2C;
+// RECOVERY_OBJECT: v2 0x006971E0 0x006971E4 ?EditBoxDefaultB30@@3IA 0x00614E50
+uint32_t EditBoxDefaultB30 = 1;
+// RECOVERY_OBJECT: v2 0x006971E4 0x006971E8 ?EditBoxDefaultB34@@3IA 0x00614E50
+uint32_t EditBoxDefaultB34 = 4;
+
+// The initializer reads these four consecutive colour defaults. The first
+// occupies zero-filled storage; the others are initialized image data.
+// RECOVERY_OBJECT: v2 0x009B90C0 0x009B90C4 ?EditBoxTextColor1@@3HA 0x00614FE0
+int EditBoxTextColor1;
+// RECOVERY_OBJECT: v2 0x006971E8 0x006971EC ?EditBoxTextColor2@@3HA 0x00614FE0
+int EditBoxTextColor2 = -1;
+// RECOVERY_OBJECT: v2 0x006971EC 0x006971F0 ?EditBoxTextColor3@@3HA 0x00614FE0
+int EditBoxTextColor3 = 1;
+// RECOVERY_OBJECT: v2 0x006971F0 0x006971F4 ?EditBoxTextColor4@@3HA 0x00614FE0
+int EditBoxTextColor4 = 1;
+
+/*
+Purpose: Construct the GraphicWin base and trailing Time member, then publish
+         the EditBox field defaults. C++ owns base/member lifetime and tables.
+// ORIGINAL: 0x00614E50 ??0EditBox@@QAE@XZ 0x00614E50-0x00614F2C;0x00663130-0x00663142 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["pinned:prolog 0x614E52 registers handler 0x663138; FuncInfo 0x67FE18 and unwind map 0x67FE38 contain one HIGHLOW-backed action in the completely decoded cold region 0x663130..0x663142."], "reason": "Preserve the historical constructor claim while retaining its complete original partial-construction cleanup and handler; new generated-span equality is not assumed."}
+// symbol    ??0EditBox@@QAE@XZ
+// size      220 bytes
+// prototype void (__thiscall ??0EditBox@@QAE@XZ)(EditBox* this)
+// callers   2   call targets   3
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x005D4CF0 0x006161D0
+Return Value: n/a
+
+The image's call 5D4CF0 constructs GraphicWin on the unadjusted receiver.
+Its Time constructor call receives this+B4C. Neither is an explicit source
+call on an already constructed member.
+*/
+EditBox::EditBox() {
+    text_[0] = 0;
+    field_B14_ = 0xA;
+    field_B28_ = EditBoxDefaultB28;
+    field_B2C_ = EditBoxDefaultB2C;
+    field_B30_ = EditBoxDefaultB30;
+    field_B34_ = EditBoxDefaultB34;
+    field_B1C_ = EditBoxDefaultB1C;
+    field_B20_ = EditBoxDefaultB20;
+    field_B24_ = EditBoxDefaultB24;
+    field_B38_ = 0;
+    field_B40_ = 0;
+    field_B44_ = 0;
+    field_B48_ = 0;
+    field_B18_ = 0;
+    field_B3C_ = 0;
 }
 
-// 615DF0. Calls slot 62 virtually, not slot 12 directly.
-// Superseded seed deleted; seed paths below are historical Git provenance.
-// ORIGINAL: 0x00615DF0 ?on_dialog_focus@EditBox@@QAEXH@Z 0x00615DF0-0x00615E31 BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["src/recovered/00615df0.cpp", "Pinned original EditBox table66A038 and direct call/branch evidence"], "reason": "EditBox owns this table override or its direct text helper: pinned primary table66A038 slots12,17,20,21,25,26,51,64 and original direct-call receivers establish ownership. Use existing Win slot signatures without changing their order; text_position returns the EAX index consumed by callers despite the catalogue void label."}
-// symbol    ?on_dialog_focus@EditBox@@UAEXH@Z
-void EditBox::on_dialog_focus(int focused) {
-    if (focused) {
-        time_.start();
-    } else {
-        stop_edit_timer(&time_);
-        field_B48_ = 0;
+
+/*
+Purpose: Reset the edit box - clear its state, republish the seven defaults,
+         then close the trailing Time and the GraphicWin prefix.
+The historical forwarding notes below predate the separate timer lifecycle TU;
+this definition now calls the actual Time member.
+// ORIGINAL: 0x00614F30 ?close@EditBox@@QAEXXZ 0x00614F30-0x00614FD1 BYTE_EXACT
+// LEVER: PROMOTED out of src/unrecovered/00614f30.cpp, whose claim proved the ARTIFACT reproduced while the program held a pending_bodies forwarder. src/editbox.cpp did not exist - EditBox was header-only - so this file and its CMakeLists entry are new.
+// LEVER (2026-09-03): time_close_call, not `->close()` on the Time at 0xb4c.
+//        The image CALLS 0x00616780 here (0x00614FC3) where time.h's
+//        in-class `MEASURED close` otherwise expands at this site too -
+//        61 compiled instructions against the image's 31, 2/31 agreeing.
+//        Same forwarder flatbutton.cpp uses for its own Time member, and
+//        netmsg.cpp now carries a static copy of it as well.
+// symbol    ?close@EditBox@@QAEXXZ
+// size      161 bytes
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005D4E40 0x00616780
+Return Value: n/a
+Status: Complete
+*/
+
+
+void EditBox::close() {
+    text_[0] = 0;
+    field_B14_ = 0xa;
+    field_B28_ = EditBoxDefaultB28;
+    field_B2C_ = EditBoxDefaultB2C;
+    field_B30_ = EditBoxDefaultB30;
+    field_B34_ = EditBoxDefaultB34;
+    field_B1C_ = EditBoxDefaultB1C;
+    field_B20_ = EditBoxDefaultB20;
+    field_B24_ = EditBoxDefaultB24;
+    field_B38_ = 0;
+    field_B40_ = 0;
+    field_B44_ = 0;
+    field_B48_ = 0;
+    field_B18_ = 0;
+    field_B3C_ = 0;
+
+    time_.close();
+    GraphicWin::close();
+}
+
+// ORIGINAL: 0x00614FE0 ?init@EditBox@@QAEHHHHHPAUWin@@H@Z 0x00614FE0-0x00615179 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["git:276d612614085e5d57743cf8cc92903d9468e346:src/unrecovered/00614fe0.cpp", "EditBox member offsets in src/editbox.h", "Buffer::markup_enabled_ lies at GraphicWin+0x964", "Original image values at 0x006971E8-0x006971F3"], "reason": "Initialize the real editor, base window, text buffer and owned timer; install the free caret callback rather than a synthetic vtable receiver."}
+// TRIED: same as 0x005C9860 - the scaffold's GraphicWin::init is stale as `void` (src/graphicwin.cpp's real recovery returns `int`, and this disassembly tests the return value), so a same-layout `GraphicWinInitShim` with the correct `int` return gets the call.
+// TRIED: landed at 0.92 similarity, 410 vs 409 bytes; diverges at #45 where the trailing low-byte or/and-with-1 flag update compiles to a wider `not`/`and` sequence here, and VC6 inlines the `strlen` call as `repne scasb` where the original kept a real `call`. Tried an explicit `unsigned char` low-byte read/write for the flag update instead of a 32-bit read-modify-write; same divergence point.
+// The recovered Win base is declared as a class; VC6 consequently spells its
+// pointer PAVWin rather than the historical PAUWin without changing the ABI.
+// symbol    ?init@EditBox@@QAEHHHHHPAVWin@@H@Z
+int EditBox::init(int x, int y, int width, int height, Win *parent,
+                  int focus_wrap) {
+    field_B14_ = 10;
+    text_[0] = 0;
+    field_B28_ = EditBoxDefaultB28;
+    field_B2C_ = EditBoxDefaultB2C;
+    field_B30_ = EditBoxDefaultB30;
+    field_B34_ = EditBoxDefaultB34;
+    field_B1C_ = EditBoxDefaultB1C;
+    field_B20_ = EditBoxDefaultB20;
+    field_B24_ = EditBoxDefaultB24;
+    field_B38_ = 0;
+    field_B40_ = 0;
+    field_B44_ = 0;
+    field_B48_ = 0;
+    field_B18_ = 0;
+    field_B3C_ = 0;
+
+    time_.close();
+    GraphicWin::close();
+    if (parent == 0) return 3;
+
+    int style_flags = 0x2020;
+    if ((parent->iFlags_ & 0x1000) == 0) {
+        style_flags = 0x102020;
     }
+    const int result = GraphicWin::init(x, y, width, height,
+                                        style_flags, parent);
+    if (result != 0) return result;
+
+    Buffer::set_markup_enabled(0);
+    Buffer::set_text_color(EditBoxTextColor1, EditBoxTextColor2,
+                           EditBoxTextColor3, EditBoxTextColor4);
+    Win::set_cursor(0x7f01);
+    field_B40_ = 0;
+    field_B44_ = strlen(text_);
     redraw();
-}
-
-// 615E60. Genuine owner globals already live in win.cpp.
-// Superseded seed deleted; seed paths below are historical Git provenance.
-// ORIGINAL: 0x00615E60 ?on_left_down@EditBox@@QAEXHH@Z 0x00615E60-0x00615EB5 BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/00615e60.cpp", "Pinned original EditBox table66A038 and direct call/branch evidence"], "reason": "EditBox owns this table override or its direct text helper: pinned primary table66A038 slots12,17,20,21,25,26,51,64 and original direct-call receivers establish ownership. Use existing Win slot signatures without changing their order; text_position returns the EAX index consumed by callers despite the catalogue void label."}
-// symbol    ?on_left_down@EditBox@@UAEXHH@Z
-void EditBox::on_left_down(int x, int) {
-    grab_pointer();
-    field_B44_ = text_position(x);
-    if ((GetAsyncKeyState(VK_SHIFT) & 0x8000) == 0) {
-        field_B40_ = field_B44_;
-    }
+    time_.init(edit_box_caret_callback, reinterpret_cast<int>(this), 0x1f4, 5);
     redraw();
+    if (focus_wrap) field_B3C_ |= 1;
+    else field_B3C_ &= ~1u;
+    return 0;
 }
 
-// 615EC0. Keep the virtual release hook before clearing the second owner.
 // Superseded seed deleted; seed paths below are historical Git provenance.
-// ORIGINAL: 0x00615EC0 ?on_left_up@EditBox@@QAEXHH@Z 0x00615EC0-0x00615F0D BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["src/recovered/00615ec0.cpp", "Pinned original EditBox table66A038 and direct call/branch evidence"], "reason": "EditBox owns this table override or its direct text helper: pinned primary table66A038 slots12,17,20,21,25,26,51,64 and original direct-call receivers establish ownership. Use existing Win slot signatures without changing their order; text_position returns the EAX index consumed by callers despite the catalogue void label."}
-// symbol    ?on_left_up@EditBox@@UAEXHH@Z
-void EditBox::on_left_up(int x, int) {
-    if (WinPointerOwner3 == this) {
-        WinPointerOwner3 = 0;
-        on_lose_mouse_capture();
-    }
-    if (WinPointerOwner4 == this) {
-        WinPointerOwner4 = 0;
-    }
-    field_B44_ = text_position(x);
-    redraw();
+// ORIGINAL: 0x00615180 ?UNK1@EditBox@@QAEHPAUFont@@HHHPAUWin@@@Z 0x00615180-0x006151D6 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/00615180.cpp records six stack arguments and a font-height call", "GraphicWin's Buffer base begins at EditBox+0x444", "EditBox::init at 0x00614FE0 consumes the derived height"], "reason": "Initialize the real Buffer font and use its measured line height to size the edit box; retain the sixth ABI argument although the original body does not read it."}
+// The historical label omits the sixth stack argument; the source symbol
+// records the actual C++ ABI and the recovered Win/Font class spellings.
+// symbol    ?init_with_font@EditBox@@QAEHPAVFont@@HHHPAVWin@@H@Z
+int EditBox::init_with_font(Font *font, int x, int y, int width,
+                            Win *parent, int) {
+    if (font == 0) return 3;
+    Buffer::set_font(font, 0, 0, 0);
+    const int height = Buffer::text_line_height() + 2;
+    return init(x, y, width, height, parent, 0);
 }
 
-// 615F10. This is the TWO-argument slot 17, not slot 16's mouse router.
-// Superseded seed deleted; seed paths below are historical Git provenance.
-// ORIGINAL: 0x00615F10 ?on_mouse_move@EditBox@@QAEXHH@Z 0x00615F10-0x00615F4E BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["src/recovered/00615f10.cpp", "Pinned original EditBox table66A038 and direct call/branch evidence"], "reason": "EditBox owns this table override or its direct text helper: pinned primary table66A038 slots12,17,20,21,25,26,51,64 and original direct-call receivers establish ownership. Use existing Win slot signatures without changing their order; text_position returns the EAX index consumed by callers despite the catalogue void label."}
-// symbol    ?on_mouse_move@EditBox@@UAEXHH@Z
-void EditBox::on_mouse_move(int x, int) {
-    if (WinPointerOwner3 == this ||
-        (WinPointerOwner4 == this && WinPointerOwner3 != 0 && WinPointerOwner4 != 0)) {
-        field_B44_ = text_position(x);
+/*
+Purpose: Replace one edit box's text: clear the cursor; if the input exceeds
+         the character limit, trim the caller's mutable input until it fits,
+         then append it and recompute the text length before repainting.
+
+// ORIGINAL: 0x006151E0 ?set_text@EditBox@@QAEXPAD@Z 0x006151E0-0x0061526A BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["pinned image 01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf; original identity 0x006151E0 retains name and all original spans/claims", "src/editbox.h declares the actual EditBox::set_text class member; body uses that existing owner API", "historical source was FILE-mode in git:2874481e371cbbaa04e3375e6797f1f182abb7cb:src/leaf_recoveries.cpp; this transfer places the unchanged C++ member definition in its actual owner TU and changes measurement mode to BODY explicitly; it does not assert historical recipe equality", "the complete source body and existing TRIED/LEVER/DEFERRED history are carried forward unchanged; only annotation mode/location and transitional SCAFFOLD classification change"], "reason": "Transfer the complete EditBox::set_text definition to its existing source owner without changing its C++ body. Keep the original FILE spans and historical claim state; BODY is the new per-member measurement scope, not a claim that the old whole-TU recipe is equivalent."}
+// size      138 bytes
+// prototype void (__thiscall ?set_text@EditBox@@QAEXPAD@Z)(EditBox* this, int8*)
+// callers   1   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// indirect  0x00615264
+// TRIED (forwarder): reached from `EditGroup::set_text` - see the note in
+//         `editbox.h`.
+Status: Source-owned member body; behavior retained, exactness not measured
+*/
+void EditBox::set_text(char *text) {
+    if (text_ != 0) {
+        field_B18_ = 0;
+        text_[0] = 0;
+        if (text != 0) {
+            while (strlen(text) != 0) {
+                if (strlen(text) <= field_B14_) {
+                    break;
+                }
+                text[strlen(text) - 1] = 0;
+            }
+            strcat(text_, text);
+        }
+        field_B40_ = 0;
+        field_B44_ = static_cast<uint32_t>(strlen(text_));
         redraw();
     }
 }
 
-// 616140. Qualified base calls are required: ordinary virtual calls recurse.
+// 615270. Do not cache the mask flag across drawing calls; original reloads
+// it at each branch. Rendering is intentionally inherited virtual redraw(),
+// whose eventual slot-12 callback reaches this handler.
 // Superseded seed deleted; seed paths below are historical Git provenance.
-// ORIGINAL: 0x00616140 ?pass_dialog_focus@EditBox@@QAEXXZ 0x00616140-0x00616196 BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/00616140.cpp", "Pinned original EditBox table66A038 and direct call/branch evidence"], "reason": "EditBox owns this table override or its direct text helper: pinned primary table66A038 slots12,17,20,21,25,26,51,64 and original direct-call receivers establish ownership. Use existing Win slot signatures without changing their order; text_position returns the EAX index consumed by callers despite the catalogue void label."}
-// symbol    ?pass_dialog_focus@EditBox@@UAEXXZ
-void EditBox::pass_dialog_focus() {
-    Win *parent = win_parent_;
-    if (parent == 0) return;
-    if ((field_B3C_ & 1) != 0 &&
-        parent->list_.tail_ == parent->list_.count_ - 1) {
-        if (win_parent_->list_.count_ - 1 >= 0) {
-            parent->list_.tail_ = 0;
-            parent->list_.current_ = parent->list_.head_;
-        }
-        win_parent_->Win::pass_dialog_focus();
-        return;
-    }
-    Win::pass_dialog_focus();
-}
+// ORIGINAL: 0x00615270 ?on_redraw@EditBox@@QAEXXZ 0x00615270-0x00615627
+// RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/00615270.cpp", "Pinned original EditBox table66A038 and direct call/branch evidence"], "reason": "EditBox owns this table override or its direct text helper: pinned primary table66A038 slots12,17,20,21,25,26,51,64 and original direct-call receivers establish ownership. Use existing Win slot signatures without changing their order; text_position returns the EAX index consumed by callers despite the catalogue void label."}
+// symbol    ?on_redraw@EditBox@@UAEXXZ
 
-// 616030. Empty selected text returns zero, NOT the current scroll position.
-// The last comparison is against B44, not the x argument or string length.
-// Superseded seed deleted; seed paths below are historical Git provenance.
-// ORIGINAL: 0x00616030 ?text_position@EditBox@@QAEXH@Z 0x00616030-0x00616135 BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/00616030.cpp", "Pinned original EditBox table66A038 and direct call/branch evidence"], "reason": "EditBox owns this table override or its direct text helper: pinned primary table66A038 slots12,17,20,21,25,26,51,64 and original direct-call receivers establish ownership. Use existing Win slot signatures without changing their order; text_position returns the EAX index consumed by callers despite the catalogue void label."}
-// symbol    ?text_position@EditBox@@QAEHH@Z
-int EditBox::text_position(int x) {
-    if (x < field_B34_) return field_B18_;
-    x -= field_B34_;
-    char masked[256];
-    char *text;
-    if (field_B3C_ & 2) {
-        masked[0] = 0;
-        strcat(masked, text_);
-        for (char *p = masked; *p; ++p) *p = '*';
-        text = masked;
-    } else {
-        text = text_ + field_B18_;
-    }
-    if (*text == 0) return 0;
-    const int length = static_cast<int>(strlen(text));
-    int count = 1;
-    while (count < length) {
-        if (Buffer::text_width(text, count) > x) break;
-        ++count;
-    }
-    if (count < field_B44_)
-        return field_B18_ + count - 1;
-    return field_B18_ + count;
-}
-
-// 615F50. Preserve the second mask read, strict width inequality, width read
-// before the text-width call, and padding read after it.
-// ORIGINAL: 0x00615F50 ?text_fits@EditBox@@QAEHXZ 0x00615F50-0x00616029 BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["git:276d612614085e5d57743cf8cc92903d9468e346:src/unrecovered/00615f50.cpp", "Pinned original EditBox table66A038 and direct call/branch evidence"], "reason": "EditBox owns this table override or its direct text helper: pinned primary table66A038 slots12,17,20,21,25,26,51,64 and original direct-call receivers establish ownership. Use existing Win slot signatures without changing their order; text_position returns the EAX index consumed by callers despite the catalogue void label."}
-// TRIED: plain `strcat(buf, ...)` compiles to an inlined `repne scasb`/copy sequence, not the original's `call _strcat`; `#pragma function(strcat)` restores the call. Landed at 82.4% mnemonic similarity (172 vs 217 bytes): the original duplicates its `text_width` + threshold-compare tail in BOTH branches (masked and unmasked text), but this source's identical trailing 3 statements in each branch let VC6 tail-merge them into one shared block with a `jmp`, which the original does not do even though its two tails are mnemonic-for-mnemonic identical too. Tried: a shared vs per-branch `threshold`/`base` local, folding the compare inline vs a named `threshold` variable - the merge persisted across all of them.
-// symbol    ?text_fits@EditBox@@QAEHXZ
-int EditBox::text_fits() {
+void EditBox::on_redraw() {
     char masked[256];
     if (field_B3C_ & 2) {
         masked[0] = 0;
         strcat(masked, text_);
-        for (char *p = masked; *p; ++p) *p = '*';
+        for (char *p = masked; *p; ++p) {
+            *p = '*';
+        }
     }
+    Buffer::restore_clip();
+    GraphicWin::fill(field_B1C_);
+    RECT area = rect2_;
+    for (int i = 0; i < field_B30_; i++) {
+        Buffer::box(&area, field_B28_, field_B2C_);
+        area.left++;
+        area.right--;
+        area.top++;
+        area.bottom--;
+    }
+    expand_rect(&area, field_B30_ - field_B34_, field_B30_);
+    const int y = -(Buffer::text_line_height() + dib_.bmiHeader.biHeight) >> 1;
+    if (field_B48_) {
+        int x;
+        if (field_B3C_ & 2) {
+            x = Buffer::text_width(masked, field_B44_ - field_B18_);
+        } else {
+            x = Buffer::text_width(text_ + field_B18_, field_B44_ - field_B18_);
+        }
+        x += field_B34_;
+        Buffer::vline(x, y, Buffer::text_line_height() + y,
+                      text_parameters_[0][0]);
+    }
+    Buffer::set_clip(&area);
     if (field_B3C_ & 2) {
-        int available = dib_.bmiHeader.biWidth;
-        int width = Buffer::text_width(masked,
-            field_B44_ - field_B18_);
-        if (width >= available - field_B34_ * 2) {
-            return 0;
-        }
+        Buffer::write_l(masked, &area);
     } else {
-        int available = dib_.bmiHeader.biWidth;
-        int width = Buffer::text_width(text_ + field_B18_,
-            field_B44_ - field_B18_);
-        if (width >= available - field_B34_ * 2) {
-            return 0;
-        }
+        Buffer::write_l(text_ + field_B18_, &area);
     }
-    return 1;
+
+    if (field_B40_ != field_B44_) {
+        int x;
+        int width;
+        if (field_B40_ > field_B44_) {
+            if (field_B3C_ & 2) {
+                x = Buffer::text_width(masked, field_B44_ - field_B18_);
+                x += field_B34_;
+                width = Buffer::text_width(masked, field_B40_ - field_B44_);
+            } else {
+                x = Buffer::text_width(text_ + field_B18_, field_B44_ - field_B18_);
+                x += field_B34_;
+                width = Buffer::text_width(text_ + field_B44_, field_B40_ - field_B44_);
+            }
+        } else {
+            const int start = max(field_B40_, field_B18_);
+            if (field_B3C_ & 2) {
+                x = Buffer::text_width(masked, start - field_B18_);
+                x += field_B34_;
+                width = Buffer::text_width(masked, field_B44_ - field_B40_);
+            } else {
+                x = Buffer::text_width(text_ + field_B18_, start - field_B18_);
+                x += field_B34_;
+                width = Buffer::text_width(text_ + start, field_B44_ - field_B40_);
+            }
+        }
+        const int foreground = field_B24_ != -1 ? field_B24_ : text_parameters_[0][0];
+        int background = field_B20_;
+        if (background == -1) {
+            background = field_B1C_;
+        }
+        const int temporary = foreground + 1;
+        Buffer::change_color(x, y, width, Buffer::text_line_height(), field_B1C_, temporary);
+        Buffer::change_color(x, y, width, Buffer::text_line_height(), text_parameters_[0][0], background);
+        Buffer::change_color(x, y, width, Buffer::text_line_height(), temporary, foreground);
+    }
 }
 
 // 615630. No invented bounds clamp: preserve the original selection cases.
@@ -391,278 +551,157 @@ int EditBox::on_key_down(int key) {
     return 1;
 }
 
-// 615270. Do not cache the mask flag across drawing calls; original reloads
-// it at each branch. Rendering is intentionally inherited virtual redraw(),
-// whose eventual slot-12 callback reaches this handler.
+// 615DF0. Calls slot 62 virtually, not slot 12 directly.
 // Superseded seed deleted; seed paths below are historical Git provenance.
-// ORIGINAL: 0x00615270 ?on_redraw@EditBox@@QAEXXZ 0x00615270-0x00615627
-// RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/00615270.cpp", "Pinned original EditBox table66A038 and direct call/branch evidence"], "reason": "EditBox owns this table override or its direct text helper: pinned primary table66A038 slots12,17,20,21,25,26,51,64 and original direct-call receivers establish ownership. Use existing Win slot signatures without changing their order; text_position returns the EAX index consumed by callers despite the catalogue void label."}
-// symbol    ?on_redraw@EditBox@@UAEXXZ
+// ORIGINAL: 0x00615DF0 ?on_dialog_focus@EditBox@@QAEXH@Z 0x00615DF0-0x00615E31 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["src/recovered/00615df0.cpp", "Pinned original EditBox table66A038 and direct call/branch evidence"], "reason": "EditBox owns this table override or its direct text helper: pinned primary table66A038 slots12,17,20,21,25,26,51,64 and original direct-call receivers establish ownership. Use existing Win slot signatures without changing their order; text_position returns the EAX index consumed by callers despite the catalogue void label."}
+// symbol    ?on_dialog_focus@EditBox@@UAEXH@Z
+void EditBox::on_dialog_focus(int focused) {
+    if (focused) {
+        time_.start();
+    } else {
+        stop_edit_timer(&time_);
+        field_B48_ = 0;
+    }
+    redraw();
+}
 
-void EditBox::on_redraw() {
+// Superseded seed deleted; seed paths below are historical Git provenance.
+// ORIGINAL: 0x00615E40 ?caret_callback@EditBox@@QAEXH@Z 0x00615E40-0x00615E5F BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned disassembly 0x00615E40 reads its only receiver from [esp+4] and ends with a tail jump through the receiver's redraw slot", "git:276d612614085e5d57743cf8cc92903d9468e346:src/unrecovered/00614fe0.cpp passes EditBox this as Time's integer callback payload", "src/editbox.h field_B48_ is the caret visibility state"], "reason": "Treat the timer entry as a free callback taking an EditBox pointer payload, not a member with an invented implicit receiver."}
+// symbol    ?edit_box_caret_callback@@YAXH@Z
+void __cdecl edit_box_caret_callback(int edit_box_address) {
+    EditBox *const box = reinterpret_cast<EditBox *>(edit_box_address);
+    box->field_B48_ = box->field_B48_ == 0;
+    box->redraw();
+}
+
+// 615E60. Genuine owner globals already live in win.cpp.
+// Superseded seed deleted; seed paths below are historical Git provenance.
+// ORIGINAL: 0x00615E60 ?on_left_down@EditBox@@QAEXHH@Z 0x00615E60-0x00615EB5 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/00615e60.cpp", "Pinned original EditBox table66A038 and direct call/branch evidence"], "reason": "EditBox owns this table override or its direct text helper: pinned primary table66A038 slots12,17,20,21,25,26,51,64 and original direct-call receivers establish ownership. Use existing Win slot signatures without changing their order; text_position returns the EAX index consumed by callers despite the catalogue void label."}
+// symbol    ?on_left_down@EditBox@@UAEXHH@Z
+void EditBox::on_left_down(int x, int) {
+    grab_pointer();
+    field_B44_ = text_position(x);
+    if ((GetAsyncKeyState(VK_SHIFT) & 0x8000) == 0) {
+        field_B40_ = field_B44_;
+    }
+    redraw();
+}
+
+// 615EC0. Keep the virtual release hook before clearing the second owner.
+// Superseded seed deleted; seed paths below are historical Git provenance.
+// ORIGINAL: 0x00615EC0 ?on_left_up@EditBox@@QAEXHH@Z 0x00615EC0-0x00615F0D BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["src/recovered/00615ec0.cpp", "Pinned original EditBox table66A038 and direct call/branch evidence"], "reason": "EditBox owns this table override or its direct text helper: pinned primary table66A038 slots12,17,20,21,25,26,51,64 and original direct-call receivers establish ownership. Use existing Win slot signatures without changing their order; text_position returns the EAX index consumed by callers despite the catalogue void label."}
+// symbol    ?on_left_up@EditBox@@UAEXHH@Z
+void EditBox::on_left_up(int x, int) {
+    if (WinPointerOwner3 == this) {
+        WinPointerOwner3 = 0;
+        on_lose_mouse_capture();
+    }
+    if (WinPointerOwner4 == this) {
+        WinPointerOwner4 = 0;
+    }
+    field_B44_ = text_position(x);
+    redraw();
+}
+
+// 615F10. This is the TWO-argument slot 17, not slot 16's mouse router.
+// Superseded seed deleted; seed paths below are historical Git provenance.
+// ORIGINAL: 0x00615F10 ?on_mouse_move@EditBox@@QAEXHH@Z 0x00615F10-0x00615F4E BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["src/recovered/00615f10.cpp", "Pinned original EditBox table66A038 and direct call/branch evidence"], "reason": "EditBox owns this table override or its direct text helper: pinned primary table66A038 slots12,17,20,21,25,26,51,64 and original direct-call receivers establish ownership. Use existing Win slot signatures without changing their order; text_position returns the EAX index consumed by callers despite the catalogue void label."}
+// symbol    ?on_mouse_move@EditBox@@UAEXHH@Z
+void EditBox::on_mouse_move(int x, int) {
+    if (WinPointerOwner3 == this ||
+        (WinPointerOwner4 == this && WinPointerOwner3 != 0 && WinPointerOwner4 != 0)) {
+        field_B44_ = text_position(x);
+        redraw();
+    }
+}
+
+// 615F50. Preserve the second mask read, strict width inequality, width read
+// before the text-width call, and padding read after it.
+// ORIGINAL: 0x00615F50 ?text_fits@EditBox@@QAEHXZ 0x00615F50-0x00616029 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["git:276d612614085e5d57743cf8cc92903d9468e346:src/unrecovered/00615f50.cpp", "Pinned original EditBox table66A038 and direct call/branch evidence"], "reason": "EditBox owns this table override or its direct text helper: pinned primary table66A038 slots12,17,20,21,25,26,51,64 and original direct-call receivers establish ownership. Use existing Win slot signatures without changing their order; text_position returns the EAX index consumed by callers despite the catalogue void label."}
+// TRIED: plain `strcat(buf, ...)` compiles to an inlined `repne scasb`/copy sequence, not the original's `call _strcat`; `#pragma function(strcat)` restores the call. Landed at 82.4% mnemonic similarity (172 vs 217 bytes): the original duplicates its `text_width` + threshold-compare tail in BOTH branches (masked and unmasked text), but this source's identical trailing 3 statements in each branch let VC6 tail-merge them into one shared block with a `jmp`, which the original does not do even though its two tails are mnemonic-for-mnemonic identical too. Tried: a shared vs per-branch `threshold`/`base` local, folding the compare inline vs a named `threshold` variable - the merge persisted across all of them.
+// symbol    ?text_fits@EditBox@@QAEHXZ
+int EditBox::text_fits() {
     char masked[256];
     if (field_B3C_ & 2) {
         masked[0] = 0;
         strcat(masked, text_);
-        for (char *p = masked; *p; ++p) {
-            *p = '*';
-        }
+        for (char *p = masked; *p; ++p) *p = '*';
     }
-    Buffer::restore_clip();
-    GraphicWin::fill(field_B1C_);
-    RECT area = rect2_;
-    for (int i = 0; i < field_B30_; i++) {
-        Buffer::box(&area, field_B28_, field_B2C_);
-        area.left++;
-        area.right--;
-        area.top++;
-        area.bottom--;
-    }
-    expand_rect(&area, field_B30_ - field_B34_, field_B30_);
-    const int y = -(Buffer::text_line_height() + dib_.bmiHeader.biHeight) >> 1;
-    if (field_B48_) {
-        int x;
-        if (field_B3C_ & 2) {
-            x = Buffer::text_width(masked, field_B44_ - field_B18_);
-        } else {
-            x = Buffer::text_width(text_ + field_B18_, field_B44_ - field_B18_);
-        }
-        x += field_B34_;
-        Buffer::vline(x, y, Buffer::text_line_height() + y,
-                      text_parameters_[0][0]);
-    }
-    Buffer::set_clip(&area);
     if (field_B3C_ & 2) {
-        Buffer::write_l(masked, &area);
+        int available = dib_.bmiHeader.biWidth;
+        int width = Buffer::text_width(masked,
+            field_B44_ - field_B18_);
+        if (width >= available - field_B34_ * 2) {
+            return 0;
+        }
     } else {
-        Buffer::write_l(text_ + field_B18_, &area);
-    }
-
-    if (field_B40_ != field_B44_) {
-        int x;
-        int width;
-        if (field_B40_ > field_B44_) {
-            if (field_B3C_ & 2) {
-                x = Buffer::text_width(masked, field_B44_ - field_B18_);
-                x += field_B34_;
-                width = Buffer::text_width(masked, field_B40_ - field_B44_);
-            } else {
-                x = Buffer::text_width(text_ + field_B18_, field_B44_ - field_B18_);
-                x += field_B34_;
-                width = Buffer::text_width(text_ + field_B44_, field_B40_ - field_B44_);
-            }
-        } else {
-            const int start = max(field_B40_, field_B18_);
-            if (field_B3C_ & 2) {
-                x = Buffer::text_width(masked, start - field_B18_);
-                x += field_B34_;
-                width = Buffer::text_width(masked, field_B44_ - field_B40_);
-            } else {
-                x = Buffer::text_width(text_ + field_B18_, start - field_B18_);
-                x += field_B34_;
-                width = Buffer::text_width(text_ + start, field_B44_ - field_B40_);
-            }
+        int available = dib_.bmiHeader.biWidth;
+        int width = Buffer::text_width(text_ + field_B18_,
+            field_B44_ - field_B18_);
+        if (width >= available - field_B34_ * 2) {
+            return 0;
         }
-        const int foreground = field_B24_ != -1 ? field_B24_ : text_parameters_[0][0];
-        int background = field_B20_;
-        if (background == -1) {
-            background = field_B1C_;
-        }
-        const int temporary = foreground + 1;
-        Buffer::change_color(x, y, width, Buffer::text_line_height(), field_B1C_, temporary);
-        Buffer::change_color(x, y, width, Buffer::text_line_height(), text_parameters_[0][0], background);
-        Buffer::change_color(x, y, width, Buffer::text_line_height(), temporary, foreground);
     }
+    return 1;
 }
 
-/*
- * THE SEVEN GLOBALS EditBox::close REPUBLISHES, and why they are named after
- * their DESTINATIONS rather than after anything they mean.
- *
- * Every member they land in is `field_BXX_` - the class carries no recovered
- * name for any of them - so a name claiming a purpose would be invented. What
- * IS known is which field each one feeds, and that all seven are read at close
- * time to republish per-instance defaults, the same role EditGroupDefault
- * plays for EditGroup.
- *
- * 0x006971DC-0x006971F8 is one contiguous run in .data; 0x009B90B8 and
- * 0x009B90BC sit apart from it, in the zero-filled range.
- *
- * Independent DWORD reads at 614EA4..614EEE establish each four-byte extent.
- * These bindings identify the original targets, not just masked operands.
- */
-// RECOVERY_OBJECT: v2 0x006971DC 0x006971E0 ?EditBoxDefaultB1C@@3IA 0x00614E50
-uint32_t EditBoxDefaultB1C = 255;
-// RECOVERY_OBJECT: v2 0x006971F8 0x006971FC ?EditBoxDefaultB20@@3IA 0x00614E50
-uint32_t EditBoxDefaultB20 = -1;
-// RECOVERY_OBJECT: v2 0x006971F4 0x006971F8 ?EditBoxDefaultB24@@3IA 0x00614E50
-uint32_t EditBoxDefaultB24 = -1;
-// RECOVERY_OBJECT: v2 0x009B90B8 0x009B90BC ?EditBoxDefaultB28@@3IA 0x00614E50
-uint32_t EditBoxDefaultB28;
-// RECOVERY_OBJECT: v2 0x009B90BC 0x009B90C0 ?EditBoxDefaultB2C@@3IA 0x00614E50
-uint32_t EditBoxDefaultB2C;
-// RECOVERY_OBJECT: v2 0x006971E0 0x006971E4 ?EditBoxDefaultB30@@3IA 0x00614E50
-uint32_t EditBoxDefaultB30 = 1;
-// RECOVERY_OBJECT: v2 0x006971E4 0x006971E8 ?EditBoxDefaultB34@@3IA 0x00614E50
-uint32_t EditBoxDefaultB34 = 4;
-
-// The initializer reads these four consecutive colour defaults. The first
-// occupies zero-filled storage; the others are initialized image data.
-// RECOVERY_OBJECT: v2 0x009B90C0 0x009B90C4 ?EditBoxTextColor1@@3HA 0x00614FE0
-int EditBoxTextColor1;
-// RECOVERY_OBJECT: v2 0x006971E8 0x006971EC ?EditBoxTextColor2@@3HA 0x00614FE0
-int EditBoxTextColor2 = -1;
-// RECOVERY_OBJECT: v2 0x006971EC 0x006971F0 ?EditBoxTextColor3@@3HA 0x00614FE0
-int EditBoxTextColor3 = 1;
-// RECOVERY_OBJECT: v2 0x006971F0 0x006971F4 ?EditBoxTextColor4@@3HA 0x00614FE0
-int EditBoxTextColor4 = 1;
-
-// ORIGINAL: 0x00614FE0 ?init@EditBox@@QAEHHHHHPAUWin@@H@Z 0x00614FE0-0x00615179 BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["git:276d612614085e5d57743cf8cc92903d9468e346:src/unrecovered/00614fe0.cpp", "EditBox member offsets in src/editbox.h", "Buffer::markup_enabled_ lies at GraphicWin+0x964", "Original image values at 0x006971E8-0x006971F3"], "reason": "Initialize the real editor, base window, text buffer and owned timer; install the free caret callback rather than a synthetic vtable receiver."}
-// TRIED: same as 0x005C9860 - the scaffold's GraphicWin::init is stale as `void` (src/graphicwin.cpp's real recovery returns `int`, and this disassembly tests the return value), so a same-layout `GraphicWinInitShim` with the correct `int` return gets the call.
-// TRIED: landed at 0.92 similarity, 410 vs 409 bytes; diverges at #45 where the trailing low-byte or/and-with-1 flag update compiles to a wider `not`/`and` sequence here, and VC6 inlines the `strlen` call as `repne scasb` where the original kept a real `call`. Tried an explicit `unsigned char` low-byte read/write for the flag update instead of a 32-bit read-modify-write; same divergence point.
-// The recovered Win base is declared as a class; VC6 consequently spells its
-// pointer PAVWin rather than the historical PAUWin without changing the ABI.
-// symbol    ?init@EditBox@@QAEHHHHHPAVWin@@H@Z
-int EditBox::init(int x, int y, int width, int height, Win *parent,
-                  int focus_wrap) {
-    field_B14_ = 10;
-    text_[0] = 0;
-    field_B28_ = EditBoxDefaultB28;
-    field_B2C_ = EditBoxDefaultB2C;
-    field_B30_ = EditBoxDefaultB30;
-    field_B34_ = EditBoxDefaultB34;
-    field_B1C_ = EditBoxDefaultB1C;
-    field_B20_ = EditBoxDefaultB20;
-    field_B24_ = EditBoxDefaultB24;
-    field_B38_ = 0;
-    field_B40_ = 0;
-    field_B44_ = 0;
-    field_B48_ = 0;
-    field_B18_ = 0;
-    field_B3C_ = 0;
-
-    time_.close();
-    GraphicWin::close();
-    if (parent == 0) return 3;
-
-    int style_flags = 0x2020;
-    if ((parent->iFlags_ & 0x1000) == 0) {
-        style_flags = 0x102020;
-    }
-    const int result = GraphicWin::init(x, y, width, height,
-                                        style_flags, parent);
-    if (result != 0) return result;
-
-    Buffer::set_markup_enabled(0);
-    Buffer::set_text_color(EditBoxTextColor1, EditBoxTextColor2,
-                           EditBoxTextColor3, EditBoxTextColor4);
-    Win::set_cursor(0x7f01);
-    field_B40_ = 0;
-    field_B44_ = strlen(text_);
-    redraw();
-    time_.init(edit_box_caret_callback, reinterpret_cast<int>(this), 0x1f4, 5);
-    redraw();
-    if (focus_wrap) field_B3C_ |= 1;
-    else field_B3C_ &= ~1u;
-    return 0;
-}
-
+// 616030. Empty selected text returns zero, NOT the current scroll position.
+// The last comparison is against B44, not the x argument or string length.
 // Superseded seed deleted; seed paths below are historical Git provenance.
-// ORIGINAL: 0x00615180 ?UNK1@EditBox@@QAEHPAUFont@@HHHPAUWin@@@Z 0x00615180-0x006151D6 BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/00615180.cpp records six stack arguments and a font-height call", "GraphicWin's Buffer base begins at EditBox+0x444", "EditBox::init at 0x00614FE0 consumes the derived height"], "reason": "Initialize the real Buffer font and use its measured line height to size the edit box; retain the sixth ABI argument although the original body does not read it."}
-// The historical label omits the sixth stack argument; the source symbol
-// records the actual C++ ABI and the recovered Win/Font class spellings.
-// symbol    ?init_with_font@EditBox@@QAEHPAVFont@@HHHPAVWin@@H@Z
-int EditBox::init_with_font(Font *font, int x, int y, int width,
-                            Win *parent, int) {
-    if (font == 0) return 3;
-    Buffer::set_font(font, 0, 0, 0);
-    const int height = Buffer::text_line_height() + 2;
-    return init(x, y, width, height, parent, 0);
+// ORIGINAL: 0x00616030 ?text_position@EditBox@@QAEXH@Z 0x00616030-0x00616135 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/00616030.cpp", "Pinned original EditBox table66A038 and direct call/branch evidence"], "reason": "EditBox owns this table override or its direct text helper: pinned primary table66A038 slots12,17,20,21,25,26,51,64 and original direct-call receivers establish ownership. Use existing Win slot signatures without changing their order; text_position returns the EAX index consumed by callers despite the catalogue void label."}
+// symbol    ?text_position@EditBox@@QAEHH@Z
+int EditBox::text_position(int x) {
+    if (x < field_B34_) return field_B18_;
+    x -= field_B34_;
+    char masked[256];
+    char *text;
+    if (field_B3C_ & 2) {
+        masked[0] = 0;
+        strcat(masked, text_);
+        for (char *p = masked; *p; ++p) *p = '*';
+        text = masked;
+    } else {
+        text = text_ + field_B18_;
+    }
+    if (*text == 0) return 0;
+    const int length = static_cast<int>(strlen(text));
+    int count = 1;
+    while (count < length) {
+        if (Buffer::text_width(text, count) > x) break;
+        ++count;
+    }
+    if (count < field_B44_)
+        return field_B18_ + count - 1;
+    return field_B18_ + count;
 }
 
-
-/*
-Purpose: Construct the GraphicWin base and trailing Time member, then publish
-         the EditBox field defaults. C++ owns base/member lifetime and tables.
-// ORIGINAL: 0x00614E50 ??0EditBox@@QAE@XZ 0x00614E50-0x00614F2C;0x00663130-0x00663142 BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["pinned:prolog 0x614E52 registers handler 0x663138; FuncInfo 0x67FE18 and unwind map 0x67FE38 contain one HIGHLOW-backed action in the completely decoded cold region 0x663130..0x663142."], "reason": "Preserve the historical constructor claim while retaining its complete original partial-construction cleanup and handler; new generated-span equality is not assumed."}
-// symbol    ??0EditBox@@QAE@XZ
-// size      220 bytes
-// prototype void (__thiscall ??0EditBox@@QAE@XZ)(EditBox* this)
-// callers   2   call targets   3
-// kind      game
-// flags     frame;sp_ready;purged_ok
-// calls     0x005D4CF0 0x006161D0
-Return Value: n/a
-
-The image's call 5D4CF0 constructs GraphicWin on the unadjusted receiver.
-Its Time constructor call receives this+B4C. Neither is an explicit source
-call on an already constructed member.
-*/
-EditBox::EditBox() {
-    text_[0] = 0;
-    field_B14_ = 0xA;
-    field_B28_ = EditBoxDefaultB28;
-    field_B2C_ = EditBoxDefaultB2C;
-    field_B30_ = EditBoxDefaultB30;
-    field_B34_ = EditBoxDefaultB34;
-    field_B1C_ = EditBoxDefaultB1C;
-    field_B20_ = EditBoxDefaultB20;
-    field_B24_ = EditBoxDefaultB24;
-    field_B38_ = 0;
-    field_B40_ = 0;
-    field_B44_ = 0;
-    field_B48_ = 0;
-    field_B18_ = 0;
-    field_B3C_ = 0;
+// 616140. Qualified base calls are required: ordinary virtual calls recurse.
+// Superseded seed deleted; seed paths below are historical Git provenance.
+// ORIGINAL: 0x00616140 ?pass_dialog_focus@EditBox@@QAEXXZ 0x00616140-0x00616196 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/00616140.cpp", "Pinned original EditBox table66A038 and direct call/branch evidence"], "reason": "EditBox owns this table override or its direct text helper: pinned primary table66A038 slots12,17,20,21,25,26,51,64 and original direct-call receivers establish ownership. Use existing Win slot signatures without changing their order; text_position returns the EAX index consumed by callers despite the catalogue void label."}
+// symbol    ?pass_dialog_focus@EditBox@@UAEXXZ
+void EditBox::pass_dialog_focus() {
+    Win *parent = win_parent_;
+    if (parent == 0) return;
+    if ((field_B3C_ & 1) != 0 &&
+        parent->list_.tail_ == parent->list_.count_ - 1) {
+        if (win_parent_->list_.count_ - 1 >= 0) {
+            parent->list_.tail_ = 0;
+            parent->list_.current_ = parent->list_.head_;
+        }
+        win_parent_->Win::pass_dialog_focus();
+        return;
+    }
+    Win::pass_dialog_focus();
 }
 
-
-/*
-Purpose: Reset the edit box - clear its state, republish the seven defaults,
-         then close the trailing Time and the GraphicWin prefix.
-The historical forwarding notes below predate the separate timer lifecycle TU;
-this definition now calls the actual Time member.
-// ORIGINAL: 0x00614F30 ?close@EditBox@@QAEXXZ 0x00614F30-0x00614FD1 BYTE_EXACT
-// LEVER: PROMOTED out of src/unrecovered/00614f30.cpp, whose claim proved the ARTIFACT reproduced while the program held a pending_bodies forwarder. src/editbox.cpp did not exist - EditBox was header-only - so this file and its CMakeLists entry are new.
-// LEVER (2026-09-03): time_close_call, not `->close()` on the Time at 0xb4c.
-//        The image CALLS 0x00616780 here (0x00614FC3) where time.h's
-//        in-class `MEASURED close` otherwise expands at this site too -
-//        61 compiled instructions against the image's 31, 2/31 agreeing.
-//        Same forwarder flatbutton.cpp uses for its own Time member, and
-//        netmsg.cpp now carries a static copy of it as well.
-// symbol    ?close@EditBox@@QAEXXZ
-// size      161 bytes
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     0x005D4E40 0x00616780
-Return Value: n/a
-Status: Complete
-*/
-
-
-void EditBox::close() {
-    text_[0] = 0;
-    field_B14_ = 0xa;
-    field_B28_ = EditBoxDefaultB28;
-    field_B2C_ = EditBoxDefaultB2C;
-    field_B30_ = EditBoxDefaultB30;
-    field_B34_ = EditBoxDefaultB34;
-    field_B1C_ = EditBoxDefaultB1C;
-    field_B20_ = EditBoxDefaultB20;
-    field_B24_ = EditBoxDefaultB24;
-    field_B38_ = 0;
-    field_B40_ = 0;
-    field_B44_ = 0;
-    field_B48_ = 0;
-    field_B18_ = 0;
-    field_B3C_ = 0;
-
-    time_.close();
-    GraphicWin::close();
-}
 /*
 Purpose: Does this window hold the dialog focus, and its partner too?
 
@@ -700,40 +739,4 @@ Status: Complete
 int EditBox::is_dialog_focus_chain() {
     return is_dialog_focus() != 0 &&
         (win_parent_ == nullptr || win_parent_->is_dialog_focus() != 0);
-}
-
-/*
-Purpose: Replace one edit box's text: clear the cursor; if the input exceeds
-         the character limit, trim the caller's mutable input until it fits,
-         then append it and recompute the text length before repainting.
-
-// ORIGINAL: 0x006151E0 ?set_text@EditBox@@QAEXPAD@Z 0x006151E0-0x0061526A BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["pinned image 01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf; original identity 0x006151E0 retains name and all original spans/claims", "src/editbox.h declares the actual EditBox::set_text class member; body uses that existing owner API", "historical source was FILE-mode in git:2874481e371cbbaa04e3375e6797f1f182abb7cb:src/leaf_recoveries.cpp; this transfer places the unchanged C++ member definition in its actual owner TU and changes measurement mode to BODY explicitly; it does not assert historical recipe equality", "the complete source body and existing TRIED/LEVER/DEFERRED history are carried forward unchanged; only annotation mode/location and transitional SCAFFOLD classification change"], "reason": "Transfer the complete EditBox::set_text definition to its existing source owner without changing its C++ body. Keep the original FILE spans and historical claim state; BODY is the new per-member measurement scope, not a claim that the old whole-TU recipe is equivalent."}
-// size      138 bytes
-// prototype void (__thiscall ?set_text@EditBox@@QAEXPAD@Z)(EditBox* this, int8*)
-// callers   1   call targets   1
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// indirect  0x00615264
-// TRIED (forwarder): reached from `EditGroup::set_text` - see the note in
-//         `editbox.h`.
-Status: Source-owned member body; behavior retained, exactness not measured
-*/
-void EditBox::set_text(char *text) {
-    if (text_ != 0) {
-        field_B18_ = 0;
-        text_[0] = 0;
-        if (text != 0) {
-            while (strlen(text) != 0) {
-                if (strlen(text) <= field_B14_) {
-                    break;
-                }
-                text[strlen(text) - 1] = 0;
-            }
-            strcat(text_, text);
-        }
-        field_B40_ = 0;
-        field_B44_ = static_cast<uint32_t>(strlen(text_));
-        redraw();
-    }
 }
