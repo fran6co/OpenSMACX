@@ -2167,7 +2167,7 @@ draw_map:
 }
 
 // 0040FCC0..004103A7, EH cleanup00651AF8..00651B0D.
-// ORIGINAL: 0x0040FCC0 ?draw_facilities@BaseWin@@QAEXH@Z 0x0040FCC0-0x004103A7;0x00651AF8-0x00651B0D
+// ORIGINAL: 0x0040FCC0 ?draw_facilities@BaseWin@@QAEXH@Z 0x0040FCC0-0x004103A7;0x00651AF8-0x00651B0D BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["image:0x0040FCC0; retired seed provenance git:ac469904:src/unrecovered/0040fcc0.cpp; all original spans and historical obligations retained.", "image:41E8D0 initializes existing Font/FlatButton/Sprite/RECT and Caviar camera members; 420A70 tears down the same declaration order.", "image:41AF5B supplies ConsoleGlobal GraphicWin virtual-base receiver939444; qualified Console callback leaves the result intact.", "image:40B8F8 borrows the vehicle-ID pointer in NetDaemon row1 payload; normal menu cancel-1 reads inherited GraphicWinA0C. Undefined icon-spacing/invalid-index/modal-borrow inputs remain explicit."], "reason": "Genuine BaseWin owner with actual members, automatic base/member lifetimes and native callback receivers, not fixed executable-address forwarding or raw self-offset access."}
 // TRIED: automatic `Font font;` local (real ctor/dtor from the class, matching draw_psych's precedent) to get the compiler-generated SEH try-finally frame, instead of hand-rolled ExceptionList plumbing; VCall::slot001 retyped to take an int (Scroll vtable slot 1 dispatch with arg 0). Traced the real bytes (not just Ghidra, which mislabels several stack slots by a constant in the Font-adjacent region) for the rowHeight formula ((font.unk_1_>=0) ? font.height_+font.unk_1_ : font.line_height_) and the Spot::add(facId,2,left,y,width,rowHeight) arg order. Not chased to byte-exact given size (1788 bytes / SEH frame).
 void BaseWin::draw_facilities(int update_mode) {
@@ -5053,7 +5053,7 @@ void BaseWin::rename() {
     // The pinned BaseWin::rename call references bytes 52 45 4E 41 4D 45 00
     // at 0x682C70. This writable-data correspondence says nothing about
     // runtime immutability or linker selection.
-    // RECOVERY_LITERAL: v1 0x682C70 0x682C77 $SG64600 0x41A2B0
+    // RECOVERY_LITERAL: v1 0x682C70 0x682C77 $SG64596 0x41A2B0
     if (X_pop_ask("RENAME", 0x18, BaseCurrent->name_string, nullptr, 0)) {
         NetDaemonNet.unlock_base(BaseIDCurrentSelected);
         return;
