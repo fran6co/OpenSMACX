@@ -105,7 +105,7 @@ static const char alpha_faction_prefix[] = "Faction";
 // the DWORDs at 0x006900CC/0x006900D0 point at the ".\Alpha Centauri.Ini"
 // and "Alpha Centauri" literals.
 // RECOVERY_OBJECT: v1 0x006900CC ?PrefsFile@@3PBDB
-const char *PrefsFile = ".\\Alpha Centauri.ini";   // 0x006900CC
+const char *PrefsFile = ".\\Alpha Centauri.Ini";   // 0x006900CC
 // RECOVERY_OBJECT: v1 0x006900D0 ?PrefsSection@@3PBDB
 const char *PrefsSection = "Alpha Centauri";       // 0x006900D0
 
