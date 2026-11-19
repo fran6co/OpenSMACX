@@ -1287,7 +1287,7 @@ void __cdecl base_kill(int base_id) {
 
 
 // Superseded seed deleted; seed paths below are historical Git provenance.
-// ORIGINAL: 0x004E5A60 ?base_change@@YAXHH@Z 0x004E5A60-0x004E5FDC
+// ORIGINAL: 0x004E5A60 ?base_change@@YAXHH@Z 0x004E5A60-0x004E5FDC BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/004e5a60.cpp", "source:src/base.cpp:base_reset", "source:src/base.cpp:base_lose_minerals"], "reason": "Recover production selection, retool mineral adjustment and radius redraw through the typed Base and Rules. Project announcement and faction production counts remain unresolved; this is not a byte or behavioral claim."}
 void __cdecl base_change(int base_id, int production_id) {
     if (production_id == 99999) return;
@@ -1836,7 +1836,7 @@ int __cdecl base_at(int x, int y) {
     }
     if (!BaseAtErrorGuard) {
         // This base_at diagnostic passes its own format literal to log_say, with x and y as separate values.
-// RECOVERY_LITERAL: v1 0x00689390 0x006893A8 $SG62402 0x004E3A50
+// RECOVERY_LITERAL: v1 0x00689390 0x006893A8 $SG62400 0x004E3A50
         log_say("Base Bits Error  (x, y)", x, y, 0);
     }
     if (!(GameDataStateStorage.fields_.game_state_ & STATE_DEBUG_MODE)) {
@@ -1851,7 +1851,7 @@ int __cdecl base_at(int x, int y) {
         parse_num(0, x);
         parse_num(1, y);
         // This base_at popup key is a separate literal argument from the diagnostic format string above.
-// RECOVERY_LITERAL: v1 0x006893A8 0x006893B0 $SG62406 0x004E3A50
+// RECOVERY_LITERAL: v1 0x006893A8 0x006893B0 $SG62404 0x004E3A50
         X_pop("BASEBIT", NULL);
     }
     BaseAtErrorGuard = 0;
@@ -5407,7 +5407,7 @@ void __cdecl make_base_unique(int base_id) {
     if (collisions != 0) {
         Bases[base_id].name_string[21] = 0;
         // make_base_unique passes this one-byte delimiter to strcat; collision digits use a separate buffer.
-// RECOVERY_LITERAL: v1 0x00689F08 0x00689F0A $SG63751 0x004F7FE0
+// RECOVERY_LITERAL: v1 0x00689F08 0x00689F0A $SG63749 0x004F7FE0
         strcat(Bases[base_id].name_string, "-");
         char digits[0x50];
         _itoa(collisions + 1, digits, 10);
