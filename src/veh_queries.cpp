@@ -414,15 +414,15 @@ int __cdecl veh_init(int prototype, int faction, int x, int y) {
         }
         return vehicle_id;
     }
-    if (weapon_value >= armor_value) {
-        if (PlayersData[faction].region_base_plan[region] != 7
-            && !rnd(
-                range(PlayersData[faction].region_total_bases[region] * 2 / 3, 3, 8) + 2, "MARAUDER")) {
-            Vehs[vehicle_id].state |= VSTATE_UNK_20000;
+    if (weapon_value < armor_value) {
+        if (PlayersData[faction].unk_72 & 1
+            || PlayersData[faction].region_base_plan[region] == 7) {
             return vehicle_id;
         }
-    } else if (PlayersData[faction].unk_72 & 1
-               || PlayersData[faction].region_base_plan[region] == 7) {
+    } else if (PlayersData[faction].region_base_plan[region] != 7
+            && !rnd(
+                range(PlayersData[faction].region_total_bases[region] * 2 / 3, 3, 8) + 2, "MARAUDER")) {
+        Vehs[vehicle_id].state |= VSTATE_UNK_20000;
         return vehicle_id;
     }
     Vehs[vehicle_id].state |= VSTATE_UNK_40000;
