@@ -1789,6 +1789,36 @@ say_label/say_tech batch, 86cc2f1fd4..39c52fa497, 89 probe calls retired)
   unreferenced) and `analysis/giantcallee.py` (helpers called only by the
   giants). Ambiguous spans (more sites than labels) stay as written until
   something else orders them.
+- **A unit's literal run is its definition order** (high; 2026-11-19,
+  par-3 literal sweep). VC6 numbers `$SG` literals and lays them out in
+  .data in source order, so the image's literal run is in the address
+  (definition) order of the unit's functions. A file whose functions are
+  defined in another order gives every literal another counter slot.
+  Putting the whole file in address order was codegen-neutral in eleven
+  units (netwin, netdaemon, net_class, tutwin, video, filewin, newtechwin,
+  uv2player, multiwin, replaywin, net_session_picker); move static helpers
+  ahead of their first user, but keep a helper defined *before its own
+  callee's definition* and give it a forward declaration if hoisting it
+  changes what expands (tutwin's tut_callout: 0 -> 236 rows when hoisted).
+  Keep `#pragma auto_inline`/`inline_depth` pairs around the same
+  functions: a function compiled inside an `auto_inline(off)` region gets
+  its own .data section, linked after the deferred functions' section,
+  and the region changes codegen (veh prune_protos 167 -> 172 when
+  name_proto slipped inside). Within a call, literal arguments are
+  emitted right to left (`MessageBoxA(0, text, caption, 0)` emits caption
+  first; `popp(.., label, 0, picture, 0)` picture first). A unit's
+  initialised globals precede all its literals, so a global between two
+  literal runs marks an original TU boundary (veh.cpp: 0x0068F0F0 after
+  study_artifact; newgame.cpp: 0x0068F9F0 before sub_58f4f0). Single-use
+  named `static char X[] = "..."` arrays are pooled-era stand-ins: unpooled
+  units spell them as literals (with a `RECOVERY_LITERAL` at the same
+  extent); only addresses pushed from several functions are named objects
+  (one address pushed twice inside one function can also be a loop-top
+  call duplicated by loop rotation: connect_session's NETCONNECT_CREATE).
+  Restoring the literals re-tuned PrefWin::init (exact, 0 pads) and
+  action_give (exact at 17 pads). Screens (scratch tools, not in tree):
+  compare the unit's referenced image strings in address order with the
+  object's `$SG` order.
 
 ## 3. Symptom → first thing to check
 
