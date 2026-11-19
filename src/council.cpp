@@ -1101,6 +1101,29 @@ int __cdecl can_call_council(int faction_id, int announce) {
     }
 }
 
+// WORKAROUND(decl): name ours. call_council's two cooldown refusals (recent
+// call, recent proposal) show their notice through inline owners: written out,
+// the late ~Popup teardowns expand two levels deeper than the image's (EH runs
+// ...,6,7,9,7,9,6 against 6,6,6,6) and stop sharing the closing teardown;
+// with both owners the runs are ...,6,6,6,7. Names and homes unknown; no
+// out-of-line copy in the image.
+static inline void council_recent_call(int faction_id) {
+    if (faction_id == ConsoleGlobal.faction_id_
+            && is_human(faction_id)) {
+        parse_num(0, game_year(PlayersData[ConsoleGlobal.faction_id_].council_call_turn));
+        parse_num(1, Rules.min_turns_councils);
+        parse_num(2, Rules.min_turns_councils / 2);
+        NetMsgPrimary.pop("COUNCILRECENTCALL", "council_sm.pcx");
+    }
+}
+static inline void council_recent_prop(int faction_id, int last_turn) {
+    if (faction_id == ConsoleGlobal.faction_id_
+            && is_human(faction_id)) {
+        parse_num(0, game_year(last_turn));
+        parse_num(1, Rules.min_turns_councils);
+        NetMsgPrimary.pop("COUNCILRECENTPROP", "council_sm.pcx");
+    }
+}
 // RECOVERY_ASSOCIATED: v1 switch_targets 0x0052C880 0x0052DA98 0x0052DAC0 0x0052CE00
 // ORIGINAL: 0x0052C880 ?call_council@@YAXH@Z 0x0052C880-0x0052DA98;0x0065DB70-0x0065DF45
 // RECOVERY_BINDING: v1 {"reason":"Recover the complete faction-taking council dialog in its existing owner with genuine automatic Popup and Sprite lifetimes, typed game/faction storage and live post-modal reads.","evidence":["Pinned52C880 and its65DB70 lifetime tail establish the proposal selection, cooldown and network dispatch paths.","Existing Rules.min_turns_councils and Players/PlayersData members account for the observed storage; no executable-address aliases or manual vtable writes.","The original s14 local is initialized only on eligible proposal1 paths; alternate_selection retains that unresolved stack-residue obligation rather than inventing a default."]}
@@ -1332,13 +1355,7 @@ void __cdecl call_council(int faction_id) {
                  && is_human(faction_id))) {
         int due = (faction_id == GameDataStateStorage.fields_.governor_faction_) ? delay / 2 : delay;
         if (turn - PlayersData[faction_id].council_call_turn < due) {
-            if (faction_id == ConsoleGlobal.faction_id_
-                    && is_human(faction_id)) {
-                parse_num(0, game_year(PlayersData[ConsoleGlobal.faction_id_].council_call_turn));
-                parse_num(1, Rules.min_turns_councils);
-                parse_num(2, Rules.min_turns_councils / 2);
-                NetMsgPrimary.pop("COUNCILRECENTCALL", "council_sm.pcx");
-            }
+            council_recent_call(faction_id);
             return;
         }
     }
@@ -1347,12 +1364,7 @@ void __cdecl call_council(int faction_id) {
             && !((GameDataStateStorage.fields_.game_state_ & 0x80)
                  && (GameDataStateStorage.fields_.game_state_ & 0x1000)
                  && is_human(faction_id))) {
-        if (faction_id == ConsoleGlobal.faction_id_
-                && is_human(faction_id)) {
-            parse_num(0, game_year(last_turn));
-            parse_num(1, Rules.min_turns_councils);
-            NetMsgPrimary.pop("COUNCILRECENTPROP", "council_sm.pcx");
-        }
+        council_recent_prop(faction_id, last_turn);
         return;
     }
 
