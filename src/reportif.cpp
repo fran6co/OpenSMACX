@@ -3237,6 +3237,8 @@ void ReportWin::on_selected(int selection_id, int) {
 // ORIGINAL: 0x0049D540 ?draw_ops@ReportWin@@QAEXXZ 0x0049D540-0x0049EAEB;0x00659435-0x00659447
 // RECOVERY_BINDING: v1 {"evidence": ["git:649230f6:src/unrecovered/0049d540.cpp", "source:src/reportwin.h", "source:src/reportif.h", "image:original ReportWin instructions, callbacks and lifecycle evidence"], "reason": "Recover this report-window operation in its genuine owner using typed members, natural subobject lifetimes and shared source-owned state; retained catalogue identity and spans remain distinct from current emitted symbols."}
 void ReportWin::draw_ops() {
+    // [ebp-0x10] (imgmerge.py, par-6): the image keeps the queue item cost and both citizen loop indexes in one home
+    int v_10;
     const int faction = ReportIfGlobal.report_faction_id_;       // edi, spilled to [ebp-0x74]
     Random rng;                                                  // [ebp-0x54]
     rng.reseed(timeGetTime());
@@ -3468,11 +3470,10 @@ void ReportWin::draw_ops() {
             StringTemp[0] = 0;
             Buffer::set_font(ReportIfGlobal.field_1E18C_, ReportIfGlobal.field_1E18C_,
                 ReportIfGlobal.field_1E18C_, 0);
-            int item_cost;                                       // shares [ebp-0x10]
             if (production >= 0) {
                 strcat(StringTemp, VehPrototypes[production].veh_name);
                 BOOL has_proto_cost;                             // [ebp-0x98]
-                item_cost = veh_cost(production, BaseIDCurrentSelected, &has_proto_cost);
+                v_10 = veh_cost(production, BaseIDCurrentSelected, &has_proto_cost);
                 Buffer::set_text_color(
                     mandate_color(TutWinBaseWindow.prodPicker_.edbc_unit(production)), -1, 1, 1);
             } else {
@@ -3480,7 +3481,7 @@ void ReportWin::draw_ops() {
                 strcat(StringTemp, StringTable.get(Facility[facility].name));
                 Buffer::set_text_color(
                     mandate_color(TutWinBaseWindow.prodPicker_.edbc_fac(facility)), -1, 1, 1);
-                item_cost = Facility[facility].cost;
+                v_10 = Facility[facility].cost;
             }
             rect1_.left += 60;
             Buffer::write_l(StringTemp, rect1_.left, text_y);
@@ -3495,7 +3496,7 @@ void ReportWin::draw_ops() {
                 say_num(BaseCurrent->minerals_accumulated);
             }
             strcat(StringTemp, "/");
-            int cost = cost_factor(BaseCurrent->faction_id_current, 1, -1) * item_cost;  // edi
+            int cost = cost_factor(BaseCurrent->faction_id_current, 1, -1) * v_10;  // edi
             say_num(cost);
             strcat(StringTemp, SocialWinCloseParenText);
             strcat(StringTemp, BufferJoinSpace);
@@ -3576,15 +3577,15 @@ void ReportWin::draw_ops() {
                     g_CITIZEN_SM_CURSOR_SPRITES[
                         (drone < BaseCurrent->super_drone_total) + 2 + rng.get(0, 2) * 4].draw(this, rect1_.left, rect1_.top);
                 }
-                for (int worker = 0; worker < BaseCurrent->population_size
+                for (v_10 = 0; v_10 < BaseCurrent->population_size
                         - BaseCurrent->talent_total - BaseCurrent->specialist_total
                         - (BaseCurrent->drone_total < 0 ? 0 : BaseCurrent->drone_total);
-                     ++worker) {
+                     ++v_10) {
                     rect1_.left -= spacing;
                     spot_.add(list_index, 0, rect1_.left, rect1_.top, spacing, pitch);
                     g_CITIZEN_SM_CURSOR_SPRITES[rng.get(0, 2) * 4 + 1].draw(this, rect1_.left, rect1_.top);
                 }
-                for (int talent = 0; talent < BaseCurrent->talent_total; ++talent) {
+                for (v_10 = 0; v_10 < BaseCurrent->talent_total; ++v_10) {
                     rect1_.left -= spacing;
                     spot_.add(list_index, 0, rect1_.left, rect1_.top, spacing, pitch);
                     g_CITIZEN_SM_CURSOR_SPRITES[rng.get(0, 2) * 4].draw(this, rect1_.left, rect1_.top);
