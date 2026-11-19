@@ -4912,6 +4912,35 @@ result over 64 symbol-counter pads, so none of these is a counter canary.
   store and later ones lose theirs (ProdPicker::on_scrolled 0x00493CB0).
 - **Two same-type locals in disjoint block scopes share one slot**
   (on_scrolled's two shifted rectangles in a 0x10 frame).
+- **Slot sharing follows the source's variable structure: read the image's
+  homes, then find the declarations that share or split them the same way**
+  (par-1 2026-11-19, `analysis/varset.py`, `analysis/imgmerge.py`). For each
+  value, list the image slot it is stored to and reloaded from; two values
+  in one image slot are two variables with disjoint scopes (or one reused
+  name), one value in two image slots is two variables. Two shapes closed
+  rung 5 outright:
+  - *A census loop variable sharing a slot with a later row variable.*
+    BaseWin::draw_facilities 0x0040FCC0: the image puts the census counter
+    `facility` and the drawing loop's `row` in one slot (-0x10) and `count`
+    with `y` (-0x24). Ours declared `facility` at function scope with a
+    `while` loop, so it had a home of its own and the slot ranks shifted.
+    `for (int facility = 0; facility < 134; ++facility)` with one ternary
+    test (`facility < 70 ? has_fac(..) || redundant(..) : base_project(..)
+    == base`) scopes it to the loop, it packs with `row`, and the function
+    went fe-exact (recorded BYTE_EXACT). A function-scope loop counter
+    whose image slot is shared with a later variable is a `for`-scoped one.
+  - *A chain of section bounds through one `next` variable.*
+    NetWin::draw_session_info 0x00480900: from the rules line on, the image
+    homes each wrap result at one slot ([ebp-0x14]) and reads every later
+    section's top from it, closing each section with one store back
+    (`mov [ebp-0x14],ebx`), while `row`'s own slot is dead over those
+    sections and reused by another local. Ours copied `bottom` into `row`
+    at each section end (`row = bottom`), so `row` stayed live and one home.
+    The original shape is `top = bottom` implicit: each section draws at
+    `bottom`, computes `next`, then `bottom = next`; `row` is written once
+    more after the last section. Slot map one-to-one with the image, 137 ->
+    79 rows. A per-section `row = bottom` copy in ours where the image
+    keeps writing one home is this chain.
 - **A RECT packs with a later address-taken array** (par-5 2026-11-19,
   `analysis/probes/rectpack/run.py`). A RECT local whose address is never
   taken out of line shares its frame slot with a later `char[16]` whose
