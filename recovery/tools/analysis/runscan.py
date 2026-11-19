@@ -19,6 +19,11 @@ functions (fe json if given, else the marker's BYTE_EXACT token), then total. Si
 functions are marked `x`: an inline helper must leave them exact (or be shown structurally right).
 `scope` says whether all sites share one unit (file-local static inline) or span units (header).
 Pure text screen, no compiler.
+
+runscan.py <unit> --try 0xADDR [--max N] [--wmin 1] [--keep] [--unit-exact]: compile screen (FE_PFX_BASE, FE_JOBS).
+Every level-1 window repeated inside the function becomes a template inline helper (each alone, all together),
+with and without the function's dead probe lines; prints fe rows, moved inline E/c strings and broken exact
+functions. --keep also keeps only the first k probe lines beside each helper.
 """
 import sys, os, re, json, glob, argparse, collections
 
@@ -692,6 +697,21 @@ def try_mode(a):
             if noprobe:
                 deck.append(('all-np', strip(v)))
                 remake['all-np'] = lambda mem: (lambda v: v and strip(v))(combined(mem))
+    if noprobe and a.keep:
+        # helper plus only the first k probe lines: how many probes a helper replaces
+        def keep(v, k):
+            f2 = [f for f in scan_file_text(unit, v) if f.addr == addr][0]
+            n = [0]
+
+            def rep(m):
+                n[0] += 1
+                return m.group(0) if n[0] <= k else ''
+            return v[:f2.span[1]] + PROBE_LINE.sub(rep, v[f2.span[1]:f2.span[2]]) + v[f2.span[2]:]
+        nprobe = len(PROBE_LINE.findall(body))
+        for key, v in list(deck):
+            if key.startswith('h') and not key.endswith('-np') or key == 'all':
+                for k in range(1, nprobe):
+                    deck.append(('%s-k%d' % (key, k), keep(v, k)))
     exact_addrs = [int(m.group(1), 16) for m in re.finditer(r'// ORIGINAL: 0x([0-9A-F]{8}) \S+ 0x[0-9A-Fa-f]+-0x[0-9A-Fa-f]+([^\n]*)', text)
                    if 'BYTE_EXACT' in m.group(2)]
     jobs = int(os.environ.get('FE_JOBS', '5'))
@@ -780,6 +800,7 @@ if __name__ == '__main__':
         ap.add_argument('--max', type=int, default=24)
         ap.add_argument('--unit-exact', action='store_true')
         ap.add_argument('--wmin', type=int, default=2, help='1: also single call statements repeated 3+ times')
+        ap.add_argument('--keep', action='store_true', help='also each helper with only the first k probe lines (k = 1..n-1)')
         try_mode(ap.parse_args())
     else:
         main()

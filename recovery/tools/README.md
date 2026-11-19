@@ -122,6 +122,16 @@ worker-21..34 (the queue uses 20) and never touch the worktree's build.
   more instructions. Read with the probe/save_game notes in MATCHING_GUIDE 3.7: the image's choice of the join's
   fallthrough predecessor decides which copy survives. `jj=N` (and `JJ` lines) counts our jumper-into-jumper merges,
   the strongest single sign of a merge the image does not make (33/110 non-exact vs 15/626 exact functions sampled). `HOST` lines: each join whose host (the predecessor it is laid after) differs between the image and ours, both sides' predecessors as `line[last instruction]` in our source order (`H:` host, `x:` cross-jumped into it, `/T` inner then-arm tail), whether rules 1-2 of MATCHING_GUIDE 3.7 predict our host, and the source change they predict gives the image's (pop size: move a call across a branch; image host not first partnered: its tail was an inner then-arm; ours promoted by a then-arm: make it a lone if / else-arm; or reorder arms). `--tree --hosts` prints them all.
+- `analysis/runscan.py [unit ...] [--fe FEALL.json] [--level 1|2] [--top N] [--json F]` repeated statement-run screen
+  (MATCHING_GUIDE 2.8, "Helper screen"; text only, 20 s tree-wide): 2-5 statement windows of straight-line code (a no-else
+  simple `if` counts as one statement) holding a call, normalised (locals V, numbers K, strings S; level 2 also collapses
+  argument lists and subscripts), that occur 3+ times in the tree or 2+ times in one function, ranked by sites in non-exact
+  functions, sites in exact functions marked `x`. `runscan.py <unit> --try 0xADDR [--wmin 1] [--keep] [--unit-exact]` turns
+  every run repeated inside that function into a template inline helper (each alone and all together, implicit members
+  retried as `this->`), with and without the function's dead probe lines (calls of `*probe*` or lines of calls tagged
+  WORKAROUND(inline)), and prints fe rows, the inline E/c strings that moved, and (`--unit-exact`) the unit's exact
+  functions it breaks. `--keep` adds each helper with only the first k probe lines. Templates pass locals by reference,
+  which costs more than a hand-written int parameter (see the guide), so confirm a hit with typed spellings.
 - `analysis/ownerscan.py [unit ...] [--addr A,..] [--probes 8,32] [--repeat] [--swaps] [--json F]` missing inline
   owner screen (MATCHING_GUIDE 2.8 "Missing owner, not missing budget"): per non-exact function, the inline callees
   the image calls more often than ours, our call counts with a dead 0/8/32-probe pass-1 block at the top of the

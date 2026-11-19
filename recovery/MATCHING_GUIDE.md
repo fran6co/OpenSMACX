@@ -1607,6 +1607,30 @@ What the model does not predict (2026-11-19)
   early sites expands (image E,c / c,E against ours c,E / E,c); pick_pass
   also keeps `payload` in memory where ours enregisters it in edx and
   gives its slot [ebp+8] to faction_mode (image: to verify_hash).
+- **Helper screen: real runs retire probes, but not the suffix**
+  (2026-11-19, par-1; `analysis/runscan.py --try`). Each statement run
+  repeated inside a function, as a template inline helper with and without
+  the function's dead probe lines, over 83 probe-carrying functions:
+  - Whole retirements: base_editor_copy 0x0041C240 (label/item run, five
+    probes), introduce 0x0053D360 (leader and noun pairs, eight probes),
+    propose_attack 0x00545E80 (friction/X_pop run, one probe), go_to
+    0x004D61A0 (refusal and waypoint runs, 20-if probe). Partial:
+    size_of_planet 0x0058CED0 (six of sixteen probes, `--keep` sweeps the
+    probe count beside each helper). Most other probes are only partly
+    replaced (8-64% of their rows).
+  - **A helper's parameter form changes its cost.** In introduce and
+    base_editor_copy the natural form (int by value, label index) falls
+    short (119 and 42 rows); `const int &` parameters, or a byte offset
+    divided inside the helper, reproduce the image. Each reference or
+    expression inside the helper adds charge, so try those forms before
+    concluding a run was not a helper. Mark the form WORKAROUND(inline).
+  - No helper the screen finds refuses ~Scroll at the earliest teardowns of
+    go_to or PickTech::pick (pick: seven windows, also the score/best,
+    say_tech, box and modal runs; all leave ~Scroll E at every site). The
+    suffix shortfall above stays open.
+  - A run can be a helper at one site and not another: the label/item
+    helper breaks DiploWin::on_button_clicked 0x004415C0 (refuses its
+    ~RadioButton), so keep such helpers file-local to the sites that gain.
 - The units are approximate. Costs come from fitted counts, not node
   counts, so a prediction is good to about one expansion. Use it to choose
   the *kind* and *place* of a missing spend, then confirm with fe.
