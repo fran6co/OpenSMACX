@@ -129,16 +129,16 @@ void __cdecl vox_matrix_inverse(const float (*matrix)[3], float (*out)[3]) {
     out[2][2] = reciprocal * cof[2][2];
 }
 
-// WORKAROUND(decl): six unused declarations restore the front-end symbol
-// state vox_matrix_vector_mul and vox_cross_product need for their x87
-// operand order after vox_matrix_inverse's cofactor array (6 and 8 keep both
-// exact; 0-5, 7, 10 and 12 flip one or both).
+// WORKAROUND(decl): three unused declarations restore the front-end symbol
+// state vector_add, vox_matrix_vector_mul and vox_cross_product need for
+// their x87 operand order after vox_matrix_inverse's cofactor array.
+// Re-tuned 2026-11-19 after caviar.h's `friend class StatusWin;` (fe sweep,
+// this block 0-23 x caviar_symbol_pad_ 0-7): all three exact only at
+// (1, 3-5), (3, 2-4), (17, 3-5) and (19, 2-4); 6 flips all three.
+// CANARY-PADS: extern vox_geometry_pad_
 extern float vox_geometry_pad_0;
 extern float vox_geometry_pad_1;
 extern float vox_geometry_pad_2;
-extern float vox_geometry_pad_3;
-extern float vox_geometry_pad_4;
-extern float vox_geometry_pad_5;
 
 // 0x006280E0. A 3x3 times a vector: three rows of three multiplies and a
 // store, 107 bytes, no calls of its own.
@@ -292,6 +292,7 @@ void __cdecl vox_normalise_vector(const float *source, float *out) {
 // and flipped vox_cross_product 0x628290; these four unused declarations
 // restore the state (3..5 work, measured 2026-11-11). Stand-ins for the
 // library's unknown original declaration set; remove with the header cleanup.
+// CANARY-PADS: extern caviar_symbol_pad_
 extern int caviar_symbol_pad_0(int);
 extern int caviar_symbol_pad_1(int);
 extern int caviar_symbol_pad_2(int);
