@@ -13,9 +13,10 @@ an explicit `--pfx` is only needed to pick another lane.
   relocations masked. `!!` = differing row, `!>` = same instruction, different local jump target.
   A marker with `// compile_context <tu>` is measured in that unit's compile, as `recover measure`
   does (unless `--src` replaces the host).
-- `feall.py [--all] [--base FILE] [--out FILE]` whole-tree pass: 420 non-exact functions in 13 s,
+- `feall.py [--all] [--base FILE] [--out FILE] [--root CHECKOUT]` whole-tree pass: 420 non-exact functions in 13 s,
   all 5,574 markers in 17 s (`--all`). `--base` prints LOST/GAINED/MOVED: a header hypothesis
-  can be tested tree-wide in under 20 s. About 46 claimed functions read inexact (measured in
+  can be tested tree-wide in under 20 s. `--root` measures another checkout with that checkout's own fe.py (its
+  sources and headers; before 2026-11-19 it was parsed and ignored). About 46 claimed functions read inexact (measured in
   another unit, self-calls); the set is stable, so compare against a base.
 - `perm.py <unit> <addr> --lines A-B [--max N] [--win ...] [--apply K]` every order of the source
   lines A..B (36 candidates/s). `perm.run_deck(unit, addr, [(key, source_text), ...])` evaluates
@@ -52,6 +53,16 @@ an explicit `--pfx` is only needed to pick another lane.
 - `analysis/inline/giant.py N STRIDE [if|store|call] [--charged] [--mixed] [--front]` synthetic giant caller:
   expansions against caller size (the ceiling T, MATCHING_GUIDE 2.8 rule 7).
 - `objdis.py <unit> <src> <addr>` raw listing of our function with real jump targets.
+- `objdis.py <unit> <src> <addr>` raw listing of our function with real jump targets (unit as `picktech`, `picktech.cpp`,
+  `src/picktech.cpp`, or a basename found in a subdirectory; lane FE_PFX_BASE).
+- `analysis/sdeck.py` (`sdeck.run(unit, addr, lo, hi, [(key, text), ...])`) structural deck runner: ranks whole-file
+  variants by (named call multiset distance, jcc/jmp/call/ret count distance, control-flow hunks, fe rows), so a
+  spelling is judged by its /Ob2 and block decisions before its rows (MATCHING_GUIDE 2.8 "Judge by decisions").
+  `sdeck.WATCH = ['remove_all', ...]` adds per-callee image/ours counts to the key.
+- `analysis/jseq.py <unit> <src> <addr> [<lo> <hi>]` control-flow token diff (jcc/jmp/call/ret) of one function:
+  both token counts and the first `SHOW` differing hunks. Equal counts and 0 hunks = rung 4 settled.
+- `analysis/ucmp.py <unit.cpp> ...` per-marker fe rows of HEAD's version of each unit against the worktree's:
+  the markers a body edit moved in its own unit, before committing (about 1 s per unit).
 - `analysis/regmap.py <unit> <addr> [--src ALT.cpp] [--min N] [--ranges]` which callee-saved register holds
   which role (this, a named slot's cached copy, a call result at a source line, a temporary), for the image
   and for ours, with what the other side uses in the same aligned rows. Read it with MATCHING_GUIDE 2.7.

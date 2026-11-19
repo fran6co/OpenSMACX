@@ -2717,6 +2717,22 @@ What the model does not predict (2026-11-19)
   per-site and per-unit. So no "+" helper belongs in strings.h; the
   shared-literal family (`" "`, `", "`, `": "`, `"("`, `")"`, `"%"`,
   `". "`) is exactly the texts the image shares across units.
+- **Frame-slot order follows the expansion counts: judge a spelling by its
+  decisions, not its rows** (high; 2026-11-19 par-4, PickTech::pick
+  64a5fb2ca3). Every expanded destructor or helper brings its own locals and
+  temporaries, and VC6 numbers frame slots by first appearance in the
+  expanded tree, so one more or one fewer expansion at an early site shifts
+  every later slot. fe aligns those shifted `[ebp-N]` operands as differing
+  rows: a spelling one decision closer to the image can read dozens of rows
+  WORSE, and a spelling one decision further can read better because its
+  wrong slots happen to line up. In pick, the deck whose ~FlatButton E/c
+  string equalled the image's ranked ~40th by rows; once committed, the
+  popup slots fell into image order by themselves and rows went 395 -> 146.
+  Rank decks by (EH states, named call multiset, inlinemap E/c distance,
+  frame size, control-flow tokens) and only then rows
+  (`analysis/sdeck.py`, `analysis/jseq.py`); never read a row loss on a
+  decision gain as a regression, and never compare slot maps
+  (`framescan.py --slots`) until the decision strings agree.
 - The units are approximate. Costs come from fitted counts, not node
   counts, so a prediction is good to about one expansion. Use it to choose
   the *kind* and *place* of a missing spend, then confirm with fe.
