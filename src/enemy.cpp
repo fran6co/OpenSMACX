@@ -6880,164 +6880,165 @@ L_573942:
         }
     }
     // 0x5739aa
-    if (Vehs[veh_id].order == ORDER_MOVE_TO || near_hostile) goto L_5741cf;
-    if (j) {
-        base_id = Vehs[veh_id].home_base_id;
-        alt = Bases[base_id].x;
-        n = Bases[base_id].y;
-    } else {
-        base_id = home_base;
-        if (Vehs[veh_id].state & 0x200) {
-            alt = Bases[home_base].x;
-            n = Bases[home_base].y;
+    if (!(Vehs[veh_id].order == ORDER_MOVE_TO || near_hostile)) {
+        if (j) {
+            base_id = Vehs[veh_id].home_base_id;
+            alt = Bases[base_id].x;
+            n = Bases[base_id].y;
         } else {
-            alt = x;
-            n = y;
-        }
-        score = 0;
-        {
-            int r;
-            for (r = 1; r < 21; r++) {
-                tx = xrange(Bases[home_base].x + RadiusOffsetX[r]);
-                ty = Bases[home_base].y + RadiusOffsetY[r];
-                if (on_map(tx, ty) && map_loc(tx, ty)->region == region) {
-                    other_id = veh_at(tx, ty);
-                    if (other_id >= 0 && Vehs[other_id].faction_id == faction_id) {
-                        score += stack_check(other_id, 2, 9, -1, -1);
-                        if (tx == x && ty == y) score--;
-                    }
-                }
+            base_id = home_base;
+            if (Vehs[veh_id].state & 0x200) {
+                alt = Bases[home_base].x;
+                n = Bases[home_base].y;
+            } else {
+                alt = x;
+                n = y;
             }
-        }
-        if (score) {
-            best_score = 9999;
-            for (m = 0; m < GameDataStateStorage.fields_.base_current_count_; m++) {
-                if (Bases[m].faction_id_current == faction_id
-                    && map_loc(Bases[m].x, Bases[m].y)->region == region) {
-                    int cnt = 0;
-                    for (k = 0; k < 25; k++) {
-                        int bx = xrange(Bases[m].x + RadiusOffsetX[k]);
-                        int by = Bases[m].y + RadiusOffsetY[k];
-                        if (on_map(bx, by) && map_loc(bx, by)->region == region) {
-                            other_id = veh_at(bx, by);
-                            if (other_id >= 0) cnt += stack_check(other_id, 2, 9, -1, -1);
-                        }
-                    }
-                    if (cnt < score) {
-                        dist = map_dist(x, y, Bases[m].x, Bases[m].y) * (cnt + 1) * (cnt + 1);
-                        if (dist < best_score) {
-                            best_score = dist;
-                            base_id = m;
-                        }
-                    }
-                }
-            }
-        }
-    }
-    // 0x573ca0
-    if (base_id >= 0) {
-        best_score = 9999;
-        for (i = 1; i < 21; i++) {
+            score = 0;
             {
-                int r = (GameDataStateStorage.fields_.turn_current_num_ + i) % 21;
-                tx = xrange(alt + RadiusOffsetX[r]);
-                ty = n + RadiusOffsetY[r];
-            }
-            if (on_map(tx, ty) && base_who(tx, ty) < 0
-                && is_ocean(tx, ty) == (triad == 1)
-                && (map_loc(tx, ty)->region == region || at_sea != is_ocean(tx, ty))
-                && !zoc_move(tx, ty, faction_id)) {
-                other_id = veh_at(tx, ty);
-                if ((other_id < 0
-                     || (Vehs[other_id].faction_id == faction_id
-                         && !stack_check(other_id, 2, 9, -1, -1)))
-                    && can_terraform(faction_id, tx, ty,
-                           (faction_bit & (uint8_t)GameDataStateStorage.fields_.lock_masks_.enable_mask_) && j,
-                           base_id)) {
-                    score = map_dist(Bases[base_id].x, Bases[base_id].y, tx, ty);
-                    if (score <= 2) {
-                        // BUG(original): tests the worked-tile bit of the loop
-                        // counter i, not of the rotated radius index.
-                        if (!(Bases[base_id].resource_sqr_radius & (1 << i))
-                            && (!(map_loc(tx, ty)->bit & BIT_FUNGUS)
-                                || (map_loc(tx, ty)->climate & ~0x1F) < 0x40)) {
-                            score *= 3;
-                        }
-                        if (score < best_score) {
-                            for (other_id = 0; other_id < GameDataStateStorage.fields_.vehicle_current_count_; other_id++) {
-                                if (Vehs[other_id].faction_id == faction_id
-                                    && VehPrototypes[Vehs[other_id].proto_id].plan == 9
-                                    && other_id != veh_id
-                                    && ((Vehs[other_id].x == tx && Vehs[other_id].y == ty)
-                                        || (Vehs[other_id].order == ORDER_MOVE_TO
-                                            && Vehs[other_id].waypoint_x[0] == tx
-                                            && Vehs[other_id].waypoint_y[0] == ty))) {
-                                    goto L_573f3c;
-                                }
-                            }
-                            best_score = score;
-                            go_to(veh_id, 0x77, tx, ty);
+                int r;
+                for (r = 1; r < 21; r++) {
+                    tx = xrange(Bases[home_base].x + RadiusOffsetX[r]);
+                    ty = Bases[home_base].y + RadiusOffsetY[r];
+                    if (on_map(tx, ty) && map_loc(tx, ty)->region == region) {
+                        other_id = veh_at(tx, ty);
+                        if (other_id >= 0 && Vehs[other_id].faction_id == faction_id) {
+                            score += stack_check(other_id, 2, 9, -1, -1);
+                            if (tx == x && ty == y) score--;
                         }
                     }
                 }
             }
-L_573f3c:
-            ;
-        }
-        if (Vehs[veh_id].order == ORDER_MOVE_TO) goto L_57707f;
-    }
-    // 0x573f61
-    if (own_ground) goto L_57408e;
-    if ((faction_bit & (uint8_t)GameDataStateStorage.fields_.lock_masks_.enable_mask_)
-        && !(GameDataStateStorage.fields_.game_more_preferences_ & 0x20)) {
-        goto L_57408e;
-    }
-    tx = x;
-    ty = y;
-    if (Paths.sensors(faction_id, &tx, &ty)) goto L_57408e;
-    if (tx == x && ty == y) {
-        Vehs[veh_id].order = 0xD;
-        goto L_578f46;
-    }
-    // falls through into chunk 5 at 0x573fd0
-    // ---- chunk 5: 0x573fd0-0x575b27 ----
-L_573fd0:
-    if (!j || map_dist(x, y, tx, ty) <= 2) {
-        for (other_id = 0; other_id < GameDataStateStorage.fields_.vehicle_current_count_; other_id++) {
-            if (Vehs[other_id].faction_id == faction_id
-                && VehPrototypes[Vehs[other_id].proto_id].plan == PLAN_TERRAFORMING
-                && other_id != veh_id
-                && ((Vehs[other_id].x == tx && Vehs[other_id].y == ty)
-                    || (Vehs[other_id].order == ORDER_MOVE_TO
-                        && Vehs[other_id].waypoint_x[0] == tx
-                        && Vehs[other_id].waypoint_y[0] == ty))) {
-                goto L_57408e;  // another former already has this tile
-            }
-        }
-        go_to(veh_id, 's', tx, ty);
-        goto L_57707f;
-    }
-L_57408e:
-    if (home_dist && !at_sea && PlayersData[faction_id].region_total_bases[region]) {
-        int b = (Vehs[veh_id].home_base_id >= 0) ? Vehs[veh_id].home_base_id : home_base;
-        if (b >= 0) {
-            if (map_loc(Bases[b].x, Bases[b].y)->region != region) {
-                b = home_base;
-            }
-            if (b >= 0) {
-                if (map_dist(x, y, Bases[b].x, Bases[b].y)
-                        > (GameDataStateStorage.fields_.turn_current_num_ <= 50) + 3
-                    || zoc_moved) {
-                    go_to(veh_id, 'b', Bases[b].x, Bases[b].y);
-                    goto L_57707f;
+            if (score) {
+                best_score = 9999;
+                for (m = 0; m < GameDataStateStorage.fields_.base_current_count_; m++) {
+                    if (Bases[m].faction_id_current == faction_id
+                        && map_loc(Bases[m].x, Bases[m].y)->region == region) {
+                        int cnt = 0;
+                        for (k = 0; k < 25; k++) {
+                            int bx = xrange(Bases[m].x + RadiusOffsetX[k]);
+                            int by = Bases[m].y + RadiusOffsetY[k];
+                            if (on_map(bx, by) && map_loc(bx, by)->region == region) {
+                                other_id = veh_at(bx, by);
+                                if (other_id >= 0) cnt += stack_check(other_id, 2, 9, -1, -1);
+                            }
+                        }
+                        if (cnt < score) {
+                            dist = map_dist(x, y, Bases[m].x, Bases[m].y) * (cnt + 1) * (cnt + 1);
+                            if (dist < best_score) {
+                                best_score = dist;
+                                base_id = m;
+                            }
+                        }
+                    }
                 }
             }
         }
-    }
-    if (j && !Vehs[veh_id].order) {
-        Vehs[veh_id].state &= ~0x200;
-        Vehs[veh_id].order = ORDER_NONE;
-        return 0;
+        // 0x573ca0
+        if (base_id >= 0) {
+            best_score = 9999;
+            for (i = 1; i < 21; i++) {
+                {
+                    int r = (GameDataStateStorage.fields_.turn_current_num_ + i) % 21;
+                    tx = xrange(alt + RadiusOffsetX[r]);
+                    ty = n + RadiusOffsetY[r];
+                }
+                if (on_map(tx, ty) && base_who(tx, ty) < 0
+                    && is_ocean(tx, ty) == (triad == 1)
+                    && (map_loc(tx, ty)->region == region || at_sea != is_ocean(tx, ty))
+                    && !zoc_move(tx, ty, faction_id)) {
+                    other_id = veh_at(tx, ty);
+                    if ((other_id < 0
+                         || (Vehs[other_id].faction_id == faction_id
+                             && !stack_check(other_id, 2, 9, -1, -1)))
+                        && can_terraform(faction_id, tx, ty,
+                               (faction_bit & (uint8_t)GameDataStateStorage.fields_.lock_masks_.enable_mask_) && j,
+                               base_id)) {
+                        score = map_dist(Bases[base_id].x, Bases[base_id].y, tx, ty);
+                        if (score <= 2) {
+                            // BUG(original): tests the worked-tile bit of the loop
+                            // counter i, not of the rotated radius index.
+                            if (!(Bases[base_id].resource_sqr_radius & (1 << i))
+                                && (!(map_loc(tx, ty)->bit & BIT_FUNGUS)
+                                    || (map_loc(tx, ty)->climate & ~0x1F) < 0x40)) {
+                                score *= 3;
+                            }
+                            if (score < best_score) {
+                                for (other_id = 0; other_id < GameDataStateStorage.fields_.vehicle_current_count_; other_id++) {
+                                    if (Vehs[other_id].faction_id == faction_id
+                                        && VehPrototypes[Vehs[other_id].proto_id].plan == 9
+                                        && other_id != veh_id
+                                        && ((Vehs[other_id].x == tx && Vehs[other_id].y == ty)
+                                            || (Vehs[other_id].order == ORDER_MOVE_TO
+                                                && Vehs[other_id].waypoint_x[0] == tx
+                                                && Vehs[other_id].waypoint_y[0] == ty))) {
+                                        goto L_573f3c;
+                                    }
+                                }
+                                best_score = score;
+                                go_to(veh_id, 0x77, tx, ty);
+                            }
+                        }
+                    }
+                }
+L_573f3c:
+                ;
+            }
+            if (Vehs[veh_id].order == ORDER_MOVE_TO) goto L_57707f;
+        }
+        // 0x573f61
+        if (own_ground) goto L_57408e;
+        if ((faction_bit & (uint8_t)GameDataStateStorage.fields_.lock_masks_.enable_mask_)
+            && !(GameDataStateStorage.fields_.game_more_preferences_ & 0x20)) {
+            goto L_57408e;
+        }
+        tx = x;
+        ty = y;
+        if (Paths.sensors(faction_id, &tx, &ty)) goto L_57408e;
+        if (tx == x && ty == y) {
+            Vehs[veh_id].order = 0xD;
+            goto L_578f46;
+        }
+        // falls through into chunk 5 at 0x573fd0
+        // ---- chunk 5: 0x573fd0-0x575b27 ----
+L_573fd0:
+        if (!j || map_dist(x, y, tx, ty) <= 2) {
+            for (other_id = 0; other_id < GameDataStateStorage.fields_.vehicle_current_count_; other_id++) {
+                if (Vehs[other_id].faction_id == faction_id
+                    && VehPrototypes[Vehs[other_id].proto_id].plan == PLAN_TERRAFORMING
+                    && other_id != veh_id
+                    && ((Vehs[other_id].x == tx && Vehs[other_id].y == ty)
+                        || (Vehs[other_id].order == ORDER_MOVE_TO
+                            && Vehs[other_id].waypoint_x[0] == tx
+                            && Vehs[other_id].waypoint_y[0] == ty))) {
+                    goto L_57408e;  // another former already has this tile
+                }
+            }
+            go_to(veh_id, 's', tx, ty);
+            goto L_57707f;
+        }
+L_57408e:
+        if (home_dist && !at_sea && PlayersData[faction_id].region_total_bases[region]) {
+            int b = (Vehs[veh_id].home_base_id >= 0) ? Vehs[veh_id].home_base_id : home_base;
+            if (b >= 0) {
+                if (map_loc(Bases[b].x, Bases[b].y)->region != region) {
+                    b = home_base;
+                }
+                if (b >= 0) {
+                    if (map_dist(x, y, Bases[b].x, Bases[b].y)
+                            > (GameDataStateStorage.fields_.turn_current_num_ <= 50) + 3
+                        || zoc_moved) {
+                        go_to(veh_id, 'b', Bases[b].x, Bases[b].y);
+                        goto L_57707f;
+                    }
+                }
+            }
+        }
+        if (j && !Vehs[veh_id].order) {
+            Vehs[veh_id].state &= ~0x200;
+            Vehs[veh_id].order = ORDER_NONE;
+            return 0;
+        }
     }
 L_5741cf:
     if (region_plan > 2
