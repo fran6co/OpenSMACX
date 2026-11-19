@@ -5410,11 +5410,8 @@ L_56ef2f:
         goto L_57460a;
     }
     if (plan == PLAN_NAVAL_SUPERIORITY) {
-        if (!(Vehs[veh_id].order == ORDER_MOVE_TO)) {
-            best_score = 9999;
-        } else {
-            best_score = map_range(x, y, Vehs[veh_id].waypoint_x[0], Vehs[veh_id].waypoint_y[0]);
-        }
+        best_score = Vehs[veh_id].order == ORDER_MOVE_TO
+            ? map_range(x, y, Vehs[veh_id].waypoint_x[0], Vehs[veh_id].waypoint_y[0]) : 9999;
         // The radius bound is re-evaluated (veh_moves/range calls) every iteration.
         for (i = 0; i < RadiusRange[range(veh_moves(veh_id) / Rules.move_rate_roads, 1, 8)]; i++) {
             tx = xrange(x + RadiusOffsetX[i]);
