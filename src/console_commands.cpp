@@ -2861,8 +2861,7 @@ void Console::use_ability(int vehicle_id) {
         popup.init(0x40, 0);
         for (int ability_id = 0; ability_id < MaxAbilityNum; ++ability_id) {
             const uint32_t ability_bit = 1u << ability_id;
-            const int current_proto_id = Vehs[vehicle_id].proto_id;
-            if (has_abil(current_proto_id, static_cast<int>(ability_bit)) == 0) {
+            if (has_abil(Vehs[vehicle_id].proto_id, static_cast<int>(ability_bit)) == 0) {
                 continue;
             }
             popup.item(StringTable.get(Ability[ability_id].name),
