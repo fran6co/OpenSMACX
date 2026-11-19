@@ -1514,8 +1514,16 @@ void BaseWin::draw_flash(int redraw_mode) {
     if (Vehs[vehicle_id].faction_id == ConsoleGlobal.faction_id_
         || (GameDataStateStorage.fields_.game_state_ & 0x80)) {
         StringTemp[0] = 0;
-        strcat(StringTemp, Vehs[vehicle_id].home_base_id < 0 ? label_get(0x308 / 4)
-               : Bases[Vehs[vehicle_id].home_base_id].name_string);
+        // 0x0040D885: `movsx eax, word; test eax, eax` - the home base is tested and indexed as an int.
+        // 0x0040D885: `movsx eax, word; test eax, eax` - the home base is tested and indexed as an int.
+        // 0x0040D8AD: each arm pushes its own argument (`push eax; jmp` into the other arm's
+        // `push StringTemp; call strcat`): two strcat statements, cross-jumped, not one ternary argument.
+        int home = Vehs[vehicle_id].home_base_id;
+        if (home < 0) {
+            strcat(StringTemp, label_get(0x308 / 4));
+        } else {
+            strcat(StringTemp, Bases[home].name_string);
+        }
         y = MainInterfaceGlobal.wrap(StringTemp, x, y, area.right - area.left);
         if (Vehs[vehicle_id].faction_id == ConsoleGlobal.faction_id_) {
             if (veh_moves(vehicle_id) == 0) {
