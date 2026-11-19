@@ -6653,9 +6653,9 @@ void Console::editor_natural(int place) {
         }
         return;
 found:
-        for (int clear_offset = 0; clear_offset < limit; ++clear_offset) {
-            const int tile_x = wrap_map_x(x + RadiusOffsetX[clear_offset]);
-            const int tile_y = y + RadiusOffsetY[clear_offset];
+        for (place = 0; place < limit; ++place) {
+            const int tile_x = wrap_map_x(x + RadiusOffsetX[place]);
+            const int tile_y = y + RadiusOffsetY[place];
             if (on_map(tile_x, tile_y) && ((map_loc(tile_x, tile_y)->bit2) & (1u << selected))) {
                 bit2_set(tile_x, tile_y, 1u << selected, 0);
                 code_set(tile_x, tile_y, 0);
