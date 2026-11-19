@@ -447,8 +447,6 @@ void __cdecl alt_put_detail(int x, int y, int detail) {
 // RECOVERY_BINDING: v1 {"evidence": ["git:7e269a283e888ff1ee459699529fb7ce8c44b171:src/unrecovered/00591290.cpp", "pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf", "recovery/tasks/game-logic-seed-owner-coverage.json"], "reason": "Recover signed altitude changes through real Map/Base/Veh/faction owners, preserving native submersion, facility, compaction and callback paths. Explicit unsigned shift retains x86 low-byte altitude encoding without C++ signed-shift undefined behavior. Historical mappings and seed lessons are retained; no new byte/layout/runtime/linked-preservation claim."}
 // TRIED: no Ghidra hint for this one - straight register-variable/goto transcription from the raw disassembly (44-byte tile struct, 0x833-stride owner tables, round-to-zero /2 idiom, extern lever on the lea-taken 0x00946d54 table). Compiles; diverges at instruction #0 (push vs mov), so the prologue/frame shape itself differs, not yet investigated further.
 void __cdecl alt_set(int x, int y, int altitude) {
-    static char submerged_title[] = "BASESUBMERGED";
-    static char submerged_lost_title[] = "BASESUBMERGED2";
 
     // The turn-zero path skips gameplay consequences only; the altitude
     // write and dirty flag below are unconditional.
@@ -517,13 +515,13 @@ void __cdecl alt_set(int x, int y, int altitude) {
                         if (faction_id == local) {
                             ConsoleGlobal.focus(Bases[base_id].x, Bases[base_id].y, local);
                             parse_says(0, Bases[base_id].name_string, -1, -1);
-                            X_pop(submerged_title, "subbase_sm.pcx", 0);
+                            X_pop("BASESUBMERGED", "subbase_sm.pcx", 0);
                         } else if (Bases[base_id].faction_id_current == local ||
                                    Bases[base_id].visibility & (1 << local)) {
                             ConsoleGlobal.focus(Bases[base_id].x, Bases[base_id].y, local);
                             parse_says(0, Bases[base_id].name_string, -1, -1);
                             parse_says(1, Players[Bases[base_id].faction_id_current].adj_name_faction, -1, -1);
-                            X_pop(submerged_lost_title, "subbase_sm.pcx", 0);
+                            X_pop("BASESUBMERGED2", "subbase_sm.pcx", 0);
                         }
                     }
                     goto done;
@@ -549,14 +547,14 @@ void __cdecl alt_set(int x, int y, int altitude) {
                 int rocky = map_loc(x, y)->val3 >> 6;
                 if (rocky < ROCKINESS_ROCKY &&
                     rocky + 1 <= altitude - ALT_SHORE_LINE &&
-                    !bounded_crt_random(rocky + 4)) {
+                    !rnd(rocky + 4, "MAP1")) {
                     rocky_set(x, y, rocky + 1);
                 }
             } else if (altitude < old_altitude) {
                 int rocky = map_loc(x, y)->val3 >> 6;
                 if (rocky != ROCKINESS_FLAT &&
                     rocky > altitude - ALT_SHORE_LINE &&
-                    bounded_crt_random(rocky + 1)) {
+                    rnd(rocky + 1, "MAP2")) {
                     rocky_set(x, y, rocky - 1);
                 }
             }
@@ -629,7 +627,7 @@ Status: Complete
 void __cdecl alt_set_both(int x, int y, int altitude_natural) {
     alt_set(x, y, altitude_natural);
     if (alt_natural(x, y) != altitude_natural) {
-        int roll = bounded_crt_random(AltNatural[altitude_natural + 1] - AltNatural[altitude_natural]);
+        int roll = rnd(AltNatural[altitude_natural + 1] - AltNatural[altitude_natural], "MAP3");
         alt_put_detail(x, y, AltNatural[altitude_natural] + MapSeaLevel + roll);
     }
 }
