@@ -2,7 +2,6 @@
 import sys,os,re,json,struct,queue
 from concurrent.futures import ThreadPoolExecutor
 sys.path.insert(0,os.getcwd()+'/recovery/tools'); import fe
-res=json.load(open(sys.argv[1]))
 TEXT_LO,TEXT_HI=0x401000,0x700000
 def img_fi(lo):
     ins=list(fe.md.disasm(fe.imgbytes(lo,lo+40),lo))[:8]
@@ -45,42 +44,45 @@ def our_fi(c,sym):
             return dict(ms=ms,par=[struct.unpack_from('<i',ud.data,base+8*i)[0] for i in range(ms)],
                         act=[1 if (base+8*i+4) in urel else 0 for i in range(ms)],nt=nt)
     return None
-work={}
-for r in res:
-    if r.get('diff',-1)<=0 or r['addr']=='?': continue
-    work.setdefault(r['unit'],[]).append(r)
-units=list(work)
-Q=queue.Queue()
-for i in range(5): Q.put(i)
-def unit_job(u):
-    L=Q.get()
-    try:
-        out=[]; cache={}
-        text=open(fe.R+'/'+u,encoding='latin-1').read()
-        for r in work[u]:
-            a=int(r['addr'],16)
-            m=re.search(r'// ORIGINAL: 0x%08X [^\n]*\n((?://(?! ORIGINAL)[^\n]*\n)*)'%a,text)
-            mc=m and re.search(r'// compile_context (\S+)',m.group(1))
-            host=mc.group(1) if mc else u
-            if host not in cache: cache[host]=fe.compile_unit(host,fe.R+'/'+host,str(8+L))[0]
-            c=cache[host]
-            idn=fe.ident(text,a)
-            if not idn or c is None: continue
-            sym,lo,hi=idn
-            I=img_fi(lo); O=our_fi(c,sym)
-            out.append(dict(unit=u,addr=r['addr'],sym=sym,diff=r['diff'],img=I,ours=O))
-        return out
-    finally: Q.put(L)
-allr=[]
-with ThreadPoolExecutor(5) as ex:
-    for o in ex.map(unit_job,units): allr+=o
-json.dump(allr,open(sys.argv[2],'w'))
-def key(f): return None if not isinstance(f,dict) else (f['ms'],tuple(f['par']),tuple(f['act']),f['nt'])
-n=0
-for r in allr:
-    I,O=r['img'],r['ours']
-    if key(I)!=key(O):
-        n+=1
-        fi=lambda f: '-' if f is None else (f if isinstance(f,str) else 'ms=%d nt=%d'%(f['ms'],f['nt']))
-        print('%s %-22s %-44s d=%4d IMG %-12s OURS %-12s'%(r['addr'],r['unit'][4:26],r['sym'][:44],r['diff'],fi(I),fi(O)))
-print('differ',n,'of',len(allr))
+def main():
+    res=json.load(open(sys.argv[1]))
+    work={}
+    for r in res:
+        if r.get('diff',-1)<=0 or r['addr']=='?': continue
+        work.setdefault(r['unit'],[]).append(r)
+    units=list(work)
+    Q=queue.Queue()
+    for i in range(5): Q.put(i)
+    def unit_job(u):
+        L=Q.get()
+        try:
+            out=[]; cache={}
+            text=open(fe.R+'/'+u,encoding='latin-1').read()
+            for r in work[u]:
+                a=int(r['addr'],16)
+                m=re.search(r'// ORIGINAL: 0x%08X [^\n]*\n((?://(?! ORIGINAL)[^\n]*\n)*)'%a,text)
+                mc=m and re.search(r'// compile_context (\S+)',m.group(1))
+                host=mc.group(1) if mc else u
+                if host not in cache: cache[host]=fe.compile_unit(host,fe.R+'/'+host,str(8+L))[0]
+                c=cache[host]
+                idn=fe.ident(text,a)
+                if not idn or c is None: continue
+                sym,lo,hi=idn
+                I=img_fi(lo); O=our_fi(c,sym)
+                out.append(dict(unit=u,addr=r['addr'],sym=sym,diff=r['diff'],img=I,ours=O))
+            return out
+        finally: Q.put(L)
+    allr=[]
+    with ThreadPoolExecutor(5) as ex:
+        for o in ex.map(unit_job,units): allr+=o
+    json.dump(allr,open(sys.argv[2],'w'))
+    def key(f): return None if not isinstance(f,dict) else (f['ms'],tuple(f['par']),tuple(f['act']),f['nt'])
+    n=0
+    for r in allr:
+        I,O=r['img'],r['ours']
+        if key(I)!=key(O):
+            n+=1
+            fi=lambda f: '-' if f is None else (f if isinstance(f,str) else 'ms=%d nt=%d'%(f['ms'],f['nt']))
+            print('%s %-22s %-44s d=%4d IMG %-12s OURS %-12s'%(r['addr'],r['unit'][4:26],r['sym'][:44],r['diff'],fi(I),fi(O)))
+    print('differ',n,'of',len(allr))
+if __name__=='__main__': main()
