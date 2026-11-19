@@ -5015,9 +5015,11 @@ void __cdecl battle_plans(int faction_a, int faction_b) {
             naval:
                 base_find(Bases[plan_b].x, Bases[plan_b].y, faction_b);
                 {
-                    attack_a = BaseFindDist;
+                    // Its own block-local: the image homes it at [ebp+0xC]
+                    // (plan_a's), not in attack_a's [ebp+8].
+                    int dist = BaseFindDist;
                     base_find(Bases[selected].x, Bases[selected].y, faction_b);
-                    if (BaseFindDist >= attack_a * 2) {
+                    if (BaseFindDist >= dist * 2) {
                         X_pops(BattlePlansDistanceRejectedLabel, 0x100000,
                                FactionDiplomacyPortraits[faction_b], pop_wait);
                         goto done;
