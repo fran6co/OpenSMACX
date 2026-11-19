@@ -3398,8 +3398,8 @@ void __cdecl world_rainfall() {
                     }
                 }
             } else {
-                int cloudmass = (int)(altitude <= 5 ? WorldBuilder.cloudmass_hills
-                                                    : WorldBuilder.cloudmass_peaks);
+                int cloudmass = (int)(altitude > 5 ? WorldBuilder.cloudmass_peaks
+                                                   : WorldBuilder.cloudmass_hills);
                 for (i = -1;
                      i >= -((MapCloudCover - 1) * (int)WorldBuilder.rainfall_coeff + cloudmass);
                      i--) {
