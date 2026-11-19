@@ -34,7 +34,7 @@ RULES=collections.OrderedDict([
  # per-site texts), unlike an argument-free helper whose literal is one COMDAT
  ('says_fn',(r'(?<![\w.>])strcat\(StringTemp, (?!label_get\()'+ARG+r'\)', lambda m:'says(%s)'%m.group(1))),
  ('sayl_fn',(r'(?<![\w.>])strcat\(StringTemp, label_get\('+ARG+r'\)\)', lambda m:'say_label(%s)'%m.group(1))),
- ('clear_fn',(r"(?<![\w.>])StringTemp\[0\] = (?:'\\0'|0);", lambda m:'clear();')),
+ ('clear_fn',(r"(?<![\w.>])StringTemp\[0\] = (?:'\\0'|0);", lambda m:'::clear();')),
  ('table_fn',(r'(?<![\w.>])StringTable\.get\(', lambda m:'table_text(')),
  ('rw_raw',(r'\brect_width\(&('+OBJ+r')\)', lambda m:'(%s.right - %s.left)'%(m.group(1),m.group(1)))),
  ('rh_raw',(r'\brect_height\(&('+OBJ+r')\)', lambda m:'(%s.bottom - %s.top)'%(m.group(1),m.group(1)))),
@@ -42,7 +42,13 @@ RULES=collections.OrderedDict([
 def par(a):
     a=a.strip(); return a if re.fullmatch(r'[\w.\[\]>-]+',a) and '->' not in a.replace('->','') or re.fullmatch(r'\w+',a) else '('+a+')'
 def span(t,addr):
-    m=re.search(r'// ORIGINAL: 0x%08X '%addr,t); s=m.start(); e=t.index('\n}\n',s); return s,e
+    m=re.search(r'// ORIGINAL: 0x%08X (\S+)'%addr,t); s=m.start(); e=t.index('\n}\n',s)
+    # a marker may sit above file-local helpers: end at the function's own body
+    nm=re.match(r'\?([A-Za-z_]\w*)@',m.group(1))
+    if nm:
+        d=re.search(r'\n(?!static |inline |//)[A-Za-z_][^\n;]*\b%s\([^\n;]*\{?\n'%re.escape(nm.group(1)),t[s:])
+        if d: e=t.index('\n}\n',s+d.start())
+    return s,e
 def sites(t,addr,rules):
     s,e=span(t,addr); out=[]; body=t[s:e]
     code=re.sub(r'//[^\n]*',lambda m:' '*len(m.group(0)),body)

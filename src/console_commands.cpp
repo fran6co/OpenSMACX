@@ -2232,8 +2232,8 @@ void Console::go_to(int subject, int order, int grouped) {
         parse_says(0, Bases[base_id].name_string, -1, -1);
         popup.start("DESTTRIAD", 0x40);
         for (int i = 0; i < MaxTriadNum; i++) {
-            StringTemp[0] = '\0';
-            strcat(StringTemp, StringTable.get(Triad[i]));
+            ::clear();
+            says(table_text(Triad[i]));
             space();
             say_open_paren();
             say_base(StringTemp, Bases[base_id].auto_forward_slots[i]);
@@ -2322,28 +2322,28 @@ void Console::go_to(int subject, int order, int grouped) {
     PlanWindow.center_y_ = source_y;
     PlanWindow.GraphicWin::show(0);
     for (;;) {
-        StringTemp[0] = '\0';
+        ::clear();
         switch (order) {
         case 24:
-            strcat(StringTemp, grouped ? "GROUPTO" : "GOTO");
+            says(grouped ? "GROUPTO" : "GOTO");
             break;
         case 27:
-            strcat(StringTemp, "ROADTO");
+            says("ROADTO");
             break;
         case 28:
-            strcat(StringTemp, "TUBETO");
+            says("TUBETO");
             break;
         case 128:
-            strcat(StringTemp, "BOMBTO");
+            says("BOMBTO");
             break;
         case -1:
-            strcat(StringTemp, "DESTTO");
+            says("DESTTO");
             break;
         case -2:
-            strcat(StringTemp, "FINDTO");
+            says("FINDTO");
             break;
         case -3:
-            strcat(StringTemp, "GATETO");
+            says("GATETO");
             break;
         }
         popup.start(StringTemp, 0x42);
@@ -2356,9 +2356,9 @@ void Console::go_to(int subject, int order, int grouped) {
         }
         int count = 0;
         if (order == -1) {
-            StringTemp[0] = '\0';
+            ::clear();
             say_open_paren();
-            strcat(StringTemp, label_get(0xFB));
+            say_label(0xFB);
             say_close_paren();
             popup.item(StringTemp, 9999);
             count = 1;
@@ -2403,14 +2403,14 @@ void Console::go_to(int subject, int order, int grouped) {
             const int id = ids[i];
             if (Bases[id].faction_id_current != faction) {
                 if (order == 128) {
-                    if (!(PlayersData[faction].diplo_treaties[Bases[id].faction_id_current] & 0x10)) {
+                    if (!has_treaty(faction, Bases[id].faction_id_current, 0x10)) {
                         continue;
                     }
                 } else {
                     if (order < 0) {
                         continue;
                     }
-                    if (!(PlayersData[faction].diplo_treaties[Bases[id].faction_id_current] & 1)) {
+                    if (!has_treaty(faction, Bases[id].faction_id_current, 1)) {
                         continue;
                     }
                 }
@@ -2462,46 +2462,42 @@ void Console::go_to(int subject, int order, int grouped) {
                 && !(GameDataStateStorage.fields_.game_state_ & 0x80)) {
                 continue;
             }
-            StringTemp[0] = '\0';
-            strcat(StringTemp, Bases[id].name_string);
-            strcat(StringTemp, "|");
+            ::clear();
+            says(Bases[id].name_string);
+            says("|");
             if (Bases[id].faction_id_current != faction) {
                 space();
                 say_open_paren();
-                strcat(StringTemp, get_noun(Bases[id].faction_id_current));
+                says(get_noun(Bases[id].faction_id_current));
                 say_close_paren();
             }
             if (artifact && Bases[id].faction_id_current == faction) {
                 if (id == GameDataStateStorage.fields_.secret_project_.universal_translator()) {
                     space();
                     say_open_paren();
-                    strcat(StringTemp, table_text(Facility[FAC_UNIVERSAL_TRANSLATOR].name));
+                    says(table_text(Facility[FAC_UNIVERSAL_TRANSLATOR].name));
                     say_close_paren();
                 } else if (has_fac(FAC_NETWORK_NODE, id, 0) && !(Bases[id].state & 0x400)) {
                     space();
                     say_open_paren();
-                    strcat(StringTemp, label_get(0x131));
+                    say_label(0x131);
                     say_close_paren();
                 }
             }
             if (!(order == -3)) {
                 space();
-                strcat(StringTemp, StringTable.get(Labels.strings_ptr[0xFA]));
+                say_label(0xFA);
                 say_colon();
-                char distance_text[80];
-                _itoa(map_range(source_x, source_y, Bases[id].x, Bases[id].y), distance_text, 10);
-                strcat(StringTemp, distance_text);
+                say_num(map_range(source_x, source_y, Bases[id].x, Bases[id].y));
                 if (sorting == 1) {
                     say_comma();
-                    strcat(StringTemp, label_get(0x243));
+                    say_label(0x243);
                     say_colon();
-                    char size_text[80];
-                    _itoa(Bases[id].population_size, size_text, 10);
-                    strcat(StringTemp, size_text);
+                    say_num(Bases[id].population_size);
                 }
             } else {
                 space();
-                strcat(StringTemp, label_get((Bases[id].state & 0x20000000) ? 0x212 : 0x211));
+                say_label((Bases[id].state & 0x20000000) ? 0x212 : 0x211);
             }
             popup.item(StringTemp, id);
             count++;
