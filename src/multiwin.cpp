@@ -55,56 +55,259 @@ static const char CaretSeparator[] = "^";  // original string at 0x006867C0
 // RECOVERY_OBJECT: v2 0x006867E0 0x006867E3 ?MultiWinDotSpaceText@@3PADA 0x00478630
 char MultiWinDotSpaceText[] = ". ";               // 0x006867E0
 
-// MultiWin::draw_time_bonus_markers, original 0x00479270. Add the supplied
-// rectangle to the time-bonus hotspot and render its caret markers.
-// The source header now declares the measured original member on its genuine owner.
-/*
-Purpose: Register the multiplayer time-bonus hotspot and draw its caret markers.
-// ORIGINAL: 0x00479270 ?UNK1@MultiWin@@QAEXPAURECT@@@Z 0x00479270-0x0047932C FILE BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["Pinned 0x00479270-0x0047932C is the original thiscall member ?UNK1@MultiWin@@QAEXPAURECT@@@Z; decoded body adds Spot position 3/type 2 before reading the local faction and writing centered text.", "Current MultiWin owns Spot as spot_ at +0x28AC; its GraphicWin base has the source-owned Buffer secondary base at +0x444. The original write_cent_l receiver adjustment is therefore static_cast<Buffer *>(this).", "PlayerData::time_bonus_count is the existing typed member at +0x2054 (asserted in multiwin.cpp); faction.h documents the time-control extra seconds, and faction/game/netdaemon sources produce and update it.", "The text uses source-owned StringTemp and BufferJoinSpace (0x00682820); the single caret byte at 0x006867C0 is only a strcat source, so the owner defines the same immutable character without relying on that image address."], "reason": "Move the original MultiWin member into its genuine class owner and replace raw object offsets with its existing Spot, Buffer base and PlayerData time-bonus members. Preserve the measured branch/order and historical match obligation."}
-// symbol    ?draw_time_bonus_markers@MultiWin@@QAEXPAUtagRECT@@@Z
-// SUPERSEDED_BINDING_HISTORY: v1 {"evidence": ["Original479270..47932C; retired seed git:ee30a69d:src/unrecovered/00479270.cpp records the same identity and spans.", "The receiver's Spot subobject at +0x28AC (spot.h's own add/3,2 overload) and the +0x444 Buffer (write_cent_l is buffer.h's own) carry the walk; the difficulty table is the 0x833-dword PlayerData stride faction.h pins, read at the +0x2054 record offset through the local-faction slot 0x00939284.", "The caret row is built into strings.h's StringTemp (0x009B86A0) from the one-space and caret .rdata strings exactly as the seed strcat-walks them."], "reason": "Coverage transcription of the multiplayer spot label with the receiver spelled explicitly because MultiWin has no header declaration yet."}
-Status: Coverage transcription - unclaimed body
-*/
-void MultiWin::draw_time_bonus_markers(RECT *rect) {
-    const int top = rect->top;
-    const int height = rect->bottom - top;
-    const int left = rect->left;
-    const int width = rect->right - left;
-    spot_.add(3, 2, left, top, width, height);
+// The original show/hide pair publishes its visible state in
+// MainInterfaceGlobal.multiwin_visibility_state_ (0x007CFF04). Its historical
+// object identity is retained beside MainInterfaceGlobal in maininterface.cpp.
 
-    const int time_bonus = PlayersData[ConsoleGlobal.faction_id_].time_bonus_count;
-    if (time_bonus >= 0) {
-        int carets = (time_bonus > 3) ? 3 : time_bonus;
-        if (carets != 0) {
-            StringTemp[0] = 0;
-            strcat(StringTemp, BufferJoinSpace);
-            for (; carets > 0; --carets) {
-                strcat(StringTemp, CaretSeparator);
-            }
-            Buffer::write_cent_l(StringTemp, rect);
+// Shared animation frame interval (20 ms in the pinned image). Other window
+// animations also read this original data object.
+// RECOVERY_OBJECT: v2 0x00691AF8 0x00691AFC ?WindowAnimationFrameDelay@@3HA 0x00479C00
+int WindowAnimationFrameDelay = 20;
+
+// The original draw suppresses its soft update while show calls the redraw callback.
+// The original show writes this dword on both sides of that callback;
+// MultiWin::draw at 0x00479330 reads it before soft_update.
+// RECOVERY_OBJECT: v2 0x007FFF70 0x007FFF74 ?MultiWindowRedrawSuppressed@@3HA 0x00479970
+int MultiWindowRedrawSuppressed;
+
+// NetDaemonProgressInterval is the shared 0x93F668 dword, declared and
+// defined once by netdaemon. These two independent MultiWin latch/frame dwords
+// are address-reflecting provisional identities, not semantic names or a
+// larger allocation claim. Original PE initial data is four zero bytes at
+// each address; the frame test uses only its low bit.
+// RECOVERY_OBJECT: v2 0x007FFF78 0x007FFF7C ?MultiWinState7FFF78@@3HA 0x00478BE0
+int MultiWinState7FFF78;
+// RECOVERY_OBJECT: v2 0x007FFF7C 0x007FFF80 ?MultiWinState7FFF7C@@3IA 0x00478BE0
+uint32_t MultiWinState7FFF7C;
+
+// 0x0047A590 and 0x0047A430. The compiler owns construction, exception
+// cleanup and reverse destruction of the subobjects declared in multiwin.h.
+// Historical mapped seed units remain under src/recovered/units/.
+// Superseded seed deleted; seed paths below are historical Git provenance.
+// ORIGINAL: 0x0047A590 ??0MultiWin@@QAE@XZ 0x0047A590-0x0047A6B9;0x00656310-0x006563DE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/0047a590.cpp; docs/recovery/subobject-sites.csv; src/multiwin.h"], "reason": "The original constructor builds a GraphicWin front and the owned Buffer, Sprite, FlatButton, Font and Spot subobjects in the observed order."}
+MultiWin::MultiWin() {}
+// Superseded seed deleted; seed paths below are historical Git provenance.
+// ORIGINAL: 0x0047A430 ??1MultiWin@@QAE@XZ 0x0047A430-0x0047A58A;0x00656230-0x0065630E FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/0047a430.cpp; docs/recovery/subobject-sites.csv; src/multiwin.h"], "reason": "The original destructor tears down the Spot, Fonts, FlatButtons, Sprites, Buffer and GraphicWin front in reverse ownership order."}
+// symbol    ??1MultiWin@@UAE@XZ
+// kind game
+
+// 0x00477E70: Spot::check returns the hovered position and type through its
+// two output arguments. Only type 1 changes the highlighted player.
+// ORIGINAL: 0x00477E70 ?on_mouse_move@MultiWin@@QAEXHH@Z 0x00477E70-0x00477EDB BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["git:276d612614085e5d57743cf8cc92903d9468e346:src/recovered/00477e70.cpp; docs/recovery/member-accesses.csv"], "reason": "The original checks the owned Spot for a player hover and redraws when the selected position changes."}
+// TRIED: Historical exact-seed spelling: Spot::check used the addresses of both incoming stack parameters as its output arguments (lea of ebp+8/ebp+0xc), overwriting them with spot position/type; writing the result != -1 arm first produced the original je branch polarity. The typed source owner uses distinct output locals and a real virtual override; this observation preserves seed restoration evidence, not a current matching claim.
+// symbol    ?on_mouse_move@MultiWin@@UAEXHH@Z
+void MultiWin::on_mouse_move(int x, int y) {
+  int position;
+  int type;
+  if (spot_.check(x, y, &position, &type) != -1) {
+    if (type == 1 && hovered_spot_ != position) {
+      hovered_spot_ = position;
+      draw(0);
+    }
+  } else if (hovered_spot_ != -1) {
+    hovered_spot_ = -1;
+    draw(0);
+  }
+}
+
+// 0x00477EE0 and 0x004798F0: Win callbacks selected by MultiWin's table.
+// Superseded seed deleted; seed paths below are historical Git provenance.
+// ORIGINAL: 0x00477EE0 ?on_mouse_leave@MultiWin@@QAEXHH@Z 0x00477EE0-0x00477EFE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["src/recovered/00477ee0.cpp; docs/recovery/member-accesses.csv"], "reason": "The original resets the hovered player position and redraws on mouse leave."}
+// symbol    ?on_mouse_leave@MultiWin@@UAEXHH@Z
+void MultiWin::on_mouse_leave(int, int) {
+  if (hovered_spot_ >= 0) {
+    hovered_spot_ = -1;
+    draw(0);
+  }
+}
+
+// Superseded seed deleted; seed paths below are historical Git provenance.
+// ORIGINAL: 0x004798F0 ?on_redraw@MultiWin@@QAEXXZ 0x004798F0-0x004798F8 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["src/recovered/004798f0.cpp; src/win.h"], "reason": "The original Win redraw callback forwards the zero draw mode to MultiWin draw."}
+// symbol    ?on_redraw@MultiWin@@UAEXXZ
+void MultiWin::on_redraw() { draw(0); }
+
+// 0x00477F00. The chat branch is restored; the council dialog remains an
+// explicitly unfinished, separately mapped dependency.
+// Superseded seed deleted; seed paths below are historical Git provenance.
+// ORIGINAL: 0x00477F00 ?on_button_clicked@MultiWin@@QAEXH@Z 0x00477F00-0x00477F30 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["src/recovered/00477f00.cpp", "src/console.cpp", "src/council.cpp", "src/win.h"], "reason": "The original button callback branches on chat and council button IDs. The typed override now preserves both calls; the separately mapped council dialog remains explicitly unfinished."}
+// symbol    ?on_button_clicked@MultiWin@@UAEXH@Z
+void MultiWin::on_button_clicked(int button_id) {
+  switch (button_id) {
+    case 0: ConsoleGlobal.chat(0); break;
+    case 1: call_council(ConsoleGlobal.faction_id_); break;
+  }
+}
+
+// Separate contact/display faction bits; provisional descriptive name.
+// Native click writers and535xxx/537xxx readers prove a DWORD, not its full lifecycle.
+// RECOVERY_OBJECT: v2 0x007FFF74 0x007FFF78 ?MultiWindowContactStatusMask@@3HA 0x00477F30
+int MultiWindowContactStatusMask;
+
+// ORIGINAL: 0x00477F30 ?on_left_click@MultiWin@@QAEXHH@Z 0x00477F30-0x00478148 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["task:multiwin-contact-owner", "historical seed:src/recovered/units/00477f30.cpp", "pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf:complete original mapped span and native call/branch order", "native:478500 subtracts item ID1; jump-table indices7..10 select items8renounce,9withdrawal,10contact,11chat; withdrawal arguments local then clicked", "source:existing typed subobjects, faction/player/parser/network and separate bounded contact-state storage; automatic PullDown/Buffer lifetime"], "reason": "Recover the complete original in its genuine MultiWin or diplomacy C++ owner, retaining identity, auxiliary spans and historical seed findings; no current match or runtime claim."}
+// symbol    ?on_left_click@MultiWin@@UAEXHH@Z
+void MultiWin::on_left_click(int x, int y) {
+    ConsoleInfoWin.reset();
+    ConsoleStatusWin.reset();
+
+    int faction;
+    int kind;
+    if (spot_.check(x, y, &faction, &kind) < 0) return;
+
+    if (!is_alive(static_cast<uint32_t>(faction))) {
+        GenderDefault = Players[faction].is_leader_female;
+        PluralityDefault = 0;
+        parse_says(0, Players[faction].title_leader, -1, -1);
+        GenderDefault = Players[faction].is_leader_female;
+        PluralityDefault = 0;
+        parse_says(1, Players[faction].name_leader, -1, -1);
+        GenderDefault = Players[faction].noun_gender;
+        PluralityDefault = Players[faction].is_noun_plural;
+        parse_says(2, Players[faction].noun_faction, -1, -1);
+        NetMsgPrimary.pop("ELIMINATED", 5000, 0, 0);
+        return;
+    }
+
+    if (kind == 1) commlink_attempt(faction);
+    if (!IsMultiplayerNet) return;
+
+    if (kind == 2) {
+        ConsoleInfoWin.reset();
+        ConsoleStatusWin.reset();
+        switch (faction) {
+        case 0:
+            ConsoleGlobal.time_controls();
+            return;
+        case 3:
+            ConsoleGlobal.use_time_bonus();
+            return;
         }
+    } else if (kind == 0) {
+        const uint32_t bit = 1u << faction;
+        if (MultiWindowContactStatusMask & bit) {
+            MultiWindowContactStatusMask &= ~bit;
+            NetDaemonNet.field_1BD0_ |= bit;
+            draw(0);
+            return;
+        }
+        if (NetDaemonNet.field_1BD0_ & bit) {
+            NetDaemonNet.field_1BD0_ &= ~bit;
+            draw(0);
+            return;
+        }
+        MultiWindowContactStatusMask |= bit;
+        draw(0);
     }
 }
 
+// RECOVERY_ASSOCIATED: v1 switch_targets 0x00478150 0x004785FC 0x00478628 0x0047850A
+// ORIGINAL: 0x00478150 ?on_right_click@MultiWin@@QAEXHH@Z 0x00478150-0x004785FA;0x006563E0-0x006563F5 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["task:multiwin-contact-owner", "historical seed:src/recovered/units/00478150.cpp", "pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf:complete original mapped span and native call/branch order", "native:478500 subtracts item ID1; jump-table indices7..10 select items8renounce,9withdrawal,10contact,11chat; withdrawal arguments local then clicked", "source:existing typed subobjects, faction/player/parser/network and separate bounded contact-state storage; automatic PullDown/Buffer lifetime"], "reason": "Recover the complete original in its genuine MultiWin or diplomacy C++ owner, retaining identity, auxiliary spans and historical seed findings; no current match or runtime claim."}
+// symbol    ?on_right_click@MultiWin@@UAEXHH@Z
+void MultiWin::on_right_click(int x, int y) {
+    PullDown menu;
+    int faction;
+    int kind;
+    if (spot_.check(x, y, &faction, &kind) < 0 || faction < 0 || kind != 1)
+        return;
 
+    Win::client_to_screen(&x, &y);
+    menu.init(0);
 
-// Superseded seed deleted; seed paths below are historical Git provenance.
-// ORIGINAL: 0x00479900 ?UNK2@MultiWin@@QAEXXZ 0x00479900-0x00479964 BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/00479900.cpp", "image:terranx_original.exe:0x00479900", "source:src/maininterface.h:InterfaceRegistry and mode-stack storage; source:src/multiwin.h:owned Sprite offsets; native callback-sensitive mode reload and downward repeated removal", "recovery/tasks/interface-contract-report-closure.json; owner expansion interface-registry-multiwin-small-20261001"], "reason": "Recover the original in its genuine C++ owner using source-owned interface registry and mode stack, real virtual callbacks, or owned MultiWin sprite geometry. Preserve historical seed obligations; this binding grants no current byte or runtime claim."}
-void MultiWin::UNK2() {
-    const int row_height = sprite5_.height();
-    const int footer_height = sprite7_.height();
-    const int header_height = sprite3_.height();
-    int total = row_height * 7 + header_height + footer_height;
-    if (IsMultiplayerNet != 0) {
-        total += sprite4_.height() + footer_height + 0x0E;
+    StringTemp[0] = 0;
+    strcat(StringTemp, label_get(0x9F0 / 4));
+    strcat(StringTemp, BufferJoinSpace);
+    parse_set(Players[faction].is_leader_female, 0);
+    char *const title = Players[faction].title_leader;
+    strcat(StringTemp, title);
+    strcat(StringTemp, BufferJoinSpace);
+    parse_set(Players[faction].is_leader_female, 0);
+    char *const name = Players[faction].name_leader;
+    strcat(StringTemp, name);
+    menu.add_item(1, StringTemp);
+    menu.add_item(2, StringTable.get(Labels.strings_ptr[0x9F4 / 4]));
+
+    if (PlayersData[ConsoleGlobal.faction_id_].diplo_treaties[faction] & 7) {
+        menu.add_separator(0x63);
+        if (PlayersData[ConsoleGlobal.faction_id_].diplo_treaties[faction] & 1)
+            menu.add_item(8, StringTable.get(Labels.strings_ptr[0xE20 / 4]));
+        else
+            menu.add_item(9, StringTable.get(Labels.strings_ptr[0xE24 / 4]));
     }
-    bounds_.left = 0;
-    bounds_.top = 0;
-    bounds_.right = 0x8A;
-    bounds_.bottom = total;
-    StatusFlags |= 0x40;
+
+    menu.add_separator(0x63);
+    menu.add_item(3, StringTable.get(Labels.strings_ptr[0x9F8 / 4]));
+    if (IsMultiplayerNet) {
+        menu.add_separator(0x63);
+        menu.add_item(0xA, StringTable.get(Labels.strings_ptr[0x9FC / 4]));
+        menu.add_item(0xB, StringTable.get(Labels.strings_ptr[0xA00 / 4]));
+    }
+
+    menu.show(x, y, pop_expire);
+    if (GameDataStateStorage.fields_.game_state_ & 0x800) return;
+
+    const int selected = menu.get_selected();
+    if (selected >= 0x40) return;
+    const int action = menu.item_id(selected);
+    if (action < 0) return;
+
+    if (!is_alive(static_cast<uint32_t>(faction))) {
+        parse_set(Players[faction].is_leader_female, 0);
+        parse_says(0, Players[faction].title_leader, -1, -1);
+        parse_set(Players[faction].is_leader_female, 0);
+        parse_says(1, Players[faction].name_leader, -1, -1);
+        parse_set(Players[faction].noun_gender, Players[faction].is_noun_plural);
+        parse_says(2, Players[faction].noun_faction, -1, -1);
+        // RECOVERY_LITERAL: v1 0x0068677C 0x00686787 $SG58754 0x00478150
+        NetMsgPrimary.pop("ELIMINATED", 5000, 0, 0);
+        return;
+    }
+
+    switch (action) {
+    case 1:
+        commlink_attempt(faction);
+        break;
+    case 2:
+        report_intel(faction);
+        break;
+    case 3:
+        call_council(ConsoleGlobal.faction_id_);
+        break;
+    case 8:
+        renounce_pact(ConsoleGlobal.faction_id_, faction);
+        break;
+    case 9:
+        demands_withdrawal(ConsoleGlobal.faction_id_, faction);
+        break;
+    case 10: {
+        const unsigned int bit = 1u << faction;
+        unsigned int mask = MultiWindowContactStatusMask;
+        if (mask & bit) {
+            mask &= ~bit;
+            MultiWindowContactStatusMask = mask;
+            NetDaemonNet.field_1BD0_ |= bit;
+            draw(0);
+        } else if (NetDaemonNet.field_1BD0_ & bit) {
+            NetDaemonNet.field_1BD0_ &= ~bit;
+            draw(0);
+        } else {
+            MultiWindowContactStatusMask |= bit;
+            draw(0);
+        }
+        break;
+    }
+    case 11:
+        ConsoleGlobal.chat(faction);
+        break;
+    default:
+        break;
+    }
 }
 
 // Superseded seed deleted; seed paths below are historical Git provenance.
@@ -440,6 +643,38 @@ done:
   MultiWinState7FFF78 = local_c;
 }
 
+// MultiWin::draw_time_bonus_markers, original 0x00479270. Add the supplied
+// rectangle to the time-bonus hotspot and render its caret markers.
+// The source header now declares the measured original member on its genuine owner.
+/*
+Purpose: Register the multiplayer time-bonus hotspot and draw its caret markers.
+// ORIGINAL: 0x00479270 ?UNK1@MultiWin@@QAEXPAURECT@@@Z 0x00479270-0x0047932C FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned 0x00479270-0x0047932C is the original thiscall member ?UNK1@MultiWin@@QAEXPAURECT@@@Z; decoded body adds Spot position 3/type 2 before reading the local faction and writing centered text.", "Current MultiWin owns Spot as spot_ at +0x28AC; its GraphicWin base has the source-owned Buffer secondary base at +0x444. The original write_cent_l receiver adjustment is therefore static_cast<Buffer *>(this).", "PlayerData::time_bonus_count is the existing typed member at +0x2054 (asserted in multiwin.cpp); faction.h documents the time-control extra seconds, and faction/game/netdaemon sources produce and update it.", "The text uses source-owned StringTemp and BufferJoinSpace (0x00682820); the single caret byte at 0x006867C0 is only a strcat source, so the owner defines the same immutable character without relying on that image address."], "reason": "Move the original MultiWin member into its genuine class owner and replace raw object offsets with its existing Spot, Buffer base and PlayerData time-bonus members. Preserve the measured branch/order and historical match obligation."}
+// symbol    ?draw_time_bonus_markers@MultiWin@@QAEXPAUtagRECT@@@Z
+// SUPERSEDED_BINDING_HISTORY: v1 {"evidence": ["Original479270..47932C; retired seed git:ee30a69d:src/unrecovered/00479270.cpp records the same identity and spans.", "The receiver's Spot subobject at +0x28AC (spot.h's own add/3,2 overload) and the +0x444 Buffer (write_cent_l is buffer.h's own) carry the walk; the difficulty table is the 0x833-dword PlayerData stride faction.h pins, read at the +0x2054 record offset through the local-faction slot 0x00939284.", "The caret row is built into strings.h's StringTemp (0x009B86A0) from the one-space and caret .rdata strings exactly as the seed strcat-walks them."], "reason": "Coverage transcription of the multiplayer spot label with the receiver spelled explicitly because MultiWin has no header declaration yet."}
+Status: Coverage transcription - unclaimed body
+*/
+void MultiWin::draw_time_bonus_markers(RECT *rect) {
+    const int top = rect->top;
+    const int height = rect->bottom - top;
+    const int left = rect->left;
+    const int width = rect->right - left;
+    spot_.add(3, 2, left, top, width, height);
+
+    const int time_bonus = PlayersData[ConsoleGlobal.faction_id_].time_bonus_count;
+    if (time_bonus >= 0) {
+        int carets = (time_bonus > 3) ? 3 : time_bonus;
+        if (carets != 0) {
+            StringTemp[0] = 0;
+            strcat(StringTemp, BufferJoinSpace);
+            for (; carets > 0; --carets) {
+                strcat(StringTemp, CaretSeparator);
+            }
+            Buffer::write_cent_l(StringTemp, rect);
+        }
+    }
+}
+
 // ORIGINAL: 0x00479330 ?draw@MultiWin@@QAEXH@Z 0x00479330-0x004798EC BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["git:276d612614085e5d57743cf8cc92903d9468e346:src/unrecovered/00479330.cpp", "src/multiwin.h", "src/faction.h", "src/spot.h"], "reason": "Move the panel painter from its fixed-address seed onto MultiWin's owned sprites, Spot and GraphicWin buffer; the two separately mapped row painters remain explicit dependencies."}
 // TRIED: raw self+offset field reads (MultiWin left opaque) with reinterpret_cast to Spot/GraphicWin/Buffer sub-objects at their disassembly-derived offsets; diverges at insn #11
@@ -564,93 +799,24 @@ void MultiWin::draw(int draw_type) {
   if (!MultiWindowRedrawSuppressed) soft_update();
 }
 
-// The original show/hide pair publishes its visible state in
-// MainInterfaceGlobal.multiwin_visibility_state_ (0x007CFF04). Its historical
-// object identity is retained beside MainInterfaceGlobal in maininterface.cpp.
 
-// Shared animation frame interval (20 ms in the pinned image). Other window
-// animations also read this original data object.
-// RECOVERY_OBJECT: v2 0x00691AF8 0x00691AFC ?WindowAnimationFrameDelay@@3HA 0x00479C00
-int WindowAnimationFrameDelay = 20;
 
-// The original draw suppresses its soft update while show calls the redraw callback.
-// The original show writes this dword on both sides of that callback;
-// MultiWin::draw at 0x00479330 reads it before soft_update.
-// RECOVERY_OBJECT: v2 0x007FFF70 0x007FFF74 ?MultiWindowRedrawSuppressed@@3HA 0x00479970
-int MultiWindowRedrawSuppressed;
-
-// NetDaemonProgressInterval is the shared 0x93F668 dword, declared and
-// defined once by netdaemon. These two independent MultiWin latch/frame dwords
-// are address-reflecting provisional identities, not semantic names or a
-// larger allocation claim. Original PE initial data is four zero bytes at
-// each address; the frame test uses only its low bit.
-// RECOVERY_OBJECT: v2 0x007FFF78 0x007FFF7C ?MultiWinState7FFF78@@3HA 0x00478BE0
-int MultiWinState7FFF78;
-// RECOVERY_OBJECT: v2 0x007FFF7C 0x007FFF80 ?MultiWinState7FFF7C@@3IA 0x00478BE0
-uint32_t MultiWinState7FFF7C;
-
-// 0x0047A590 and 0x0047A430. The compiler owns construction, exception
-// cleanup and reverse destruction of the subobjects declared in multiwin.h.
-// Historical mapped seed units remain under src/recovered/units/.
 // Superseded seed deleted; seed paths below are historical Git provenance.
-// ORIGINAL: 0x0047A590 ??0MultiWin@@QAE@XZ 0x0047A590-0x0047A6B9;0x00656310-0x006563DE BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/0047a590.cpp; docs/recovery/subobject-sites.csv; src/multiwin.h"], "reason": "The original constructor builds a GraphicWin front and the owned Buffer, Sprite, FlatButton, Font and Spot subobjects in the observed order."}
-MultiWin::MultiWin() {}
-// Superseded seed deleted; seed paths below are historical Git provenance.
-// ORIGINAL: 0x0047A430 ??1MultiWin@@QAE@XZ 0x0047A430-0x0047A58A;0x00656230-0x0065630E FILE BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/0047a430.cpp; docs/recovery/subobject-sites.csv; src/multiwin.h"], "reason": "The original destructor tears down the Spot, Fonts, FlatButtons, Sprites, Buffer and GraphicWin front in reverse ownership order."}
-// symbol    ??1MultiWin@@UAE@XZ
-// kind game
-
-// 0x00477E70: Spot::check returns the hovered position and type through its
-// two output arguments. Only type 1 changes the highlighted player.
-// ORIGINAL: 0x00477E70 ?on_mouse_move@MultiWin@@QAEXHH@Z 0x00477E70-0x00477EDB BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["git:276d612614085e5d57743cf8cc92903d9468e346:src/recovered/00477e70.cpp; docs/recovery/member-accesses.csv"], "reason": "The original checks the owned Spot for a player hover and redraws when the selected position changes."}
-// TRIED: Historical exact-seed spelling: Spot::check used the addresses of both incoming stack parameters as its output arguments (lea of ebp+8/ebp+0xc), overwriting them with spot position/type; writing the result != -1 arm first produced the original je branch polarity. The typed source owner uses distinct output locals and a real virtual override; this observation preserves seed restoration evidence, not a current matching claim.
-// symbol    ?on_mouse_move@MultiWin@@UAEXHH@Z
-void MultiWin::on_mouse_move(int x, int y) {
-  int position;
-  int type;
-  if (spot_.check(x, y, &position, &type) != -1) {
-    if (type == 1 && hovered_spot_ != position) {
-      hovered_spot_ = position;
-      draw(0);
+// ORIGINAL: 0x00479900 ?UNK2@MultiWin@@QAEXXZ 0x00479900-0x00479964 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/00479900.cpp", "image:terranx_original.exe:0x00479900", "source:src/maininterface.h:InterfaceRegistry and mode-stack storage; source:src/multiwin.h:owned Sprite offsets; native callback-sensitive mode reload and downward repeated removal", "recovery/tasks/interface-contract-report-closure.json; owner expansion interface-registry-multiwin-small-20261001"], "reason": "Recover the original in its genuine C++ owner using source-owned interface registry and mode stack, real virtual callbacks, or owned MultiWin sprite geometry. Preserve historical seed obligations; this binding grants no current byte or runtime claim."}
+void MultiWin::UNK2() {
+    const int row_height = sprite5_.height();
+    const int footer_height = sprite7_.height();
+    const int header_height = sprite3_.height();
+    int total = row_height * 7 + header_height + footer_height;
+    if (IsMultiplayerNet != 0) {
+        total += sprite4_.height() + footer_height + 0x0E;
     }
-  } else if (hovered_spot_ != -1) {
-    hovered_spot_ = -1;
-    draw(0);
-  }
-}
-
-// 0x00477EE0 and 0x004798F0: Win callbacks selected by MultiWin's table.
-// Superseded seed deleted; seed paths below are historical Git provenance.
-// ORIGINAL: 0x00477EE0 ?on_mouse_leave@MultiWin@@QAEXHH@Z 0x00477EE0-0x00477EFE BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["src/recovered/00477ee0.cpp; docs/recovery/member-accesses.csv"], "reason": "The original resets the hovered player position and redraws on mouse leave."}
-// symbol    ?on_mouse_leave@MultiWin@@UAEXHH@Z
-void MultiWin::on_mouse_leave(int, int) {
-  if (hovered_spot_ >= 0) {
-    hovered_spot_ = -1;
-    draw(0);
-  }
-}
-
-// Superseded seed deleted; seed paths below are historical Git provenance.
-// ORIGINAL: 0x004798F0 ?on_redraw@MultiWin@@QAEXXZ 0x004798F0-0x004798F8 BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["src/recovered/004798f0.cpp; src/win.h"], "reason": "The original Win redraw callback forwards the zero draw mode to MultiWin draw."}
-// symbol    ?on_redraw@MultiWin@@UAEXXZ
-void MultiWin::on_redraw() { draw(0); }
-
-// 0x00477F00. The chat branch is restored; the council dialog remains an
-// explicitly unfinished, separately mapped dependency.
-// Superseded seed deleted; seed paths below are historical Git provenance.
-// ORIGINAL: 0x00477F00 ?on_button_clicked@MultiWin@@QAEXH@Z 0x00477F00-0x00477F30 BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["src/recovered/00477f00.cpp", "src/console.cpp", "src/council.cpp", "src/win.h"], "reason": "The original button callback branches on chat and council button IDs. The typed override now preserves both calls; the separately mapped council dialog remains explicitly unfinished."}
-// symbol    ?on_button_clicked@MultiWin@@UAEXH@Z
-void MultiWin::on_button_clicked(int button_id) {
-  switch (button_id) {
-    case 0: ConsoleGlobal.chat(0); break;
-    case 1: call_council(ConsoleGlobal.faction_id_); break;
-  }
+    bounds_.left = 0;
+    bounds_.top = 0;
+    bounds_.right = 0x8A;
+    bounds_.bottom = total;
+    StatusFlags |= 0x40;
 }
 
 // 0x00479970. The panel is redrawn into its owned buffer and optionally
@@ -782,172 +948,6 @@ void MultiWin::hide() {
     }
     buffer_.close();
   }
-}
-
-// Separate contact/display faction bits; provisional descriptive name.
-// Native click writers and535xxx/537xxx readers prove a DWORD, not its full lifecycle.
-// RECOVERY_OBJECT: v2 0x007FFF74 0x007FFF78 ?MultiWindowContactStatusMask@@3HA 0x00477F30
-int MultiWindowContactStatusMask;
-
-// ORIGINAL: 0x00477F30 ?on_left_click@MultiWin@@QAEXHH@Z 0x00477F30-0x00478148 BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["task:multiwin-contact-owner", "historical seed:src/recovered/units/00477f30.cpp", "pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf:complete original mapped span and native call/branch order", "native:478500 subtracts item ID1; jump-table indices7..10 select items8renounce,9withdrawal,10contact,11chat; withdrawal arguments local then clicked", "source:existing typed subobjects, faction/player/parser/network and separate bounded contact-state storage; automatic PullDown/Buffer lifetime"], "reason": "Recover the complete original in its genuine MultiWin or diplomacy C++ owner, retaining identity, auxiliary spans and historical seed findings; no current match or runtime claim."}
-// symbol    ?on_left_click@MultiWin@@UAEXHH@Z
-void MultiWin::on_left_click(int x, int y) {
-    ConsoleInfoWin.reset();
-    ConsoleStatusWin.reset();
-
-    int faction;
-    int kind;
-    if (spot_.check(x, y, &faction, &kind) < 0) return;
-
-    if (!is_alive(static_cast<uint32_t>(faction))) {
-        GenderDefault = Players[faction].is_leader_female;
-        PluralityDefault = 0;
-        parse_says(0, Players[faction].title_leader, -1, -1);
-        GenderDefault = Players[faction].is_leader_female;
-        PluralityDefault = 0;
-        parse_says(1, Players[faction].name_leader, -1, -1);
-        GenderDefault = Players[faction].noun_gender;
-        PluralityDefault = Players[faction].is_noun_plural;
-        parse_says(2, Players[faction].noun_faction, -1, -1);
-        NetMsgPrimary.pop("ELIMINATED", 5000, 0, 0);
-        return;
-    }
-
-    if (kind == 1) commlink_attempt(faction);
-    if (!IsMultiplayerNet) return;
-
-    if (kind == 2) {
-        ConsoleInfoWin.reset();
-        ConsoleStatusWin.reset();
-        switch (faction) {
-        case 0:
-            ConsoleGlobal.time_controls();
-            return;
-        case 3:
-            ConsoleGlobal.use_time_bonus();
-            return;
-        }
-    } else if (kind == 0) {
-        const uint32_t bit = 1u << faction;
-        if (MultiWindowContactStatusMask & bit) {
-            MultiWindowContactStatusMask &= ~bit;
-            NetDaemonNet.field_1BD0_ |= bit;
-            draw(0);
-            return;
-        }
-        if (NetDaemonNet.field_1BD0_ & bit) {
-            NetDaemonNet.field_1BD0_ &= ~bit;
-            draw(0);
-            return;
-        }
-        MultiWindowContactStatusMask |= bit;
-        draw(0);
-    }
-}
-
-// RECOVERY_ASSOCIATED: v1 switch_targets 0x00478150 0x004785FC 0x00478628 0x0047850A
-// ORIGINAL: 0x00478150 ?on_right_click@MultiWin@@QAEXHH@Z 0x00478150-0x004785FA;0x006563E0-0x006563F5 BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["task:multiwin-contact-owner", "historical seed:src/recovered/units/00478150.cpp", "pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf:complete original mapped span and native call/branch order", "native:478500 subtracts item ID1; jump-table indices7..10 select items8renounce,9withdrawal,10contact,11chat; withdrawal arguments local then clicked", "source:existing typed subobjects, faction/player/parser/network and separate bounded contact-state storage; automatic PullDown/Buffer lifetime"], "reason": "Recover the complete original in its genuine MultiWin or diplomacy C++ owner, retaining identity, auxiliary spans and historical seed findings; no current match or runtime claim."}
-// symbol    ?on_right_click@MultiWin@@UAEXHH@Z
-void MultiWin::on_right_click(int x, int y) {
-    PullDown menu;
-    int faction;
-    int kind;
-    if (spot_.check(x, y, &faction, &kind) < 0 || faction < 0 || kind != 1)
-        return;
-
-    Win::client_to_screen(&x, &y);
-    menu.init(0);
-
-    StringTemp[0] = 0;
-    strcat(StringTemp, label_get(0x9F0 / 4));
-    strcat(StringTemp, BufferJoinSpace);
-    parse_set(Players[faction].is_leader_female, 0);
-    char *const title = Players[faction].title_leader;
-    strcat(StringTemp, title);
-    strcat(StringTemp, BufferJoinSpace);
-    parse_set(Players[faction].is_leader_female, 0);
-    char *const name = Players[faction].name_leader;
-    strcat(StringTemp, name);
-    menu.add_item(1, StringTemp);
-    menu.add_item(2, StringTable.get(Labels.strings_ptr[0x9F4 / 4]));
-
-    if (PlayersData[ConsoleGlobal.faction_id_].diplo_treaties[faction] & 7) {
-        menu.add_separator(0x63);
-        if (PlayersData[ConsoleGlobal.faction_id_].diplo_treaties[faction] & 1)
-            menu.add_item(8, StringTable.get(Labels.strings_ptr[0xE20 / 4]));
-        else
-            menu.add_item(9, StringTable.get(Labels.strings_ptr[0xE24 / 4]));
-    }
-
-    menu.add_separator(0x63);
-    menu.add_item(3, StringTable.get(Labels.strings_ptr[0x9F8 / 4]));
-    if (IsMultiplayerNet) {
-        menu.add_separator(0x63);
-        menu.add_item(0xA, StringTable.get(Labels.strings_ptr[0x9FC / 4]));
-        menu.add_item(0xB, StringTable.get(Labels.strings_ptr[0xA00 / 4]));
-    }
-
-    menu.show(x, y, pop_expire);
-    if (GameDataStateStorage.fields_.game_state_ & 0x800) return;
-
-    const int selected = menu.get_selected();
-    if (selected >= 0x40) return;
-    const int action = menu.item_id(selected);
-    if (action < 0) return;
-
-    if (!is_alive(static_cast<uint32_t>(faction))) {
-        parse_set(Players[faction].is_leader_female, 0);
-        parse_says(0, Players[faction].title_leader, -1, -1);
-        parse_set(Players[faction].is_leader_female, 0);
-        parse_says(1, Players[faction].name_leader, -1, -1);
-        parse_set(Players[faction].noun_gender, Players[faction].is_noun_plural);
-        parse_says(2, Players[faction].noun_faction, -1, -1);
-        // RECOVERY_LITERAL: v1 0x0068677C 0x00686787 $SG58973 0x00478150
-        NetMsgPrimary.pop("ELIMINATED", 5000, 0, 0);
-        return;
-    }
-
-    switch (action) {
-    case 1:
-        commlink_attempt(faction);
-        break;
-    case 2:
-        report_intel(faction);
-        break;
-    case 3:
-        call_council(ConsoleGlobal.faction_id_);
-        break;
-    case 8:
-        renounce_pact(ConsoleGlobal.faction_id_, faction);
-        break;
-    case 9:
-        demands_withdrawal(ConsoleGlobal.faction_id_, faction);
-        break;
-    case 10: {
-        const unsigned int bit = 1u << faction;
-        unsigned int mask = MultiWindowContactStatusMask;
-        if (mask & bit) {
-            mask &= ~bit;
-            MultiWindowContactStatusMask = mask;
-            NetDaemonNet.field_1BD0_ |= bit;
-            draw(0);
-        } else if (NetDaemonNet.field_1BD0_ & bit) {
-            NetDaemonNet.field_1BD0_ &= ~bit;
-            draw(0);
-        } else {
-            MultiWindowContactStatusMask |= bit;
-            draw(0);
-        }
-        break;
-    }
-    case 11:
-        ConsoleGlobal.chat(faction);
-        break;
-    default:
-        break;
-    }
 }
 
 // ORIGINAL: 0x00479F90 ?init@MultiWin@@QAEXXZ 0x00479F90-0x0047A429;0x0065641F-0x00656434 BYTE_EXACT
