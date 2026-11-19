@@ -670,7 +670,7 @@ void __cdecl world_temperature() {
 
 /*
 Purpose: Score the specified tile as a site for a new base.
-// ORIGINAL: 0x005C4FD0 ?world_site@@YAHHHH@Z 0x005C4FD0-0x005C55B5
+// ORIGINAL: 0x005C4FD0 ?world_site@@YAHHHH@Z 0x005C4FD0-0x005C55B5 BYTE_EXACT
 // TRIED: site_tile/site_xrange were being emitted as real calls; __forceinline on both
 //            (site_tile at 2423, site_xrange at 1730) brought the call count from 9 down to
 //            the image's 3 (2x bonus_at, 1x goody_at) but did not reach BYTE_EXACT.
