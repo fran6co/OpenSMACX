@@ -140,357 +140,6 @@ extern char SocialWinColonSpaceText[];
 void __cdecl draw_cursor();                               // 0x0046AE00
 void __cdecl ambience_veh(int vehicle);
 
-// ORIGINAL: 0x00511520 ?set_move@Console@@QAEXH@Z 0x00511520-0x005117FD BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["git:c4c11a8acc2acd0a79f619ec8b1d6f2fd233e533:src/recovered/units/00511520.cpp", "source:src/console.h", "source:src/veh.h", "source:src/game.h", "source:src/mapwin.h", "pinned:0x00511520..0x005117FD sequential multiplayer gates, ready/ambience selection split, visibility call and callback-sensitive coordinate reads", "source:src/netdaemon.h:NetDaemon::primary_state_"], "reason": "Complete the original Console move workflow through its genuine ready, ambience_veh and spot_all helpers. Preserve the observed ordered guards, selection recheck, offline visibility condition and post-callback field reads. The historical faction waiting-mask identity now binds to NetDaemonNet.primary_state_.trailing_words_[6]; the singleton owns that shared storage."}
-void Console::set_move(int force_update) {
-    int did_reset = 0;
-    if (IsMultiplayerNet != 0) {
-        if (ConsoleControlTurnActive != 0) {
-            return;
-        }
-        if (NetDaemonNet.field_1BB4_ != 0) {
-            return;
-        }
-        if ((GameDataStateStorage.fields_.net_turn_flags_ & 0x10u) != 0) {
-            if (not_my_turn() != 0) {
-                return;
-            }
-        } else {
-            const int faction_bit = 1 << faction_id_;
-            if ((NetDaemonNet.factions_waiting_mask() & faction_bit) != 0) {
-                return;
-            }
-            if (NetDaemonNet.primary_state_.trailing_words_[3] != 0) {
-                return;
-            }
-        }
-    }
-
-    if (ConsoleGlobal.cursor_active_ == 0 || force_update != 0) {
-        cursor_active_ = 0;
-        field_23BF8_ = 0;
-        field_23BFC_ = 1;
-        did_reset = 1;
-
-        if (survey_mode_ != 0) {
-            survey_mode_ = 0;
-            console_map_win()->draw_map(1);
-        }
-        ::draw_cursor();
-        cursor_active_ = 1;
-        field_23BE4_ = 0;
-    }
-
-    if (veh_selectable(selected_vehicle_) == 0) {
-        ready();
-        did_reset = 0;
-    } else {
-        ambience_veh(selected_vehicle_);
-    }
-
-    if (selected_vehicle_ >= 0 && veh_selectable(selected_vehicle_) != 0) {
-        const int visible_vehicle_id = selected_vehicle_;
-        if (Vehs[visible_vehicle_id].moves_expended == 0 && IsMultiplayerNet == 0) {
-            spot_all(visible_vehicle_id, 0);
-        }
-        const int coordinate_vehicle_id = selected_vehicle_;
-        const int tile_y = Vehs[coordinate_vehicle_id].y;
-        const int tile_x = Vehs[coordinate_vehicle_id].x;
-        field_23BF8_ = 0;
-        if (survey_mode_ != 0) {
-            survey_mode_ = 0;
-            console_map_win()->draw_map(1);
-        }
-        console_map_win()->draw_cursor();
-        cursor_next(tile_x, tile_y);
-
-        if (did_reset) {
-            ConsoleInfoWin.change(0);
-            ConsoleStatusWin.redraw();
-            console_map_win()->main_caption();
-            const int focus_vehicle_id = selected_vehicle_;
-            const int history_index = ConsoleGlobal.cursor_history_index_;
-            const int focus_faction = Vehs[focus_vehicle_id].faction_id;
-            const int focus_y = ConsoleGlobal.cursor_history_y_[history_index];
-            const int focus_x = ConsoleGlobal.cursor_history_x_[history_index];
-            focus(focus_x, focus_y, focus_faction);
-            alpha_menu_.check(selected_vehicle_);
-        }
-        field_23BF4_ = 1;
-        return;
-    }
-
-    field_23BE4_ = 0;
-    if (ConsoleGlobal.cursor_active_ != 0) {
-        ambience(0x1E);
-        cursor_active_ = 0;
-        field_23BF8_ = 1;
-        field_23BFC_ = 1;
-        if (survey_mode_ != 0) {
-            survey_mode_ = 0;
-            console_map_win()->draw_map(1);
-        }
-        ::draw_cursor();
-        ConsoleInfoWin.change(0);
-        ConsoleStatusWin.redraw();
-        console_map_win()->main_caption();
-        alpha_menu_.check(selected_vehicle_);
-    }
-
-    const int loc_index = ConsoleGlobal.cursor_history_index_;
-    const int loc_y = ConsoleGlobal.cursor_history_y_[loc_index];
-    const int loc_x = ConsoleGlobal.cursor_history_x_[loc_index];
-    ConsoleStatusWin.set_loc(loc_x, loc_y);
-    const int focus_index = ConsoleGlobal.cursor_history_index_;
-    const int focus_faction = faction_id_;
-    const int focus_y = ConsoleGlobal.cursor_history_y_[focus_index];
-    const int focus_x = ConsoleGlobal.cursor_history_x_[focus_index];
-    focus(focus_x, focus_y, focus_faction);
-}
-
-
-
-// Superseded seed deleted; seed paths below are historical Git provenance.
-// ORIGINAL: 0x00511800 ?turn_hints@Console@@QAEXXZ 0x00511800-0x00511BA8 BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["Pinned original entry 00511800; retained seed src/recovered/units/00511800.cpp", "Existing TutWin guard at8CC210 is member+53A8; stage8CC228 is+53C0. Typed global Console history, PlayerData prototype/base/population fields and diplomacy arrays replace seed address arithmetic. Caption pointer691B14 targets TUTOR691B8C.", "recovery/tasks/console-scenario-owner-wave.json; native scope expansions retain the original task baseline"], "reason": "Recover the complete Console command into its genuine owner using typed state and existing lifecycle/network APIs. Preserve original spans and retained seed evidence; this binding is not a byte, reference or runtime acceptance claim."}
-void Console::turn_hints() { // 0x00511800
-    if ((GameDataStateStorage.fields_.game_preferences_ & PREF_BSC_TUTORIAL_MSGS) == 0 ||
-        IsMultiplayerNet != 0 || TutorialWindow.tutorial_blocked()) {
-        return;
-    }
-
-    const int faction_id = ConsoleGlobal.faction_id_;
-    if (GameDataStateStorage.fields_.turn_current_num_ == 1 &&
-        tut_check(GameDataStateStorage.fields_.turn_current_num_) != 0) {
-        const int base_id = base_find(
-            ConsoleGlobal.cursor_history_x_[ConsoleGlobal.cursor_history_index_],
-            ConsoleGlobal.cursor_history_y_[ConsoleGlobal.cursor_history_index_], faction_id);
-        if (base_id >= 0) {
-            parse_says(0, Bases[base_id].name_string, -1, -1);
-            if (selected_vehicle_ >= 0) {
-                parse_says(1, VehPrototypes[Vehs[selected_vehicle_].proto_id].veh_name, -1, -1);
-                TutorialWindow.set_tour_stage(0);
-                TutorialWindow.tut_map("LANDFALL",
-                    ConsoleGlobal.cursor_history_x_[ConsoleGlobal.cursor_history_index_],
-                    ConsoleGlobal.cursor_history_y_[ConsoleGlobal.cursor_history_index_], -1,
-                    nullptr, 0x100, -1, -1);
-            }
-        }
-    }
-
-    bool second_base_tutorial_shown = false;
-    if (GameDataStateStorage.fields_.turn_current_num_ >= 0x14 &&
-        PlayersData[faction_id].current_num_bases == 1 &&
-        PlayersData[faction_id].pop_total >= 2 &&
-        PlayersData[faction_id].proto_id_active[0] == 0 &&
-        PlayersData[faction_id].proto_id_queue[0] == 0 &&
-        tut_check(0x100000) != 0) {
-        second_base_tutorial_shown = true;
-        const int base_id = base_find(
-            ConsoleGlobal.cursor_history_x_[ConsoleGlobal.cursor_history_index_],
-            ConsoleGlobal.cursor_history_y_[ConsoleGlobal.cursor_history_index_], faction_id);
-        if (base_id >= 0) {
-            focus(Bases[base_id].x, Bases[base_id].y, faction_id);
-            parse_says(0, Bases[base_id].name_string, -1, -1);
-            TutorialWindow.tut_map("SECONDBASE", Bases[base_id].x, Bases[base_id].y, -2 - base_id,
-                                  nullptr, 0, -1, -1);
-            PlayersData[faction_id].last_turn_new_base = GameDataStateStorage.fields_.turn_current_num_;
-        }
-    }
-
-    if (!second_base_tutorial_shown &&
-        GameDataStateStorage.fields_.turn_current_num_ - PlayersData[faction_id].last_turn_new_base >= 0x18 &&
-        PlayersData[faction_id].proto_id_active[0] == 0 &&
-        PlayersData[faction_id].current_num_bases <= 5 &&
-        PlayersData[faction_id].current_num_bases > 1) {
-        const int base_id = base_find(
-            ConsoleGlobal.cursor_history_x_[ConsoleGlobal.cursor_history_index_],
-            ConsoleGlobal.cursor_history_y_[ConsoleGlobal.cursor_history_index_], faction_id);
-        if (base_id >= 0) {
-            TutorialWindow.tut_map("BUILDMORE", Bases[base_id].x, Bases[base_id].y, -2 - base_id,
-                                  nullptr, 0, -1, -1);
-            PlayersData[faction_id].last_turn_new_base = GameDataStateStorage.fields_.turn_current_num_;
-        }
-    }
-
-    for (int other_faction = 1; other_faction < MaxPlayerNum; ++other_faction) {
-        if (faction_id != other_faction &&
-            (PlayersData[faction_id].diplo_treaties[other_faction] & DTREATY_COMMLINK) &&
-            (PlayersData[faction_id].diplo_treaties[other_faction] & DTREATY_VENDETTA)) {
-            if (tut_check(0x80) == 0) {
-                return;
-            }
-            GenderDefault = Players[other_faction].is_leader_female;
-            PluralityDefault = 0;
-            parse_says(0, Players[other_faction].title_leader, -1, -1);
-            GenderDefault = Players[other_faction].is_leader_female;
-            PluralityDefault = 0;
-            parse_says(1, Players[other_faction].name_leader, -1, -1);
-            GenderDefault = Players[other_faction].noun_gender;
-            PluralityDefault = Players[other_faction].is_noun_plural;
-            parse_says(2, Players[other_faction].noun_faction, -1, -1);
-            X_pop(TutorialPopupCaption, "VENDETTA", nullptr);
-            return;
-        }
-    }
-}
-
-// Superseded seed deleted; seed paths below are historical Git provenance.
-// ORIGINAL: 0x00516DA0 ?governor_directives@Console@@QAEXXZ 0x00516DA0-0x00517033 BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["Pinned original entry 00516DA0; retained seed src/recovered/units/00516da0.cpp", "Native516DC7/516E0E/516E97 uses ConsoleGlobal faction for eligibility/base scanning. Native516EBB..516FC9 repeatedly writes BaseCurrent->governor, not each visited base. Advanced settings use receiver faction at+23BD4; preserve this original behavior rather than silently fixing it.", "recovery/tasks/console-scenario-owner-wave.json; native scope expansions retain the original task baseline"], "reason": "Recover the complete Console command into its genuine owner using typed state and existing lifecycle/network APIs. Preserve original spans and retained seed evidence; this binding is not a byte, reference or runtime acceptance claim."}
-void Console::governor_directives() { // 0x00516DA0
-    if (ConsoleControlTurnActive != 0 || field_23BE8_ == 0 ||
-        !is_human(ConsoleGlobal.faction_id_)) {
-        return;
-    }
-
-    const int directive = x_pop_short("GOVERNORCONTROL", 0x40, 0);
-    if (directive < 0) {
-        return;
-    }
-
-    int first_owned_base;
-    for (first_owned_base = 0;
-         first_owned_base < GameDataStateStorage.fields_.base_current_count_;
-         ++first_owned_base) {
-        if (Bases[first_owned_base].faction_id_current == ConsoleGlobal.faction_id_) {
-            break;
-        }
-    }
-    if (first_owned_base >= GameDataStateStorage.fields_.base_current_count_) {
-        return;
-    }
-
-    if (directive == 5) {
-        set_base(first_owned_base);
-        if (TutWinBaseWindow.governor(1) != 0) {
-            return;
-        }
-    }
-    if (diplo_lock(0x32) != 0) {
-        return;
-    }
-
-    StringTemp[0] = 0;
-    // The image mutates BaseCurrent, the selected-base pointer, while
-    // walking the owner's base records; it does not retarget it per record.
-    for (int owned_base_id = 0; owned_base_id < GameDataStateStorage.fields_.base_current_count_; ++owned_base_id) {
-        if (Bases[owned_base_id].faction_id_current == ConsoleGlobal.faction_id_) {
-            switch (directive) {
-            case 0:
-                BaseCurrent->governor &= 0x7FFFFFFFu;
-                BaseCurrent->governor &= 0xF0FFFFFFu;
-                strcat(StringTemp, label_get(0xAF8 / 4));
-                break;
-            case 1:
-            case 2:
-            case 3:
-            case 4:
-                BaseCurrent->governor |= 0x80000000u;
-                BaseCurrent->governor &= 0xF0FFFFFFu;
-                switch (directive) {
-                case 1:
-                    BaseCurrent->governor |= 0x01000000u;
-                    strcat(StringTemp, label_get(0x824 / 4));
-                    break;
-                case 2:
-                    BaseCurrent->governor |= 0x02000000u;
-                    strcat(StringTemp, label_get(0x828 / 4));
-                    break;
-                case 3:
-                    BaseCurrent->governor |= 0x04000000u;
-                    strcat(StringTemp, label_get(0x82C / 4));
-                    break;
-                case 4:
-                    BaseCurrent->governor |= 0x08000000u;
-                    strcat(StringTemp, label_get(0x830 / 4));
-                    break;
-                }
-                break;
-            case 5:
-                BaseCurrent->governor = static_cast<uint32_t>(
-                    PlayersData[faction_id_].base_governor_adv);
-                strcat(StringTemp, label_get(0xAFC / 4));
-                break;
-            }
-        }
-    }
-
-    parse_says(0, StringTemp, -1, -1);
-    NetMsgPrimary.pop("GOVERNORCONTROLDONE", 5000, 0, nullptr);
-    diplo_unlock();
-}
-
-// Shared by the turn loop and network lock guards. The original writers
-// are control_turn, net_end_of_turn and net_control_turn (see console.h).
-// RECOVERY_OBJECT: v2 0x0093A938 0x0093A93C ?ConsoleControlTurnActive@@3HA 0x00530D50
-int ConsoleControlTurnActive;
-
-// Chat passes 939FE8 as default text, not editable output (5157CC).
-// BasePop forwards it to EditGroup::set_default, which allocates and copies
-// input at 612108..612134; entered text is ParseStrBuffer[0].str.
-// Only the initial NUL is established: the original allocation extent and
-// containing owner remain unknown. Do not overlap the distinct default
-// text start passed by name_landmark at 5163E6 (939FEC).
-// RECOVERY_OBJECT: v1 0x00939FE8 ?ConsoleChatInput@@3PADA
-char ConsoleChatInput[1] = {0};
-// RECOVERY_OBJECT: v1 0x00939FEC ?LandmarkDefaultName@@3PADA
-char LandmarkDefaultName[1] = {0};
-// The empty second string every debug danger() call passes: cursor_next
-// (5109B0), four on_key_click sites and faction's add_site (579B95) all push
-// this one zero-filled object, so it is named storage, not a per-site literal.
-// RECOVERY_OBJECT: v1 0x00939FF0 ?ConsoleEmptyText@@3PADA
-char ConsoleEmptyText[1] = {0};
-
-// Superseded seed deleted; seed paths below are historical Git provenance.
-// ORIGINAL: 0x00515770 ?chat@Console@@QAEXH@Z 0x00515770-0x005158F4
-// RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/00515770.cpp", "src/netdaemon.h", "src/xpops.h"], "reason": "The chat command belongs to Console, reads network lock state through NetDaemonNet, and uses source-owned text buffers and message services rather than fixed executable addresses; seed matching alone is not structural proof."}
-void Console::chat(int target_faction) {
-    if (!IsMultiplayerNet) return;
-
-    NetDaemon &network = NetDaemonNet;
-    if (ConsoleControlTurnActive &&
-        (network.field_1B6C_ & (1 << ConsoleGlobal.faction_id_)) == 0 &&
-        network.primary_state_.trailing_words_[3] == 0) {
-        NetMsgPrimary.pop("FINISHUPKEEP", 1000, 0, 0);
-        return;
-    }
-
-    if (X_pop_ask("CHATASK", 0xff, ConsoleChatInput, pop_wait, 0) != 0)
-        return;
-
-    char *message = ParseStrBuffer[0].str;
-    if (message[0] == '!') {
-        message_chat(0x4e00, 0, message + 1);
-        log_say("Sent CHAT ALL(1)", message, 0, 0, 0);
-        return;
-    }
-
-    // Literal order (ALL(2) at 0x68A91C before "Sent CHAT" at 0x68A930) puts
-    // the broadcast arm first in the source; VC6 lays it out last.
-    unsigned int enabled;
-    if (network.primary_state_.session_phase_ < 2
-        || ((enabled = GameDataStateStorage.fields_.lock_masks_.enable_mask_ & 0xff)
-            & network.field_1BD0_) == enabled) {
-        message_chat(0x4e00, 0, message);
-        log_say("Sent CHAT ALL(2)", message, 0, 0, 0);
-    } else {
-        for (int faction = 1; faction < 8; ++faction) {
-            const int bit = 1 << faction;
-            if (!is_human(faction)) continue;
-            if (target_faction > 0) {
-                if (faction != target_faction) continue;
-            } else if (CommlinkPending) {
-                if (faction != CommlinkFaction) continue;
-            } else if (!TurnRedrawPending &&
-                       !(network.field_1BD0_ & bit)) {
-                continue;
-            }
-            message_chat(0x1e00, faction, message);
-            log_say("Sent CHAT", message, faction, 0, 0);
-        }
-    }
-}
 
 // FREE FUNCTIONS THE CONSOLE BODIES CALL that no header in src/ declares yet.
 // Each line carries the image address its catalogue entry names, and the
@@ -1196,6 +845,291 @@ void __stdcall sub_50f630(int unused) {
 void __stdcall nullsub_185(int) {
 }
 
+// ORIGINAL: 0x00511520 ?set_move@Console@@QAEXH@Z 0x00511520-0x005117FD BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["git:c4c11a8acc2acd0a79f619ec8b1d6f2fd233e533:src/recovered/units/00511520.cpp", "source:src/console.h", "source:src/veh.h", "source:src/game.h", "source:src/mapwin.h", "pinned:0x00511520..0x005117FD sequential multiplayer gates, ready/ambience selection split, visibility call and callback-sensitive coordinate reads", "source:src/netdaemon.h:NetDaemon::primary_state_"], "reason": "Complete the original Console move workflow through its genuine ready, ambience_veh and spot_all helpers. Preserve the observed ordered guards, selection recheck, offline visibility condition and post-callback field reads. The historical faction waiting-mask identity now binds to NetDaemonNet.primary_state_.trailing_words_[6]; the singleton owns that shared storage."}
+void Console::set_move(int force_update) {
+    int did_reset = 0;
+    if (IsMultiplayerNet != 0) {
+        if (ConsoleControlTurnActive != 0) {
+            return;
+        }
+        if (NetDaemonNet.field_1BB4_ != 0) {
+            return;
+        }
+        if ((GameDataStateStorage.fields_.net_turn_flags_ & 0x10u) != 0) {
+            if (not_my_turn() != 0) {
+                return;
+            }
+        } else {
+            const int faction_bit = 1 << faction_id_;
+            if ((NetDaemonNet.factions_waiting_mask() & faction_bit) != 0) {
+                return;
+            }
+            if (NetDaemonNet.primary_state_.trailing_words_[3] != 0) {
+                return;
+            }
+        }
+    }
+
+    if (ConsoleGlobal.cursor_active_ == 0 || force_update != 0) {
+        cursor_active_ = 0;
+        field_23BF8_ = 0;
+        field_23BFC_ = 1;
+        did_reset = 1;
+
+        if (survey_mode_ != 0) {
+            survey_mode_ = 0;
+            console_map_win()->draw_map(1);
+        }
+        ::draw_cursor();
+        cursor_active_ = 1;
+        field_23BE4_ = 0;
+    }
+
+    if (veh_selectable(selected_vehicle_) == 0) {
+        ready();
+        did_reset = 0;
+    } else {
+        ambience_veh(selected_vehicle_);
+    }
+
+    if (selected_vehicle_ >= 0 && veh_selectable(selected_vehicle_) != 0) {
+        const int visible_vehicle_id = selected_vehicle_;
+        if (Vehs[visible_vehicle_id].moves_expended == 0 && IsMultiplayerNet == 0) {
+            spot_all(visible_vehicle_id, 0);
+        }
+        const int coordinate_vehicle_id = selected_vehicle_;
+        const int tile_y = Vehs[coordinate_vehicle_id].y;
+        const int tile_x = Vehs[coordinate_vehicle_id].x;
+        field_23BF8_ = 0;
+        if (survey_mode_ != 0) {
+            survey_mode_ = 0;
+            console_map_win()->draw_map(1);
+        }
+        console_map_win()->draw_cursor();
+        cursor_next(tile_x, tile_y);
+
+        if (did_reset) {
+            ConsoleInfoWin.change(0);
+            ConsoleStatusWin.redraw();
+            console_map_win()->main_caption();
+            const int focus_vehicle_id = selected_vehicle_;
+            const int history_index = ConsoleGlobal.cursor_history_index_;
+            const int focus_faction = Vehs[focus_vehicle_id].faction_id;
+            const int focus_y = ConsoleGlobal.cursor_history_y_[history_index];
+            const int focus_x = ConsoleGlobal.cursor_history_x_[history_index];
+            focus(focus_x, focus_y, focus_faction);
+            alpha_menu_.check(selected_vehicle_);
+        }
+        field_23BF4_ = 1;
+        return;
+    }
+
+    field_23BE4_ = 0;
+    if (ConsoleGlobal.cursor_active_ != 0) {
+        ambience(0x1E);
+        cursor_active_ = 0;
+        field_23BF8_ = 1;
+        field_23BFC_ = 1;
+        if (survey_mode_ != 0) {
+            survey_mode_ = 0;
+            console_map_win()->draw_map(1);
+        }
+        ::draw_cursor();
+        ConsoleInfoWin.change(0);
+        ConsoleStatusWin.redraw();
+        console_map_win()->main_caption();
+        alpha_menu_.check(selected_vehicle_);
+    }
+
+    const int loc_index = ConsoleGlobal.cursor_history_index_;
+    const int loc_y = ConsoleGlobal.cursor_history_y_[loc_index];
+    const int loc_x = ConsoleGlobal.cursor_history_x_[loc_index];
+    ConsoleStatusWin.set_loc(loc_x, loc_y);
+    const int focus_index = ConsoleGlobal.cursor_history_index_;
+    const int focus_faction = faction_id_;
+    const int focus_y = ConsoleGlobal.cursor_history_y_[focus_index];
+    const int focus_x = ConsoleGlobal.cursor_history_x_[focus_index];
+    focus(focus_x, focus_y, focus_faction);
+}
+
+
+
+// Superseded seed deleted; seed paths below are historical Git provenance.
+// ORIGINAL: 0x00511800 ?turn_hints@Console@@QAEXXZ 0x00511800-0x00511BA8 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned original entry 00511800; retained seed src/recovered/units/00511800.cpp", "Existing TutWin guard at8CC210 is member+53A8; stage8CC228 is+53C0. Typed global Console history, PlayerData prototype/base/population fields and diplomacy arrays replace seed address arithmetic. Caption pointer691B14 targets TUTOR691B8C.", "recovery/tasks/console-scenario-owner-wave.json; native scope expansions retain the original task baseline"], "reason": "Recover the complete Console command into its genuine owner using typed state and existing lifecycle/network APIs. Preserve original spans and retained seed evidence; this binding is not a byte, reference or runtime acceptance claim."}
+void Console::turn_hints() { // 0x00511800
+    if ((GameDataStateStorage.fields_.game_preferences_ & PREF_BSC_TUTORIAL_MSGS) == 0 ||
+        IsMultiplayerNet != 0 || TutorialWindow.tutorial_blocked()) {
+        return;
+    }
+
+    const int faction_id = ConsoleGlobal.faction_id_;
+    if (GameDataStateStorage.fields_.turn_current_num_ == 1 &&
+        tut_check(GameDataStateStorage.fields_.turn_current_num_) != 0) {
+        const int base_id = base_find(
+            ConsoleGlobal.cursor_history_x_[ConsoleGlobal.cursor_history_index_],
+            ConsoleGlobal.cursor_history_y_[ConsoleGlobal.cursor_history_index_], faction_id);
+        if (base_id >= 0) {
+            parse_says(0, Bases[base_id].name_string, -1, -1);
+            if (selected_vehicle_ >= 0) {
+                parse_says(1, VehPrototypes[Vehs[selected_vehicle_].proto_id].veh_name, -1, -1);
+                TutorialWindow.set_tour_stage(0);
+                TutorialWindow.tut_map("LANDFALL",
+                    ConsoleGlobal.cursor_history_x_[ConsoleGlobal.cursor_history_index_],
+                    ConsoleGlobal.cursor_history_y_[ConsoleGlobal.cursor_history_index_], -1,
+                    nullptr, 0x100, -1, -1);
+            }
+        }
+    }
+
+    bool second_base_tutorial_shown = false;
+    if (GameDataStateStorage.fields_.turn_current_num_ >= 0x14 &&
+        PlayersData[faction_id].current_num_bases == 1 &&
+        PlayersData[faction_id].pop_total >= 2 &&
+        PlayersData[faction_id].proto_id_active[0] == 0 &&
+        PlayersData[faction_id].proto_id_queue[0] == 0 &&
+        tut_check(0x100000) != 0) {
+        second_base_tutorial_shown = true;
+        const int base_id = base_find(
+            ConsoleGlobal.cursor_history_x_[ConsoleGlobal.cursor_history_index_],
+            ConsoleGlobal.cursor_history_y_[ConsoleGlobal.cursor_history_index_], faction_id);
+        if (base_id >= 0) {
+            focus(Bases[base_id].x, Bases[base_id].y, faction_id);
+            parse_says(0, Bases[base_id].name_string, -1, -1);
+            TutorialWindow.tut_map("SECONDBASE", Bases[base_id].x, Bases[base_id].y, -2 - base_id,
+                                  nullptr, 0, -1, -1);
+            PlayersData[faction_id].last_turn_new_base = GameDataStateStorage.fields_.turn_current_num_;
+        }
+    }
+
+    if (!second_base_tutorial_shown &&
+        GameDataStateStorage.fields_.turn_current_num_ - PlayersData[faction_id].last_turn_new_base >= 0x18 &&
+        PlayersData[faction_id].proto_id_active[0] == 0 &&
+        PlayersData[faction_id].current_num_bases <= 5 &&
+        PlayersData[faction_id].current_num_bases > 1) {
+        const int base_id = base_find(
+            ConsoleGlobal.cursor_history_x_[ConsoleGlobal.cursor_history_index_],
+            ConsoleGlobal.cursor_history_y_[ConsoleGlobal.cursor_history_index_], faction_id);
+        if (base_id >= 0) {
+            TutorialWindow.tut_map("BUILDMORE", Bases[base_id].x, Bases[base_id].y, -2 - base_id,
+                                  nullptr, 0, -1, -1);
+            PlayersData[faction_id].last_turn_new_base = GameDataStateStorage.fields_.turn_current_num_;
+        }
+    }
+
+    for (int other_faction = 1; other_faction < MaxPlayerNum; ++other_faction) {
+        if (faction_id != other_faction &&
+            (PlayersData[faction_id].diplo_treaties[other_faction] & DTREATY_COMMLINK) &&
+            (PlayersData[faction_id].diplo_treaties[other_faction] & DTREATY_VENDETTA)) {
+            if (tut_check(0x80) == 0) {
+                return;
+            }
+            GenderDefault = Players[other_faction].is_leader_female;
+            PluralityDefault = 0;
+            parse_says(0, Players[other_faction].title_leader, -1, -1);
+            GenderDefault = Players[other_faction].is_leader_female;
+            PluralityDefault = 0;
+            parse_says(1, Players[other_faction].name_leader, -1, -1);
+            GenderDefault = Players[other_faction].noun_gender;
+            PluralityDefault = Players[other_faction].is_noun_plural;
+            parse_says(2, Players[other_faction].noun_faction, -1, -1);
+            X_pop(TutorialPopupCaption, "VENDETTA", nullptr);
+            return;
+        }
+    }
+}
+
+/*
+Purpose: Open the shared preferences window to the preferences page.
+// ORIGINAL: 0x00514EF0 ?set_preferences@Console@@QAEXXZ 0x00514EF0-0x00514EFD BYTE_EXACT
+// size      13 bytes
+// prototype void (__thiscall ?set_preferences@Console@@QAEXXZ)(Console* this)
+// callers   2   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x0048FA00
+Return Value: n/a
+Status: Complete
+*/
+// WORKAROUND(noinline): menu_proc (0x0051BC70) and on_key_click call this
+// out of line at every site; VC6 would otherwise expand it there.
+#pragma auto_inline(off)
+void Console::set_preferences() {
+    ConsolePrefWin.PrefWin::display(0);
+}
+
+// Shared by the turn loop and network lock guards. The original writers
+// are control_turn, net_end_of_turn and net_control_turn (see console.h).
+// RECOVERY_OBJECT: v2 0x0093A938 0x0093A93C ?ConsoleControlTurnActive@@3HA 0x00530D50
+int ConsoleControlTurnActive;
+
+// Chat passes 939FE8 as default text, not editable output (5157CC).
+// BasePop forwards it to EditGroup::set_default, which allocates and copies
+// input at 612108..612134; entered text is ParseStrBuffer[0].str.
+// Only the initial NUL is established: the original allocation extent and
+// containing owner remain unknown. Do not overlap the distinct default
+// text start passed by name_landmark at 5163E6 (939FEC).
+// RECOVERY_OBJECT: v1 0x00939FE8 ?ConsoleChatInput@@3PADA
+char ConsoleChatInput[1] = {0};
+// RECOVERY_OBJECT: v1 0x00939FEC ?LandmarkDefaultName@@3PADA
+char LandmarkDefaultName[1] = {0};
+// The empty second string every debug danger() call passes: cursor_next
+// (5109B0), four on_key_click sites and faction's add_site (579B95) all push
+// this one zero-filled object, so it is named storage, not a per-site literal.
+// RECOVERY_OBJECT: v1 0x00939FF0 ?ConsoleEmptyText@@3PADA
+char ConsoleEmptyText[1] = {0};
+
+// Superseded seed deleted; seed paths below are historical Git provenance.
+// ORIGINAL: 0x00515770 ?chat@Console@@QAEXH@Z 0x00515770-0x005158F4
+// RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/00515770.cpp", "src/netdaemon.h", "src/xpops.h"], "reason": "The chat command belongs to Console, reads network lock state through NetDaemonNet, and uses source-owned text buffers and message services rather than fixed executable addresses; seed matching alone is not structural proof."}
+void Console::chat(int target_faction) {
+    if (!IsMultiplayerNet) return;
+
+    NetDaemon &network = NetDaemonNet;
+    if (ConsoleControlTurnActive &&
+        (network.field_1B6C_ & (1 << ConsoleGlobal.faction_id_)) == 0 &&
+        network.primary_state_.trailing_words_[3] == 0) {
+        NetMsgPrimary.pop("FINISHUPKEEP", 1000, 0, 0);
+        return;
+    }
+
+    if (X_pop_ask("CHATASK", 0xff, ConsoleChatInput, pop_wait, 0) != 0)
+        return;
+
+    char *message = ParseStrBuffer[0].str;
+    if (message[0] == '!') {
+        message_chat(0x4e00, 0, message + 1);
+        log_say("Sent CHAT ALL(1)", message, 0, 0, 0);
+        return;
+    }
+
+    // Literal order (ALL(2) at 0x68A91C before "Sent CHAT" at 0x68A930) puts
+    // the broadcast arm first in the source; VC6 lays it out last.
+    unsigned int enabled;
+    if (network.primary_state_.session_phase_ < 2
+        || ((enabled = GameDataStateStorage.fields_.lock_masks_.enable_mask_ & 0xff)
+            & network.field_1BD0_) == enabled) {
+        message_chat(0x4e00, 0, message);
+        log_say("Sent CHAT ALL(2)", message, 0, 0, 0);
+    } else {
+        for (int faction = 1; faction < 8; ++faction) {
+            const int bit = 1 << faction;
+            if (!is_human(faction)) continue;
+            if (target_faction > 0) {
+                if (faction != target_faction) continue;
+            } else if (CommlinkPending) {
+                if (faction != CommlinkFaction) continue;
+            } else if (!TurnRedrawPending &&
+                       !(network.field_1BD0_ & bit)) {
+                continue;
+            }
+            message_chat(0x1e00, faction, message);
+            log_say("Sent CHAT", message, faction, 0, 0);
+        }
+    }
+}
+
 /*
 Purpose: Tear down the game console - its own Buffer/Time/Menu/Sprite
          members, its own extra embedded GraphicWin, then the MapWin
@@ -1256,24 +1190,93 @@ already-matching `->Console::~Console()` on `TeardownObject00939444` -
 GraphicWin, the same convention PlanWin's and MapWin's destructors use (see
 the note in `planwin.cpp`).
 */
-/*
-Purpose: Open the shared preferences window to the preferences page.
-// ORIGINAL: 0x00514EF0 ?set_preferences@Console@@QAEXXZ 0x00514EF0-0x00514EFD BYTE_EXACT
-// size      13 bytes
-// prototype void (__thiscall ?set_preferences@Console@@QAEXXZ)(Console* this)
-// callers   2   call targets   1
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     0x0048FA00
-Return Value: n/a
-Status: Complete
-*/
-// WORKAROUND(noinline): menu_proc (0x0051BC70) and on_key_click call this
-// out of line at every site; VC6 would otherwise expand it there.
-#pragma auto_inline(off)
-void Console::set_preferences() {
-    ConsolePrefWin.PrefWin::display(0);
+
+// Superseded seed deleted; seed paths below are historical Git provenance.
+// ORIGINAL: 0x00516DA0 ?governor_directives@Console@@QAEXXZ 0x00516DA0-0x00517033 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned original entry 00516DA0; retained seed src/recovered/units/00516da0.cpp", "Native516DC7/516E0E/516E97 uses ConsoleGlobal faction for eligibility/base scanning. Native516EBB..516FC9 repeatedly writes BaseCurrent->governor, not each visited base. Advanced settings use receiver faction at+23BD4; preserve this original behavior rather than silently fixing it.", "recovery/tasks/console-scenario-owner-wave.json; native scope expansions retain the original task baseline"], "reason": "Recover the complete Console command into its genuine owner using typed state and existing lifecycle/network APIs. Preserve original spans and retained seed evidence; this binding is not a byte, reference or runtime acceptance claim."}
+void Console::governor_directives() { // 0x00516DA0
+    if (ConsoleControlTurnActive != 0 || field_23BE8_ == 0 ||
+        !is_human(ConsoleGlobal.faction_id_)) {
+        return;
+    }
+
+    const int directive = x_pop_short("GOVERNORCONTROL", 0x40, 0);
+    if (directive < 0) {
+        return;
+    }
+
+    int first_owned_base;
+    for (first_owned_base = 0;
+         first_owned_base < GameDataStateStorage.fields_.base_current_count_;
+         ++first_owned_base) {
+        if (Bases[first_owned_base].faction_id_current == ConsoleGlobal.faction_id_) {
+            break;
+        }
+    }
+    if (first_owned_base >= GameDataStateStorage.fields_.base_current_count_) {
+        return;
+    }
+
+    if (directive == 5) {
+        set_base(first_owned_base);
+        if (TutWinBaseWindow.governor(1) != 0) {
+            return;
+        }
+    }
+    if (diplo_lock(0x32) != 0) {
+        return;
+    }
+
+    StringTemp[0] = 0;
+    // The image mutates BaseCurrent, the selected-base pointer, while
+    // walking the owner's base records; it does not retarget it per record.
+    for (int owned_base_id = 0; owned_base_id < GameDataStateStorage.fields_.base_current_count_; ++owned_base_id) {
+        if (Bases[owned_base_id].faction_id_current == ConsoleGlobal.faction_id_) {
+            switch (directive) {
+            case 0:
+                BaseCurrent->governor &= 0x7FFFFFFFu;
+                BaseCurrent->governor &= 0xF0FFFFFFu;
+                strcat(StringTemp, label_get(0xAF8 / 4));
+                break;
+            case 1:
+            case 2:
+            case 3:
+            case 4:
+                BaseCurrent->governor |= 0x80000000u;
+                BaseCurrent->governor &= 0xF0FFFFFFu;
+                switch (directive) {
+                case 1:
+                    BaseCurrent->governor |= 0x01000000u;
+                    strcat(StringTemp, label_get(0x824 / 4));
+                    break;
+                case 2:
+                    BaseCurrent->governor |= 0x02000000u;
+                    strcat(StringTemp, label_get(0x828 / 4));
+                    break;
+                case 3:
+                    BaseCurrent->governor |= 0x04000000u;
+                    strcat(StringTemp, label_get(0x82C / 4));
+                    break;
+                case 4:
+                    BaseCurrent->governor |= 0x08000000u;
+                    strcat(StringTemp, label_get(0x830 / 4));
+                    break;
+                }
+                break;
+            case 5:
+                BaseCurrent->governor = static_cast<uint32_t>(
+                    PlayersData[faction_id_].base_governor_adv);
+                strcat(StringTemp, label_get(0xAFC / 4));
+                break;
+            }
+        }
+    }
+
+    parse_says(0, StringTemp, -1, -1);
+    NetMsgPrimary.pop("GOVERNORCONTROLDONE", 5000, 0, nullptr);
+    diplo_unlock();
 }
+
 #pragma auto_inline(on)
 
 /*
@@ -1294,6 +1297,7 @@ Status: Complete
 void Console::set_auto_preferences() {
     ConsolePrefWin.PrefWin::display(3);
 }
+
 #pragma auto_inline(on)
 
 /*
@@ -1314,6 +1318,7 @@ Status: Complete
 void Console::set_base_preferences() {
     ConsolePrefWin.PrefWin::display(2);
 }
+
 #pragma auto_inline(on)
 
 /*
@@ -1334,6 +1339,7 @@ Status: Complete
 void Console::set_audiovisual() {
     ConsolePrefWin.PrefWin::display(4);
 }
+
 #pragma auto_inline(on)
 
 /*
@@ -1354,6 +1360,7 @@ Status: Complete
 void Console::set_map_display() {
     ConsolePrefWin.PrefWin::display(5);
 }
+
 #pragma auto_inline(on)
 
 
@@ -1411,114 +1418,407 @@ Status: Complete
 void Console::set_adv_preferences() {
     ConsolePrefWin.PrefWin::display(1);
 }
+
 #pragma auto_inline(on)
 
 
 
 
 
-/*
-Purpose: Refresh everything the console shows after a selection or turn change:
-         hand the change code to the shared InfoWin, redraw the shared
-         StatusWin, then push the map's caption into the main interface.
-// ORIGINAL: 0x00514880 ?update_data@Console@@QAEXH@Z 0x00514880-0x005148AA BYTE_EXACT
-// size      42 bytes
-// prototype void (__thiscall ?update_data@Console@@QAEXH@Z)(Console* this, int)
-// callers   33   call targets   3
-// kind      game
-// flags     frame;hidden;sp_ready;purged_ok
-// calls     0x00458900 0x0046FB10 0x004B9EA0
-Return Value: n/a
-Status: Complete with a temporary StatusWin::redraw original dependency
-Verification note: three properties of this body are unobservable at every
-oracle tier, because the original's own callees discard them rather than
-because the fixtures are weak.
-  1. InfoWin::change at 0x00458900 is a bare `ret 4` - it drops both its
-     `this` and its argument - so neither the call nor the value of a1 has any
-     effect to observe. src/infowin.cpp models it as an empty body.
-  2. MapWin::main_caption at 0x0046FB10 overwrites ecx before using it, so the
-     MapWin pointer loaded out of ConsoleMapWinSlot never reaches anything
-     that reads it.
-  3. The original leaves EAX holding main_caption's residue, whose chain is
-     already terminated by the committed `void MapWin::main_caption()`, so
-     there is no residue available to return and fabricating a constant would
-     be wrong. Kept `void`, matching the mangled name.
-Mutation-harness survivors for the dropped `change` call and for a perturbed
-a1 are therefore equivalent by construction.
-*/
-void Console::update_data(int change_flags) {
-    // 0x00514883 mov eax,[ebp+8] / 0x00514886 mov ecx,0x7ad2a0 /
-    // 0x0051488B push eax / 0x0051488C call 0x458900.
-    ConsoleInfoWin.change(change_flags);
-    // 0x00514891 mov ecx,0x8c5568 / 0x00514896 call 0x4b9ea0.
-    ConsoleStatusWin.StatusWin::redraw();
-    // 0x0051489B mov ecx,[0x7d3c3c] - a load, not an address-of - then
-    // 0x005148A1 call 0x46fb10. The slot is read here, never cached.
-    console_map_win()->main_caption();
-}
 
 
-/*
-Purpose: Report the cursor's new tile position to the status bar and record
-         it in this Console's own ring buffer, unless it is the same tile
-         already selected in ConsoleGlobal's history. In debug mode, warn
-         when the coordinates have mismatched parity, then normalise them
-         to matching parity before anything else runs.
-// ORIGINAL: 0x005109B0 ?cursor_next@Console@@QAEXHH@Z 0x005109B0-0x00510A59 BYTE_EXACT
-// size      169 bytes
-// prototype void (__thiscall ?cursor_next@Console@@QAEXHH@Z)(Console* this, int, int)
-// callers   1   call targets   3
+// ORIGINAL: 0x0050E890 ?auto_play_callback@@YAXH@Z 0x0050E890-0x0050E97E BYTE_EXACT
+// size      238 bytes
+// prototype void (__cdecl ?auto_play_callback@@YAXH@Z)(int)
+// callers   0   call targets   2
 // kind      game
 // flags     hidden;sp_ready;purged_ok
-// calls     0x00517C50 0x00644C40 0x0064B330
-Return Value: n/a
-Status: Complete
-*/
-void Console::cursor_next(int x_coord, int y_coord) {
-    if (((x_coord ^ y_coord) & 1) != 0) {
-        if ((GameDataStateStorage.fields_.game_state_ & STATE_DEBUG_MODE) != 0) {
-            danger(CursorNextDangerMsg1, ConsoleEmptyText, x_coord,
-                  y_coord, 0);
-        }
-        if ((x_coord & 1) != 0) {
-            x_coord -= 1;
-        }
-        if ((y_coord & 1) != 0) {
-            x_coord += 1;
+// calls     0x005169F0 0x00625810
+// indirect  0x0050E8FE 0x0050E90F 0x0050E939 0x0050E968 0x0050E978
+// Homed 2026-09-05 from src/unrecovered/0050e890.cpp (deleted). The
+// catalogue's callers-0 is right in spirit: nothing calls it, Console::
+// on_key_click (0x005178C0) takes its ADDRESS at 0x00517987 - it is a timer
+// callback - the source-owned on_key_click handler below installs it
+// through the real Time owner.
+//
+// Every fixed address in it is a name the tree already owns: AutoPlayCounter
+// (0x00939FD0, above), WinModalDepth (0x009B7AE4), GameState's low byte
+// (0x009A64C0), ConsoleGlobal (0x009156B0), HandleMain (0x009B7B28),
+// WinScreenWidth / WinScreenHeight (0x009B7B1C / 0x009B7B20), and the two
+// USER32 imports reached by name - SetCursorPos (0x00669310) and
+// PostMessageA (0x00669314).
+//
+// LEVER (from the artifact, re-measured there on cl 12.00.8168): the
+// PostMessageA pointer is a LOCAL in the keystroke branch. Spelled inline,
+// VC6 emits `call dword ptr [0x669314]` twice and needs no callee-saved
+// register for it; the image's `mov edi, [0x669314]` plus two `call edi` is
+// a value held across a call, which only a local gets. That is what makes
+// EDI live and puts `push esi; push edi` at 0x0050E8C6 rather than at entry.
+// The packed word is an EXPRESSION written out at both call sites, not a
+// local: naming it costs a whole-branch register home and a stack slot. And
+// `(unsigned short)((y & 0xff) << 8) | (x & 0xff)` - the cast on the high
+// half only, MAKEWORD's own shape - is what frees x to live in ESI and y to
+// take EBX, the image's allocation.
+// TRIED, all measured in the artifact: signed against unsigned x and y
+// (no effect); thirteen pack spellings, of which only the one below reaches
+// mnemonic #64; locals declared at function top; one shared set of locals
+// across both branches; computing the pack before SetCursorPos; `register`,
+// `const`, a nested scope, a function-scope variable assigned in both
+// branches, assignment inside the first call's callee expression, a `void **`
+// read, and a const-qualified or `extern` global for the pointer.
+// CLOSED 2026-09-05: the artifact's last instruction - the image loads the
+// pointer into ESI after the pack and calls `esi` twice in the mouse branch -
+// falls to reaching the import as the DESIGNATOR in the keystroke branch
+// (`PostMessageCallback post = PostMessageA;`, no explicit address read) and
+// BY NAME in the mouse branch. VC6 dllimports both into registers it can
+// reuse for the second pair, `mov esi, [0x669314]` landing after the mask
+// exactly where the image puts it. Reading the IAT slot as data
+// (`*(PostMessageAFn *)0x00669314`), which is every spelling the artifact
+// had, is what forced the load to schedule early. BYTE_EXACT 80 of 80.
+typedef int(__stdcall *PostMessageCallback)(HWND, UINT, WPARAM, LPARAM);
+
+void __cdecl auto_play_callback(int) {
+    AutoPlayCounter = AutoPlayCounter + 1;
+    if (AutoPlayCounter > 100) {
+        if (WinModalDepth == 0) {
+            unsigned char state = static_cast<unsigned char>(GameDataStateStorage.fields_.game_state_);
+            if ((state & 2) != 0) {
+                ConsoleGlobal.end_my_turn();
+                AutoPlayCounter = 0;
+            }
         }
     }
-    ConsoleStatusWin.set_loc(x_coord, y_coord);
-    int idx = ConsoleGlobal.cursor_history_index_;
-    if (x_coord == ConsoleGlobal.cursor_history_x_[idx]) {
-        if (y_coord == ConsoleGlobal.cursor_history_y_[idx]) {
-            return;
-        }
+
+    if (random(0, 2) != 0) {
+        int key = (signed char)random(0, 0xff);
+        PostMessageCallback post = PostMessageA;
+        post(HandleMain, WM_KEYDOWN, key, 0);
+        post(HandleMain, WM_KEYUP, key, 0);
+        return;
     }
-    int newIdx = (cursor_history_head_ + 1) % 32;
-    cursor_history_head_ = newIdx;
-    cursor_history_index_ = newIdx;
-    cursor_history_x_[newIdx] = x_coord;
-    int reIdx = cursor_history_head_;
-    cursor_history_y_[reIdx] = y_coord;
+
+    int x = random(0, WinScreenWidth);
+    int y = random(0, WinScreenHeight);
+    SetCursorPos(x, y);
+
+    PostMessageA(HandleMain, WM_LBUTTONDOWN, 0,
+                 static_cast<unsigned short>((y & 0xff) << 8) | (x & 0xff));
+    PostMessageA(HandleMain, WM_LBUTTONUP, 0,
+                 static_cast<unsigned short>((y & 0xff) << 8) | (x & 0xff));
 }
 
-// The retained exact seed establishes a Console receiver, two tile
-// coordinates and this sequence of cursor-overlay operations. The original
-// symbol has no semantic name, so keep its neutral identity.
-// Superseded seed deleted; seed paths below are historical Git provenance.
-// ORIGINAL: 0x00510C90 sub_510c90 0x00510C90-0x00510CE0 BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/00510c90.cpp", "source:src/console.h", "source:src/mapwin.h"], "reason": "The retained exact seed shows an unchanged Console receiver, two tile coordinates, and the overlay-clear, redraw, cursor-next call sequence. The image supplies no semantic name."}
-// symbol    ?sub_510c90@Console@@QAEHHH@Z
-int Console::sub_510c90(int x_coord, int y_coord) {
-    const int had_survey = survey_mode_;
-    field_23BF8_ = 0;
-    if (had_survey != 0) {
-        survey_mode_ = 0;
-        console_map_win()->draw_map(1);
+// ====================
+
+// 0x009156B0 - the bare declaration is what the image has: its ??__E
+// dynamic initialiser pushes the hidden most-derived flag (push 1 at
+// 0x0050E852) and the compiler emits that push for a most-derived global
+// on its own. The old explicit `ConsoleGlobal(1)` was the flag spelled as
+// a real int - the exact doubling Console(int) carried.
+// Absolute cursor loads at 0x00510A01..0x00510A19 address this object's
+// history members. The following stores instead use the method receiver.
+// Native 0x0068A5D0 is exactly the writable initialized text plus terminator;
+// this constant-initialized source array adds no global constructor.
+// RECOVERY_OBJECT: v2 0x0068A5D0 0x0068A5E0 ?CursorNextDangerMsg1@@3PADA 0x005109B0
+char CursorNextDangerMsg1[16] = "Bad Cursor Move";
+// The 0x247A8-byte Console runs to its virtual GraphicWin base's end:
+// ??0Console builds that base at +0x23D94 (0x0050F494) and the 0xA14-byte
+// GraphicWin ends at 0x00939E58. Formerly separate globals inside that
+// extent are Console members, constructed or cleared by ??0Console:
+// CoverWindow (+0x21A68, ??0GraphicWin at 0x0050F4B3), Blink2Counter
+// (+0x23C04, cleared at 0x0050F5B6) and MessageWinMessageCount (+0x23D20,
+// between constructor-initialized +0x23D18 and the +0x23D28 Sprite).
+// RECOVERY_OBJECT: v2 0x009156B0 0x00939E58 ?ConsoleGlobal@@3VConsole@@A 0x0050E850
+// RECOVERY_OBJECT: v3 0x00937118 ?CoverWindow@@3VGraphicWin@@A member ?ConsoleGlobal@@3VConsole@@A cover_window_
+// RECOVERY_OBJECT: v3 0x009392B4 ?Blink2Counter@@3HA member ?ConsoleGlobal@@3VConsole@@A blink2_counter_
+// RECOVERY_OBJECT: v3 0x009393D0 0x009393D4 ?MessageWinMessageCount@@3HA 0x00471530 member ?ConsoleGlobal@@3VConsole@@A message_count_
+Console ConsoleGlobal;
+// ===== MANAGED GLOBALS - real objects, homed to their domain =====
+// In the shipped image these live at fixed data addresses and are
+// constructed before WinMain by the CRT's dynamic-initializer walk
+// (image bytes: ??__E at 0x0050E980 builds the ConsoleTimer object at
+// 0x00939E88, the one at 0x0050E9B0 builds the other five - Blink 0x915688,
+// Blink2 0x939EB0, Line 0x915658, Go 0x939E60, Turn 0x915628, each
+// `mov ecx, <addr>; call Time::Time` - and registers their teardowns;
+// winedbg-confirmed walker return 0x00644EEB, table at 0x682568..). Here
+// the same recovered constructors run through this build's own startup,
+// and the matching destructors close them at exit. Declarations in time.h
+// beside their users.
+// Keep the Console timer lifecycles in their original domain order.
+// RECOVERY_OBJECT: v1 0x00939E88 ?ConsoleTimer@@3VTime@@A
+Time ConsoleTimer; // 0x00939E88
+// RECOVERY_OBJECT: v2 0x00915658 0x00915680 ?LineTimer@@3VTime@@A 0x0050F440
+// RECOVERY_OBJECT: v2 0x00915688 0x009156B0 ?BlinkTimer@@3VTime@@A 0x0050F440
+// RECOVERY_OBJECT: v2 0x00939EB0 0x00939ED8 ?Blink2Timer@@3VTime@@A 0x0050F440
+// Original grouped ctor at 0x0050E9CE and cleanup at 0x0050E9FA use the distinct Go timer receiver; start only.
+// RECOVERY_OBJECT: v1 0x00939E60 ?GoTimer@@3VTime@@A
+// Original 0x0050E9D8/0x0050E9F0 and start_timers at 0x0050F426 use this timer receiver; no extent/lifetime claim.
+// RECOVERY_OBJECT: v1 0x00915628 ?TurnTimer@@3VTime@@A
+Time BlinkTimer,   // 0x00915688
+     Blink2Timer,  // 0x00939EB0
+     LineTimer,    // 0x00915658
+     GoTimer,      // 0x00939E60
+     TurnTimer;    // 0x00915628
+
+// Compiler-generated source-owned lifecycle entry; no handwritten wrapper.
+/*
+// ORIGINAL: 0x0050E9B0 sub_50e9b0 0x0050E9B0-0x0050E9EE FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["git:c02baa72365fcd4a910683a3dc9b3c39399a9191:src/recovered/0050e9b0.cpp", "pinned:terranx_original lifecycle0x50e9b0", "historical source owner before rehome:src/time.cpp"], "reason": "Generated complete five-Time-object initializer composes the real constructor group and destructor registration. Delegated generated helpers are current lowering, not a claim of one-to-one byte layout. Preserve complete original spans, catalogue names, claims and historical lessons; current compiler emission is not a fresh grant or linked selection proof."}
+// symbol    _$E26
+*/
+
+// Historical seed finding: Native construction order: Blink, Blink2, Line, Go, Turn; registers the aggregate reverse teardown.
+// Historical seed finding: ConsoleTimer startup50E980 is a separate original group and is not annexed by this binding.
+
+// Compiler-generated source-owned lifecycle entry; no handwritten wrapper.
+/*
+// ORIGINAL: 0x0050E9F0 sub_50e9f0 0x0050E9F0-0x0050EA22 FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["git:c02baa72365fcd4a910683a3dc9b3c39399a9191:src/recovered/0050e9f0.cpp", "pinned:terranx_original lifecycle0x50e9f0", "historical source owner before rehome:src/time.cpp"], "reason": "Generated destructor for the single five-Time-object declaration preserves native reverse destruction and timer shutdown effects. Preserve complete original spans, catalogue names, claims and historical lessons; current compiler emission is not a fresh grant or linked selection proof."}
+// symbol    _$E24
+*/
+
+// ORIGINAL: 0x00510400 ?cursor_on@Console@@QAEXH@Z 0x00510400-0x00510490 FILE BYTE_EXACT
+// working copy - scaffold materialised by --work
+// size      144 bytes
+// prototype void (__thiscall ?cursor_on@Console@@QAEXH@Z)(Console* this, int)
+// callers   0   call targets   2
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x005EC740 0x005FCA30
+
+void Console::cursor_on(int cursor_shape) {
+    // The original assumes cursor_shape names one of the twelve loaded
+    // cursor sprites; neither it nor the hotspot lookup adds a bounds guard.
+    for (int slot = 0; slot < static_cast<int>(MapWinTableSlots); ++slot) {
+        MapWin *const window = MapWinTable[slot];
+        if (window != nullptr && (slot == 0 || window->view_active_ != 0)) {
+            Sprite *const sprite = &g_CURSOR_SPRITES[cursor_shape];
+            if (window->cursor_sprite_ != sprite) {
+                window->GraphicWin::set_cursor(sprite,
+                    CursorHotspotX[cursor_shape], CursorHotspotY[cursor_shape]);
+                // set_cursor may dispatch callbacks. Publish to the window
+                // we called, not a replacement installed in its table slot.
+                window->cursor_sprite_ = sprite;
+            }
+        }
     }
-    console_map_win()->draw_cursor();
-    cursor_next(x_coord, y_coord);
+    do_non_input();
+}
+
+// Fixed-slot bindings carried from 00510490.cpp
+
+// ORIGINAL: 0x00510490 ?cursor_on@Console@@QAEXHH@Z 0x00510490-0x0051051D FILE BYTE_EXACT
+// working copy - scaffold materialised by --work
+// size      141 bytes
+// prototype void (__thiscall ?cursor_on@Console@@QAEXHH@Z)(Console* this, int, int)
+// callers   5   call targets   2
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x005EC740 0x005FCA30
+
+void Console::cursor_on(int cursor_shape, int veh_id) {
+    field_23D10_ = static_cast<uint32_t>(cursor_shape);
+    field_23D14_ = veh_id;
+    for (int slot = 0; slot < static_cast<int>(MapWinTableSlots); ++slot) {
+        MapWin *const window = MapWinTable[slot];
+        if (window != nullptr && (slot == 0 || window->view_active_ != 0)) {
+            Sprite *const sprite = &g_CURSOR_SPRITES[cursor_shape];
+            if (window->cursor_sprite_ != sprite) {
+                window->GraphicWin::set_cursor(sprite,
+                    CursorHotspotX[cursor_shape], CursorHotspotY[cursor_shape]);
+                window->cursor_sprite_ = sprite;
+            }
+        }
+    }
+    do_non_input();
+}
+
+// ORIGINAL: 0x00510520 ?cursor_off@Console@@QAEXXZ 0x00510520-0x005105BE FILE BYTE_EXACT
+// size      158 bytes
+// prototype void (__thiscall ?cursor_off@Console@@QAEXXZ)(Console* this)
+// callers   8   call targets   3
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x0046A550 0x005EC7C0 0x005FCA30
+// PRESERVED UNIT - measured BYTE_EXACT.
+//
+// Homed 2026-09-04. The two raw slots the emitter bound - 0x007D3C3C and the
+// exclusive 0x007D3C5C - are mapwin.h's MapWinTable and MapWinTableSlots,
+// and 0x1DD74 is the active-window member. The typed walk below preserves
+// their eight-slot domain without truncating relocated pointers.
+// Historical LEVER: the old loop tail compared CASTED ints, not pointers -
+// `reinterpret_cast<int>(entry) < reinterpret_cast<int>(...)`. A pointer
+// comparison compiles `jb` where the image has `jl`, and that one byte was
+// the whole divergence (39/40 -> 40/40). Runs under the /Oy- set.
+
+
+void Console::cursor_off() {
+    field_23D10_ = 0;
+    for (int slot = 0; slot < static_cast<int>(MapWinTableSlots); ++slot) {
+        MapWin *const window = MapWinTable[slot];
+        if (window != nullptr && (slot == 0 || window->view_active_ != 0)) {
+            if (window->cursor_sprite_ != nullptr ||
+                window->cursor_resource_id_ != 0x7f00) {
+                window->GraphicWin::set_cursor(0x7f00);
+                window->cursor_resource_id_ = 0x7f00;
+                window->cursor_sprite_ = nullptr;
+            }
+            // Preserve the original post-callback reload (0x00510584),
+            // while the two cursor stores above still use the old receiver.
+            const uint32_t flags = MapWinTable[slot]->field_1DD70_;
+            if ((flags & 0xc40000) != 0) {
+                MapWinTable[slot]->field_1DD70_ = flags & 0xff3bffff;
+                MapWinTable[slot]->draw_map(1);
+            }
+            do_non_input();
+        }
+    }
+}
+
+// Original .data text inputs, with separate writable owners for each
+// address even when another input has the same contents.
+// RECOVERY_OBJECT: v2 0x0068A9CC 0x0068A9D7 ?ConsoleStrMenuSimple@@3PADA 0x00516970
+char ConsoleStrMenuSimple[] = "MENUSIMPLE";  // 0x0068A9CC
+// RECOVERY_OBJECT: v2 0x0068A9C0 0x0068A9CB ?ConsoleStrMenuDetail@@3PADA 0x00516930
+char ConsoleStrMenuDetail[] = "MENUDETAIL";  // 0x0068A9C0
+// The caption/label popup passes this separate body-key object at 0x0068AA0C.
+// RECOVERY_OBJECT: v1 0x0068AA0C _StrScenarioObjectivesPopup
+static const char StrScenarioObjectivesPopup[] = "OBJECTIVES";
+// Its title argument uses this distinct writable object at 0x0068AA18.
+// RECOVERY_OBJECT: v1 0x0068AA18 _StrScenarioObjectivesTitle
+static char StrScenarioObjectivesTitle[] = "SCENARIO";
+// One Console-owned confirmation string is shared by the original quit/new/menu/key callers.
+// RECOVERY_OBJECT: v1 0x0068A7D4 _ConsoleReallyWimpOut
+static const char ConsoleReallyWimpOut[] = "REALLYWIMPOUT";
+// RECOVERY_OBJECT: v2 0x0068A8E0 0x0068A8ED ?ConsoleStrTerraSurvey2@@3PADA 0x00515530
+char ConsoleStrTerraSurvey2[] = "TERRASURVEY2";  // 0x0068A8E0
+// RECOVERY_OBJECT: v2 0x0068A8D4 0x0068A8DF ?ConsoleStrTechChange@@3PADA 0x00515010
+char ConsoleStrTechChange[] = "TECHCHANGE";  // 0x0068A8D4
+// RECOVERY_OBJECT: v2 0x0068AA7C 0x0068AA8B ?ConsoleStrAcLogoSm@@3PADA 0x00517180
+char ConsoleStrAcLogoSm[] = "ac_logo_sm.pcx";  // 0x0068AA7C
+// RECOVERY_OBJECT: v2 0x0068AA8C 0x0068AA9C ?ConsoleStrVersionControlX@@3PADA 0x00517180
+char ConsoleStrVersionControlX[] = "VERSIONCONTROLX";  // 0x0068AA8C
+// The pinned .data cells were mutable char* slots initialized to these
+// distinct writable text arrays; callers share the pointer objects.
+// RECOVERY_OBJECT: v2 0x00691B40 0x00691B4C ?ConsoleVersionReleaseText@@3PADA 0x00517180
+char ConsoleVersionReleaseText[] = "RELEASE 2.0";
+// RECOVERY_OBJECT: v2 0x00691B4C 0x00691B58 ?ConsoleVersionBuildDateText@@3PADA 0x00517180
+char ConsoleVersionBuildDateText[] = "20-Dec-1999";
+// RECOVERY_OBJECT: v2 0x00691870 0x00691874 ?ConsoleVersionRelease@@3PADA 0x00517180
+char *ConsoleVersionRelease = ConsoleVersionReleaseText;
+// RECOVERY_OBJECT: v2 0x00691874 0x00691878 ?ConsoleVersionBuildDate@@3PADA 0x00517180
+char *ConsoleVersionBuildDate = ConsoleVersionBuildDateText;
+
+
+// RECOVERY_OBJECT: v2 0x0068A8C8 0x0068A8D3 ?ConsoleStrTechRandom@@3PADA 0x00514F50
+char ConsoleStrTechRandom[] = "TECHRANDOM";  // 0x0068A8C8
+// RECOVERY_OBJECT: v2 0x0068A93C 0x0068A945 ?ConsoleStrHostTime@@3PADA 0x00515900
+char ConsoleStrHostTime[] = "HOSTTIME";  // 0x0068A93C
+// RECOVERY_OBJECT: v2 0x0068A948 0x0068A953 ?ConsoleStrCustomTime@@3PADA 0x00515900
+char ConsoleStrCustomTime[] = "CUSTOMTIME";  // 0x0068A948
+
+// THE TIME-CONTROLS STATE the CUSTOMTIME dialog drives: 0x009A64E0 is the
+// preselected row (start's value slot copies it into the popup) and
+// 0x0094F25C..0x0094F274 are alpha.h's TimeControl[5].turn/.base/.unit/
+// .event/.extra/.refresh/.accumulated. All seven editable values are seeded
+// before CUSTOMTIME and re-parsed on accept.
+// Historical object identity moved to GameDataStateStorage; see the transport manifest.
+
+
+// Existing typed owner cells: NetDaemonNet's shared assignment word and
+// Popup's full-width checkbox state.
+inline unsigned int &console_turns_assigned() {
+    return NetDaemonNet.primary_state_.leading_words_[0];
+}
+
+// THE CURSOR HOTSPOT TABLES, two int runs immediately ahead of the cursor
+// sprite array sprite.cpp owns at 0x0093AA70. cursor_on passes
+// CursorHotspotX[shape] and CursorHotspotY[shape] as Win::set_cursor's
+// hot_x / hot_y, which is the whole of the evidence for the pairing and the
+// order; neither table has a symbol in the image.
+// RECOVERY_OBJECT: v2 0x0093AA10 0x0093AA40 ?CursorHotspotX@@3PAHA 0x00454FC0
+int CursorHotspotX[12] = {0};  // 0x0093AA10, defined here
+// RECOVERY_OBJECT: v2 0x0093AA40 0x0093AA70 ?CursorHotspotY@@3PAHA 0x00454FC0
+int CursorHotspotY[12] = {0};  // 0x0093AA40, defined here
+
+
+// ORIGINAL: 0x005105C0 ?selecting@Console@@QAEHHH@Z 0x005105C0-0x005107D5 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["Original 0x005105C0..0x005107D5 and its retired transcription preserved in Git history.", "Original early mode1/mode0 returns skip pumping. Ordinary cursor mode is captured after valid_patrol; each called receiver is retained for cache writeback while subsequent table slots and hotspots are read live.", "Original68FAF0 is MapLongitude, the half-width used by the wrap test; valid initialized vehicle/window state and representable coordinate arithmetic are required by the original."], "reason": "Console owns selection-mode admission and the shared map-window cursor update. Recover genuine receivers and cursor globals; the range and patrol refusals both select loaded sprite5."}
+// The image repeats this map-window cursor walk at each of selecting's
+// three exits, each followed by do_non_input.
+static inline void selecting_cursor(int shape) {
+    for (int slot = 0; slot < static_cast<int>(MapWinTableSlots); ++slot) {
+        MapWin *const window = MapWinTable[slot];
+        if (window != nullptr && (slot == 0 || window->view_active_ != 0)) {
+            Sprite *const sprite = &g_CURSOR_SPRITES[shape];
+            if (window->cursor_sprite_ != sprite) {
+                window->GraphicWin::set_cursor(sprite,
+                    CursorHotspotX[shape], CursorHotspotY[shape]);
+                window->cursor_sprite_ = sprite;
+            }
+        }
+    }
+    do_non_input();
+}
+
+int Console::selecting(int tile_x, int tile_y) {
+    if (field_23D10_ == 1) {
+        return 1;
+    }
+    if (field_23D10_ != 0) {
+        if (field_23D14_ >= 0) {
+            if (map_range(tile_x, tile_y, Vehs[selected_vehicle_].x, Vehs[selected_vehicle_].y) > field_23D14_) {
+                selecting_cursor(5);
+                return 1;
+            }
+        }
+        if (field_23D10_ == 8 && !valid_patrol(selected_vehicle_, tile_x, tile_y)) {
+            selecting_cursor(5);
+            return 1;
+        }
+        selecting_cursor(field_23D10_);
+        return 1;
+    }
     return 0;
+}
+
+// ORIGINAL: 0x005107E0 ?selected@Console@@QAEXXZ 0x005107E0-0x00510899 FILE BYTE_EXACT
+// symbol    ?selected@Console@@QAEHXZ
+// TRIED: manual vbase-adjust pointer arith for Win::set_cursor `this` (obj + *(int*)(*(int*)obj+4)); #0 push/mov is frame-setup register order, not a logic mismatch
+// working copy - scaffold materialised by --work
+// size      185 bytes
+// prototype void (__thiscall ?selected@Console@@QAEXXZ)(Console* this)
+// callers   1   call targets   3
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x0046A550 0x005EC7C0 0x005FCA30
+
+// The catalogue's void return is wrong: 0x005107E4 saves the entry mode,
+// 0x00510881 restores it to EAX after callbacks, and MapWin::click consumes it.
+int Console::selected() {
+    const int selected_mode = static_cast<int>(field_23D10_);
+    if (selected_mode != 0) {
+        field_23D10_ = 0;
+        for (int slot = 0; slot < static_cast<int>(MapWinTableSlots); ++slot) {
+            MapWin *const window = MapWinTable[slot];
+            if (window != nullptr && (slot == 0 || window->view_active_ != 0)) {
+                if (window->cursor_sprite_ != nullptr ||
+                    window->cursor_resource_id_ != 0x7f00) {
+                    window->GraphicWin::set_cursor(0x7f00);
+                    window->cursor_resource_id_ = 0x7f00;
+                    window->cursor_sprite_ = nullptr;
+                }
+                // Unlike cursor writeback, repaint state belongs to the
+                // live slot after the cursor callback (0x00510859).
+                const uint32_t flags = MapWinTable[slot]->field_1DD70_;
+                if ((flags & 0xc40000) != 0) {
+                    MapWinTable[slot]->field_1DD70_ = flags & 0xff3bffff;
+                    MapWinTable[slot]->draw_map(1);
+                }
+                do_non_input();
+            }
+        }
+    }
+    return selected_mode;
 }
 
 /*
@@ -1690,6 +1990,540 @@ int Console::focus(int x_coord, int y_coord, int faction_id) {
     return focused;
 }
 
+
+/*
+Purpose: Report the cursor's new tile position to the status bar and record
+         it in this Console's own ring buffer, unless it is the same tile
+         already selected in ConsoleGlobal's history. In debug mode, warn
+         when the coordinates have mismatched parity, then normalise them
+         to matching parity before anything else runs.
+// ORIGINAL: 0x005109B0 ?cursor_next@Console@@QAEXHH@Z 0x005109B0-0x00510A59 BYTE_EXACT
+// size      169 bytes
+// prototype void (__thiscall ?cursor_next@Console@@QAEXHH@Z)(Console* this, int, int)
+// callers   1   call targets   3
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x00517C50 0x00644C40 0x0064B330
+Return Value: n/a
+Status: Complete
+*/
+void Console::cursor_next(int x_coord, int y_coord) {
+    if (((x_coord ^ y_coord) & 1) != 0) {
+        if ((GameDataStateStorage.fields_.game_state_ & STATE_DEBUG_MODE) != 0) {
+            danger(CursorNextDangerMsg1, ConsoleEmptyText, x_coord,
+                  y_coord, 0);
+        }
+        if ((x_coord & 1) != 0) {
+            x_coord -= 1;
+        }
+        if ((y_coord & 1) != 0) {
+            x_coord += 1;
+        }
+    }
+    ConsoleStatusWin.set_loc(x_coord, y_coord);
+    int idx = ConsoleGlobal.cursor_history_index_;
+    if (x_coord == ConsoleGlobal.cursor_history_x_[idx]) {
+        if (y_coord == ConsoleGlobal.cursor_history_y_[idx]) {
+            return;
+        }
+    }
+    int newIdx = (cursor_history_head_ + 1) % 32;
+    cursor_history_head_ = newIdx;
+    cursor_history_index_ = newIdx;
+    cursor_history_x_[newIdx] = x_coord;
+    int reIdx = cursor_history_head_;
+    cursor_history_y_[reIdx] = y_coord;
+}
+
+// ORIGINAL: 0x00510A60 ?prev_cursor@Console@@QAEXXZ 0x00510A60-0x00510B70 FILE BYTE_EXACT
+// size      272 bytes
+// prototype void (__thiscall ?prev_cursor@Console@@QAEXXZ)(Console* this)
+// callers   0   call targets   10
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x00446B40 0x00458900 0x00460DD0 0x0046A550 0x0046AD60 0x0046AE00 0x0046B310 0x0046FB10 0x004B9EA0 0x004B9F90
+//
+// moved into src/ and was still being written into new files.
+//
+// address        0x00510A60
+//
+// emitted scaffolding and the body alone will not reproduce the
+//   build/byte-match/00510a60/unit.cpp
+//
+//
+// They are knowledge, not scaffolding, so they now live in the agent
+// system prompt (mizuchi.yaml, plugins.claude-runner.systemPrompt),
+// where they can be edited without regenerating anything and are in
+// context from the first token rather than behind a file read. This
+
+
+void Console::prev_cursor() {
+    const int had_move = survey_mode_;
+    field_23BF8_ = 0;
+    if (had_move != 0) {
+        survey_mode_ = 0;
+        console_map_win()->draw_map(1);
+    }
+    console_map_win()->draw_cursor();
+    if (ConsoleGlobal.cursor_active_ != 0) {
+        ambience(0x1E);
+        const int had_move_now = survey_mode_;
+        cursor_active_ = 0;
+        field_23BF8_ = 1;
+        field_23BFC_ = 1;
+        if (had_move_now != 0) {
+            survey_mode_ = 0;
+            console_map_win()->draw_map(1);
+        }
+        ::draw_cursor();
+        ConsoleInfoWin.change(0);
+        ConsoleStatusWin.redraw();
+        console_map_win()->main_caption();
+        alpha_menu_.check(selected_vehicle_);
+    }
+    const int cursor_timer = cursor_history_index_ - 1;
+    cursor_history_index_ = cursor_timer;
+    if (cursor_timer < 0) {
+        cursor_history_index_ = 0x1F;
+    }
+    const int slot = ConsoleGlobal.cursor_history_index_;
+    ConsoleStatusWin.set_loc(ConsoleGlobal.cursor_history_x_[slot], ConsoleGlobal.cursor_history_y_[slot]);
+    const int slot_now = ConsoleGlobal.cursor_history_index_;
+    console_map_win()->focus(ConsoleGlobal.cursor_history_x_[slot_now], ConsoleGlobal.cursor_history_y_[slot_now]);
+}
+
+// Historical seed finding: Native destruction order: Turn, Go, Line, Blink2, Blink.
+// Historical seed finding: The former separate per-object declarations did not own the complete original aggregate.
+
+// Shared four-field rectangle written by original Console51D760/51D890.
+// Start binding only: no complete original allocation/lifetime claim.
+// RECOVERY_OBJECT: v1 0x00939EE8 ?ConsoleMenuBounds@@3UtagRECT@@A
+RECT ConsoleMenuBounds;
+
+// Advance the view history after clearing the transient survey overlay.
+// Superseded seed deleted; seed paths below are historical Git provenance.
+// ORIGINAL: 0x00510B70 ?next_cursor@Console@@QAEXXZ 0x00510B70-0x00510C89 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/00510b70.cpp"], "reason": "Seed 00510b70 and adjacent recovered prev_cursor establish the next history transition on Console cursor fields."}
+void Console::next_cursor() {
+    field_23BF8_ = 0;
+    if (survey_mode_ != 0) {
+        survey_mode_ = 0;
+        console_map_win()->draw_map(1);
+    }
+    console_map_win()->draw_cursor();
+    if (ConsoleGlobal.cursor_active_ != 0) {
+        ambience(0x1E);
+        cursor_active_ = 0;
+        field_23BF8_ = 1;
+        field_23BFC_ = 1;
+        if (survey_mode_ != 0) {
+            survey_mode_ = 0;
+            console_map_win()->draw_map(1);
+        }
+        ::draw_cursor();
+        ConsoleInfoWin.change(0);
+        ConsoleStatusWin.redraw();
+        console_map_win()->main_caption();
+        alpha_menu_.check(selected_vehicle_);
+    }
+    if (cursor_history_index_ != cursor_history_head_) {
+        cursor_history_index_ = (cursor_history_index_ + 1) % 32;
+        const int slot = ConsoleGlobal.cursor_history_index_;
+        ConsoleStatusWin.set_loc(ConsoleGlobal.cursor_history_x_[slot],
+                                 ConsoleGlobal.cursor_history_y_[slot]);
+        const int slot_now = ConsoleGlobal.cursor_history_index_;
+        console_map_win()->focus(ConsoleGlobal.cursor_history_x_[slot_now],
+                                 ConsoleGlobal.cursor_history_y_[slot_now]);
+    }
+}
+
+// The retained exact seed establishes a Console receiver, two tile
+// coordinates and this sequence of cursor-overlay operations. The original
+// symbol has no semantic name, so keep its neutral identity.
+// Superseded seed deleted; seed paths below are historical Git provenance.
+// ORIGINAL: 0x00510C90 sub_510c90 0x00510C90-0x00510CE0 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/00510c90.cpp", "source:src/console.h", "source:src/mapwin.h"], "reason": "The retained exact seed shows an unchanged Console receiver, two tile coordinates, and the overlay-clear, redraw, cursor-next call sequence. The image supplies no semantic name."}
+// symbol    ?sub_510c90@Console@@QAEHHH@Z
+int Console::sub_510c90(int x_coord, int y_coord) {
+    const int had_survey = survey_mode_;
+    field_23BF8_ = 0;
+    if (had_survey != 0) {
+        survey_mode_ = 0;
+        console_map_win()->draw_map(1);
+    }
+    console_map_win()->draw_cursor();
+    cursor_next(x_coord, y_coord);
+    return 0;
+}
+
+// Fixed-slot bindings carried from 00510ce0.cpp
+
+// ORIGINAL: 0x00510CE0 ?ready_search@Console@@QAEHH@Z 0x00510CE0-0x00510F48 FILE BYTE_EXACT
+// TRIED: prologue register order (7-slot frame, edi saved to a local purely to free it as scratch across the inner loop) - not chased byte-for-byte; control flow/offsets re-derived from raw disasm since Ghidra's local_N numbering did not line up with the real ebp-relative slots here.
+// working copy - scaffold materialised by --work
+// size      616 bytes
+// prototype int (__thiscall ?ready_search@Console@@QAEHH@Z)(Console* this, int)
+// callers   4   call targets   2
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x005C1B70 0x00644F3A
+
+
+int Console::ready_search(int veh_id) {
+    int bestScore = 9999;
+    int result = -1;
+    int coordA, coordB;
+
+    if (veh_id >= 0 && Vehs[veh_id].faction_id == ConsoleGlobal.faction_id_) {
+        coordA = Vehs[veh_id].x;
+        coordB = Vehs[veh_id].y;
+    } else {
+        coordA = ConsoleGlobal.cursor_history_x_[ConsoleGlobal.cursor_history_index_];
+        coordB = ConsoleGlobal.cursor_history_y_[ConsoleGlobal.cursor_history_index_];
+        veh_id = -1;
+    }
+
+    int outerIdx = (IsMultiplayerNet != 0) ? -1 : 0;
+
+    while (outerIdx < 3) {
+        int vehCount = GameDataStateStorage.fields_.vehicle_current_count_;
+
+        if ((IsMultiplayerNet != 0) && (outerIdx == 0) && (focus_vehicle_ >= 0) &&
+            (focus_vehicle_ < vehCount) &&
+            (Vehs[focus_vehicle_].faction_id == ConsoleGlobal.faction_id_) &&
+            (veh_ready(focus_vehicle_) != 0)) {
+            result = focus_vehicle_;
+            focus_vehicle_ = -1;
+            goto searchDone;
+        }
+
+        for (int innerIdx = 0;
+             innerIdx < GameDataStateStorage.fields_.vehicle_current_count_;
+             innerIdx++) {
+            Veh &vehicle = Vehs[innerIdx];
+
+            if (veh_ready(innerIdx) == 0) continue;
+
+            if (outerIdx >= 0 ||
+                (vehicle.state & 0x200) != 0 ||
+                (vehicle.state & 0x1000200) == 0x1000200 ||
+                (vehicle.state & 0x4000) != 0 ||
+                vehicle.order != 0) {
+
+                if (vehicle.state & 2) continue;
+
+                int vehX = vehicle.x;
+                int vehY = vehicle.y;
+
+                int score = map_dist(coordA, coordB, vehX, vehY);
+
+                if (score < bestScore) {
+                    bestScore = score;
+                    result = innerIdx;
+                } else if (score == bestScore && innerIdx == selected_vehicle_) {
+                    result = innerIdx;
+                }
+            }
+        }
+
+        if (result >= 0) goto searchDone;
+
+        if (outerIdx >= 0) {
+            vehCount = GameDataStateStorage.fields_.vehicle_current_count_;
+            for (int clearIdx = 0; clearIdx < vehCount; clearIdx++) {
+                if (outerIdx != 0 || clearIdx != selected_vehicle_ || veh_id < 0) {
+                    Vehs[clearIdx].state &= 0xfffffffd;
+                }
+            }
+        }
+
+        outerIdx++;
+    }
+
+searchDone:
+    field_23D24_ = IsMultiplayerNet != 0 && outerIdx < 0;
+    return result;
+}
+
+// ORIGINAL: 0x00511480 ?set_view@Console@@QAEXH@Z 0x00511480-0x00511518 FILE BYTE_EXACT
+// size      152 bytes
+// prototype void (__thiscall ?set_view@Console@@QAEXH@Z)(Console* this, int)
+// callers   8   call targets   7
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x00446B40 0x00458900 0x00460DD0 0x0046A550 0x0046AE00 0x0046FB10 0x004B9EA0
+
+
+void Console::set_view(int force_update) {
+    // The vehicle-cursor repaint cycle, guarded two ways: the global cursor flag
+    // says a cursor vehicle exists at all, force_update says the caller wants
+    // the repaint regardless (the editor toggles pass 1 so the view follows
+    // the flag they just flipped even with no vehicle selected).
+    if (ConsoleGlobal.cursor_active_ != 0 || force_update != 0) {
+        ambience(0x1E);
+        cursor_active_ = 0;
+        field_23BF8_ = 1;
+        field_23BFC_ = 1;
+        if (survey_mode_ != 0) {
+            survey_mode_ = 0;
+            console_map_win()->draw_map(1);
+        }
+        ::draw_cursor();
+        ConsoleInfoWin.change(0);
+        ConsoleStatusWin.redraw();
+        console_map_win()->main_caption();
+        alpha_menu_.check(selected_vehicle_);
+    }
+}
+
+/*
+Purpose: Play out the turn boundary until the game says to stop: drive
+         end_of_game, wait out the loop's queued work, and launch the tutorial
+         when it was requested.
+// ORIGINAL: 0x00513FC0 ?end_of_turn@Console@@QAEXXZ 0x00513FC0-0x0051404E FILE BYTE_EXACT
+// size      142 bytes
+// prototype void (__thiscall ?end_of_turn@Console@@QAEXXZ)(Console* this)
+// callers   0   call targets   3
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x004BC6E0 0x0051F200 0x00524870
+*/
+void Console::end_of_turn() {
+    field_23BE4_ = 1;
+    const int saved_group_count = GameDataStateStorage.fields_.vehicle_current_count_;
+
+    while (ConsoleGlobal.cursor_active_ == 0 && field_23BE4_ != 0 &&
+           field_23BE8_ != 0 && ExitTurnLoop == 0) {
+        if (end_of_game(0) != 0) break;
+        if (saved_group_count != GameDataStateStorage.fields_.vehicle_current_count_) break;
+
+        if (IsMultiplayerNet != 0) {
+            if ((GameDataStateStorage.fields_.game_state_ & 0x800) != 0) break;
+        }
+
+        wait_loop();
+        if (TutWinTourPending != 0) {
+            TutWinTourPending = 0;
+            TutorialWindow.tour();
+        }
+    }
+
+    field_23BE4_ = 0;
+}
+
+// ORIGINAL: 0x005147E0 ?set_cursor@Console@@QAEXHH@Z 0x005147E0-0x0051487D FILE BYTE_EXACT
+// TRIED: nesting the last bound check as its own `if` (both alone and after a 3-way `||` early return), and a fully split `&&` chain with success nested two levels deep - all reproduce the same MISMATCH #15 'jl' vs 'jge' on the 4th comparison (a1 < bound2); similarity 0.9091. void return keeps the C2556 declared prototype; the eax=1/xor eax,eax result codes are dropped.
+// size      157 bytes
+// prototype void (__thiscall ?set_cursor@Console@@QAEXHH@Z)(Console* this, int xCoord, int yCoord)
+// callers   6   call targets   4
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x0046A550 0x0046AD60 0x004B9EA0 0x005109B0
+// symbol    ?set_cursor@Console@@QAEHHH@Z
+// LEVER: the catalogued `void` return is wrong, and the archive body's TRIED
+//        note says exactly where that cost it. Every one of the four bound
+//        failures reaches 0x00514807, which loads eax with 1 before the shared
+//        epilogue, and the success path clears eax at the end - so the body
+//        returns int: 1 for out of bounds, 0 after the repaint. Declared int
+//        (the emitted name above is the legitimately different mangling, the
+//        same fact Console::focus carries) and the four tests reproduce.
+//        13 of 47 -> measured below.
+// TRIED: `void` with a bare `return` on the failure path - that is the
+//        archive's spelling, and its eax=1 / xor eax,eax codes are dropped,
+//        which is what made the 4th comparison's branch target diverge.
+// TRIED: three shapes for the FOURTH bound test, all 17 of 47 with identical
+//        instruction counts: chained as the fourth `||` term (the compiler
+//        emits `jge <failure>`), as its own `if (x_coord >= lon) return 1;`,
+//        and polarised as the in-bounds guard `if (x_coord < lon) { body;
+//        return 0; }` so the source asks for the image's jump-to-the-work
+//        `jl 0x514812`. VC6 inverts all three into the same `jge` and merges
+//        the tails, so the 4th comparison's branch target is not reachable
+//        from source form here. Not chased further.
+
+
+int Console::set_cursor(int x_coord, int y_coord) {
+    if (!on_map(x_coord, y_coord)) {
+        return 1;
+    }
+    field_23BF8_ = 0;
+    if (survey_mode_ != 0) {
+        survey_mode_ = 0;
+        console_map_win()->draw_map(1);
+    }
+    console_map_win()->draw_cursor();
+    cursor_next(x_coord, y_coord);
+    ConsoleStatusWin.redraw();
+    field_23BF8_ = 1;
+    field_23BFC_ = 1;
+    console_map_win()->draw_cursor();
+    return 0;
+}
+
+/*
+Purpose: Refresh everything the console shows after a selection or turn change:
+         hand the change code to the shared InfoWin, redraw the shared
+         StatusWin, then push the map's caption into the main interface.
+// ORIGINAL: 0x00514880 ?update_data@Console@@QAEXH@Z 0x00514880-0x005148AA BYTE_EXACT
+// size      42 bytes
+// prototype void (__thiscall ?update_data@Console@@QAEXH@Z)(Console* this, int)
+// callers   33   call targets   3
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x00458900 0x0046FB10 0x004B9EA0
+Return Value: n/a
+Status: Complete with a temporary StatusWin::redraw original dependency
+Verification note: three properties of this body are unobservable at every
+oracle tier, because the original's own callees discard them rather than
+because the fixtures are weak.
+  1. InfoWin::change at 0x00458900 is a bare `ret 4` - it drops both its
+     `this` and its argument - so neither the call nor the value of a1 has any
+     effect to observe. src/infowin.cpp models it as an empty body.
+  2. MapWin::main_caption at 0x0046FB10 overwrites ecx before using it, so the
+     MapWin pointer loaded out of ConsoleMapWinSlot never reaches anything
+     that reads it.
+  3. The original leaves EAX holding main_caption's residue, whose chain is
+     already terminated by the committed `void MapWin::main_caption()`, so
+     there is no residue available to return and fabricating a constant would
+     be wrong. Kept `void`, matching the mangled name.
+Mutation-harness survivors for the dropped `change` call and for a perturbed
+a1 are therefore equivalent by construction.
+*/
+void Console::update_data(int change_flags) {
+    // 0x00514883 mov eax,[ebp+8] / 0x00514886 mov ecx,0x7ad2a0 /
+    // 0x0051488B push eax / 0x0051488C call 0x458900.
+    ConsoleInfoWin.change(change_flags);
+    // 0x00514891 mov ecx,0x8c5568 / 0x00514896 call 0x4b9ea0.
+    ConsoleStatusWin.StatusWin::redraw();
+    // 0x0051489B mov ecx,[0x7d3c3c] - a load, not an address-of - then
+    // 0x005148A1 call 0x46fb10. The slot is read here, never cached.
+    console_map_win()->main_caption();
+}
+
+// ORIGINAL: 0x005148B0 ?move_cursor@Console@@QAEXH@Z 0x005148B0-0x00514990 FILE BYTE_EXACT
+// size      224 bytes
+// prototype void (__thiscall ?move_cursor@Console@@QAEXH@Z)(Console* this, int)
+// callers   0   call targets   5
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x0046A550 0x0046AD60 0x0046B310 0x004B9EA0 0x005109B0
+// LEVER: the image's two `draw_cursor` calls are MapWin::draw_cursor
+// (0x0046AD60, the per-window member), not the free ::draw_cursor at
+// 0x0046AE00 that mapwin.cpp defines - the archive body named the free one
+// and so was calling a function the image never calls here. Declared on
+// MapWin with a pending_bodies forwarder; VehMoveDeltaX/Y moved to veh.h
+// beside the array definitions so the cursor's own deltas stop being
+// anonymous fixed addresses.
+// TRIED: `const int slot`; operand order `delta + coord` for the x sum. The
+// image loads ConsoleGlobal.cursor_history_x_[slot] BEFORE VehMoveDeltaX[direction] (0x005148BE
+// then 0x005148C6) and the reverse for y, so the x sum is spelled
+// coordinate-first below; neither ordering nor the const moved the first
+// divergence, which is which register holds ConsoleGlobal.cursor_history_index_ (image: edx,
+// this tree: eax) and follows from the image deferring its `this` spill
+// (0x005148CD `mov edi, ecx`) until after both loads.
+// Operands now follow VC6's load-b-first order (x: delta + coord, y: coord +
+// delta), which fixes the loads. The x wrap is map.h's flat-first ternary
+// wrap_map_x (MATCHING_GUIDE 3.2); the older if-chain form left this and
+// new_x in swapped registers.
+
+
+void Console::move_cursor(int direction) {
+    int x = VehMoveDeltaX[direction] +
+        ConsoleGlobal.cursor_history_x_[ConsoleGlobal.cursor_history_index_];
+    int new_x = wrap_map_x(x);
+    int new_y = ConsoleGlobal.cursor_history_y_[ConsoleGlobal.cursor_history_index_] +
+                VehMoveDeltaY[direction];
+    if (set_cursor(new_x, new_y) == 0) {
+        console_map_win()->focus(new_x, new_y);
+    }
+}
+
+
+
+/*
+Purpose: Edit one faction's four AI priority toggles through the checkbox
+         popup, store the answer back and resync that faction's AI.
+// ORIGINAL: 0x00514F50 ?set_ai@Console@@QAEXH@Z 0x00514F50-0x0051500F FILE
+// TRIED (seed history): closest at 171/191 bytes (mnemonic similarity 0.80) -
+//        VC6 folds each field access into a `[eax*4+CONST]` SIB scale instead
+//        of materialising the full byte offset once, either spelling; not
+//        chased further.
+// size      191 bytes
+// prototype void (__thiscall ?set_ai@Console@@QAEXH@Z)(Console* this, int factionID)
+// callers   3   call targets   2
+// calls     0x00593310 0x005BF3F0
+*/
+void Console::set_ai(int faction_id) {
+    // The pinned reads/writes at 96CDC0..96CDCC are the four named priority
+    // fields at PlayersData + 0x3E0..0x3EC (VC6 CodeView offsets 992..1004).
+    int *growth = &PlayersData[faction_id].ai_growth;
+    int *tech = &PlayersData[faction_id].ai_tech;
+    int *wealth = &PlayersData[faction_id].ai_wealth;
+    int *power = &PlayersData[faction_id].ai_power;
+    int flags = (*growth != 0) ? 1 : 0;
+    if (*tech != 0) {
+        flags |= 2;
+    } else {
+        flags &= ~2;
+    }
+    if (*wealth != 0) {
+        flags |= 4;
+    } else {
+        flags &= ~4;
+    }
+    if (*power != 0) {
+        flags |= 8;
+    } else {
+        flags &= ~8;
+    }
+    PopupWriteCheckState = static_cast<int>(flags);
+    if (x_pop_short(ConsoleStrTechRandom, 1, (NullCallback)0) >= 0) {
+        // The image shifts with shr: the masks are unsigned.
+        *growth = (char)PopupWriteCheckState & 1u;
+        *tech = ((char)PopupWriteCheckState & 2u) >> 1;
+        *wealth = ((char)PopupWriteCheckState & 4u) >> 2;
+        *power = ((char)PopupWriteCheckState & 8u) >> 3;
+        synch_ai(faction_id);
+    }
+}
+
+// ORIGINAL: 0x00515010 ?set_tech@Console@@QAEXH@Z 0x00515010-0x005150C2 FILE BYTE_EXACT
+// size      178 bytes
+// prototype void (__thiscall ?set_tech@Console@@QAEXH@Z)(Console* this, int factionID)
+// callers   2   call targets   5
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x00593340 0x005BEB70 0x005BF310 0x00625E30 0x00625E50
+// PRESERVED UNIT - measured BYTE_EXACT.
+//
+// Homed 2026-09-04. The two slots the emitter bound at 0x0096CDA8 and
+// 0x0096CDAC are PlayersData[faction].tech_accumulated (0x3C8) and
+// .tech_id_researching (0x3CC) - faction.h declares both, and
+// technology.cpp already reads the 0x3D0 sibling. `g_0094f35c[n * 11]` is
+// Technology[n].name: Technology is at 0x0094F358, name sits at +4, and
+// sizeof(RulesTechnology) is 0x2C, so 11 * 4 lands on the name. The label at
+// 0x0068A8D4 reads "TECHCHANGE" out of the image's .data.
+
+
+void Console::set_tech(int faction_id) {
+    int *research = &PlayersData[faction_id].tech_accumulated;
+    int *researching = &PlayersData[faction_id].tech_id_researching;
+    if (*research != 0 && *researching >= 0) {
+        parse_say(0, Technology[*researching].name, -1, -1);
+        parse_num(0, *research);
+        if (X_pop(ConsoleStrTechChange, (NullCallback)0) == 0) {
+            return;
+        }
+    }
+    int picked = tech_pick(faction_id, 0, -1, 0);
+    if (picked >= 0) {
+        if (*researching >= 0 && picked != *researching) {
+            *research = *research / 2;
+        }
+        *researching = picked;
+    }
+    synch_research(faction_id);
+}
+
 // Original 0x005150D0 selects the world-map or an eligible secondary map
 // beneath the pointer when passed a negative window index, then adjusts the
 // selected windows' signed zoom offsets and redraws the world view. When no
@@ -1793,812 +2627,86 @@ zoom_windows:
     WorldClimateWorldWin.GraphicWin::redraw();
 }
 
-
-/*
-Purpose: Record that the console was closed from the system menu, by raising
-         the flag the turn loop watches.
-// ORIGINAL: 0x0051D7C0 ?on_sys_close@Console@@QAEXXZ 0x0051D7C0-0x0051D7CB BYTE_EXACT
-// symbol    ?on_sys_close@Console@@UAEXXZ
-// size      11 bytes
-// prototype void (__thiscall ?on_sys_close@Console@@QAEXXZ)(Console* this)
-// callers   0   call targets   0
+// ORIGINAL: 0x00515400 ?center@Console@@QAEXXZ 0x00515400-0x00515423 BYTE_EXACT
+// size      35 bytes
+// prototype void (__thiscall ?center@Console@@QAEXXZ)(Console* this)
+// callers   5   call targets   1
 // kind      game
 // flags     sp_ready;purged_ok
-// calls     (none)
-Return Value: n/a
-Status: Complete
-*/
-void Console::on_sys_close() {
-    ExitTurnLoop = 1;
+// calls     0x0046B1F0
+// 0x00515400  ?center@Console@@QAEXXZ  ->  ?center@Console@@QAEXXZ
+//
+// BLOCKED (2026-09-03, P1 calibration) on a mapwin.h declaration this TU does
+// not own: 0x0046B1F0 is ?set_center@MapWin@@QAEXHHH@Z, undeclared. It needs
+// `void set_center(int, int, int);` on MapWin and a pending_bodies forwarder
+// Deleted seed provenance: git:e82971b277b557e89a52143c7c51170d6d3b0bd4:src/recovered/units/0046b1f0.cpp
+// (the body itself is src/recovered/units/0046b1f0.cpp, unclaimed, 275
+// bytes). Everything the body reads is already bound here: ConsoleGlobal.cursor_history_index_ /
+// ConsoleGlobal.cursor_history_x_ / ConsoleGlobal.cursor_history_y_ in console.h and the accessor console_map_win()
+// for the single absolute load of 0x007D3C3C the image makes at 0x00515416.
+//
+// The de-punned body, ready to drop in once set_center is declared:
+//
+// void Console::center() {
+//     const int index = ConsoleGlobal.cursor_history_index_;
+//     console_map_win()->set_center(ConsoleGlobal.cursor_history_x_[index], ConsoleGlobal.cursor_history_y_[index], 1);
+// }
+
+
+void Console::center() {
+    const int slot = ConsoleGlobal.cursor_history_index_;
+    console_map_win()->set_center(ConsoleGlobal.cursor_history_x_[slot], ConsoleGlobal.cursor_history_y_[slot], 1);
 }
 
+// ORIGINAL: 0x00515430 sub_515430 0x00515430-0x00515443 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["historical seed:src/recovered/00515430.cpp", "task:owned-helper-coverage-batch", "StatusFlags939ED8 is already owned by statuswin.cpp; native515430 clears it before desktop_init(1)."], "reason": "Recover a complete native helper through genuine source owners and SDK calls, preserving original identity, extent and historical obligations. Source home is not proof of original TU or complete-game acceptance."}
+// symbol    ?reset_status_and_initialize_desktop@@YAXXZ
+void __cdecl reset_status_and_initialize_desktop() {
+    StatusFlags = 0;
+    desktop_init(1);
+}
 
-
-/*
-// ORIGINAL: 0x0051D740 ?menu_update@Console@@QAEXXZ 0x0051D740-0x0051D753 BYTE_EXACT
-// size      19 bytes
-// prototype void (__thiscall ?menu_update@Console@@QAEXXZ)(Console* this)
-// callers   0   call targets   1
+// ORIGINAL: 0x00515450 ?survey@Console@@QAEXXZ 0x00515450-0x0051552B FILE BYTE_EXACT
+// LEVER: re-read the fixed global for the `this` of the draw_map() call instead of reusing the pointer already cached for the field save/restore - the original re-reads it too
+// size      219 bytes
+// prototype void (__thiscall ?survey@Console@@QAEXXZ)(Console* this)
+// callers   2   call targets   1
 // kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     0x00460DD0
-Status: Complete
-*/
-void Console::menu_update() {
-    // alpha_menu_ IS the object the image calls 0x00460DD0 on - the member
-    // form replaces the MainMenu pun this body used to carry, and measured
-    // BYTE_EXACT unchanged (2026-09-04).
-    alpha_menu_.check(selected_vehicle_);
-}
+// flags     sp_ready;purged_ok
+// calls     0x0046A550
 
 
-
-/*
-Purpose: Reset the console - clear its scalar state and history slot zero,
-         then close the Buffer, Time and GraphicWin
-         subobjects and clear the map.
-The historical forwarding notes below predate the separate timer lifecycle TU;
-the timer call now uses the existing Time member directly.
-// ORIGINAL: 0x0051D7D0 ?close@Console@@QAEXXZ 0x0051D7D0-0x0051D88E BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["Console owns buffer_ at2247C, time_ at22A04 and alpha_menu_ at22A2C; AlphaMenu derives nonvirtually from Menu/GraphicWin.", "Pinned51D7D0 tail selects receiver+2247C for5D7470, receiver+22A04 for616780, receiver+22A2C for5D4E40, then clear(0); this closes members without substituting destruction."], "reason": "Select the constructed Console Buffer and AlphaMenu GraphicWin base through their real members; preserve scalar resets, repeated history-slot-zero writes and Buffer/Time/GraphicWin/clear ordering."}
-// LEVER: PROMOTED out of src/unrecovered/0051d7d0.cpp, whose claim proved the ARTIFACT reproduced while the program held a pending_bodies forwarder. `void close()` was not declared on Console at all - that, not the body, is what kept it in an artifact.
-// LEVER (2026-09-03): time_close_call, not `->close()` on the Time at
-//        0x22a04. The image CALLS 0x00616780 here (0x0051D873) where
-//        time.h's in-class `MEASURED close` otherwise expands at this site
-//        too - 68 compiled instructions against the image's 40, 22/40
-//        agreeing, the whole extra block being Time's own teardown written
-//        out. Buffer::close and GraphicWin::close needed nothing: both are
-//        declared out-of-line in their headers, so both were already calls.
-// symbol    ?close@Console@@QAEXXZ
-// size      190 bytes
-// kind      game
-Return Value: n/a
-Status: Complete
-*/
-void Console::close() {
-    field_23BC8_ = 0xffffffff;
-    cursor_active_ = 0;
-    field_23BE4_ = 0;
-    field_23BE8_ = 0;
-    field_23BF0_ = 0;
-    field_23BF4_ = 0;
-    survey_mode_ = 0;
-    blink2_counter_ = 0;
-    field_23BFC_ = 0;
-    field_23BF8_ = 0;
-    cursor_history_index_ = 0;
-    // 0x0051D821..0x0051D83C reloads this same index on every iteration.
-    // Slots 1..31 and the history head survive close().
-    int count = 0x20;
-    do {
-        count -= 1;
-        int32_t idx1 = cursor_history_index_;
-        cursor_history_x_[idx1] = 0;
-        int32_t idx2 = cursor_history_index_;
-        cursor_history_y_[idx2] = 0;
-    } while (count != 0);
-    field_23D10_ = 0;
-    field_23D18_ = 0;
-    field_23D88_ = 0;
-    field_23D80_ = 0;
-    field_23D8C_ = 0;
-    field_23D84_ = 0;
-    buffer_.close();
-    time_.close();
-    static_cast<GraphicWin &>(alpha_menu_).close();
-    clear(0);
-}
-
-// ====================
-
-// 0x009156B0 - the bare declaration is what the image has: its ??__E
-// dynamic initialiser pushes the hidden most-derived flag (push 1 at
-// 0x0050E852) and the compiler emits that push for a most-derived global
-// on its own. The old explicit `ConsoleGlobal(1)` was the flag spelled as
-// a real int - the exact doubling Console(int) carried.
-// Absolute cursor loads at 0x00510A01..0x00510A19 address this object's
-// history members. The following stores instead use the method receiver.
-// Native 0x0068A5D0 is exactly the writable initialized text plus terminator;
-// this constant-initialized source array adds no global constructor.
-// RECOVERY_OBJECT: v2 0x0068A5D0 0x0068A5E0 ?CursorNextDangerMsg1@@3PADA 0x005109B0
-char CursorNextDangerMsg1[16] = "Bad Cursor Move";
-// The 0x247A8-byte Console runs to its virtual GraphicWin base's end:
-// ??0Console builds that base at +0x23D94 (0x0050F494) and the 0xA14-byte
-// GraphicWin ends at 0x00939E58. Formerly separate globals inside that
-// extent are Console members, constructed or cleared by ??0Console:
-// CoverWindow (+0x21A68, ??0GraphicWin at 0x0050F4B3), Blink2Counter
-// (+0x23C04, cleared at 0x0050F5B6) and MessageWinMessageCount (+0x23D20,
-// between constructor-initialized +0x23D18 and the +0x23D28 Sprite).
-// RECOVERY_OBJECT: v2 0x009156B0 0x00939E58 ?ConsoleGlobal@@3VConsole@@A 0x0050E850
-// RECOVERY_OBJECT: v3 0x00937118 ?CoverWindow@@3VGraphicWin@@A member ?ConsoleGlobal@@3VConsole@@A cover_window_
-// RECOVERY_OBJECT: v3 0x009392B4 ?Blink2Counter@@3HA member ?ConsoleGlobal@@3VConsole@@A blink2_counter_
-// RECOVERY_OBJECT: v3 0x009393D0 0x009393D4 ?MessageWinMessageCount@@3HA 0x00471530 member ?ConsoleGlobal@@3VConsole@@A message_count_
-Console ConsoleGlobal;
-// ===== MANAGED GLOBALS - real objects, homed to their domain =====
-// In the shipped image these live at fixed data addresses and are
-// constructed before WinMain by the CRT's dynamic-initializer walk
-// (image bytes: ??__E at 0x0050E980 builds the ConsoleTimer object at
-// 0x00939E88, the one at 0x0050E9B0 builds the other five - Blink 0x915688,
-// Blink2 0x939EB0, Line 0x915658, Go 0x939E60, Turn 0x915628, each
-// `mov ecx, <addr>; call Time::Time` - and registers their teardowns;
-// winedbg-confirmed walker return 0x00644EEB, table at 0x682568..). Here
-// the same recovered constructors run through this build's own startup,
-// and the matching destructors close them at exit. Declarations in time.h
-// beside their users.
-// Keep the Console timer lifecycles in their original domain order.
-// RECOVERY_OBJECT: v1 0x00939E88 ?ConsoleTimer@@3VTime@@A
-Time ConsoleTimer; // 0x00939E88
-// RECOVERY_OBJECT: v2 0x00915658 0x00915680 ?LineTimer@@3VTime@@A 0x0050F440
-// RECOVERY_OBJECT: v2 0x00915688 0x009156B0 ?BlinkTimer@@3VTime@@A 0x0050F440
-// RECOVERY_OBJECT: v2 0x00939EB0 0x00939ED8 ?Blink2Timer@@3VTime@@A 0x0050F440
-// Original grouped ctor at 0x0050E9CE and cleanup at 0x0050E9FA use the distinct Go timer receiver; start only.
-// RECOVERY_OBJECT: v1 0x00939E60 ?GoTimer@@3VTime@@A
-// Original 0x0050E9D8/0x0050E9F0 and start_timers at 0x0050F426 use this timer receiver; no extent/lifetime claim.
-// RECOVERY_OBJECT: v1 0x00915628 ?TurnTimer@@3VTime@@A
-Time BlinkTimer,   // 0x00915688
-     Blink2Timer,  // 0x00939EB0
-     LineTimer,    // 0x00915658
-     GoTimer,      // 0x00939E60
-     TurnTimer;    // 0x00915628
-
-// Compiler-generated source-owned lifecycle entry; no handwritten wrapper.
-/*
-// ORIGINAL: 0x0050E9B0 sub_50e9b0 0x0050E9B0-0x0050E9EE FILE BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["git:c02baa72365fcd4a910683a3dc9b3c39399a9191:src/recovered/0050e9b0.cpp", "pinned:terranx_original lifecycle0x50e9b0", "historical source owner before rehome:src/time.cpp"], "reason": "Generated complete five-Time-object initializer composes the real constructor group and destructor registration. Delegated generated helpers are current lowering, not a claim of one-to-one byte layout. Preserve complete original spans, catalogue names, claims and historical lessons; current compiler emission is not a fresh grant or linked selection proof."}
-// symbol    _$E26
-*/
-
-// Historical seed finding: Native construction order: Blink, Blink2, Line, Go, Turn; registers the aggregate reverse teardown.
-// Historical seed finding: ConsoleTimer startup50E980 is a separate original group and is not annexed by this binding.
-
-// Compiler-generated source-owned lifecycle entry; no handwritten wrapper.
-/*
-// ORIGINAL: 0x0050E9F0 sub_50e9f0 0x0050E9F0-0x0050EA22 FILE BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["git:c02baa72365fcd4a910683a3dc9b3c39399a9191:src/recovered/0050e9f0.cpp", "pinned:terranx_original lifecycle0x50e9f0", "historical source owner before rehome:src/time.cpp"], "reason": "Generated destructor for the single five-Time-object declaration preserves native reverse destruction and timer shutdown effects. Preserve complete original spans, catalogue names, claims and historical lessons; current compiler emission is not a fresh grant or linked selection proof."}
-// symbol    _$E24
-*/
-
-// Historical seed finding: Native destruction order: Turn, Go, Line, Blink2, Blink.
-// Historical seed finding: The former separate per-object declarations did not own the complete original aggregate.
-
-// Shared four-field rectangle written by original Console51D760/51D890.
-// Start binding only: no complete original allocation/lifetime claim.
-// RECOVERY_OBJECT: v1 0x00939EE8 ?ConsoleMenuBounds@@3UtagRECT@@A
-RECT ConsoleMenuBounds;
-
-// Advance the view history after clearing the transient survey overlay.
-// Superseded seed deleted; seed paths below are historical Git provenance.
-// ORIGINAL: 0x00510B70 ?next_cursor@Console@@QAEXXZ 0x00510B70-0x00510C89 BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/00510b70.cpp"], "reason": "Seed 00510b70 and adjacent recovered prev_cursor establish the next history transition on Console cursor fields."}
-void Console::next_cursor() {
-    field_23BF8_ = 0;
-    if (survey_mode_ != 0) {
+void Console::survey() {
+    // Cycle through three survey modes: 0 -> 1 -> 2 -> 3 -> 0. Each
+    // step forces one repaint with the map's detail mask pinned to a value
+    // that shows only the layer that step is about, then puts the mask back.
+    const int state = survey_mode_;
+    if (state == 1) {
+        survey_mode_ = 2;
+        const uint32_t saved = console_map_win()->field_1DD70_;
+        console_map_win()->field_1DD70_ = 0x603;
+        console_map_win()->draw_map(1);
+        console_map_win()->field_1DD70_ = saved;
+        return;
+    }
+    if (state == 2) {
+        survey_mode_ = 3;
+        const uint32_t saved = console_map_win()->field_1DD70_;
+        console_map_win()->field_1DD70_ = 0x402;
+        console_map_win()->draw_map(1);
+        console_map_win()->field_1DD70_ = saved;
+        return;
+    }
+    if (state != 0) {
         survey_mode_ = 0;
         console_map_win()->draw_map(1);
-    }
-    console_map_win()->draw_cursor();
-    if (ConsoleGlobal.cursor_active_ != 0) {
-        ambience(0x1E);
-        cursor_active_ = 0;
-        field_23BF8_ = 1;
-        field_23BFC_ = 1;
-        if (survey_mode_ != 0) {
-            survey_mode_ = 0;
-            console_map_win()->draw_map(1);
-        }
-        ::draw_cursor();
-        ConsoleInfoWin.change(0);
-        ConsoleStatusWin.redraw();
-        console_map_win()->main_caption();
-        alpha_menu_.check(selected_vehicle_);
-    }
-    if (cursor_history_index_ != cursor_history_head_) {
-        cursor_history_index_ = (cursor_history_index_ + 1) % 32;
-        const int slot = ConsoleGlobal.cursor_history_index_;
-        ConsoleStatusWin.set_loc(ConsoleGlobal.cursor_history_x_[slot],
-                                 ConsoleGlobal.cursor_history_y_[slot]);
-        const int slot_now = ConsoleGlobal.cursor_history_index_;
-        console_map_win()->focus(ConsoleGlobal.cursor_history_x_[slot_now],
-                                 ConsoleGlobal.cursor_history_y_[slot_now]);
-    }
-}
-
-// ORIGINAL: 0x00515740 ?toggle_dest@Console@@QAEXXZ 0x00515740-0x00515758 BYTE_EXACT
-// size      24 bytes
-// prototype void (__thiscall ?toggle_dest@Console@@QAEXXZ)(Console* this)
-// callers   0   call targets   1
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     0x0046B190
-// 0x00515740  ?toggle_dest@Console@@QAEXXZ  ->  ?toggle_dest@Console@@QAEXXZ
-//
-// Purpose: flip the "draw vehicle destinations" bit on the live map window
-//          and repaint it.
-
-
-// LEVER: ::draw_map, not draw_map. The image calls the FREE cdecl draw_map
-//          (0x0046B190, ?draw_map@@YAXH@Z), which cleans its own argument -
-//          the unqualified spelling resolves to the MapWin member this class
-//          inherits, and that thiscall leaves the cleanup to the callee, which
-//          drops the image's trailing `pop ecx` (4 of 6).
-void Console::toggle_dest() {
-    console_map_win()->field_1DD70_ ^= 0x40000;
-    ::draw_map(1);
-}
-
-// Unreferenced in the pinned image (no call, jump or data reference).
-// Original effect: return without modifying EAX; callee stack cleanup 0 bytes.
-// ORIGINAL: 0x00515760 nullsub_186 0x00515760-0x00515761 BYTE_EXACT
-// RECOVERY_BINDING: v1 {"reason": "Bind the unreferenced original leaf as an empty/constant source function in the translation unit whose address band contains it; its original name, prototype and callers remain unknown.", "evidence": ["pinned:terranx_original.exe:0x00515760-0x00515761 return without modifying EAX; callee stack cleanup 0 bytes", "pinned scan: no rel32 call/jmp and no dword reference to this address anywhere in the image", "address band: nearest mapped neighbours are 0x00515740 ?toggle_dest@Console@@QAEXXZ (src/console.cpp) and 0x00515770 ?chat@Console@@QAEXH@Z (src/console.cpp)"]}
-// symbol    ?nullsub_186@@YAXXZ
-// kind      game
-void __cdecl nullsub_186() {
-}
-
-// Original .data text inputs, with separate writable owners for each
-// address even when another input has the same contents.
-// RECOVERY_OBJECT: v2 0x0068A9CC 0x0068A9D7 ?ConsoleStrMenuSimple@@3PADA 0x00516970
-char ConsoleStrMenuSimple[] = "MENUSIMPLE";  // 0x0068A9CC
-// RECOVERY_OBJECT: v2 0x0068A9C0 0x0068A9CB ?ConsoleStrMenuDetail@@3PADA 0x00516930
-char ConsoleStrMenuDetail[] = "MENUDETAIL";  // 0x0068A9C0
-// The caption/label popup passes this separate body-key object at 0x0068AA0C.
-// RECOVERY_OBJECT: v1 0x0068AA0C _StrScenarioObjectivesPopup
-static const char StrScenarioObjectivesPopup[] = "OBJECTIVES";
-// Its title argument uses this distinct writable object at 0x0068AA18.
-// RECOVERY_OBJECT: v1 0x0068AA18 _StrScenarioObjectivesTitle
-static char StrScenarioObjectivesTitle[] = "SCENARIO";
-// One Console-owned confirmation string is shared by the original quit/new/menu/key callers.
-// RECOVERY_OBJECT: v1 0x0068A7D4 _ConsoleReallyWimpOut
-static const char ConsoleReallyWimpOut[] = "REALLYWIMPOUT";
-// RECOVERY_OBJECT: v2 0x0068A8E0 0x0068A8ED ?ConsoleStrTerraSurvey2@@3PADA 0x00515530
-char ConsoleStrTerraSurvey2[] = "TERRASURVEY2";  // 0x0068A8E0
-// RECOVERY_OBJECT: v2 0x0068A8D4 0x0068A8DF ?ConsoleStrTechChange@@3PADA 0x00515010
-char ConsoleStrTechChange[] = "TECHCHANGE";  // 0x0068A8D4
-// RECOVERY_OBJECT: v2 0x0068AA7C 0x0068AA8B ?ConsoleStrAcLogoSm@@3PADA 0x00517180
-char ConsoleStrAcLogoSm[] = "ac_logo_sm.pcx";  // 0x0068AA7C
-// RECOVERY_OBJECT: v2 0x0068AA8C 0x0068AA9C ?ConsoleStrVersionControlX@@3PADA 0x00517180
-char ConsoleStrVersionControlX[] = "VERSIONCONTROLX";  // 0x0068AA8C
-// The pinned .data cells were mutable char* slots initialized to these
-// distinct writable text arrays; callers share the pointer objects.
-// RECOVERY_OBJECT: v2 0x00691B40 0x00691B4C ?ConsoleVersionReleaseText@@3PADA 0x00517180
-char ConsoleVersionReleaseText[] = "RELEASE 2.0";
-// RECOVERY_OBJECT: v2 0x00691B4C 0x00691B58 ?ConsoleVersionBuildDateText@@3PADA 0x00517180
-char ConsoleVersionBuildDateText[] = "20-Dec-1999";
-// RECOVERY_OBJECT: v2 0x00691870 0x00691874 ?ConsoleVersionRelease@@3PADA 0x00517180
-char *ConsoleVersionRelease = ConsoleVersionReleaseText;
-// RECOVERY_OBJECT: v2 0x00691874 0x00691878 ?ConsoleVersionBuildDate@@3PADA 0x00517180
-char *ConsoleVersionBuildDate = ConsoleVersionBuildDateText;
-
-
-// RECOVERY_OBJECT: v2 0x0068A8C8 0x0068A8D3 ?ConsoleStrTechRandom@@3PADA 0x00514F50
-char ConsoleStrTechRandom[] = "TECHRANDOM";  // 0x0068A8C8
-// RECOVERY_OBJECT: v2 0x0068A93C 0x0068A945 ?ConsoleStrHostTime@@3PADA 0x00515900
-char ConsoleStrHostTime[] = "HOSTTIME";  // 0x0068A93C
-// RECOVERY_OBJECT: v2 0x0068A948 0x0068A953 ?ConsoleStrCustomTime@@3PADA 0x00515900
-char ConsoleStrCustomTime[] = "CUSTOMTIME";  // 0x0068A948
-
-// THE TIME-CONTROLS STATE the CUSTOMTIME dialog drives: 0x009A64E0 is the
-// preselected row (start's value slot copies it into the popup) and
-// 0x0094F25C..0x0094F274 are alpha.h's TimeControl[5].turn/.base/.unit/
-// .event/.extra/.refresh/.accumulated. All seven editable values are seeded
-// before CUSTOMTIME and re-parsed on accept.
-// Historical object identity moved to GameDataStateStorage; see the transport manifest.
-
-
-// Existing typed owner cells: NetDaemonNet's shared assignment word and
-// Popup's full-width checkbox state.
-inline unsigned int &console_turns_assigned() {
-    return NetDaemonNet.primary_state_.leading_words_[0];
-}
-
-// THE CURSOR HOTSPOT TABLES, two int runs immediately ahead of the cursor
-// sprite array sprite.cpp owns at 0x0093AA70. cursor_on passes
-// CursorHotspotX[shape] and CursorHotspotY[shape] as Win::set_cursor's
-// hot_x / hot_y, which is the whole of the evidence for the pairing and the
-// order; neither table has a symbol in the image.
-// RECOVERY_OBJECT: v2 0x0093AA10 0x0093AA40 ?CursorHotspotX@@3PAHA 0x00454FC0
-int CursorHotspotX[12] = {0};  // 0x0093AA10, defined here
-// RECOVERY_OBJECT: v2 0x0093AA40 0x0093AA70 ?CursorHotspotY@@3PAHA 0x00454FC0
-int CursorHotspotY[12] = {0};  // 0x0093AA40, defined here
-
-
-// ORIGINAL: 0x005105C0 ?selecting@Console@@QAEHHH@Z 0x005105C0-0x005107D5 BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["Original 0x005105C0..0x005107D5 and its retired transcription preserved in Git history.", "Original early mode1/mode0 returns skip pumping. Ordinary cursor mode is captured after valid_patrol; each called receiver is retained for cache writeback while subsequent table slots and hotspots are read live.", "Original68FAF0 is MapLongitude, the half-width used by the wrap test; valid initialized vehicle/window state and representable coordinate arithmetic are required by the original."], "reason": "Console owns selection-mode admission and the shared map-window cursor update. Recover genuine receivers and cursor globals; the range and patrol refusals both select loaded sprite5."}
-// The image repeats this map-window cursor walk at each of selecting's
-// three exits, each followed by do_non_input.
-static inline void selecting_cursor(int shape) {
-    for (int slot = 0; slot < static_cast<int>(MapWinTableSlots); ++slot) {
-        MapWin *const window = MapWinTable[slot];
-        if (window != nullptr && (slot == 0 || window->view_active_ != 0)) {
-            Sprite *const sprite = &g_CURSOR_SPRITES[shape];
-            if (window->cursor_sprite_ != sprite) {
-                window->GraphicWin::set_cursor(sprite,
-                    CursorHotspotX[shape], CursorHotspotY[shape]);
-                window->cursor_sprite_ = sprite;
-            }
-        }
-    }
-    do_non_input();
-}
-
-int Console::selecting(int tile_x, int tile_y) {
-    if (field_23D10_ == 1) {
-        return 1;
-    }
-    if (field_23D10_ != 0) {
-        if (field_23D14_ >= 0) {
-            if (map_range(tile_x, tile_y, Vehs[selected_vehicle_].x, Vehs[selected_vehicle_].y) > field_23D14_) {
-                selecting_cursor(5);
-                return 1;
-            }
-        }
-        if (field_23D10_ == 8 && !valid_patrol(selected_vehicle_, tile_x, tile_y)) {
-            selecting_cursor(5);
-            return 1;
-        }
-        selecting_cursor(field_23D10_);
-        return 1;
-    }
-    return 0;
-}
-
-// The editor's landmark removal command. The original uses the current
-// cursor-history coordinate when either supplied coordinate is outside the
-// map, then asks for confirmation before deleting the named landmark.
-// The three popup keys are the strings at 0x0068A994/0x0068A9A4/0x0068A9B0.
-// ORIGINAL: 0x00516490 ?erase_landmark@Console@@QAEXHH@Z 0x00516490-0x005165A6 BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["The original 0x00516490..0x005165A6 seed searches a landmark, checks editor permission, confirms LANDMARKKILL, then either sends a multiplayer message or deletes and redraws locally.", "src/map.h owns MapLandmark, MapLandmarkCount, map bounds and landmark helpers; src/console.h owns cursor-history coordinates and faction_id_; src/game.h owns GameState and IsMultiplayerNet.", "The pinned image stores popup keys LANDMARKNONE, LANDMARKNO and LANDMARKKILL at 0x0068A994, 0x0068A9A4 and 0x0068A9B0.", "git:b2de7f29042d247ee9b448c814029bbbbc35f230:src/recovered/units/00516490.cpp"], "reason": "Recover the Console landmark removal command through typed map, game and cursor owners while preserving its historical byte claim in the separate seed until remeasurement. Superseded scaffold retired at user request; historical claims and seed findings are transferred, not freshly granted. Current matching/restoration and any documented unfinished stages remain obligations."}
-// kind      game
-void Console::erase_landmark(int x_coord, int y_coord) {
-    if (y_coord < 0 || y_coord >= MapLatitudeBounds ||
-        x_coord < 0 || x_coord >= MapLongitudeBounds) {
-        const int index = ConsoleGlobal.cursor_history_index_;
-        x_coord = ConsoleGlobal.cursor_history_x_[index];
-        y_coord = ConsoleGlobal.cursor_history_y_[index];
-    }
-
-    const int landmark_id = find_landmark(x_coord, y_coord, 1);
-    if (landmark_id < 0) {
-// RECOVERY_LITERAL: v1 0x0068A994 0x0068A9A1 $SG63579 0x00516490
-        NetMsgPrimary.pop("LANDMARKNONE", 5000, 0, nullptr);
         return;
     }
-    if ((GameDataStateStorage.fields_.game_state_ & 0x80) == 0 &&
-        valid_landmark(x_coord, y_coord, ConsoleGlobal.faction_id_) == 0) {
-        NetMsgPrimary.pop(EraseLandmarkDeniedKey, 5000, 0, nullptr);
-        return;
-    }
-
-    parse_says(0, MapLandmark[landmark_id].name, -1, -1);
-// RECOVERY_LITERAL: v1 0x0068A9B0 0x0068A9BD $SG63582 0x00516490
-    if (X_pop("LANDMARKKILL", nullptr) == 0) {
-        return;
-    }
-    if (IsMultiplayerNet != 0) {
-        message_data(0x2e02, 0, x_coord, y_coord, 0, 0);
-        return;
-    }
-    kill_landmark(MapLandmark[landmark_id].x, MapLandmark[landmark_id].y);
-    ::draw_map(1);
-}
-
-// ORIGINAL: 0x00510400 ?cursor_on@Console@@QAEXH@Z 0x00510400-0x00510490 FILE BYTE_EXACT
-// working copy - scaffold materialised by --work
-// size      144 bytes
-// prototype void (__thiscall ?cursor_on@Console@@QAEXH@Z)(Console* this, int)
-// callers   0   call targets   2
-// kind      game
-// flags     frame;hidden;sp_ready;purged_ok
-// calls     0x005EC740 0x005FCA30
-
-void Console::cursor_on(int cursor_shape) {
-    // The original assumes cursor_shape names one of the twelve loaded
-    // cursor sprites; neither it nor the hotspot lookup adds a bounds guard.
-    for (int slot = 0; slot < static_cast<int>(MapWinTableSlots); ++slot) {
-        MapWin *const window = MapWinTable[slot];
-        if (window != nullptr && (slot == 0 || window->view_active_ != 0)) {
-            Sprite *const sprite = &g_CURSOR_SPRITES[cursor_shape];
-            if (window->cursor_sprite_ != sprite) {
-                window->GraphicWin::set_cursor(sprite,
-                    CursorHotspotX[cursor_shape], CursorHotspotY[cursor_shape]);
-                // set_cursor may dispatch callbacks. Publish to the window
-                // we called, not a replacement installed in its table slot.
-                window->cursor_sprite_ = sprite;
-            }
-        }
-    }
-    do_non_input();
-}
-
-// ORIGINAL: 0x005107E0 ?selected@Console@@QAEXXZ 0x005107E0-0x00510899 FILE BYTE_EXACT
-// symbol    ?selected@Console@@QAEHXZ
-// TRIED: manual vbase-adjust pointer arith for Win::set_cursor `this` (obj + *(int*)(*(int*)obj+4)); #0 push/mov is frame-setup register order, not a logic mismatch
-// working copy - scaffold materialised by --work
-// size      185 bytes
-// prototype void (__thiscall ?selected@Console@@QAEXXZ)(Console* this)
-// callers   1   call targets   3
-// kind      game
-// flags     frame;hidden;sp_ready;purged_ok
-// calls     0x0046A550 0x005EC7C0 0x005FCA30
-
-// The catalogue's void return is wrong: 0x005107E4 saves the entry mode,
-// 0x00510881 restores it to EAX after callbacks, and MapWin::click consumes it.
-int Console::selected() {
-    const int selected_mode = static_cast<int>(field_23D10_);
-    if (selected_mode != 0) {
-        field_23D10_ = 0;
-        for (int slot = 0; slot < static_cast<int>(MapWinTableSlots); ++slot) {
-            MapWin *const window = MapWinTable[slot];
-            if (window != nullptr && (slot == 0 || window->view_active_ != 0)) {
-                if (window->cursor_sprite_ != nullptr ||
-                    window->cursor_resource_id_ != 0x7f00) {
-                    window->GraphicWin::set_cursor(0x7f00);
-                    window->cursor_resource_id_ = 0x7f00;
-                    window->cursor_sprite_ = nullptr;
-                }
-                // Unlike cursor writeback, repaint state belongs to the
-                // live slot after the cursor callback (0x00510859).
-                const uint32_t flags = MapWinTable[slot]->field_1DD70_;
-                if ((flags & 0xc40000) != 0) {
-                    MapWinTable[slot]->field_1DD70_ = flags & 0xff3bffff;
-                    MapWinTable[slot]->draw_map(1);
-                }
-                do_non_input();
-            }
-        }
-    }
-    return selected_mode;
-}
-
-// ORIGINAL: 0x00515EF0 ?toggle_patrol@Console@@QAEXXZ 0x00515EF0-0x00515F70 FILE BYTE_EXACT
-// working copy - scaffold materialised by --work
-// size      128 bytes
-// prototype void (__thiscall ?toggle_patrol@Console@@QAEXXZ)(Console* this)
-// callers   0   call targets   2
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     0x00467970 0x0046A550
-
-void Console::toggle_patrol() {
-    MapWin *const first = MapWinTable[0];
-    int mask = first->field_1DD70_ & 0x400000;
-    for (int slot = 0; slot < 8; ++slot) {
-        if (MapWinTable[slot] != 0 &&
-            (slot == 0 || MapWinTable[slot]->view_active_ != 0)) {
-            if (mask == 0) {
-                MapWinTable[slot]->field_1DD70_ |= 0x400000;
-                MapWinTable[slot]->draw_base_dest(1);
-            } else {
-                MapWinTable[slot]->field_1DD70_ &= 0xffbfffff;
-                MapWinTable[slot]->draw_map(1);
-            }
-        }
-    }
-}
-
-// ORIGINAL: 0x00516970 ?menu_simple@Console@@QAEXXZ 0x00516970-0x005169A1 FILE BYTE_EXACT
-// size      49 bytes
-// prototype void (__thiscall ?menu_simple@Console@@QAEXXZ)(Console* this)
-// callers   0   call targets   2
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     0x00460DD0 0x005BF310
-// PRESERVED UNIT - measured MNEMONIC_ONLY.
-//
-// Kept for COVERAGE. This directory IS on the ratchet: every file here
-// carries an ORIGINAL marker, `decomp_status.py` compiles and measures
-// it, and 336 of the 1,108 now carry a BYTE_EXACT claim - better than a
-// quarter of the project's total. It is still in no build; the earlier
-// header said "on no ratchet", which stopped being true when the map
-// moved into src/ and was still being written into new files.
-//
-// address        0x00516970
-// measured tier  MNEMONIC_ONLY
-//
-// The WHOLE unit as measured, scaffolding included: for the units
-// that are byte-exact yet refuse extraction, the agent tuned the
-// emitted scaffolding and the body alone will not reproduce the
-// verdict. To resume, copy everything below back over
-//   build/byte-match/00516970/unit.cpp
-// and score it with tools/agent_brief.py.
-// GENERATED SKELETON - tools/emit_translation_unit.py
-// subject: ?menu_simple@Console@@QAEXXZ  at 0x00516970  (49 bytes)
-//
-// A VERIFICATION ARTIFACT, not product source: classes are opaque and
-// globals are bound to fixed addresses, because both are byte-visible
-// and both differ from the style src/ is written in.
-//
-// VC6 DIALECT - this must compile under cl 12.00.8168, which is the
-// only compiler this project builds with. Avoid: auto, nullptr, constexpr,
-// static_assert, enum class, range-for, lambdas, long long, <cstdint>,
-// and declaring `int i` twice in one function (VC6 leaks for-scope).
-// static_cast/reinterpret_cast are fine and are the right spelling.
-//
-// SOURCE-FORM RULES, each one learned by a fan-out agent that lost
-// attempts to it. They are here rather than in a prompt so the next
-// agent does not rediscover them:
-//
-//  * A ternary is not an if. `x ? a : b` lowers to `jne` with the arms
-//    swapped; `if (x) {...}` gives `je`.
-//  * VC6 NEVER hoists a same-polarity guard's body out of line. To get
-//    two special cases branching FAR away, write them negated and
-//    NESTED - `if (a != X) { if (a != Y) { return D; } ...; }` - not as
-//    sequential guard clauses, which inline each body instead.
-//  * VC6 rejects `__thiscall` on a free function pointer (C4234). For
-//    an indirect virtual call use the generated VCall shim below; for a
-//    thiscall function POINTER, take a member-function pointer of a
-//    dummy class instead of spelling the convention.
-//  * Loop form is visible: while / do-while / for lower differently,
-//    and so does counting up versus down.
-//  * If the original dedicates a callee-saved register to a constant
-//    across the whole body (an extra `push ebx`/`push edi` in the
-//    prologue), it had enough register pressure to do so. That is a
-//    hard case - the tool reports a similarity ratio so you can tell a
-//    near miss from a wrong body.
-
-
-void Console::menu_simple() {
-    // NEAR MISS, not byte-exact (MNEMONIC_ONLY): the original loads the
-    // field-0x11b0 value into EAX and cleans the X_pop call with
-    // `add esp,8`; this toolchain's /O2 register allocator instead puts the
-    // value in EDX here (mnemonics match one-for-one, only the register
-    // operand differs), and under /O1 it folds the load into `push
-    // dword ptr [...]` plus a `pop/pop` cleanup - both worse.
-    //
-    // RULED OUT: ten source-level variants tried, all producing the exact
-    // same EDX choice under /O2 - named vs. inlined field read, swapping
-    // statement order, `volatile`, `register`, reusing ONE local for both
-    // the flag and the field value (to bias reuse of the just-freed EAX),
-    // a comma-expression folding the RMW and the read into one argument
-    // expression, and routing the read through a forced-inline getter (to
-    // invoke the "return value lives in eax" convention). Also confirmed in
-    // ISOLATION, outside this function: a bare N-argument forwarding probe
-    // (unrelated to this call) shows this same EAX-after-just-freed-EAX
-    // reuse never happens for a fresh single-use temporary under these
-    // project flags - see 0x00624D00's near miss for the same family of
-    // issue (fixed register-count/window choices by the scheduler, not
-    // reachable from portable source).
-    // menu+0x11b0 is selected_vehicle_: 0x22A2C + 0x11B0 = 0x23BDC. The member
-    // form replaces the MainMenu pun this body used to carry.
-    GameDataStateStorage.fields_.game_more_preferences_ &= 0xffdfffff;
-    alpha_menu_.check(selected_vehicle_);
-    X_pop(ConsoleStrMenuSimple, 0);
-}
-
-// ORIGINAL: 0x00516930 ?menu_detail@Console@@QAEXXZ 0x00516930-0x00516961 BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["The 0x00516930 seed sets GameMorePreferences bit 0x200000, calls the Console member at +0x22A2C using its current vehicle, and passes the image string at 0x0068A9C0 to X_pop.", "src/console.h identifies alpha_menu_ at Console +0x22A2C and selected_vehicle_; src/console.cpp already binds the matching MENUDETAIL text as ConsoleStrMenuDetail, and alpha.h names GameMorePreferences."], "reason": "Express menu detail activation through the existing preference flag, typed AlphaMenu member, Console selection state and established string binding."}
-void Console::menu_detail() {
-    GameDataStateStorage.fields_.game_more_preferences_ |= 0x200000;
-    alpha_menu_.check(selected_vehicle_);
-    X_pop(ConsoleStrMenuDetail, 0);
-}
-
-// ORIGINAL: 0x00516C50 ?show_scen_objectives@Console@@QAEXXZ 0x00516C50-0x00516D98 BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["The 0x00516C50 seed parses ObjectiveReqVictory, ObjectivesSuddenDeathVictory and EndingMissionYear before processing faction-specific names.", "src/faction.h defines Players as 0x59C Player records: the seed's 0x00946A50, 0x00946A9C, 0x00946A84, 0x00946D4C, 0x00946D50 and 0x00946D34 references correspond to Player::is_leader_female, title_leader, name_leader, noun_gender, is_noun_plural and noun_faction.", "src/game.h owns GameRules and victory settings; general.h owns GenderDefault, PluralityDefault, parse_num, parse_says and say_year; strings.h owns StringTemp. The original popup keys at 0x0068AA0C and 0x0068AA18 are OBJECTIVES and SCENARIO, respectively.", "The seed's 0x005BF330 caption/label/callback call is represented by xpops.h's x_pop_caption_label, whose implementation forwards with the defaults (-1, no override, flags 0) to the typed full popup."], "reason": "Render scenario objectives through the existing faction, game-state, parser, scratch-buffer and popup owners, preserving the pinned OBJECTIVES and SCENARIO key values."}
-void Console::show_scen_objectives() {
-    parse_num(0, ScenarioSave.objective_req_victory);
-    parse_num(1, ScenarioSave.objectives_sudden_death_victory);
-    parse_num(2, num_objectives(ConsoleGlobal.faction_id_, GameDataStateStorage.fields_.game_rules_ & 0x1000));
-    parse_num(3, ScenarioSave.ending_mission_year);
-
-    GenderDefault = Players[ConsoleGlobal.faction_id_].is_leader_female;
-    PluralityDefault = 0;
-    parse_says(1, Players[ConsoleGlobal.faction_id_].title_leader, -1, -1);
-    GenderDefault = Players[ConsoleGlobal.faction_id_].is_leader_female;
-    PluralityDefault = 0;
-    parse_says(2, Players[ConsoleGlobal.faction_id_].name_leader, -1, -1);
-    GenderDefault = Players[ConsoleGlobal.faction_id_].noun_gender;
-    PluralityDefault = Players[ConsoleGlobal.faction_id_].is_noun_plural;
-    parse_says(3, Players[ConsoleGlobal.faction_id_].noun_faction, -1, -1);
-
-    StringTemp[0] = 0;
-    say_year(StringTemp);
-    parse_says(4, StringTemp, -1, -1);
-    parse_says(0, StringTemp, -1, -1);
-    X_pop(StrScenarioObjectivesTitle, StrScenarioObjectivesPopup, 0);
-}
-
-// Fixed-slot bindings carried from 00510ce0.cpp
-
-// ORIGINAL: 0x00510CE0 ?ready_search@Console@@QAEHH@Z 0x00510CE0-0x00510F48 FILE BYTE_EXACT
-// TRIED: prologue register order (7-slot frame, edi saved to a local purely to free it as scratch across the inner loop) - not chased byte-for-byte; control flow/offsets re-derived from raw disasm since Ghidra's local_N numbering did not line up with the real ebp-relative slots here.
-// working copy - scaffold materialised by --work
-// size      616 bytes
-// prototype int (__thiscall ?ready_search@Console@@QAEHH@Z)(Console* this, int)
-// callers   4   call targets   2
-// kind      game
-// flags     frame;hidden;sp_ready;purged_ok
-// calls     0x005C1B70 0x00644F3A
-
-
-int Console::ready_search(int veh_id) {
-    int bestScore = 9999;
-    int result = -1;
-    int coordA, coordB;
-
-    if (veh_id >= 0 && Vehs[veh_id].faction_id == ConsoleGlobal.faction_id_) {
-        coordA = Vehs[veh_id].x;
-        coordB = Vehs[veh_id].y;
-    } else {
-        coordA = ConsoleGlobal.cursor_history_x_[ConsoleGlobal.cursor_history_index_];
-        coordB = ConsoleGlobal.cursor_history_y_[ConsoleGlobal.cursor_history_index_];
-        veh_id = -1;
-    }
-
-    int outerIdx = (IsMultiplayerNet != 0) ? -1 : 0;
-
-    while (outerIdx < 3) {
-        int vehCount = GameDataStateStorage.fields_.vehicle_current_count_;
-
-        if ((IsMultiplayerNet != 0) && (outerIdx == 0) && (focus_vehicle_ >= 0) &&
-            (focus_vehicle_ < vehCount) &&
-            (Vehs[focus_vehicle_].faction_id == ConsoleGlobal.faction_id_) &&
-            (veh_ready(focus_vehicle_) != 0)) {
-            result = focus_vehicle_;
-            focus_vehicle_ = -1;
-            goto searchDone;
-        }
-
-        for (int innerIdx = 0;
-             innerIdx < GameDataStateStorage.fields_.vehicle_current_count_;
-             innerIdx++) {
-            Veh &vehicle = Vehs[innerIdx];
-
-            if (veh_ready(innerIdx) == 0) continue;
-
-            if (outerIdx >= 0 ||
-                (vehicle.state & 0x200) != 0 ||
-                (vehicle.state & 0x1000200) == 0x1000200 ||
-                (vehicle.state & 0x4000) != 0 ||
-                vehicle.order != 0) {
-
-                if (vehicle.state & 2) continue;
-
-                int vehX = vehicle.x;
-                int vehY = vehicle.y;
-
-                int score = map_dist(coordA, coordB, vehX, vehY);
-
-                if (score < bestScore) {
-                    bestScore = score;
-                    result = innerIdx;
-                } else if (score == bestScore && innerIdx == selected_vehicle_) {
-                    result = innerIdx;
-                }
-            }
-        }
-
-        if (result >= 0) goto searchDone;
-
-        if (outerIdx >= 0) {
-            vehCount = GameDataStateStorage.fields_.vehicle_current_count_;
-            for (int clearIdx = 0; clearIdx < vehCount; clearIdx++) {
-                if (outerIdx != 0 || clearIdx != selected_vehicle_ || veh_id < 0) {
-                    Vehs[clearIdx].state &= 0xfffffffd;
-                }
-            }
-        }
-
-        outerIdx++;
-    }
-
-searchDone:
-    field_23D24_ = IsMultiplayerNet != 0 && outerIdx < 0;
-    return result;
-}
-
-// Fixed-slot bindings carried from 00510490.cpp
-
-// ORIGINAL: 0x00510490 ?cursor_on@Console@@QAEXHH@Z 0x00510490-0x0051051D FILE BYTE_EXACT
-// working copy - scaffold materialised by --work
-// size      141 bytes
-// prototype void (__thiscall ?cursor_on@Console@@QAEXHH@Z)(Console* this, int, int)
-// callers   5   call targets   2
-// kind      game
-// flags     frame;hidden;sp_ready;purged_ok
-// calls     0x005EC740 0x005FCA30
-
-void Console::cursor_on(int cursor_shape, int veh_id) {
-    field_23D10_ = static_cast<uint32_t>(cursor_shape);
-    field_23D14_ = veh_id;
-    for (int slot = 0; slot < static_cast<int>(MapWinTableSlots); ++slot) {
-        MapWin *const window = MapWinTable[slot];
-        if (window != nullptr && (slot == 0 || window->view_active_ != 0)) {
-            Sprite *const sprite = &g_CURSOR_SPRITES[cursor_shape];
-            if (window->cursor_sprite_ != sprite) {
-                window->GraphicWin::set_cursor(sprite,
-                    CursorHotspotX[cursor_shape], CursorHotspotY[cursor_shape]);
-                window->cursor_sprite_ = sprite;
-            }
-        }
-    }
-    do_non_input();
-}
-
-// ORIGINAL: 0x005148B0 ?move_cursor@Console@@QAEXH@Z 0x005148B0-0x00514990 FILE BYTE_EXACT
-// size      224 bytes
-// prototype void (__thiscall ?move_cursor@Console@@QAEXH@Z)(Console* this, int)
-// callers   0   call targets   5
-// kind      game
-// flags     frame;hidden;sp_ready;purged_ok
-// calls     0x0046A550 0x0046AD60 0x0046B310 0x004B9EA0 0x005109B0
-// LEVER: the image's two `draw_cursor` calls are MapWin::draw_cursor
-// (0x0046AD60, the per-window member), not the free ::draw_cursor at
-// 0x0046AE00 that mapwin.cpp defines - the archive body named the free one
-// and so was calling a function the image never calls here. Declared on
-// MapWin with a pending_bodies forwarder; VehMoveDeltaX/Y moved to veh.h
-// beside the array definitions so the cursor's own deltas stop being
-// anonymous fixed addresses.
-// TRIED: `const int slot`; operand order `delta + coord` for the x sum. The
-// image loads ConsoleGlobal.cursor_history_x_[slot] BEFORE VehMoveDeltaX[direction] (0x005148BE
-// then 0x005148C6) and the reverse for y, so the x sum is spelled
-// coordinate-first below; neither ordering nor the const moved the first
-// divergence, which is which register holds ConsoleGlobal.cursor_history_index_ (image: edx,
-// this tree: eax) and follows from the image deferring its `this` spill
-// (0x005148CD `mov edi, ecx`) until after both loads.
-// Operands now follow VC6's load-b-first order (x: delta + coord, y: coord +
-// delta), which fixes the loads. The x wrap is map.h's flat-first ternary
-// wrap_map_x (MATCHING_GUIDE 3.2); the older if-chain form left this and
-// new_x in swapped registers.
-
-
-void Console::move_cursor(int direction) {
-    int x = VehMoveDeltaX[direction] +
-        ConsoleGlobal.cursor_history_x_[ConsoleGlobal.cursor_history_index_];
-    int new_x = wrap_map_x(x);
-    int new_y = ConsoleGlobal.cursor_history_y_[ConsoleGlobal.cursor_history_index_] +
-                VehMoveDeltaY[direction];
-    if (set_cursor(new_x, new_y) == 0) {
-        console_map_win()->focus(new_x, new_y);
-    }
-}
-
-// ORIGINAL: 0x005147E0 ?set_cursor@Console@@QAEXHH@Z 0x005147E0-0x0051487D FILE BYTE_EXACT
-// TRIED: nesting the last bound check as its own `if` (both alone and after a 3-way `||` early return), and a fully split `&&` chain with success nested two levels deep - all reproduce the same MISMATCH #15 'jl' vs 'jge' on the 4th comparison (a1 < bound2); similarity 0.9091. void return keeps the C2556 declared prototype; the eax=1/xor eax,eax result codes are dropped.
-// size      157 bytes
-// prototype void (__thiscall ?set_cursor@Console@@QAEXHH@Z)(Console* this, int xCoord, int yCoord)
-// callers   6   call targets   4
-// kind      game
-// flags     frame;hidden;sp_ready;purged_ok
-// calls     0x0046A550 0x0046AD60 0x004B9EA0 0x005109B0
-// symbol    ?set_cursor@Console@@QAEHHH@Z
-// LEVER: the catalogued `void` return is wrong, and the archive body's TRIED
-//        note says exactly where that cost it. Every one of the four bound
-//        failures reaches 0x00514807, which loads eax with 1 before the shared
-//        epilogue, and the success path clears eax at the end - so the body
-//        returns int: 1 for out of bounds, 0 after the repaint. Declared int
-//        (the emitted name above is the legitimately different mangling, the
-//        same fact Console::focus carries) and the four tests reproduce.
-//        13 of 47 -> measured below.
-// TRIED: `void` with a bare `return` on the failure path - that is the
-//        archive's spelling, and its eax=1 / xor eax,eax codes are dropped,
-//        which is what made the 4th comparison's branch target diverge.
-// TRIED: three shapes for the FOURTH bound test, all 17 of 47 with identical
-//        instruction counts: chained as the fourth `||` term (the compiler
-//        emits `jge <failure>`), as its own `if (x_coord >= lon) return 1;`,
-//        and polarised as the in-bounds guard `if (x_coord < lon) { body;
-//        return 0; }` so the source asks for the image's jump-to-the-work
-//        `jl 0x514812`. VC6 inverts all three into the same `jge` and merges
-//        the tails, so the 4th comparison's branch target is not reachable
-//        from source form here. Not chased further.
-
-
-int Console::set_cursor(int x_coord, int y_coord) {
-    if (!on_map(x_coord, y_coord)) {
-        return 1;
-    }
-    field_23BF8_ = 0;
-    if (survey_mode_ != 0) {
-        survey_mode_ = 0;
-        console_map_win()->draw_map(1);
-    }
-    console_map_win()->draw_cursor();
-    cursor_next(x_coord, y_coord);
-    ConsoleStatusWin.redraw();
-    field_23BF8_ = 1;
-    field_23BFC_ = 1;
-    console_map_win()->draw_cursor();
-    return 0;
+    survey_mode_ = 1;
+    const uint32_t saved = console_map_win()->field_1DD70_;
+    console_map_win()->field_1DD70_ = 0x623;
+    console_map_win()->draw_map(1);
+    console_map_win()->field_1DD70_ = saved;
 }
 
 // ORIGINAL: 0x00515530 ?survey2@Console@@QAEXXZ 0x00515530-0x005155F5 FILE BYTE_EXACT
@@ -2630,63 +2738,6 @@ void Console::survey2() {
         TutorialWindow.tut_map(ConsoleStrTerraSurvey2, ConsoleGlobal.cursor_history_x_[slot],
                                ConsoleGlobal.cursor_history_y_[slot], -1, nullptr, 0, -1, -1);
     }
-}
-
-// ORIGINAL: 0x00510A60 ?prev_cursor@Console@@QAEXXZ 0x00510A60-0x00510B70 FILE BYTE_EXACT
-// size      272 bytes
-// prototype void (__thiscall ?prev_cursor@Console@@QAEXXZ)(Console* this)
-// callers   0   call targets   10
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     0x00446B40 0x00458900 0x00460DD0 0x0046A550 0x0046AD60 0x0046AE00 0x0046B310 0x0046FB10 0x004B9EA0 0x004B9F90
-//
-// moved into src/ and was still being written into new files.
-//
-// address        0x00510A60
-//
-// emitted scaffolding and the body alone will not reproduce the
-//   build/byte-match/00510a60/unit.cpp
-//
-//
-// They are knowledge, not scaffolding, so they now live in the agent
-// system prompt (mizuchi.yaml, plugins.claude-runner.systemPrompt),
-// where they can be edited without regenerating anything and are in
-// context from the first token rather than behind a file read. This
-
-
-void Console::prev_cursor() {
-    const int had_move = survey_mode_;
-    field_23BF8_ = 0;
-    if (had_move != 0) {
-        survey_mode_ = 0;
-        console_map_win()->draw_map(1);
-    }
-    console_map_win()->draw_cursor();
-    if (ConsoleGlobal.cursor_active_ != 0) {
-        ambience(0x1E);
-        const int had_move_now = survey_mode_;
-        cursor_active_ = 0;
-        field_23BF8_ = 1;
-        field_23BFC_ = 1;
-        if (had_move_now != 0) {
-            survey_mode_ = 0;
-            console_map_win()->draw_map(1);
-        }
-        ::draw_cursor();
-        ConsoleInfoWin.change(0);
-        ConsoleStatusWin.redraw();
-        console_map_win()->main_caption();
-        alpha_menu_.check(selected_vehicle_);
-    }
-    const int cursor_timer = cursor_history_index_ - 1;
-    cursor_history_index_ = cursor_timer;
-    if (cursor_timer < 0) {
-        cursor_history_index_ = 0x1F;
-    }
-    const int slot = ConsoleGlobal.cursor_history_index_;
-    ConsoleStatusWin.set_loc(ConsoleGlobal.cursor_history_x_[slot], ConsoleGlobal.cursor_history_y_[slot]);
-    const int slot_now = ConsoleGlobal.cursor_history_index_;
-    console_map_win()->focus(ConsoleGlobal.cursor_history_x_[slot_now], ConsoleGlobal.cursor_history_y_[slot_now]);
 }
 
 // ORIGINAL: 0x00515600 ?base_names@Console@@QAEXXZ 0x00515600-0x00515638 FILE BYTE_EXACT
@@ -2920,540 +2971,36 @@ void Console::toggle_base_grid() {
     ::draw_map(1);
 }
 
-// ORIGINAL: 0x00515400 ?center@Console@@QAEXXZ 0x00515400-0x00515423 BYTE_EXACT
-// size      35 bytes
-// prototype void (__thiscall ?center@Console@@QAEXXZ)(Console* this)
-// callers   5   call targets   1
-// kind      game
-// flags     sp_ready;purged_ok
-// calls     0x0046B1F0
-// 0x00515400  ?center@Console@@QAEXXZ  ->  ?center@Console@@QAEXXZ
-//
-// BLOCKED (2026-09-03, P1 calibration) on a mapwin.h declaration this TU does
-// not own: 0x0046B1F0 is ?set_center@MapWin@@QAEXHHH@Z, undeclared. It needs
-// `void set_center(int, int, int);` on MapWin and a pending_bodies forwarder
-// Deleted seed provenance: git:e82971b277b557e89a52143c7c51170d6d3b0bd4:src/recovered/units/0046b1f0.cpp
-// (the body itself is src/recovered/units/0046b1f0.cpp, unclaimed, 275
-// bytes). Everything the body reads is already bound here: ConsoleGlobal.cursor_history_index_ /
-// ConsoleGlobal.cursor_history_x_ / ConsoleGlobal.cursor_history_y_ in console.h and the accessor console_map_win()
-// for the single absolute load of 0x007D3C3C the image makes at 0x00515416.
-//
-// The de-punned body, ready to drop in once set_center is declared:
-//
-// void Console::center() {
-//     const int index = ConsoleGlobal.cursor_history_index_;
-//     console_map_win()->set_center(ConsoleGlobal.cursor_history_x_[index], ConsoleGlobal.cursor_history_y_[index], 1);
-// }
-
-
-void Console::center() {
-    const int slot = ConsoleGlobal.cursor_history_index_;
-    console_map_win()->set_center(ConsoleGlobal.cursor_history_x_[slot], ConsoleGlobal.cursor_history_y_[slot], 1);
-}
-
-// ORIGINAL: 0x00515430 sub_515430 0x00515430-0x00515443 BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["historical seed:src/recovered/00515430.cpp", "task:owned-helper-coverage-batch", "StatusFlags939ED8 is already owned by statuswin.cpp; native515430 clears it before desktop_init(1)."], "reason": "Recover a complete native helper through genuine source owners and SDK calls, preserving original identity, extent and historical obligations. Source home is not proof of original TU or complete-game acceptance."}
-// symbol    ?reset_status_and_initialize_desktop@@YAXXZ
-void __cdecl reset_status_and_initialize_desktop() {
-    StatusFlags = 0;
-    desktop_init(1);
-}
-
-// ORIGINAL: 0x005169B0 ?base_me@Console@@QAEXXZ 0x005169B0-0x005169E6 BYTE_EXACT
-// size      54 bytes
-// prototype void (__thiscall ?base_me@Console@@QAEXXZ)(Console* this)
-// callers   0   call targets   2
-// kind      game
-// flags     sp_ready;purged_ok
-// calls     0x0041A920 0x004E3C60
-// 0x005169B0  ?base_me@Console@@QAEXXZ  ->  ?base_me@Console@@QAEXXZ
-//
-// BLOCKED (2026-09-03, P1 calibration) on a basewin.h declaration this TU does
-// not own: 0x0041A920 is BaseWin::zoom, undeclared. It needs a declaration on
-// BaseWin and a pending_bodies forwarder. Everything else is already bound:
-// base_find (base.h:533, the three-int overload), LocalFaction (game.h:865,
-// 0x00939284 - the scaffold's g_00939284), and tutwin.h's
-// TutWinBaseWindow for 0x006A7628.
-//
-// The de-punned body, ready to drop in once zoom is declared:
-//
-// void Console::base_me() {
-//     const int index = ConsoleGlobal.cursor_history_index_;
-//     const int result = base_find(ConsoleGlobal.cursor_history_x_[index], ConsoleGlobal.cursor_history_y_[index],
-//                                  LocalFaction);
-//     if (result >= 0) {
-//         TutWinBaseWindow.zoom(result, 0);
-//     }
-// }
-
-
-void Console::base_me() {
-    const int slot = ConsoleGlobal.cursor_history_index_;
-    const int base_id =
-        base_find(ConsoleGlobal.cursor_history_x_[slot], ConsoleGlobal.cursor_history_y_[slot], ConsoleGlobal.faction_id_);
-    if (base_id >= 0) {
-        TutWinBaseWindow.zoom(base_id, 0);
-    }
-}
-
-// ORIGINAL: 0x00515450 ?survey@Console@@QAEXXZ 0x00515450-0x0051552B FILE BYTE_EXACT
-// LEVER: re-read the fixed global for the `this` of the draw_map() call instead of reusing the pointer already cached for the field save/restore - the original re-reads it too
-// size      219 bytes
-// prototype void (__thiscall ?survey@Console@@QAEXXZ)(Console* this)
-// callers   2   call targets   1
-// kind      game
-// flags     sp_ready;purged_ok
-// calls     0x0046A550
-
-
-void Console::survey() {
-    // Cycle through three survey modes: 0 -> 1 -> 2 -> 3 -> 0. Each
-    // step forces one repaint with the map's detail mask pinned to a value
-    // that shows only the layer that step is about, then puts the mask back.
-    const int state = survey_mode_;
-    if (state == 1) {
-        survey_mode_ = 2;
-        const uint32_t saved = console_map_win()->field_1DD70_;
-        console_map_win()->field_1DD70_ = 0x603;
-        console_map_win()->draw_map(1);
-        console_map_win()->field_1DD70_ = saved;
-        return;
-    }
-    if (state == 2) {
-        survey_mode_ = 3;
-        const uint32_t saved = console_map_win()->field_1DD70_;
-        console_map_win()->field_1DD70_ = 0x402;
-        console_map_win()->draw_map(1);
-        console_map_win()->field_1DD70_ = saved;
-        return;
-    }
-    if (state != 0) {
-        survey_mode_ = 0;
-        console_map_win()->draw_map(1);
-        return;
-    }
-    survey_mode_ = 1;
-    const uint32_t saved = console_map_win()->field_1DD70_;
-    console_map_win()->field_1DD70_ = 0x623;
-    console_map_win()->draw_map(1);
-    console_map_win()->field_1DD70_ = saved;
-}
-
-// ORIGINAL: 0x00511480 ?set_view@Console@@QAEXH@Z 0x00511480-0x00511518 FILE BYTE_EXACT
-// size      152 bytes
-// prototype void (__thiscall ?set_view@Console@@QAEXH@Z)(Console* this, int)
-// callers   8   call targets   7
-// kind      game
-// flags     frame;hidden;sp_ready;purged_ok
-// calls     0x00446B40 0x00458900 0x00460DD0 0x0046A550 0x0046AE00 0x0046FB10 0x004B9EA0
-
-
-void Console::set_view(int force_update) {
-    // The vehicle-cursor repaint cycle, guarded two ways: the global cursor flag
-    // says a cursor vehicle exists at all, force_update says the caller wants
-    // the repaint regardless (the editor toggles pass 1 so the view follows
-    // the flag they just flipped even with no vehicle selected).
-    if (ConsoleGlobal.cursor_active_ != 0 || force_update != 0) {
-        ambience(0x1E);
-        cursor_active_ = 0;
-        field_23BF8_ = 1;
-        field_23BFC_ = 1;
-        if (survey_mode_ != 0) {
-            survey_mode_ = 0;
-            console_map_win()->draw_map(1);
-        }
-        ::draw_cursor();
-        ConsoleInfoWin.change(0);
-        ConsoleStatusWin.redraw();
-        console_map_win()->main_caption();
-        alpha_menu_.check(selected_vehicle_);
-    }
-}
-
-// ORIGINAL: 0x00510520 ?cursor_off@Console@@QAEXXZ 0x00510520-0x005105BE FILE BYTE_EXACT
-// size      158 bytes
-// prototype void (__thiscall ?cursor_off@Console@@QAEXXZ)(Console* this)
-// callers   8   call targets   3
+// ORIGINAL: 0x00515740 ?toggle_dest@Console@@QAEXXZ 0x00515740-0x00515758 BYTE_EXACT
+// size      24 bytes
+// prototype void (__thiscall ?toggle_dest@Console@@QAEXXZ)(Console* this)
+// callers   0   call targets   1
 // kind      game
 // flags     hidden;sp_ready;purged_ok
-// calls     0x0046A550 0x005EC7C0 0x005FCA30
-// PRESERVED UNIT - measured BYTE_EXACT.
+// calls     0x0046B190
+// 0x00515740  ?toggle_dest@Console@@QAEXXZ  ->  ?toggle_dest@Console@@QAEXXZ
 //
-// Homed 2026-09-04. The two raw slots the emitter bound - 0x007D3C3C and the
-// exclusive 0x007D3C5C - are mapwin.h's MapWinTable and MapWinTableSlots,
-// and 0x1DD74 is the active-window member. The typed walk below preserves
-// their eight-slot domain without truncating relocated pointers.
-// Historical LEVER: the old loop tail compared CASTED ints, not pointers -
-// `reinterpret_cast<int>(entry) < reinterpret_cast<int>(...)`. A pointer
-// comparison compiles `jb` where the image has `jl`, and that one byte was
-// the whole divergence (39/40 -> 40/40). Runs under the /Oy- set.
+// Purpose: flip the "draw vehicle destinations" bit on the live map window
+//          and repaint it.
 
 
-void Console::cursor_off() {
-    field_23D10_ = 0;
-    for (int slot = 0; slot < static_cast<int>(MapWinTableSlots); ++slot) {
-        MapWin *const window = MapWinTable[slot];
-        if (window != nullptr && (slot == 0 || window->view_active_ != 0)) {
-            if (window->cursor_sprite_ != nullptr ||
-                window->cursor_resource_id_ != 0x7f00) {
-                window->GraphicWin::set_cursor(0x7f00);
-                window->cursor_resource_id_ = 0x7f00;
-                window->cursor_sprite_ = nullptr;
-            }
-            // Preserve the original post-callback reload (0x00510584),
-            // while the two cursor stores above still use the old receiver.
-            const uint32_t flags = MapWinTable[slot]->field_1DD70_;
-            if ((flags & 0xc40000) != 0) {
-                MapWinTable[slot]->field_1DD70_ = flags & 0xff3bffff;
-                MapWinTable[slot]->draw_map(1);
-            }
-            do_non_input();
-        }
-    }
+// LEVER: ::draw_map, not draw_map. The image calls the FREE cdecl draw_map
+//          (0x0046B190, ?draw_map@@YAXH@Z), which cleans its own argument -
+//          the unqualified spelling resolves to the MapWin member this class
+//          inherits, and that thiscall leaves the cleanup to the callee, which
+//          drops the image's trailing `pop ecx` (4 of 6).
+void Console::toggle_dest() {
+    console_map_win()->field_1DD70_ ^= 0x40000;
+    ::draw_map(1);
 }
 
-// ORIGINAL: 0x00515010 ?set_tech@Console@@QAEXH@Z 0x00515010-0x005150C2 FILE BYTE_EXACT
-// size      178 bytes
-// prototype void (__thiscall ?set_tech@Console@@QAEXH@Z)(Console* this, int factionID)
-// callers   2   call targets   5
+// Unreferenced in the pinned image (no call, jump or data reference).
+// Original effect: return without modifying EAX; callee stack cleanup 0 bytes.
+// ORIGINAL: 0x00515760 nullsub_186 0x00515760-0x00515761 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"reason": "Bind the unreferenced original leaf as an empty/constant source function in the translation unit whose address band contains it; its original name, prototype and callers remain unknown.", "evidence": ["pinned:terranx_original.exe:0x00515760-0x00515761 return without modifying EAX; callee stack cleanup 0 bytes", "pinned scan: no rel32 call/jmp and no dword reference to this address anywhere in the image", "address band: nearest mapped neighbours are 0x00515740 ?toggle_dest@Console@@QAEXXZ (src/console.cpp) and 0x00515770 ?chat@Console@@QAEXH@Z (src/console.cpp)"]}
+// symbol    ?nullsub_186@@YAXXZ
 // kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     0x00593340 0x005BEB70 0x005BF310 0x00625E30 0x00625E50
-// PRESERVED UNIT - measured BYTE_EXACT.
-//
-// Homed 2026-09-04. The two slots the emitter bound at 0x0096CDA8 and
-// 0x0096CDAC are PlayersData[faction].tech_accumulated (0x3C8) and
-// .tech_id_researching (0x3CC) - faction.h declares both, and
-// technology.cpp already reads the 0x3D0 sibling. `g_0094f35c[n * 11]` is
-// Technology[n].name: Technology is at 0x0094F358, name sits at +4, and
-// sizeof(RulesTechnology) is 0x2C, so 11 * 4 lands on the name. The label at
-// 0x0068A8D4 reads "TECHCHANGE" out of the image's .data.
-
-
-void Console::set_tech(int faction_id) {
-    int *research = &PlayersData[faction_id].tech_accumulated;
-    int *researching = &PlayersData[faction_id].tech_id_researching;
-    if (*research != 0 && *researching >= 0) {
-        parse_say(0, Technology[*researching].name, -1, -1);
-        parse_num(0, *research);
-        if (X_pop(ConsoleStrTechChange, (NullCallback)0) == 0) {
-            return;
-        }
-    }
-    int picked = tech_pick(faction_id, 0, -1, 0);
-    if (picked >= 0) {
-        if (*researching >= 0 && picked != *researching) {
-            *research = *research / 2;
-        }
-        *researching = picked;
-    }
-    synch_research(faction_id);
-}
-
-// ORIGINAL: 0x00517180 ?show_version@Console@@QAEXXZ 0x00517180-0x005171C1 FILE BYTE_EXACT
-// size      65 bytes
-// prototype void (__thiscall ?show_version@Console@@QAEXXZ)(Console* this)
-// callers   0   call targets   2
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     0x0048C0A0 0x00625EC0
-// PRESERVED UNIT - measured BYTE_EXACT.
-//
-// Homed 2026-09-04. Its historical measurement was NO_COMPILE, not MISMATCH.
-// The original writable .data pointer slots at 0x00691870/74 and their
-// distinct text windows are now represented by shared source-owned objects.
-// The caption slot at 0x00691B0C is ScriptPopupFile; the two popp strings are
-// the existing source-owned arrays below.
-
-
-void Console::show_version() {
-    parse_says(0, ConsoleVersionRelease, -1, -1);
-    parse_says(1, ConsoleVersionBuildDate, -1, -1);
-    popp(ScriptPopupFile, ConsoleStrVersionControlX, 0, ConsoleStrAcLogoSm,
-         (NullCallback)0);
-}
-
-
-// ORIGINAL: 0x0050E890 ?auto_play_callback@@YAXH@Z 0x0050E890-0x0050E97E BYTE_EXACT
-// size      238 bytes
-// prototype void (__cdecl ?auto_play_callback@@YAXH@Z)(int)
-// callers   0   call targets   2
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     0x005169F0 0x00625810
-// indirect  0x0050E8FE 0x0050E90F 0x0050E939 0x0050E968 0x0050E978
-// Homed 2026-09-05 from src/unrecovered/0050e890.cpp (deleted). The
-// catalogue's callers-0 is right in spirit: nothing calls it, Console::
-// on_key_click (0x005178C0) takes its ADDRESS at 0x00517987 - it is a timer
-// callback - the source-owned on_key_click handler below installs it
-// through the real Time owner.
-//
-// Every fixed address in it is a name the tree already owns: AutoPlayCounter
-// (0x00939FD0, above), WinModalDepth (0x009B7AE4), GameState's low byte
-// (0x009A64C0), ConsoleGlobal (0x009156B0), HandleMain (0x009B7B28),
-// WinScreenWidth / WinScreenHeight (0x009B7B1C / 0x009B7B20), and the two
-// USER32 imports reached by name - SetCursorPos (0x00669310) and
-// PostMessageA (0x00669314).
-//
-// LEVER (from the artifact, re-measured there on cl 12.00.8168): the
-// PostMessageA pointer is a LOCAL in the keystroke branch. Spelled inline,
-// VC6 emits `call dword ptr [0x669314]` twice and needs no callee-saved
-// register for it; the image's `mov edi, [0x669314]` plus two `call edi` is
-// a value held across a call, which only a local gets. That is what makes
-// EDI live and puts `push esi; push edi` at 0x0050E8C6 rather than at entry.
-// The packed word is an EXPRESSION written out at both call sites, not a
-// local: naming it costs a whole-branch register home and a stack slot. And
-// `(unsigned short)((y & 0xff) << 8) | (x & 0xff)` - the cast on the high
-// half only, MAKEWORD's own shape - is what frees x to live in ESI and y to
-// take EBX, the image's allocation.
-// TRIED, all measured in the artifact: signed against unsigned x and y
-// (no effect); thirteen pack spellings, of which only the one below reaches
-// mnemonic #64; locals declared at function top; one shared set of locals
-// across both branches; computing the pack before SetCursorPos; `register`,
-// `const`, a nested scope, a function-scope variable assigned in both
-// branches, assignment inside the first call's callee expression, a `void **`
-// read, and a const-qualified or `extern` global for the pointer.
-// CLOSED 2026-09-05: the artifact's last instruction - the image loads the
-// pointer into ESI after the pack and calls `esi` twice in the mouse branch -
-// falls to reaching the import as the DESIGNATOR in the keystroke branch
-// (`PostMessageCallback post = PostMessageA;`, no explicit address read) and
-// BY NAME in the mouse branch. VC6 dllimports both into registers it can
-// reuse for the second pair, `mov esi, [0x669314]` landing after the mask
-// exactly where the image puts it. Reading the IAT slot as data
-// (`*(PostMessageAFn *)0x00669314`), which is every spelling the artifact
-// had, is what forced the load to schedule early. BYTE_EXACT 80 of 80.
-typedef int(__stdcall *PostMessageCallback)(HWND, UINT, WPARAM, LPARAM);
-
-void __cdecl auto_play_callback(int) {
-    AutoPlayCounter = AutoPlayCounter + 1;
-    if (AutoPlayCounter > 100) {
-        if (WinModalDepth == 0) {
-            unsigned char state = static_cast<unsigned char>(GameDataStateStorage.fields_.game_state_);
-            if ((state & 2) != 0) {
-                ConsoleGlobal.end_my_turn();
-                AutoPlayCounter = 0;
-            }
-        }
-    }
-
-    if (random(0, 2) != 0) {
-        int key = (signed char)random(0, 0xff);
-        PostMessageCallback post = PostMessageA;
-        post(HandleMain, WM_KEYDOWN, key, 0);
-        post(HandleMain, WM_KEYUP, key, 0);
-        return;
-    }
-
-    int x = random(0, WinScreenWidth);
-    int y = random(0, WinScreenHeight);
-    SetCursorPos(x, y);
-
-    PostMessageA(HandleMain, WM_LBUTTONDOWN, 0,
-                 static_cast<unsigned short>((y & 0xff) << 8) | (x & 0xff));
-    PostMessageA(HandleMain, WM_LBUTTONUP, 0,
-                 static_cast<unsigned short>((y & 0xff) << 8) | (x & 0xff));
-}
-
-// Compiler-generated Win-branch capture adjustor from the genuine
-// MapWin override and virtual GraphicWin base; no handwritten thunk body.
-/*
-Purpose: Adjust the receiver from MapWin's thunk4 subobject to the one
-         MapWin::on_lose_mouse_capture expects, then forward unchanged.
-// ORIGINAL: 0x0051DE30 ?on_lose_mouse_capture@thunk4_MapWin@@QAEXXZ 0x0051DE30-0x0051DE3E FILE BYTE_EXACT
-// symbol    ?on_lose_mouse_capture@MapWin@@$4PPPPPPPM@CDCI@AEXXZ
-// size      14 bytes
-// prototype void (__thiscall ?on_lose_mouse_capture@thunk4_MapWin@@QAEXXZ)(MapWin* this)
-// callers   0   call targets   0
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     (none)
-Return Value: n/a
-Status: Complete
-*/
-
-// Compiler-generated Win slot13 adjustor for the genuine MapWin resize
-// override. The virtual-base layout owns the receiver adjustment.
-/*
-Purpose: Adjust the receiver from MapWin's thunk4 subobject to the one
-         MapWin::on_resize expects, then forward unchanged.
-// ORIGINAL: 0x0051DE50 ?on_resize@thunk4_MapWin@@QAEXHH@Z 0x0051DE50-0x0051DE5E FILE BYTE_EXACT
-// symbol    ?on_resize@MapWin@@$4PPPPPPPM@CDCI@AEXHH@Z
-// size      14 bytes
-// prototype void (__thiscall ?on_resize@thunk4_MapWin@@QAEXHH@Z)(MapWin* this, int, int)
-// callers   0   call targets   0
-// kind      game
-// flags     sp_ready;purged_ok
-// calls     (none)
-Return Value: n/a
-Status: Complete
-*/
-
-// Compiler-generated Win slot17 receiver adjustment for MapWin mouse feedback.
-// The original catalogue name remains on the mapping below.
-/*
-Purpose: Adjust the receiver from MapWin's thunk4 subobject to the one
-         MapWin::on_mouse_move expects, then forward unchanged.
-// ORIGINAL: 0x0051DE70 ?on_mouse_move@thunk4_MapWin@@QAEXHH@Z 0x0051DE70-0x0051DE7E FILE BYTE_EXACT
-// symbol    ?on_mouse_move@MapWin@@$4PPPPPPPM@CDCI@AEXHH@Z
-// size      14 bytes
-// prototype void (__thiscall ?on_mouse_move@thunk4_MapWin@@QAEXHH@Z)(MapWin* this, int, int)
-// callers   0   call targets   0
-// kind      game
-// flags     sp_ready;purged_ok
-// calls     (none)
-Return Value: n/a
-Status: Complete
-*/
-
-
-
-/*
-Purpose: Edit one faction's four AI priority toggles through the checkbox
-         popup, store the answer back and resync that faction's AI.
-// ORIGINAL: 0x00514F50 ?set_ai@Console@@QAEXH@Z 0x00514F50-0x0051500F FILE
-// TRIED (seed history): closest at 171/191 bytes (mnemonic similarity 0.80) -
-//        VC6 folds each field access into a `[eax*4+CONST]` SIB scale instead
-//        of materialising the full byte offset once, either spelling; not
-//        chased further.
-// size      191 bytes
-// prototype void (__thiscall ?set_ai@Console@@QAEXH@Z)(Console* this, int factionID)
-// callers   3   call targets   2
-// calls     0x00593310 0x005BF3F0
-*/
-void Console::set_ai(int faction_id) {
-    // The pinned reads/writes at 96CDC0..96CDCC are the four named priority
-    // fields at PlayersData + 0x3E0..0x3EC (VC6 CodeView offsets 992..1004).
-    int *growth = &PlayersData[faction_id].ai_growth;
-    int *tech = &PlayersData[faction_id].ai_tech;
-    int *wealth = &PlayersData[faction_id].ai_wealth;
-    int *power = &PlayersData[faction_id].ai_power;
-    int flags = (*growth != 0) ? 1 : 0;
-    if (*tech != 0) {
-        flags |= 2;
-    } else {
-        flags &= ~2;
-    }
-    if (*wealth != 0) {
-        flags |= 4;
-    } else {
-        flags &= ~4;
-    }
-    if (*power != 0) {
-        flags |= 8;
-    } else {
-        flags &= ~8;
-    }
-    PopupWriteCheckState = static_cast<int>(flags);
-    if (x_pop_short(ConsoleStrTechRandom, 1, (NullCallback)0) >= 0) {
-        // The image shifts with shr: the masks are unsigned.
-        *growth = (char)PopupWriteCheckState & 1u;
-        *tech = ((char)PopupWriteCheckState & 2u) >> 1;
-        *wealth = ((char)PopupWriteCheckState & 4u) >> 2;
-        *power = ((char)PopupWriteCheckState & 8u) >> 3;
-        synch_ai(faction_id);
-    }
-}
-
-
-/*
-Purpose: Load a saved game: leave the base window, refuse outside an active
-         network/PBEM session, then rebuild the desktop or reload the running
-         game and redraw the world.
-// ORIGINAL: 0x0051BBA0 ?load_proc@Console@@QAEXHH@Z 0x0051BBA0-0x0051BC62 FILE BYTE_EXACT
-// size      194 bytes
-// prototype void (__thiscall ?load_proc@Console@@QAEXHH@Z)(Console* this, int, int)
-// callers   2   call targets   9
-// kind      game
-// flags     frame;sp_ready;purged_ok
-// calls     0x0041A4C0 0x00460DD0 0x0046B190 0x0058EE60 0x0058F450 0x005AAAB0 0x005D5A70 0x005FCBB0 0x00644DFF
-*/
-void Console::load_proc(int save_slot, int faction_id) {
-    TutWinBaseWindow.exit();
-    if (IsMultiplayerNet != 0 && (GameDataStateStorage.fields_.game_state_ & 0x1000) == 0) {
-        return;
-    }
-    if (IsMultiplayerPBEM != 0 && (GameDataStateStorage.fields_.game_state_ & 0x1000) == 0) {
-        return;
-    }
-    if (load_game(save_slot, faction_id) != 0) {
-        return;
-    }
-    if (GameSessionActive != 0) {
-        if (game_reload(1, 0) != 0) {
-            exit(3);
-        }
-    } else {
-        desktop_init(0);
-    }
-    if (save_slot != 0) {
-        GameDataStateStorage.fields_.game_state_ |= 0xE0;
-        do_all_draws();
-        ::draw_map(1);
-        WorldClimateWorldWin.field_239BC_ |= 4;
-        WorldClimateWorldWin.GraphicWin::redraw();
-    }
-    alpha_menu_.check(selected_vehicle_);
-}
-
-/*
-Purpose: Play out the turn boundary until the game says to stop: drive
-         end_of_game, wait out the loop's queued work, and launch the tutorial
-         when it was requested.
-// ORIGINAL: 0x00513FC0 ?end_of_turn@Console@@QAEXXZ 0x00513FC0-0x0051404E FILE BYTE_EXACT
-// size      142 bytes
-// prototype void (__thiscall ?end_of_turn@Console@@QAEXXZ)(Console* this)
-// callers   0   call targets   3
-// kind      game
-// flags     frame;hidden;sp_ready;purged_ok
-// calls     0x004BC6E0 0x0051F200 0x00524870
-*/
-void Console::end_of_turn() {
-    field_23BE4_ = 1;
-    const int saved_group_count = GameDataStateStorage.fields_.vehicle_current_count_;
-
-    while (ConsoleGlobal.cursor_active_ == 0 && field_23BE4_ != 0 &&
-           field_23BE8_ != 0 && ExitTurnLoop == 0) {
-        if (end_of_game(0) != 0) break;
-        if (saved_group_count != GameDataStateStorage.fields_.vehicle_current_count_) break;
-
-        if (IsMultiplayerNet != 0) {
-            if ((GameDataStateStorage.fields_.game_state_ & 0x800) != 0) break;
-        }
-
-        wait_loop();
-        if (TutWinTourPending != 0) {
-            TutWinTourPending = 0;
-            TutorialWindow.tour();
-        }
-    }
-
-    field_23BE4_ = 0;
-}
-
-// ORIGINAL: 0x005165B0 ?zoom_to_upkeep_base@Console@@QAEXXZ 0x005165B0-0x005166C3 BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["The retained 0x005165B0 seed selects the nearest own base carrying Base::state bit 0x10, using the current MapWin camera coordinates and wraps X on round maps.", "base.h names the 0x0097D040 array as Bases with 0x134-byte Base records; its x/y/faction/state members are at offsets 0/2/4/0x30, matching all seed reads.", "MapWin fields 0x1DD9C/0x1DDA0 supply the camera point; map.cpp binds MapLongitude/MapIsFlat/MapLongitudeBounds; tutwin.h binds the image's BaseWin at 0x006A7628 as TutWinBaseWindow."], "reason": "Choose the nearest base of ConsoleGlobal's current faction with the seed's wrapped-map distance calculation and pass its typed index to the established BaseWin zoom path."}
-void Console::zoom_to_upkeep_base() {
-    const MapWin *map_window = console_map_win();
-    const int camera_x = map_window->center_x_;
-    const int camera_y = map_window->center_y_;
-    int best_distance = 99999;
-    int best_base = -1;
-
-    for (int base_id = 0; base_id < GameDataStateStorage.fields_.base_current_count_; ++base_id) {
-        const Base &base = Bases[base_id];
-        if (base.faction_id_current == ConsoleGlobal.faction_id_ &&
-            (base.state & BSTATE_UNK_10) != 0) {
-            const int distance = map_dist(camera_x, camera_y, base.x, base.y);
-            if (distance <= best_distance) {
-                best_base = base_id;
-                best_distance = distance;
-            }
-        }
-    }
-
-    if (best_base >= 0) {
-        TutWinBaseWindow.zoom(best_base, 0);
-    }
+void __cdecl nullsub_186() {
 }
 
 
@@ -3554,6 +3101,471 @@ void Console::time_controls() {
 
     message_data(0x4C02, 0, result, 0, 0, 0);
 }
+
+// ORIGINAL: 0x00515EF0 ?toggle_patrol@Console@@QAEXXZ 0x00515EF0-0x00515F70 FILE BYTE_EXACT
+// working copy - scaffold materialised by --work
+// size      128 bytes
+// prototype void (__thiscall ?toggle_patrol@Console@@QAEXXZ)(Console* this)
+// callers   0   call targets   2
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x00467970 0x0046A550
+
+void Console::toggle_patrol() {
+    MapWin *const first = MapWinTable[0];
+    int mask = first->field_1DD70_ & 0x400000;
+    for (int slot = 0; slot < 8; ++slot) {
+        if (MapWinTable[slot] != 0 &&
+            (slot == 0 || MapWinTable[slot]->view_active_ != 0)) {
+            if (mask == 0) {
+                MapWinTable[slot]->field_1DD70_ |= 0x400000;
+                MapWinTable[slot]->draw_base_dest(1);
+            } else {
+                MapWinTable[slot]->field_1DD70_ &= 0xffbfffff;
+                MapWinTable[slot]->draw_map(1);
+            }
+        }
+    }
+}
+
+// The editor's landmark removal command. The original uses the current
+// cursor-history coordinate when either supplied coordinate is outside the
+// map, then asks for confirmation before deleting the named landmark.
+// The three popup keys are the strings at 0x0068A994/0x0068A9A4/0x0068A9B0.
+// ORIGINAL: 0x00516490 ?erase_landmark@Console@@QAEXHH@Z 0x00516490-0x005165A6 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["The original 0x00516490..0x005165A6 seed searches a landmark, checks editor permission, confirms LANDMARKKILL, then either sends a multiplayer message or deletes and redraws locally.", "src/map.h owns MapLandmark, MapLandmarkCount, map bounds and landmark helpers; src/console.h owns cursor-history coordinates and faction_id_; src/game.h owns GameState and IsMultiplayerNet.", "The pinned image stores popup keys LANDMARKNONE, LANDMARKNO and LANDMARKKILL at 0x0068A994, 0x0068A9A4 and 0x0068A9B0.", "git:b2de7f29042d247ee9b448c814029bbbbc35f230:src/recovered/units/00516490.cpp"], "reason": "Recover the Console landmark removal command through typed map, game and cursor owners while preserving its historical byte claim in the separate seed until remeasurement. Superseded scaffold retired at user request; historical claims and seed findings are transferred, not freshly granted. Current matching/restoration and any documented unfinished stages remain obligations."}
+// kind      game
+void Console::erase_landmark(int x_coord, int y_coord) {
+    if (y_coord < 0 || y_coord >= MapLatitudeBounds ||
+        x_coord < 0 || x_coord >= MapLongitudeBounds) {
+        const int index = ConsoleGlobal.cursor_history_index_;
+        x_coord = ConsoleGlobal.cursor_history_x_[index];
+        y_coord = ConsoleGlobal.cursor_history_y_[index];
+    }
+
+    const int landmark_id = find_landmark(x_coord, y_coord, 1);
+    if (landmark_id < 0) {
+// RECOVERY_LITERAL: v1 0x0068A994 0x0068A9A1 $SG63579 0x00516490
+        NetMsgPrimary.pop("LANDMARKNONE", 5000, 0, nullptr);
+        return;
+    }
+    if ((GameDataStateStorage.fields_.game_state_ & 0x80) == 0 &&
+        valid_landmark(x_coord, y_coord, ConsoleGlobal.faction_id_) == 0) {
+        NetMsgPrimary.pop(EraseLandmarkDeniedKey, 5000, 0, nullptr);
+        return;
+    }
+
+    parse_says(0, MapLandmark[landmark_id].name, -1, -1);
+// RECOVERY_LITERAL: v1 0x0068A9B0 0x0068A9BD $SG63582 0x00516490
+    if (X_pop("LANDMARKKILL", nullptr) == 0) {
+        return;
+    }
+    if (IsMultiplayerNet != 0) {
+        message_data(0x2e02, 0, x_coord, y_coord, 0, 0);
+        return;
+    }
+    kill_landmark(MapLandmark[landmark_id].x, MapLandmark[landmark_id].y);
+    ::draw_map(1);
+}
+
+// ORIGINAL: 0x005165B0 ?zoom_to_upkeep_base@Console@@QAEXXZ 0x005165B0-0x005166C3 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["The retained 0x005165B0 seed selects the nearest own base carrying Base::state bit 0x10, using the current MapWin camera coordinates and wraps X on round maps.", "base.h names the 0x0097D040 array as Bases with 0x134-byte Base records; its x/y/faction/state members are at offsets 0/2/4/0x30, matching all seed reads.", "MapWin fields 0x1DD9C/0x1DDA0 supply the camera point; map.cpp binds MapLongitude/MapIsFlat/MapLongitudeBounds; tutwin.h binds the image's BaseWin at 0x006A7628 as TutWinBaseWindow."], "reason": "Choose the nearest base of ConsoleGlobal's current faction with the seed's wrapped-map distance calculation and pass its typed index to the established BaseWin zoom path."}
+void Console::zoom_to_upkeep_base() {
+    const MapWin *map_window = console_map_win();
+    const int camera_x = map_window->center_x_;
+    const int camera_y = map_window->center_y_;
+    int best_distance = 99999;
+    int best_base = -1;
+
+    for (int base_id = 0; base_id < GameDataStateStorage.fields_.base_current_count_; ++base_id) {
+        const Base &base = Bases[base_id];
+        if (base.faction_id_current == ConsoleGlobal.faction_id_ &&
+            (base.state & BSTATE_UNK_10) != 0) {
+            const int distance = map_dist(camera_x, camera_y, base.x, base.y);
+            if (distance <= best_distance) {
+                best_base = base_id;
+                best_distance = distance;
+            }
+        }
+    }
+
+    if (best_base >= 0) {
+        TutWinBaseWindow.zoom(best_base, 0);
+    }
+}
+
+// ORIGINAL: 0x00516930 ?menu_detail@Console@@QAEXXZ 0x00516930-0x00516961 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["The 0x00516930 seed sets GameMorePreferences bit 0x200000, calls the Console member at +0x22A2C using its current vehicle, and passes the image string at 0x0068A9C0 to X_pop.", "src/console.h identifies alpha_menu_ at Console +0x22A2C and selected_vehicle_; src/console.cpp already binds the matching MENUDETAIL text as ConsoleStrMenuDetail, and alpha.h names GameMorePreferences."], "reason": "Express menu detail activation through the existing preference flag, typed AlphaMenu member, Console selection state and established string binding."}
+void Console::menu_detail() {
+    GameDataStateStorage.fields_.game_more_preferences_ |= 0x200000;
+    alpha_menu_.check(selected_vehicle_);
+    X_pop(ConsoleStrMenuDetail, 0);
+}
+
+// ORIGINAL: 0x00516970 ?menu_simple@Console@@QAEXXZ 0x00516970-0x005169A1 FILE BYTE_EXACT
+// size      49 bytes
+// prototype void (__thiscall ?menu_simple@Console@@QAEXXZ)(Console* this)
+// callers   0   call targets   2
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x00460DD0 0x005BF310
+// PRESERVED UNIT - measured MNEMONIC_ONLY.
+//
+// Kept for COVERAGE. This directory IS on the ratchet: every file here
+// carries an ORIGINAL marker, `decomp_status.py` compiles and measures
+// it, and 336 of the 1,108 now carry a BYTE_EXACT claim - better than a
+// quarter of the project's total. It is still in no build; the earlier
+// header said "on no ratchet", which stopped being true when the map
+// moved into src/ and was still being written into new files.
+//
+// address        0x00516970
+// measured tier  MNEMONIC_ONLY
+//
+// The WHOLE unit as measured, scaffolding included: for the units
+// that are byte-exact yet refuse extraction, the agent tuned the
+// emitted scaffolding and the body alone will not reproduce the
+// verdict. To resume, copy everything below back over
+//   build/byte-match/00516970/unit.cpp
+// and score it with tools/agent_brief.py.
+// GENERATED SKELETON - tools/emit_translation_unit.py
+// subject: ?menu_simple@Console@@QAEXXZ  at 0x00516970  (49 bytes)
+//
+// A VERIFICATION ARTIFACT, not product source: classes are opaque and
+// globals are bound to fixed addresses, because both are byte-visible
+// and both differ from the style src/ is written in.
+//
+// VC6 DIALECT - this must compile under cl 12.00.8168, which is the
+// only compiler this project builds with. Avoid: auto, nullptr, constexpr,
+// static_assert, enum class, range-for, lambdas, long long, <cstdint>,
+// and declaring `int i` twice in one function (VC6 leaks for-scope).
+// static_cast/reinterpret_cast are fine and are the right spelling.
+//
+// SOURCE-FORM RULES, each one learned by a fan-out agent that lost
+// attempts to it. They are here rather than in a prompt so the next
+// agent does not rediscover them:
+//
+//  * A ternary is not an if. `x ? a : b` lowers to `jne` with the arms
+//    swapped; `if (x) {...}` gives `je`.
+//  * VC6 NEVER hoists a same-polarity guard's body out of line. To get
+//    two special cases branching FAR away, write them negated and
+//    NESTED - `if (a != X) { if (a != Y) { return D; } ...; }` - not as
+//    sequential guard clauses, which inline each body instead.
+//  * VC6 rejects `__thiscall` on a free function pointer (C4234). For
+//    an indirect virtual call use the generated VCall shim below; for a
+//    thiscall function POINTER, take a member-function pointer of a
+//    dummy class instead of spelling the convention.
+//  * Loop form is visible: while / do-while / for lower differently,
+//    and so does counting up versus down.
+//  * If the original dedicates a callee-saved register to a constant
+//    across the whole body (an extra `push ebx`/`push edi` in the
+//    prologue), it had enough register pressure to do so. That is a
+//    hard case - the tool reports a similarity ratio so you can tell a
+//    near miss from a wrong body.
+
+
+void Console::menu_simple() {
+    // NEAR MISS, not byte-exact (MNEMONIC_ONLY): the original loads the
+    // field-0x11b0 value into EAX and cleans the X_pop call with
+    // `add esp,8`; this toolchain's /O2 register allocator instead puts the
+    // value in EDX here (mnemonics match one-for-one, only the register
+    // operand differs), and under /O1 it folds the load into `push
+    // dword ptr [...]` plus a `pop/pop` cleanup - both worse.
+    //
+    // RULED OUT: ten source-level variants tried, all producing the exact
+    // same EDX choice under /O2 - named vs. inlined field read, swapping
+    // statement order, `volatile`, `register`, reusing ONE local for both
+    // the flag and the field value (to bias reuse of the just-freed EAX),
+    // a comma-expression folding the RMW and the read into one argument
+    // expression, and routing the read through a forced-inline getter (to
+    // invoke the "return value lives in eax" convention). Also confirmed in
+    // ISOLATION, outside this function: a bare N-argument forwarding probe
+    // (unrelated to this call) shows this same EAX-after-just-freed-EAX
+    // reuse never happens for a fresh single-use temporary under these
+    // project flags - see 0x00624D00's near miss for the same family of
+    // issue (fixed register-count/window choices by the scheduler, not
+    // reachable from portable source).
+    // menu+0x11b0 is selected_vehicle_: 0x22A2C + 0x11B0 = 0x23BDC. The member
+    // form replaces the MainMenu pun this body used to carry.
+    GameDataStateStorage.fields_.game_more_preferences_ &= 0xffdfffff;
+    alpha_menu_.check(selected_vehicle_);
+    X_pop(ConsoleStrMenuSimple, 0);
+}
+
+// ORIGINAL: 0x005169B0 ?base_me@Console@@QAEXXZ 0x005169B0-0x005169E6 BYTE_EXACT
+// size      54 bytes
+// prototype void (__thiscall ?base_me@Console@@QAEXXZ)(Console* this)
+// callers   0   call targets   2
+// kind      game
+// flags     sp_ready;purged_ok
+// calls     0x0041A920 0x004E3C60
+// 0x005169B0  ?base_me@Console@@QAEXXZ  ->  ?base_me@Console@@QAEXXZ
+//
+// BLOCKED (2026-09-03, P1 calibration) on a basewin.h declaration this TU does
+// not own: 0x0041A920 is BaseWin::zoom, undeclared. It needs a declaration on
+// BaseWin and a pending_bodies forwarder. Everything else is already bound:
+// base_find (base.h:533, the three-int overload), LocalFaction (game.h:865,
+// 0x00939284 - the scaffold's g_00939284), and tutwin.h's
+// TutWinBaseWindow for 0x006A7628.
+//
+// The de-punned body, ready to drop in once zoom is declared:
+//
+// void Console::base_me() {
+//     const int index = ConsoleGlobal.cursor_history_index_;
+//     const int result = base_find(ConsoleGlobal.cursor_history_x_[index], ConsoleGlobal.cursor_history_y_[index],
+//                                  LocalFaction);
+//     if (result >= 0) {
+//         TutWinBaseWindow.zoom(result, 0);
+//     }
+// }
+
+
+void Console::base_me() {
+    const int slot = ConsoleGlobal.cursor_history_index_;
+    const int base_id =
+        base_find(ConsoleGlobal.cursor_history_x_[slot], ConsoleGlobal.cursor_history_y_[slot], ConsoleGlobal.faction_id_);
+    if (base_id >= 0) {
+        TutWinBaseWindow.zoom(base_id, 0);
+    }
+}
+
+// ORIGINAL: 0x00516C50 ?show_scen_objectives@Console@@QAEXXZ 0x00516C50-0x00516D98 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["The 0x00516C50 seed parses ObjectiveReqVictory, ObjectivesSuddenDeathVictory and EndingMissionYear before processing faction-specific names.", "src/faction.h defines Players as 0x59C Player records: the seed's 0x00946A50, 0x00946A9C, 0x00946A84, 0x00946D4C, 0x00946D50 and 0x00946D34 references correspond to Player::is_leader_female, title_leader, name_leader, noun_gender, is_noun_plural and noun_faction.", "src/game.h owns GameRules and victory settings; general.h owns GenderDefault, PluralityDefault, parse_num, parse_says and say_year; strings.h owns StringTemp. The original popup keys at 0x0068AA0C and 0x0068AA18 are OBJECTIVES and SCENARIO, respectively.", "The seed's 0x005BF330 caption/label/callback call is represented by xpops.h's x_pop_caption_label, whose implementation forwards with the defaults (-1, no override, flags 0) to the typed full popup."], "reason": "Render scenario objectives through the existing faction, game-state, parser, scratch-buffer and popup owners, preserving the pinned OBJECTIVES and SCENARIO key values."}
+void Console::show_scen_objectives() {
+    parse_num(0, ScenarioSave.objective_req_victory);
+    parse_num(1, ScenarioSave.objectives_sudden_death_victory);
+    parse_num(2, num_objectives(ConsoleGlobal.faction_id_, GameDataStateStorage.fields_.game_rules_ & 0x1000));
+    parse_num(3, ScenarioSave.ending_mission_year);
+
+    GenderDefault = Players[ConsoleGlobal.faction_id_].is_leader_female;
+    PluralityDefault = 0;
+    parse_says(1, Players[ConsoleGlobal.faction_id_].title_leader, -1, -1);
+    GenderDefault = Players[ConsoleGlobal.faction_id_].is_leader_female;
+    PluralityDefault = 0;
+    parse_says(2, Players[ConsoleGlobal.faction_id_].name_leader, -1, -1);
+    GenderDefault = Players[ConsoleGlobal.faction_id_].noun_gender;
+    PluralityDefault = Players[ConsoleGlobal.faction_id_].is_noun_plural;
+    parse_says(3, Players[ConsoleGlobal.faction_id_].noun_faction, -1, -1);
+
+    StringTemp[0] = 0;
+    say_year(StringTemp);
+    parse_says(4, StringTemp, -1, -1);
+    parse_says(0, StringTemp, -1, -1);
+    X_pop(StrScenarioObjectivesTitle, StrScenarioObjectivesPopup, 0);
+}
+
+// ORIGINAL: 0x00517180 ?show_version@Console@@QAEXXZ 0x00517180-0x005171C1 FILE BYTE_EXACT
+// size      65 bytes
+// prototype void (__thiscall ?show_version@Console@@QAEXXZ)(Console* this)
+// callers   0   call targets   2
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x0048C0A0 0x00625EC0
+// PRESERVED UNIT - measured BYTE_EXACT.
+//
+// Homed 2026-09-04. Its historical measurement was NO_COMPILE, not MISMATCH.
+// The original writable .data pointer slots at 0x00691870/74 and their
+// distinct text windows are now represented by shared source-owned objects.
+// The caption slot at 0x00691B0C is ScriptPopupFile; the two popp strings are
+// the existing source-owned arrays below.
+
+
+void Console::show_version() {
+    parse_says(0, ConsoleVersionRelease, -1, -1);
+    parse_says(1, ConsoleVersionBuildDate, -1, -1);
+    popp(ScriptPopupFile, ConsoleStrVersionControlX, 0, ConsoleStrAcLogoSm,
+         (NullCallback)0);
+}
+
+
+/*
+Purpose: Load a saved game: leave the base window, refuse outside an active
+         network/PBEM session, then rebuild the desktop or reload the running
+         game and redraw the world.
+// ORIGINAL: 0x0051BBA0 ?load_proc@Console@@QAEXHH@Z 0x0051BBA0-0x0051BC62 FILE BYTE_EXACT
+// size      194 bytes
+// prototype void (__thiscall ?load_proc@Console@@QAEXHH@Z)(Console* this, int, int)
+// callers   2   call targets   9
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x0041A4C0 0x00460DD0 0x0046B190 0x0058EE60 0x0058F450 0x005AAAB0 0x005D5A70 0x005FCBB0 0x00644DFF
+*/
+void Console::load_proc(int save_slot, int faction_id) {
+    TutWinBaseWindow.exit();
+    if (IsMultiplayerNet != 0 && (GameDataStateStorage.fields_.game_state_ & 0x1000) == 0) {
+        return;
+    }
+    if (IsMultiplayerPBEM != 0 && (GameDataStateStorage.fields_.game_state_ & 0x1000) == 0) {
+        return;
+    }
+    if (load_game(save_slot, faction_id) != 0) {
+        return;
+    }
+    if (GameSessionActive != 0) {
+        if (game_reload(1, 0) != 0) {
+            exit(3);
+        }
+    } else {
+        desktop_init(0);
+    }
+    if (save_slot != 0) {
+        GameDataStateStorage.fields_.game_state_ |= 0xE0;
+        do_all_draws();
+        ::draw_map(1);
+        WorldClimateWorldWin.field_239BC_ |= 4;
+        WorldClimateWorldWin.GraphicWin::redraw();
+    }
+    alpha_menu_.check(selected_vehicle_);
+}
+
+
+
+/*
+// ORIGINAL: 0x0051D740 ?menu_update@Console@@QAEXXZ 0x0051D740-0x0051D753 BYTE_EXACT
+// size      19 bytes
+// prototype void (__thiscall ?menu_update@Console@@QAEXXZ)(Console* this)
+// callers   0   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x00460DD0
+Status: Complete
+*/
+void Console::menu_update() {
+    // alpha_menu_ IS the object the image calls 0x00460DD0 on - the member
+    // form replaces the MainMenu pun this body used to carry, and measured
+    // BYTE_EXACT unchanged (2026-09-04).
+    alpha_menu_.check(selected_vehicle_);
+}
+
+
+/*
+Purpose: Record that the console was closed from the system menu, by raising
+         the flag the turn loop watches.
+// ORIGINAL: 0x0051D7C0 ?on_sys_close@Console@@QAEXXZ 0x0051D7C0-0x0051D7CB BYTE_EXACT
+// symbol    ?on_sys_close@Console@@UAEXXZ
+// size      11 bytes
+// prototype void (__thiscall ?on_sys_close@Console@@QAEXXZ)(Console* this)
+// callers   0   call targets   0
+// kind      game
+// flags     sp_ready;purged_ok
+// calls     (none)
+Return Value: n/a
+Status: Complete
+*/
+void Console::on_sys_close() {
+    ExitTurnLoop = 1;
+}
+
+
+
+// Compiler-generated Win slot17 receiver adjustment for MapWin mouse feedback.
+// The original catalogue name remains on the mapping below.
+/*
+Purpose: Adjust the receiver from MapWin's thunk4 subobject to the one
+         MapWin::on_mouse_move expects, then forward unchanged.
+// ORIGINAL: 0x0051DE70 ?on_mouse_move@thunk4_MapWin@@QAEXHH@Z 0x0051DE70-0x0051DE7E FILE BYTE_EXACT
+// symbol    ?on_mouse_move@MapWin@@$4PPPPPPPM@CDCI@AEXHH@Z
+// size      14 bytes
+// prototype void (__thiscall ?on_mouse_move@thunk4_MapWin@@QAEXHH@Z)(MapWin* this, int, int)
+// callers   0   call targets   0
+// kind      game
+// flags     sp_ready;purged_ok
+// calls     (none)
+Return Value: n/a
+Status: Complete
+*/
+
+// Compiler-generated Win slot13 adjustor for the genuine MapWin resize
+// override. The virtual-base layout owns the receiver adjustment.
+/*
+Purpose: Adjust the receiver from MapWin's thunk4 subobject to the one
+         MapWin::on_resize expects, then forward unchanged.
+// ORIGINAL: 0x0051DE50 ?on_resize@thunk4_MapWin@@QAEXHH@Z 0x0051DE50-0x0051DE5E FILE BYTE_EXACT
+// symbol    ?on_resize@MapWin@@$4PPPPPPPM@CDCI@AEXHH@Z
+// size      14 bytes
+// prototype void (__thiscall ?on_resize@thunk4_MapWin@@QAEXHH@Z)(MapWin* this, int, int)
+// callers   0   call targets   0
+// kind      game
+// flags     sp_ready;purged_ok
+// calls     (none)
+Return Value: n/a
+Status: Complete
+*/
+
+// Compiler-generated Win-branch capture adjustor from the genuine
+// MapWin override and virtual GraphicWin base; no handwritten thunk body.
+/*
+Purpose: Adjust the receiver from MapWin's thunk4 subobject to the one
+         MapWin::on_lose_mouse_capture expects, then forward unchanged.
+// ORIGINAL: 0x0051DE30 ?on_lose_mouse_capture@thunk4_MapWin@@QAEXXZ 0x0051DE30-0x0051DE3E FILE BYTE_EXACT
+// symbol    ?on_lose_mouse_capture@MapWin@@$4PPPPPPPM@CDCI@AEXXZ
+// size      14 bytes
+// prototype void (__thiscall ?on_lose_mouse_capture@thunk4_MapWin@@QAEXXZ)(MapWin* this)
+// callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+Return Value: n/a
+Status: Complete
+*/
+
+/*
+Purpose: Reset the console - clear its scalar state and history slot zero,
+         then close the Buffer, Time and GraphicWin
+         subobjects and clear the map.
+The historical forwarding notes below predate the separate timer lifecycle TU;
+the timer call now uses the existing Time member directly.
+// ORIGINAL: 0x0051D7D0 ?close@Console@@QAEXXZ 0x0051D7D0-0x0051D88E BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["Console owns buffer_ at2247C, time_ at22A04 and alpha_menu_ at22A2C; AlphaMenu derives nonvirtually from Menu/GraphicWin.", "Pinned51D7D0 tail selects receiver+2247C for5D7470, receiver+22A04 for616780, receiver+22A2C for5D4E40, then clear(0); this closes members without substituting destruction."], "reason": "Select the constructed Console Buffer and AlphaMenu GraphicWin base through their real members; preserve scalar resets, repeated history-slot-zero writes and Buffer/Time/GraphicWin/clear ordering."}
+// LEVER: PROMOTED out of src/unrecovered/0051d7d0.cpp, whose claim proved the ARTIFACT reproduced while the program held a pending_bodies forwarder. `void close()` was not declared on Console at all - that, not the body, is what kept it in an artifact.
+// LEVER (2026-09-03): time_close_call, not `->close()` on the Time at
+//        0x22a04. The image CALLS 0x00616780 here (0x0051D873) where
+//        time.h's in-class `MEASURED close` otherwise expands at this site
+//        too - 68 compiled instructions against the image's 40, 22/40
+//        agreeing, the whole extra block being Time's own teardown written
+//        out. Buffer::close and GraphicWin::close needed nothing: both are
+//        declared out-of-line in their headers, so both were already calls.
+// symbol    ?close@Console@@QAEXXZ
+// size      190 bytes
+// kind      game
+Return Value: n/a
+Status: Complete
+*/
+void Console::close() {
+    field_23BC8_ = 0xffffffff;
+    cursor_active_ = 0;
+    field_23BE4_ = 0;
+    field_23BE8_ = 0;
+    field_23BF0_ = 0;
+    field_23BF4_ = 0;
+    survey_mode_ = 0;
+    blink2_counter_ = 0;
+    field_23BFC_ = 0;
+    field_23BF8_ = 0;
+    cursor_history_index_ = 0;
+    // 0x0051D821..0x0051D83C reloads this same index on every iteration.
+    // Slots 1..31 and the history head survive close().
+    int count = 0x20;
+    do {
+        count -= 1;
+        int32_t idx1 = cursor_history_index_;
+        cursor_history_x_[idx1] = 0;
+        int32_t idx2 = cursor_history_index_;
+        cursor_history_y_[idx2] = 0;
+    } while (count != 0);
+    field_23D10_ = 0;
+    field_23D18_ = 0;
+    field_23D88_ = 0;
+    field_23D80_ = 0;
+    field_23D8C_ = 0;
+    field_23D84_ = 0;
+    buffer_.close();
+    time_.close();
+    static_cast<GraphicWin &>(alpha_menu_).close();
+    clear(0);
+}
+
+
+
 
 // The splitter distances use a textual abs: its operand is expanded twice.
 #define SPLIT_ABS(v) ((v) >= 0 ? (v) : -(v))
@@ -3727,6 +3739,52 @@ void Console::on_nc_left_down(int x_coord, int y_coord) {
     }
 }
 
+// Superseded seed deleted; seed paths below are historical Git provenance.
+// ORIGINAL: 0x0050FE70 ?on_nc_left_up@Console@@QAEXHH@Z 0x0050FE70-0x0051010A BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/0050fe70.cpp: retained complete original identity/spans and seed evidence", "recovery/tasks/console-scenario-owner-wave.json; native scope expansions through sequence27", "Source owner interpretation preserves mapped original accesses, lifetime calls and branch roles; source-bound members and globals replace the seed offsets/address aliases. Historical seeds and claims remain independent restoration obligations."], "reason": "Recover splitter release into the genuine Console owner using source Win capture owners, real Win inheritance, embedded Sprite geometry and named splitter members. Preserve signed sentinel ordering and the original update operations; no fixed executable calls or self-offset access."}
+// symbol    ?on_nc_left_up@Console@@UAEXHH@Z
+void Console::on_nc_left_up(int x, int y) {
+    release_pointer();
+
+    // Each clamp re-reads the geometry: the stores go through `target`.
+    if (field_23D80_ != -1 && field_23D84_ != -1) {
+        if (field_23D88_ == -1 || field_23D8C_ == -1) {
+            int *const target = field_23D88_ == -1 ? &field_23D88_ : &field_23D8C_;
+            *target = y - (track_height() - bottom_border() + caption_height_);
+            if (*target < sprite_b_.height() / 2) {
+                *target = sprite_b_.height() / 2;
+            }
+            if (*target > client_height() - caption_height_ - bottom_border() -
+                              sprite_b_.height() / 2) {
+                *target = client_height() - caption_height_ - bottom_border() -
+                          sprite_b_.height() / 2;
+            }
+            update(0, ConsoleDragLineY, dib_.bmiHeader.biWidth, 1, nullptr);
+            update(ConsoleDragLineX, 0, 1, -static_cast<int>(dib_.bmiHeader.biHeight), nullptr);
+        }
+    } else {
+        int *const target = field_23D80_ == -1 ? &field_23D80_ : &field_23D84_;
+        *target = x - border_thickness_;
+        if (*target < sprite_a_.width() / 2) {
+            *target = sprite_a_.width() / 2;
+        }
+        if (*target > client_width() - border_thickness_ * 2 -
+                          sprite_a_.width() / 2) {
+            *target = client_width() - border_thickness_ * 2 -
+                      sprite_a_.width() / 2;
+        }
+        update(0, ConsoleDragLineY, dib_.bmiHeader.biWidth, 1, nullptr);
+        update(ConsoleDragLineX, 0, 1, -static_cast<int>(dib_.bmiHeader.biHeight), nullptr);
+    }
+
+    if (field_23D88_ > field_23D8C_) {
+        swap(&field_23D88_, &field_23D8C_);
+    }
+    if (field_23D80_ > field_23D84_) {
+        swap(&field_23D80_, &field_23D84_);
+    }
+}
+
 /*
 Purpose: A non-client mouse move while a splitter drag is armed: whichever of
          the four drag slots holds a live position follows the cursor between
@@ -3810,183 +3868,6 @@ void Console::on_nc_mouse_move(int x_coord, int y_coord) {
                         line_x, 0, 0, 1, 0);
         ConsoleDragLineX = line_x;
         ConsoleDragLineY = line_y;
-    }
-}
-
-// Superseded seed deleted; seed paths below are historical Git provenance.
-// RECOVERY_ASSOCIATED: v1 switch_targets 0x005166D0 0x005168B8 0x005168D0 0x005166F2
-// RECOVERY_ASSOCIATED: v1 switch_selector 0x005166D0 0x005168D0 0x00516921 0x005166EC
-// ORIGINAL: 0x005166D0 ?cursor_key@Console@@QAEXHHH@Z 0x005166D0-0x005168B7 BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/005166d0.cpp: original identity and complete spans", "source:src/console.h: Console owner declarations and layout", "source:src/console.cpp: coupled navigation, selection and lifecycle caller relationships"], "reason": "The original Console operation is expressed by the corresponding real Console owner definition, using its recovered members and source-owned callees rather than the retained seed scaffold."}
-void Console::cursor_key(int, int character, int) {
-    switch (character) {
-    case ' ': {
-        const int i = ConsoleGlobal.cursor_history_index_;
-        const int base = base_at(ConsoleGlobal.cursor_history_x_[i],
-                                 ConsoleGlobal.cursor_history_y_[i]);
-        if (base >= 0 && ((GameDataStateStorage.fields_.game_state_ & 0x80) ||
-            Bases[base].faction_id_current == ConsoleGlobal.faction_id_ ||
-            ((Bases[base].visibility & (1u << ConsoleGlobal.faction_id_)) &&
-             spying(Bases[base].faction_id_current)))) {
-            TutWinBaseWindow.zoom(base, 0);
-            return;
-        }
-    }
-    case 'a':
-        if (!NetDaemonNet.field_1BB4_) {
-            const int i = ConsoleGlobal.cursor_history_index_;
-            activate(ConsoleGlobal.cursor_history_x_[i],
-                     ConsoleGlobal.cursor_history_y_[i], 1);
-            return;
-        }
-        break;
-    case 'b': {
-        const int i = ConsoleGlobal.cursor_history_index_;
-        const int base = base_find(ConsoleGlobal.cursor_history_x_[i],
-            ConsoleGlobal.cursor_history_y_[i], ConsoleGlobal.faction_id_);
-        if (base >= 0) TutWinBaseWindow.zoom(base, 0);
-        break;
-    }
-    case 'g':
-        if (!ConsoleControlTurnActive && !NetDaemonNet.field_1BB4_) {
-            const int i = ConsoleGlobal.cursor_history_index_;
-            const int base = base_at(ConsoleGlobal.cursor_history_x_[i],
-                                     ConsoleGlobal.cursor_history_y_[i]);
-            if (base >= 0) go_to(base, -1, 0);
-        }
-        break;
-    case 'p': {
-        const unsigned int shown = MapWinTable[0]->field_1DD70_ & 0x400000;
-        // The walk re-reads the window through its slot after each store; an
-        // int index, which VC6 strength-reduces to the slot pointer with the
-        // image's signed bound compare (jl).
-        for (int i = 0; i < MapWinTableSlots; i++) {
-            if (!MapWinTable[i] || (i != 0 && !MapWinTable[i]->view_active_)) continue;
-            if (!shown) {
-                MapWinTable[i]->field_1DD70_ |= 0x400000;
-                MapWinTable[i]->draw_base_dest(1);
-            } else {
-                MapWinTable[i]->field_1DD70_ &= ~0x400000u;
-                MapWinTable[i]->draw_map(1);
-            }
-        }
-        break;
-    }
-    }
-}
-
-// Superseded seed deleted; seed paths below are historical Git provenance.
-// ORIGINAL: 0x00517060 ?use_time_bonus@Console@@QAEXXZ 0x00517060-0x00517173 BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/00517060.cpp: original identity and complete spans", "source:src/console.h: Console owner declarations and layout", "source:src/console.cpp: coupled navigation, selection and lifecycle caller relationships"], "reason": "The original Console operation is expressed by the corresponding real Console owner definition, using its recovered members and source-owned callees rather than the retained seed scaffold."}
-void Console::use_time_bonus() {
-    if (ConsoleControlTurnActive) return;
-    const int selection = GameDataStateStorage.fields_.time_controls_selection_;
-    if (!selection) return;
-    if (!IsMultiplayerNet) return;
-    if ((GameDataStateStorage.fields_.net_turn_flags_ & 0x10) &&
-        GameDataStateStorage.fields_.net_turn_faction_ != ConsoleGlobal.faction_id_) {
-// RECOVERY_LITERAL: v1 0x0068AA48 0x0068AA50 $SG64041 0x00517060
-        NetMsgPrimary.pop("SIMULNO", 5000, 0, nullptr);
-        return;
-    }
-    const int faction = ConsoleGlobal.faction_id_;
-    if (PlayersData[faction].time_bonus_count <= 0) {
-        parse_num(0, TimeControl[selection].refresh);
-// RECOVERY_LITERAL: v1 0x0068AA50 0x0068AA5E $SG64044 0x00517060
-        NetMsgPrimary.pop("NOTIMEBONUSES", 5000, 0, nullptr);
-        return;
-    }
-    if (GameDataStateStorage.fields_.game_state_ & 0x800) {
-// RECOVERY_LITERAL: v1 0x0068AA60 0x0068AA6D $SG64046 0x00517060
-        NetMsgPrimary.pop("NOBONUSATEND", 5000, 0, nullptr);
-        return;
-    }
-    if ((GameDataStateStorage.fields_.game_state_ & 2) &&
-        ((1u << faction_id_) & NetDaemonNet.primary_state_.trailing_words_[6])) {
-// RECOVERY_LITERAL: v1 0x0068AA70 0x0068AA7C $SG64048 0x00517060
-        NetMsgPrimary.pop("NOBONUSDONE", 5000, 0, nullptr);
-        return;
-    }
-    message_data(0x2306, 0, 0, 0, 0, 0);
-}
-
-// Superseded seed deleted; seed paths below are historical Git provenance.
-// ORIGINAL: 0x00514990 ?quit_game@Console@@QAEXXZ 0x00514990-0x00514B2C BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/00514990.cpp: original identity and complete spans", "source:src/console.h: Console owner declarations and layout", "source:src/console.cpp: coupled navigation, selection and lifecycle caller relationships"], "reason": "The original Console operation is expressed by the corresponding real Console owner definition, using its recovered members and source-owned callees rather than the retained seed scaffold."}
-void Console::quit_game() {
-// RECOVERY_LITERAL: v1 0x0068A7E4 0x0068A7EF $SG64053 0x00514990
-    if (!X_pop((IsMultiplayerNet || IsMultiplayerPBEM) &&
-               bit_count(GameDataStateStorage.fields_.lock_masks_.enable_mask_ & 255) > 1
-                   ? ConsoleReallyWimpOut : "REALLYQUIT", nullptr)) return;
-    if (IsMultiplayerPBEM) {
-        // The original modifies only the human-faction byte of this word.
-        GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ &=
-            static_cast<unsigned char>(~(1u << ConsoleGlobal.faction_id_));
-        save_game(0);
-    }
-    if ((GameDataStateStorage.fields_.game_rules_ & 0x400) && !IsMultiplayerPBEM) auto_save();
-    if (IsMultiplayerNet) {
-        NetDaemonNet.hang_up();
-        NetDaemonNet.reset();
-        IsMultiplayerNet = 0;
-    }
-    ExitTurnLoop = 1;
-// RECOVERY_LITERAL: v1 0x0068A7F0 0x0068A818 $SG64058 0x00514990
-    log_say("Quit***********************************", 0, 0, 0);
-}
-
-// Superseded seed deleted; seed paths below are historical Git provenance.
-// ORIGINAL: 0x00514D30 ?new_game@Console@@QAEXXZ 0x00514D30-0x00514EE2 BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/00514d30.cpp: original identity and complete spans", "source:src/console.h: Console owner declarations and layout", "source:src/console.cpp: coupled navigation, selection and lifecycle caller relationships"], "reason": "The original Console operation is expressed by the corresponding real Console owner definition, using its recovered members and source-owned callees rather than the retained seed scaffold."}
-void Console::new_game() {
-    if (IsMultiplayerNet) return;
-    quit_game();
-    if (ExitTurnLoop) GameRestartQueued = 1;
-}
-
-// Superseded seed deleted; seed paths below are historical Git provenance.
-// ORIGINAL: 0x005162A0 ?name_landmark@Console@@QAEXHH@Z 0x005162A0-0x0051648F BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/005162a0.cpp: original identity and complete spans", "source:src/console.h: Console owner declarations and layout", "source:src/console.cpp: coupled navigation, selection and lifecycle caller relationships"], "reason": "The original Console operation is expressed by the corresponding real Console owner definition, using its recovered members and source-owned callees rather than the retained seed scaffold."}
-void Console::name_landmark(int x, int y) {
-    if (!on_map(x, y)) {
-        x = ConsoleGlobal.cursor_history_x_[ConsoleGlobal.cursor_history_index_];
-        y = ConsoleGlobal.cursor_history_y_[ConsoleGlobal.cursor_history_index_];
-    }
-    const int landmark = find_landmark(x, y, 1);
-    if (!(GameDataStateStorage.fields_.game_state_ & 0x80)) {
-        const int valid = landmark >= 0
-            ? valid_landmark(MapLandmark[landmark].x, MapLandmark[landmark].y,
-                             ConsoleGlobal.faction_id_)
-            : valid_landmark(x, y, ConsoleGlobal.faction_id_);
-        if (!valid) {
-            NetMsgPrimary.pop("LANDMARKNO", 5000, 0, nullptr);
-            return;
-        }
-    }
-    if (landmark >= 0) {
-        if (X_pop_ask("LANDMARK", 31, MapLandmark[landmark].name, nullptr, 0)) return;
-        purge_spaces(ParseStrBuffer[0].str);
-        if (!strlen(ParseStrBuffer[0].str)) return;
-        if (IsMultiplayerNet) {
-            message_landmark(0x2e03, 0, ParseStrBuffer[0].str,
-                MapLandmark[landmark].x, MapLandmark[landmark].y, 0, 0);
-            return;
-        }
-        strcpy(MapLandmark[landmark].name, ParseStrBuffer[0].str);
-        ::draw_map(1);
-    } else {
-        if (X_pop_ask("LANDMARK", 31, LandmarkDefaultName, nullptr, 0)) return;
-        purge_spaces(ParseStrBuffer[0].str);
-        if (!strlen(ParseStrBuffer[0].str)) return;
-        if (IsMultiplayerNet) {
-            message_landmark(0x2e01, 0, ParseStrBuffer[0].str, x, y, 0, 0);
-            return;
-        }
-        if (new_landmark(x, y, ParseStrBuffer[0].str) < 0) {
-            parse_num(0, 64);
-            NetMsgPrimary.pop("LANDMARKTOOMANY", 5000, 0, nullptr);
-        }
-        ::draw_map(1);
     }
 }
 
@@ -4077,256 +3958,6 @@ void Console::ready() {
     }
     ambience_veh(selected_vehicle_);
     flush_input();
-}
-
-int __cdecl popv(char *caption, const char *label, int vehicle, int flags);
-void __cdecl action_gate(int vehicle_id, int base_id);
-
-
-// Superseded seed deleted; seed paths below are historical Git provenance.
-// ORIGINAL: 0x00514B30 ?retire_game@Console@@QAEXXZ 0x00514B30-0x00514D2B BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["Pinned original 00514B30; retained seed src/recovered/units/00514b30.cpp", "Native514B55..64 passes the low-byte greater-than-one boolean into bit_count. Native514D10 writes closed-network==0 to93A948 GameRestartQueued,514D16 sets9B2068 ExitTurnLoop. Existing typed close-network helper reproduces lock clear/transport close; scenario, PBEM, ironman and replay branches remain distinct.", "recovery/tasks/console-scenario-owner-wave.json; native scope decisions preserve the original baseline"], "reason": "Recover the complete Console command in its genuine owner, retaining original spans and seed evidence. Typed state and lifecycle/network APIs replace seed address arithmetic; this source binding is not byte, reference, structure or runtime acceptance."}
-void Console::retire_game() { // 0x00514B30
-    // This function owns a separate static string for the distinct retirement pointer.
-// RECOVERY_OBJECT: v1 0x0068A818 _?retire_wimpout@?1??retire_game@Console@@QAEXXZ@4QBDB
-    static const char retire_wimpout[] = "REALLYWIMPOUT";
-    int closed_network = 0;
-    if (GameDataStateStorage.fields_.game_rules_ & RULES_IRONMAN) {
-        auto_save();
-    }
-
-    const bool multiple_players =
-        (IsMultiplayerNet || IsMultiplayerPBEM) &&
-        bit_count(static_cast<uint8_t>(GameDataStateStorage.fields_.lock_masks_.enable_mask_) > 1) != 0;
-    const char *const prompt = multiple_players ? retire_wimpout :
-// RECOVERY_LITERAL: v1 0x0068A828 0x0068A836 $SG64142 0x00514B30
-// RECOVERY_LITERAL: v1 0x0068A838 0x0068A845 $SG64143 0x00514B30
-        (GameDataStateStorage.fields_.game_rules_ & RULES_IRONMAN) ? "REALLYRETIRE2" : "REALLYRETIRE";
-    if (!X_pop(prompt, nullptr)) {
-        return;
-    }
-
-    if (IsMultiplayerPBEM) {
-        GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ &=
-            static_cast<unsigned char>(~(1u << ConsoleGlobal.faction_id_));
-        save_game(0);
-    }
-
-    if (IsMultiplayerNet) {
-        NetDaemonNet.hang_up();
-        NetDaemonNet.reset();
-        IsMultiplayerNet = 0;
-        closed_network = 1;
-    }
-
-    if (GameDataStateStorage.fields_.game_rules_ & RULES_IRONMAN) {
-        kill_auto_save();
-    }
-    report_score(1);
-    if ((GameDataStateStorage.fields_.game_state_ & STATE_IS_SCENARIO) == 0) {
-        quayle(ConsoleGlobal.faction_id_);
-        hall_of_fame(1);
-    }
-    if (!closed_network) {
-        show_replay();
-    }
-    GameRestartQueued = !closed_network;
-    ExitTurnLoop = 1;
-// RECOVERY_LITERAL: v1 0x0068A848 0x0068A86C $SG64151 0x00514B30
-    log_say("Retire*****************************", 0, 0, 0);
-}
-
-// WORKAROUND(inline): dead /Ob2 budget probe for show_movies (folds away,
-// spends budget). With the loop's `break` exit the image's EH map (20
-// states) matches, but its return-site Popup teardown calls ~StringList
-// (0x004066C0) out of line where this unit's budget still expands it; two
-// chained ifs here starve that expansion exactly. The original spent this
-// budget on something not yet identified.
-static int show_movies_budget_probe(int x) {
-    if (x == 0) x = 1;
-    if (x == 1) x = 4;
-    return x;
-}
-
-// Superseded seed deleted; seed paths below are historical Git provenance.
-// ORIGINAL: 0x00515F70 ?show_movies@Console@@QAEXXZ 0x00515F70-0x00516291;0x0065D3F3-0x0065D4D0 BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["Native515FA5..516035 rebuilds64 FacilitySPStart rows through StringTable and owned Dialogs, sorts the virtual-base StringList and dispatches403BA0 until exec returns negative; Popup lifetime is compiler-managed.", "src/recovered/units/00515f70.cpp", "Root-only console-movie-wrapper-20261001 central dependency closure; immutable task baseline preserved."], "reason": "Recover complete source-owned movie selection and project-index wrapper with proper Popup lifetime, typed facilities, actual text parsing and existing movie playback. Retain exact seed identities and all original spans; no match or acceptance claim is granted by this binding."}
-void Console::show_movies() { // 0x00515F70
-    show_movies_budget_probe(2);  // WORKAROUND(inline): see show_movies_budget_probe
-    Popup popup;
-    for (;;) {
-        popup.start(PopupStartCaption, "SHOWMOVIES", -1, nullptr, 0x42,
-                    nullptr);
-
-        for (int project_id = 0; project_id < MaxSecretProjectNum;
-             ++project_id) {
-            ::clear();
-            const int facility_id = FacilitySPStart + project_id;
-            char *name = Facility[facility_id].name;
-            strcat(StringTemp, StringTable.get(name));
-            popup.dialogs().item(StringTemp, project_id);
-        }
-        popup.dialogs().item_list_.sort(0);
-
-        const int selected_project = popup.exec(0, nullptr);
-        if (selected_project < 0) {
-            break;
-        }
-        amovie_project(selected_project);
-    }
-}
-
-// Superseded seed deleted; seed paths below are historical Git provenance.
-// ORIGINAL: 0x00513B90 ?veh_turn@Console@@QAEHXZ 0x00513B90-0x00513FB9 BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/00513b90.cpp; image:0x00513B90-0x00513FB9", "Native513EA3 identifies pointer-preserving NetDaemon::automated_lock; native513F85 clears selected ID only before turn-loop entry."], "reason": "Recover selected-vehicle turn scheduling through real Console state, NetDaemon locking and UI owners. Native branches distinguish cursor activity, readiness and ordered actions, retaining selection after an entered turn loop and clearing it on early refusal; no raw receiver accesses or executable callbacks."}
-int Console::veh_turn() { // 0x00513B90
-    int result = 0;
-    int flag10 = 0;
-    int n = 0;
-    field_23BE4_ = 1;
-
-    if ((GameDataStateStorage.fields_.game_preferences_ & 0x20u) != 0 &&
-        Vehs[selected_vehicle_].order == 0) {
-        give_hints();
-    }
-
-    const int first_ready = veh_ready(selected_vehicle_);
-    for (;;) {
-        if (!veh_selectable(selected_vehicle_) ||
-            veh_ready(selected_vehicle_) != first_ready ||
-            (first_ready == 0 && Vehs[selected_vehicle_].order != 0)) {
-            if (ConsoleGlobal.cursor_active_ != 0) {
-                goto finish_turn;
-            }
-        }
-
-        if (field_23BE4_ == 0 && field_23BF0_ != 2) {
-            goto finish_turn;
-        }
-        if (field_23BE8_ == 0 || ExitTurnLoop != 0 ||
-            end_of_game(0) != 0 ||
-            (IsMultiplayerNet != 0 && (GameDataStateStorage.fields_.game_state_ & 0x800u) != 0)) {
-            goto finish_turn;
-        }
-
-        flag10 = 1;
-        if (field_23BF0_ == 2) {
-            field_23BE4_ = Vehs[selected_vehicle_].order == 0x18;
-            field_23BF0_ = 0;
-        }
-
-        // Native reads 0x0093E8E0 here: NetDaemon + 0x1B50, the already
-        // typed lock_state_[0].dword_[9]. Its wider semantic role is unknown.
-        if (NetDaemonNet.primary_state_.trailing_words_[3] != 0) {
-            if (ConsoleGlobal.cursor_active_ != 0) {
-                ambience(0x1E);
-                cursor_active_ = 0;
-                field_23BF8_ = 1;
-                field_23BFC_ = 1;
-                if (survey_mode_ != 0) {
-                    survey_mode_ = 0;
-                    MapWinTable[0]->draw_map(1);
-                }
-                ::draw_cursor();
-                ConsoleInfoWin.change(0);
-                ConsoleStatusWin.redraw();
-                MapWinTable[0]->main_caption();
-                alpha_menu_.check(selected_vehicle_);
-                continue;
-            }
-            result = 1;
-            wait_loop();
-            continue;
-        }
-
-        if (field_23D24_ != 0 &&
-            (Vehs[selected_vehicle_].state & 0x200u) == 0 &&
-            (Vehs[selected_vehicle_].state & 0x01000200u) != 0x01000200u &&
-            (Vehs[selected_vehicle_].state & 0x4000u) == 0 &&
-            Vehs[selected_vehicle_].order == 0) {
-            goto clear_auto_order;
-        }
-
-        if (ConsoleGlobal.cursor_active_ != 0) {
-            if (veh_ready(selected_vehicle_) != 0) {
-                if (TutWinBaseWindow.is_visible() == 0 &&
-                    ReportWinGlobal.is_visible() == 0) {
-                    if ((Vehs[selected_vehicle_].state & 0x4200u) == 0) {
-                        const uint8_t order = Vehs[selected_vehicle_].order;
-                        if (order == 0) {
-                            n = 0;
-                        } else if (++n > (order == 0x18 ? 100 : 20)) {
-                            if (order == 0x18) {
-                                Vehs[selected_vehicle_].order = 0;
-                            } else {
-                                veh_skip(selected_vehicle_);
-                            }
-                            if (IsMultiplayerNet != 0) {
-                                synch_veh(selected_vehicle_);
-                                NetDaemonNet.await_synch();
-                                NetDaemonNet.unlock_veh();
-                            }
-                            continue;
-                        }
-                        if (NetDaemonNet.action(selected_vehicle_, 0) != 0) {
-                            continue;
-                        }
-                        Vehs[selected_vehicle_].state |= 0x04000000u;
-                    } else {
-                        // Native target 0x00531150 is NetDaemon::automated_lock(int *, int).
-                        if (NetDaemonNet.automated_lock(&selected_vehicle_, 4) != 0) {
-                            goto finish_turn;
-                        }
-                        ++NetBusyCount;
-                        if (++n > 20) {
-                            veh_skip(selected_vehicle_);
-                            if (IsMultiplayerNet != 0) {
-                                synch_veh(selected_vehicle_);
-                                NetDaemonNet.await_synch();
-                                NetDaemonNet.unlock_veh();
-                            }
-                            --NetBusyCount;
-                            continue;
-                        }
-                        if (enemy_veh(selected_vehicle_) != 0) {
-                            goto enemy_vehicle_found;
-                        }
-                        --NetBusyCount;
-                        continue;
-                    }
-                }
-            } else if (Vehs[selected_vehicle_].order != 0 ||
-                       (Vehs[selected_vehicle_].state & 0x4200u) != 0) {
-                goto selected_vehicle_unavailable;
-            }
-        }
-
-        result = 1;
-        wait_loop();
-        if (TutWinTourPending != 0) {
-            TutWinTourPending = 0;
-            TutorialWindow.tour();
-        }
-    }
-
-clear_auto_order:
-    field_23D24_ = 0;
-selected_vehicle_unavailable:
-    selected_vehicle_ = -1;
-finish_turn:
-    field_23BE4_ = 0;
-    if (flag10 == 0) {
-        selected_vehicle_ = -1;
-    }
-    return result;
-
-enemy_vehicle_found:
-    if (IsMultiplayerNet != 0) {
-        NetDaemonNet.unlock_veh();
-        selected_vehicle_ = -1;
-    }
-    --NetBusyCount;
-    goto finish_turn;
 }
 
 // ORIGINAL: 0x00511BB0 ?give_hints@Console@@QAEXXZ 0x00511BB0-0x00513B85
@@ -5007,6 +4638,159 @@ void Console::give_hints() {
     }
 }
 
+// Superseded seed deleted; seed paths below are historical Git provenance.
+// ORIGINAL: 0x00513B90 ?veh_turn@Console@@QAEHXZ 0x00513B90-0x00513FB9 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/00513b90.cpp; image:0x00513B90-0x00513FB9", "Native513EA3 identifies pointer-preserving NetDaemon::automated_lock; native513F85 clears selected ID only before turn-loop entry."], "reason": "Recover selected-vehicle turn scheduling through real Console state, NetDaemon locking and UI owners. Native branches distinguish cursor activity, readiness and ordered actions, retaining selection after an entered turn loop and clearing it on early refusal; no raw receiver accesses or executable callbacks."}
+int Console::veh_turn() { // 0x00513B90
+    int result = 0;
+    int flag10 = 0;
+    int n = 0;
+    field_23BE4_ = 1;
+
+    if ((GameDataStateStorage.fields_.game_preferences_ & 0x20u) != 0 &&
+        Vehs[selected_vehicle_].order == 0) {
+        give_hints();
+    }
+
+    const int first_ready = veh_ready(selected_vehicle_);
+    for (;;) {
+        if (!veh_selectable(selected_vehicle_) ||
+            veh_ready(selected_vehicle_) != first_ready ||
+            (first_ready == 0 && Vehs[selected_vehicle_].order != 0)) {
+            if (ConsoleGlobal.cursor_active_ != 0) {
+                goto finish_turn;
+            }
+        }
+
+        if (field_23BE4_ == 0 && field_23BF0_ != 2) {
+            goto finish_turn;
+        }
+        if (field_23BE8_ == 0 || ExitTurnLoop != 0 ||
+            end_of_game(0) != 0 ||
+            (IsMultiplayerNet != 0 && (GameDataStateStorage.fields_.game_state_ & 0x800u) != 0)) {
+            goto finish_turn;
+        }
+
+        flag10 = 1;
+        if (field_23BF0_ == 2) {
+            field_23BE4_ = Vehs[selected_vehicle_].order == 0x18;
+            field_23BF0_ = 0;
+        }
+
+        // Native reads 0x0093E8E0 here: NetDaemon + 0x1B50, the already
+        // typed lock_state_[0].dword_[9]. Its wider semantic role is unknown.
+        if (NetDaemonNet.primary_state_.trailing_words_[3] != 0) {
+            if (ConsoleGlobal.cursor_active_ != 0) {
+                ambience(0x1E);
+                cursor_active_ = 0;
+                field_23BF8_ = 1;
+                field_23BFC_ = 1;
+                if (survey_mode_ != 0) {
+                    survey_mode_ = 0;
+                    MapWinTable[0]->draw_map(1);
+                }
+                ::draw_cursor();
+                ConsoleInfoWin.change(0);
+                ConsoleStatusWin.redraw();
+                MapWinTable[0]->main_caption();
+                alpha_menu_.check(selected_vehicle_);
+                continue;
+            }
+            result = 1;
+            wait_loop();
+            continue;
+        }
+
+        if (field_23D24_ != 0 &&
+            (Vehs[selected_vehicle_].state & 0x200u) == 0 &&
+            (Vehs[selected_vehicle_].state & 0x01000200u) != 0x01000200u &&
+            (Vehs[selected_vehicle_].state & 0x4000u) == 0 &&
+            Vehs[selected_vehicle_].order == 0) {
+            goto clear_auto_order;
+        }
+
+        if (ConsoleGlobal.cursor_active_ != 0) {
+            if (veh_ready(selected_vehicle_) != 0) {
+                if (TutWinBaseWindow.is_visible() == 0 &&
+                    ReportWinGlobal.is_visible() == 0) {
+                    if ((Vehs[selected_vehicle_].state & 0x4200u) == 0) {
+                        const uint8_t order = Vehs[selected_vehicle_].order;
+                        if (order == 0) {
+                            n = 0;
+                        } else if (++n > (order == 0x18 ? 100 : 20)) {
+                            if (order == 0x18) {
+                                Vehs[selected_vehicle_].order = 0;
+                            } else {
+                                veh_skip(selected_vehicle_);
+                            }
+                            if (IsMultiplayerNet != 0) {
+                                synch_veh(selected_vehicle_);
+                                NetDaemonNet.await_synch();
+                                NetDaemonNet.unlock_veh();
+                            }
+                            continue;
+                        }
+                        if (NetDaemonNet.action(selected_vehicle_, 0) != 0) {
+                            continue;
+                        }
+                        Vehs[selected_vehicle_].state |= 0x04000000u;
+                    } else {
+                        // Native target 0x00531150 is NetDaemon::automated_lock(int *, int).
+                        if (NetDaemonNet.automated_lock(&selected_vehicle_, 4) != 0) {
+                            goto finish_turn;
+                        }
+                        ++NetBusyCount;
+                        if (++n > 20) {
+                            veh_skip(selected_vehicle_);
+                            if (IsMultiplayerNet != 0) {
+                                synch_veh(selected_vehicle_);
+                                NetDaemonNet.await_synch();
+                                NetDaemonNet.unlock_veh();
+                            }
+                            --NetBusyCount;
+                            continue;
+                        }
+                        if (enemy_veh(selected_vehicle_) != 0) {
+                            goto enemy_vehicle_found;
+                        }
+                        --NetBusyCount;
+                        continue;
+                    }
+                }
+            } else if (Vehs[selected_vehicle_].order != 0 ||
+                       (Vehs[selected_vehicle_].state & 0x4200u) != 0) {
+                goto selected_vehicle_unavailable;
+            }
+        }
+
+        result = 1;
+        wait_loop();
+        if (TutWinTourPending != 0) {
+            TutWinTourPending = 0;
+            TutorialWindow.tour();
+        }
+    }
+
+clear_auto_order:
+    field_23D24_ = 0;
+selected_vehicle_unavailable:
+    selected_vehicle_ = -1;
+finish_turn:
+    field_23BE4_ = 0;
+    if (flag10 == 0) {
+        selected_vehicle_ = -1;
+    }
+    return result;
+
+enemy_vehicle_found:
+    if (IsMultiplayerNet != 0) {
+        NetDaemonNet.unlock_veh();
+        selected_vehicle_ = -1;
+    }
+    --NetBusyCount;
+    goto finish_turn;
+}
+
 // ORIGINAL: 0x00514050 ?human_turn@Console@@QAEXXZ 0x00514050-0x005147DA FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["image:terranx_original.exe:0x00514050-0x005147DA", "git:276d612614085e5d57743cf8cc92903d9468e346:src/unrecovered/00514050.cpp", "FX bank749CF8 plus57 times6C identifies74B504 as existing Effect57; original dispatch uses Wave virtual operations.", "Native5140DC/5143B4/51467E/514694 establish cursor polarity, selection reload and branch-specific flag/audio order."], "reason": "Recover player-turn orchestration in its genuine Console owner, preserving callback-driven selection/faction reloads, cursor guards, turn flags and real UI/audio lifetimes."}
 // TRIED: direct transcription using Console's already-declared field_23BDC_ etc members (no raw casts needed, no embedded objects here - simple frameless prologue); cross-checked against raw asm for the neg/sbb/inc bool-negate idiom, the xor-swapped focus() arg orders, and the veh_ready/veh_selectable branch. Compiles, sim 0.55 frameless; not retried given size (1930 bytes).
@@ -5237,6 +5021,346 @@ finish_turn:
     go_reset();
 }
 
+// Superseded seed deleted; seed paths below are historical Git provenance.
+// ORIGINAL: 0x00514990 ?quit_game@Console@@QAEXXZ 0x00514990-0x00514B2C BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/00514990.cpp: original identity and complete spans", "source:src/console.h: Console owner declarations and layout", "source:src/console.cpp: coupled navigation, selection and lifecycle caller relationships"], "reason": "The original Console operation is expressed by the corresponding real Console owner definition, using its recovered members and source-owned callees rather than the retained seed scaffold."}
+void Console::quit_game() {
+// RECOVERY_LITERAL: v1 0x0068A7E4 0x0068A7EF $SG64053 0x00514990
+    if (!X_pop((IsMultiplayerNet || IsMultiplayerPBEM) &&
+               bit_count(GameDataStateStorage.fields_.lock_masks_.enable_mask_ & 255) > 1
+                   ? ConsoleReallyWimpOut : "REALLYQUIT", nullptr)) return;
+    if (IsMultiplayerPBEM) {
+        // The original modifies only the human-faction byte of this word.
+        GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ &=
+            static_cast<unsigned char>(~(1u << ConsoleGlobal.faction_id_));
+        save_game(0);
+    }
+    if ((GameDataStateStorage.fields_.game_rules_ & 0x400) && !IsMultiplayerPBEM) auto_save();
+    if (IsMultiplayerNet) {
+        NetDaemonNet.hang_up();
+        NetDaemonNet.reset();
+        IsMultiplayerNet = 0;
+    }
+    ExitTurnLoop = 1;
+// RECOVERY_LITERAL: v1 0x0068A7F0 0x0068A818 $SG64058 0x00514990
+    log_say("Quit***********************************", 0, 0, 0);
+}
+
+int __cdecl popv(char *caption, const char *label, int vehicle, int flags);
+void __cdecl action_gate(int vehicle_id, int base_id);
+
+
+// Superseded seed deleted; seed paths below are historical Git provenance.
+// ORIGINAL: 0x00514B30 ?retire_game@Console@@QAEXXZ 0x00514B30-0x00514D2B BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned original 00514B30; retained seed src/recovered/units/00514b30.cpp", "Native514B55..64 passes the low-byte greater-than-one boolean into bit_count. Native514D10 writes closed-network==0 to93A948 GameRestartQueued,514D16 sets9B2068 ExitTurnLoop. Existing typed close-network helper reproduces lock clear/transport close; scenario, PBEM, ironman and replay branches remain distinct.", "recovery/tasks/console-scenario-owner-wave.json; native scope decisions preserve the original baseline"], "reason": "Recover the complete Console command in its genuine owner, retaining original spans and seed evidence. Typed state and lifecycle/network APIs replace seed address arithmetic; this source binding is not byte, reference, structure or runtime acceptance."}
+void Console::retire_game() { // 0x00514B30
+    // This function owns a separate static string for the distinct retirement pointer.
+// RECOVERY_OBJECT: v1 0x0068A818 _?retire_wimpout@?1??retire_game@Console@@QAEXXZ@4QBDB
+    static const char retire_wimpout[] = "REALLYWIMPOUT";
+    int closed_network = 0;
+    if (GameDataStateStorage.fields_.game_rules_ & RULES_IRONMAN) {
+        auto_save();
+    }
+
+    const bool multiple_players =
+        (IsMultiplayerNet || IsMultiplayerPBEM) &&
+        bit_count(static_cast<uint8_t>(GameDataStateStorage.fields_.lock_masks_.enable_mask_) > 1) != 0;
+    const char *const prompt = multiple_players ? retire_wimpout :
+// RECOVERY_LITERAL: v1 0x0068A828 0x0068A836 $SG64142 0x00514B30
+// RECOVERY_LITERAL: v1 0x0068A838 0x0068A845 $SG64143 0x00514B30
+        (GameDataStateStorage.fields_.game_rules_ & RULES_IRONMAN) ? "REALLYRETIRE2" : "REALLYRETIRE";
+    if (!X_pop(prompt, nullptr)) {
+        return;
+    }
+
+    if (IsMultiplayerPBEM) {
+        GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ &=
+            static_cast<unsigned char>(~(1u << ConsoleGlobal.faction_id_));
+        save_game(0);
+    }
+
+    if (IsMultiplayerNet) {
+        NetDaemonNet.hang_up();
+        NetDaemonNet.reset();
+        IsMultiplayerNet = 0;
+        closed_network = 1;
+    }
+
+    if (GameDataStateStorage.fields_.game_rules_ & RULES_IRONMAN) {
+        kill_auto_save();
+    }
+    report_score(1);
+    if ((GameDataStateStorage.fields_.game_state_ & STATE_IS_SCENARIO) == 0) {
+        quayle(ConsoleGlobal.faction_id_);
+        hall_of_fame(1);
+    }
+    if (!closed_network) {
+        show_replay();
+    }
+    GameRestartQueued = !closed_network;
+    ExitTurnLoop = 1;
+// RECOVERY_LITERAL: v1 0x0068A848 0x0068A86C $SG64151 0x00514B30
+    log_say("Retire*****************************", 0, 0, 0);
+}
+
+// Superseded seed deleted; seed paths below are historical Git provenance.
+// ORIGINAL: 0x00514D30 ?new_game@Console@@QAEXXZ 0x00514D30-0x00514EE2 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/00514d30.cpp: original identity and complete spans", "source:src/console.h: Console owner declarations and layout", "source:src/console.cpp: coupled navigation, selection and lifecycle caller relationships"], "reason": "The original Console operation is expressed by the corresponding real Console owner definition, using its recovered members and source-owned callees rather than the retained seed scaffold."}
+void Console::new_game() {
+    if (IsMultiplayerNet) return;
+    quit_game();
+    if (ExitTurnLoop) GameRestartQueued = 1;
+}
+
+// WORKAROUND(inline): dead /Ob2 budget probe for show_movies (folds away,
+// spends budget). With the loop's `break` exit the image's EH map (20
+// states) matches, but its return-site Popup teardown calls ~StringList
+// (0x004066C0) out of line where this unit's budget still expands it; two
+// chained ifs here starve that expansion exactly. The original spent this
+// budget on something not yet identified.
+static int show_movies_budget_probe(int x) {
+    if (x == 0) x = 1;
+    if (x == 1) x = 4;
+    return x;
+}
+
+// Superseded seed deleted; seed paths below are historical Git provenance.
+// ORIGINAL: 0x00515F70 ?show_movies@Console@@QAEXXZ 0x00515F70-0x00516291;0x0065D3F3-0x0065D4D0 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["Native515FA5..516035 rebuilds64 FacilitySPStart rows through StringTable and owned Dialogs, sorts the virtual-base StringList and dispatches403BA0 until exec returns negative; Popup lifetime is compiler-managed.", "src/recovered/units/00515f70.cpp", "Root-only console-movie-wrapper-20261001 central dependency closure; immutable task baseline preserved."], "reason": "Recover complete source-owned movie selection and project-index wrapper with proper Popup lifetime, typed facilities, actual text parsing and existing movie playback. Retain exact seed identities and all original spans; no match or acceptance claim is granted by this binding."}
+void Console::show_movies() { // 0x00515F70
+    show_movies_budget_probe(2);  // WORKAROUND(inline): see show_movies_budget_probe
+    Popup popup;
+    for (;;) {
+        popup.start(PopupStartCaption, "SHOWMOVIES", -1, nullptr, 0x42,
+                    nullptr);
+
+        for (int project_id = 0; project_id < MaxSecretProjectNum;
+             ++project_id) {
+            ::clear();
+            const int facility_id = FacilitySPStart + project_id;
+            char *name = Facility[facility_id].name;
+            strcat(StringTemp, StringTable.get(name));
+            popup.dialogs().item(StringTemp, project_id);
+        }
+        popup.dialogs().item_list_.sort(0);
+
+        const int selected_project = popup.exec(0, nullptr);
+        if (selected_project < 0) {
+            break;
+        }
+        amovie_project(selected_project);
+    }
+}
+
+// Superseded seed deleted; seed paths below are historical Git provenance.
+// ORIGINAL: 0x005162A0 ?name_landmark@Console@@QAEXHH@Z 0x005162A0-0x0051648F BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/005162a0.cpp: original identity and complete spans", "source:src/console.h: Console owner declarations and layout", "source:src/console.cpp: coupled navigation, selection and lifecycle caller relationships"], "reason": "The original Console operation is expressed by the corresponding real Console owner definition, using its recovered members and source-owned callees rather than the retained seed scaffold."}
+void Console::name_landmark(int x, int y) {
+    if (!on_map(x, y)) {
+        x = ConsoleGlobal.cursor_history_x_[ConsoleGlobal.cursor_history_index_];
+        y = ConsoleGlobal.cursor_history_y_[ConsoleGlobal.cursor_history_index_];
+    }
+    const int landmark = find_landmark(x, y, 1);
+    if (!(GameDataStateStorage.fields_.game_state_ & 0x80)) {
+        const int valid = landmark >= 0
+            ? valid_landmark(MapLandmark[landmark].x, MapLandmark[landmark].y,
+                             ConsoleGlobal.faction_id_)
+            : valid_landmark(x, y, ConsoleGlobal.faction_id_);
+        if (!valid) {
+            NetMsgPrimary.pop("LANDMARKNO", 5000, 0, nullptr);
+            return;
+        }
+    }
+    if (landmark >= 0) {
+        if (X_pop_ask("LANDMARK", 31, MapLandmark[landmark].name, nullptr, 0)) return;
+        purge_spaces(ParseStrBuffer[0].str);
+        if (!strlen(ParseStrBuffer[0].str)) return;
+        if (IsMultiplayerNet) {
+            message_landmark(0x2e03, 0, ParseStrBuffer[0].str,
+                MapLandmark[landmark].x, MapLandmark[landmark].y, 0, 0);
+            return;
+        }
+        strcpy(MapLandmark[landmark].name, ParseStrBuffer[0].str);
+        ::draw_map(1);
+    } else {
+        if (X_pop_ask("LANDMARK", 31, LandmarkDefaultName, nullptr, 0)) return;
+        purge_spaces(ParseStrBuffer[0].str);
+        if (!strlen(ParseStrBuffer[0].str)) return;
+        if (IsMultiplayerNet) {
+            message_landmark(0x2e01, 0, ParseStrBuffer[0].str, x, y, 0, 0);
+            return;
+        }
+        if (new_landmark(x, y, ParseStrBuffer[0].str) < 0) {
+            parse_num(0, 64);
+            NetMsgPrimary.pop("LANDMARKTOOMANY", 5000, 0, nullptr);
+        }
+        ::draw_map(1);
+    }
+}
+
+// Superseded seed deleted; seed paths below are historical Git provenance.
+// RECOVERY_ASSOCIATED: v1 switch_targets 0x005166D0 0x005168B8 0x005168D0 0x005166F2
+// RECOVERY_ASSOCIATED: v1 switch_selector 0x005166D0 0x005168D0 0x00516921 0x005166EC
+// ORIGINAL: 0x005166D0 ?cursor_key@Console@@QAEXHHH@Z 0x005166D0-0x005168B7 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/005166d0.cpp: original identity and complete spans", "source:src/console.h: Console owner declarations and layout", "source:src/console.cpp: coupled navigation, selection and lifecycle caller relationships"], "reason": "The original Console operation is expressed by the corresponding real Console owner definition, using its recovered members and source-owned callees rather than the retained seed scaffold."}
+void Console::cursor_key(int, int character, int) {
+    switch (character) {
+    case ' ': {
+        const int i = ConsoleGlobal.cursor_history_index_;
+        const int base = base_at(ConsoleGlobal.cursor_history_x_[i],
+                                 ConsoleGlobal.cursor_history_y_[i]);
+        if (base >= 0 && ((GameDataStateStorage.fields_.game_state_ & 0x80) ||
+            Bases[base].faction_id_current == ConsoleGlobal.faction_id_ ||
+            ((Bases[base].visibility & (1u << ConsoleGlobal.faction_id_)) &&
+             spying(Bases[base].faction_id_current)))) {
+            TutWinBaseWindow.zoom(base, 0);
+            return;
+        }
+    }
+    case 'a':
+        if (!NetDaemonNet.field_1BB4_) {
+            const int i = ConsoleGlobal.cursor_history_index_;
+            activate(ConsoleGlobal.cursor_history_x_[i],
+                     ConsoleGlobal.cursor_history_y_[i], 1);
+            return;
+        }
+        break;
+    case 'b': {
+        const int i = ConsoleGlobal.cursor_history_index_;
+        const int base = base_find(ConsoleGlobal.cursor_history_x_[i],
+            ConsoleGlobal.cursor_history_y_[i], ConsoleGlobal.faction_id_);
+        if (base >= 0) TutWinBaseWindow.zoom(base, 0);
+        break;
+    }
+    case 'g':
+        if (!ConsoleControlTurnActive && !NetDaemonNet.field_1BB4_) {
+            const int i = ConsoleGlobal.cursor_history_index_;
+            const int base = base_at(ConsoleGlobal.cursor_history_x_[i],
+                                     ConsoleGlobal.cursor_history_y_[i]);
+            if (base >= 0) go_to(base, -1, 0);
+        }
+        break;
+    case 'p': {
+        const unsigned int shown = MapWinTable[0]->field_1DD70_ & 0x400000;
+        // The walk re-reads the window through its slot after each store; an
+        // int index, which VC6 strength-reduces to the slot pointer with the
+        // image's signed bound compare (jl).
+        for (int i = 0; i < MapWinTableSlots; i++) {
+            if (!MapWinTable[i] || (i != 0 && !MapWinTable[i]->view_active_)) continue;
+            if (!shown) {
+                MapWinTable[i]->field_1DD70_ |= 0x400000;
+                MapWinTable[i]->draw_base_dest(1);
+            } else {
+                MapWinTable[i]->field_1DD70_ &= ~0x400000u;
+                MapWinTable[i]->draw_map(1);
+            }
+        }
+        break;
+    }
+    }
+}
+
+
+// Superseded seed deleted; seed paths below are historical Git provenance.
+// ORIGINAL: 0x005169F0 ?end_my_turn@Console@@QAEXXZ 0x005169F0-0x00516C4D BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/005169f0.cpp: retained complete original identity/spans and seed evidence", "recovery/tasks/console-scenario-owner-wave.json; native scope expansions through sequence27", "Source owner interpretation preserves mapped original accesses, lifetime calls and branch roles; source-bound members and globals replace the seed offsets/address aliases. Historical seeds and claims remain independent restoration obligations."], "reason": "Recover end-turn into the genuine Console owner using existing pane/timer/lifecycle members, shared faction waiting state and the independently read original popup captions. Preserve remote-turn and ready-vehicle decisions, including separate timer clear rather than InfoWin::reset. No matching or game-acceptance claim."}
+void Console::end_my_turn() {
+    TutWinBaseWindow.cancel_zoom_wait();
+    ConsoleInfoWin.clear_pending_timer();
+    TutorialWindow.reset();
+    ConsoleStatusWin.reset();
+    g_FX.play(0xF);
+
+    if (ConsoleControlTurnActive != 0) return;
+    if (edit_lock() != 0) {
+        NetMsgPrimary.pop("PROTECTED", 0x1388, 0, nullptr);
+        return;
+    }
+
+    const uint8_t game_flags = static_cast<uint8_t>(GameDataStateStorage.fields_.game_state_);
+    if (IsMultiplayerNet != 0) {
+        if ((GameDataStateStorage.fields_.net_turn_flags_ & 0x10) != 0 &&
+            GameDataStateStorage.fields_.net_turn_faction_ != ConsoleGlobal.faction_id_) {
+            GenderDefault = Players[GameDataStateStorage.fields_.net_turn_faction_].is_leader_female;
+            PluralityDefault = 0;
+            parse_says(0, Players[GameDataStateStorage.fields_.net_turn_faction_].title_leader, -1, -1);
+            GenderDefault = Players[GameDataStateStorage.fields_.net_turn_faction_].is_leader_female;
+            PluralityDefault = 0;
+            parse_says(1, Players[GameDataStateStorage.fields_.net_turn_faction_].name_leader, -1, -1);
+            GenderDefault = Players[GameDataStateStorage.fields_.net_turn_faction_].noun_gender;
+            PluralityDefault = Players[GameDataStateStorage.fields_.net_turn_faction_].is_noun_plural;
+            parse_says(2, Players[GameDataStateStorage.fields_.net_turn_faction_].noun_faction, -1, -1);
+            parse_says(3, NetDaemonNet.get_player_name(NetDaemonNet.who_2_pid(
+                              GameDataStateStorage.fields_.net_turn_faction_)), -1, -1);
+            NetMsgPrimary.pop("SIMULWHOSE", 0x1388, 0, nullptr);
+            return;
+        }
+        if ((game_flags & 2) != 0 && (GameDataStateStorage.fields_.net_turn_flags_ & 0x10) == 0) {
+            const int faction_bit = 1 << ConsoleGlobal.faction_id_;
+            if ((NetDaemonNet.factions_waiting_mask() & faction_bit) != 0 &&
+                NetDaemonNet.factions_waiting_mask() != 0xFF) {
+                NetMsgPrimary.pop("ATTEMPTTOCANCEL", 0x1388, 0, nullptr);
+                message_data(0x2302, 0, GameDataStateStorage.fields_.turn_current_num_, 0, 0, 0);
+                return;
+            }
+        }
+    }
+
+    if (field_23BE8_ == 0) return;
+    if ((game_flags & 2) == 0) {
+        set_move(1);
+        if (ConsoleGlobal.cursor_active_ != 0) {
+            if (selected_vehicle_ >= 0 &&
+                (veh_ready(selected_vehicle_) != 0 ||
+                 ConsoleGlobal.ready_search(selected_vehicle_) >= 0) &&
+                X_pop("REALLYOVER", nullptr) == 0) {
+                return;
+            }
+        }
+    }
+
+    GameDataStateStorage.fields_.game_state_ |= 2u;
+    const int current_selection = selected_vehicle_;
+    field_23BE4_ = 0;
+    field_23BE8_ = 0;
+    focus_vehicle_ = current_selection;
+}
+
+// Superseded seed deleted; seed paths below are historical Git provenance.
+// ORIGINAL: 0x00517060 ?use_time_bonus@Console@@QAEXXZ 0x00517060-0x00517173 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/00517060.cpp: original identity and complete spans", "source:src/console.h: Console owner declarations and layout", "source:src/console.cpp: coupled navigation, selection and lifecycle caller relationships"], "reason": "The original Console operation is expressed by the corresponding real Console owner definition, using its recovered members and source-owned callees rather than the retained seed scaffold."}
+void Console::use_time_bonus() {
+    if (ConsoleControlTurnActive) return;
+    const int selection = GameDataStateStorage.fields_.time_controls_selection_;
+    if (!selection) return;
+    if (!IsMultiplayerNet) return;
+    if ((GameDataStateStorage.fields_.net_turn_flags_ & 0x10) &&
+        GameDataStateStorage.fields_.net_turn_faction_ != ConsoleGlobal.faction_id_) {
+// RECOVERY_LITERAL: v1 0x0068AA48 0x0068AA50 $SG64041 0x00517060
+        NetMsgPrimary.pop("SIMULNO", 5000, 0, nullptr);
+        return;
+    }
+    const int faction = ConsoleGlobal.faction_id_;
+    if (PlayersData[faction].time_bonus_count <= 0) {
+        parse_num(0, TimeControl[selection].refresh);
+// RECOVERY_LITERAL: v1 0x0068AA50 0x0068AA5E $SG64044 0x00517060
+        NetMsgPrimary.pop("NOTIMEBONUSES", 5000, 0, nullptr);
+        return;
+    }
+    if (GameDataStateStorage.fields_.game_state_ & 0x800) {
+// RECOVERY_LITERAL: v1 0x0068AA60 0x0068AA6D $SG64046 0x00517060
+        NetMsgPrimary.pop("NOBONUSATEND", 5000, 0, nullptr);
+        return;
+    }
+    if ((GameDataStateStorage.fields_.game_state_ & 2) &&
+        ((1u << faction_id_) & NetDaemonNet.primary_state_.trailing_words_[6])) {
+// RECOVERY_LITERAL: v1 0x0068AA70 0x0068AA7C $SG64048 0x00517060
+        NetMsgPrimary.pop("NOBONUSDONE", 5000, 0, nullptr);
+        return;
+    }
+    message_data(0x2306, 0, 0, 0, 0, 0);
+}
+
 // ORIGINAL: 0x005171D0 ?veh_key@Console@@QAEXHHH@Z 0x005171D0-0x0051778A FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["git:276d612614085e5d57743cf8cc92903d9468e346:src/unrecovered/005171d0.cpp", "image:terranx_original.exe:0x005171D0", "Pinned key selector tables5177E4/517844 and accelerator targets517898; native selection reloads between dispatch stages preserve callback effects."], "reason": "Recover the original in its genuine UI owner using typed members, real globals and declared operations. Retain seed spans and evidence; no current matching or runtime claim."}
 // TRIED: MISMATCH #3 push-vs-mov in the prologue; hoisting the two guard reads into locals before the branch did not change register allocation order. Full switch/goto structure otherwise matches.
@@ -5362,117 +5486,20 @@ void Console::veh_key(int key, int character, int command) {
     }
 }
 
-// Superseded seed deleted; seed paths below are historical Git provenance.
-// ORIGINAL: 0x0050FE70 ?on_nc_left_up@Console@@QAEXHH@Z 0x0050FE70-0x0051010A BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/0050fe70.cpp: retained complete original identity/spans and seed evidence", "recovery/tasks/console-scenario-owner-wave.json; native scope expansions through sequence27", "Source owner interpretation preserves mapped original accesses, lifetime calls and branch roles; source-bound members and globals replace the seed offsets/address aliases. Historical seeds and claims remain independent restoration obligations."], "reason": "Recover splitter release into the genuine Console owner using source Win capture owners, real Win inheritance, embedded Sprite geometry and named splitter members. Preserve signed sentinel ordering and the original update operations; no fixed executable calls or self-offset access."}
-// symbol    ?on_nc_left_up@Console@@UAEXHH@Z
-void Console::on_nc_left_up(int x, int y) {
-    release_pointer();
+// Provisional original storage identities: access widths and initial values
+// are observed, but no complete allocation/lifetime interpretation is claimed.
+// Six individually stored bytes at 0x517930-0x51795D initially read as zero. Only the touched cells are known; original allocation extent, terminator and other consumers remain unverified.
+// RECOVERY_OBJECT: v1 0x00939FE0 ?ConsoleKeyByteRegion@@3PAEA
+unsigned char ConsoleKeyByteRegion[6] = {0};
 
-    // Each clamp re-reads the geometry: the stores go through `target`.
-    if (field_23D80_ != -1 && field_23D84_ != -1) {
-        if (field_23D88_ == -1 || field_23D8C_ == -1) {
-            int *const target = field_23D88_ == -1 ? &field_23D88_ : &field_23D8C_;
-            *target = y - (track_height() - bottom_border() + caption_height_);
-            if (*target < sprite_b_.height() / 2) {
-                *target = sprite_b_.height() / 2;
-            }
-            if (*target > client_height() - caption_height_ - bottom_border() -
-                              sprite_b_.height() / 2) {
-                *target = client_height() - caption_height_ - bottom_border() -
-                          sprite_b_.height() / 2;
-            }
-            update(0, ConsoleDragLineY, dib_.bmiHeader.biWidth, 1, nullptr);
-            update(ConsoleDragLineX, 0, 1, -static_cast<int>(dib_.bmiHeader.biHeight), nullptr);
-        }
-    } else {
-        int *const target = field_23D80_ == -1 ? &field_23D80_ : &field_23D84_;
-        *target = x - border_thickness_;
-        if (*target < sprite_a_.width() / 2) {
-            *target = sprite_a_.width() / 2;
-        }
-        if (*target > client_width() - border_thickness_ * 2 -
-                          sprite_a_.width() / 2) {
-            *target = client_width() - border_thickness_ * 2 -
-                      sprite_a_.width() / 2;
-        }
-        update(0, ConsoleDragLineY, dib_.bmiHeader.biWidth, 1, nullptr);
-        update(ConsoleDragLineX, 0, 1, -static_cast<int>(dib_.bmiHeader.biHeight), nullptr);
-    }
+// Interlude selection dword read/written at 0x518871/0x5188AB, initially zero. Its complete original allocation and lifetime remain unverified.
+// RECOVERY_OBJECT: v1 0x00939FCC ?ConsoleInterludeSelection@@3HA
+int ConsoleInterludeSelection = 0;
 
-    if (field_23D88_ > field_23D8C_) {
-        swap(&field_23D88_, &field_23D8C_);
-    }
-    if (field_23D80_ > field_23D84_) {
-        swap(&field_23D80_, &field_23D84_);
-    }
-}
+// Key-cycle dword read/written at 0x5185CE-0x518674, initially -2 in the pinned PE. Adjacent DiploKnownTechColor is independent; full allocation and lifetime remain unverified.
+// RECOVERY_OBJECT: v1 0x0068A5C8 ?ConsoleKeyCycleState@@3HA
+int ConsoleKeyCycleState = -2;
 
-
-// Superseded seed deleted; seed paths below are historical Git provenance.
-// ORIGINAL: 0x005169F0 ?end_my_turn@Console@@QAEXXZ 0x005169F0-0x00516C4D BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/005169f0.cpp: retained complete original identity/spans and seed evidence", "recovery/tasks/console-scenario-owner-wave.json; native scope expansions through sequence27", "Source owner interpretation preserves mapped original accesses, lifetime calls and branch roles; source-bound members and globals replace the seed offsets/address aliases. Historical seeds and claims remain independent restoration obligations."], "reason": "Recover end-turn into the genuine Console owner using existing pane/timer/lifecycle members, shared faction waiting state and the independently read original popup captions. Preserve remote-turn and ready-vehicle decisions, including separate timer clear rather than InfoWin::reset. No matching or game-acceptance claim."}
-void Console::end_my_turn() {
-    TutWinBaseWindow.cancel_zoom_wait();
-    ConsoleInfoWin.clear_pending_timer();
-    TutorialWindow.reset();
-    ConsoleStatusWin.reset();
-    g_FX.play(0xF);
-
-    if (ConsoleControlTurnActive != 0) return;
-    if (edit_lock() != 0) {
-        NetMsgPrimary.pop("PROTECTED", 0x1388, 0, nullptr);
-        return;
-    }
-
-    const uint8_t game_flags = static_cast<uint8_t>(GameDataStateStorage.fields_.game_state_);
-    if (IsMultiplayerNet != 0) {
-        if ((GameDataStateStorage.fields_.net_turn_flags_ & 0x10) != 0 &&
-            GameDataStateStorage.fields_.net_turn_faction_ != ConsoleGlobal.faction_id_) {
-            GenderDefault = Players[GameDataStateStorage.fields_.net_turn_faction_].is_leader_female;
-            PluralityDefault = 0;
-            parse_says(0, Players[GameDataStateStorage.fields_.net_turn_faction_].title_leader, -1, -1);
-            GenderDefault = Players[GameDataStateStorage.fields_.net_turn_faction_].is_leader_female;
-            PluralityDefault = 0;
-            parse_says(1, Players[GameDataStateStorage.fields_.net_turn_faction_].name_leader, -1, -1);
-            GenderDefault = Players[GameDataStateStorage.fields_.net_turn_faction_].noun_gender;
-            PluralityDefault = Players[GameDataStateStorage.fields_.net_turn_faction_].is_noun_plural;
-            parse_says(2, Players[GameDataStateStorage.fields_.net_turn_faction_].noun_faction, -1, -1);
-            parse_says(3, NetDaemonNet.get_player_name(NetDaemonNet.who_2_pid(
-                              GameDataStateStorage.fields_.net_turn_faction_)), -1, -1);
-            NetMsgPrimary.pop("SIMULWHOSE", 0x1388, 0, nullptr);
-            return;
-        }
-        if ((game_flags & 2) != 0 && (GameDataStateStorage.fields_.net_turn_flags_ & 0x10) == 0) {
-            const int faction_bit = 1 << ConsoleGlobal.faction_id_;
-            if ((NetDaemonNet.factions_waiting_mask() & faction_bit) != 0 &&
-                NetDaemonNet.factions_waiting_mask() != 0xFF) {
-                NetMsgPrimary.pop("ATTEMPTTOCANCEL", 0x1388, 0, nullptr);
-                message_data(0x2302, 0, GameDataStateStorage.fields_.turn_current_num_, 0, 0, 0);
-                return;
-            }
-        }
-    }
-
-    if (field_23BE8_ == 0) return;
-    if ((game_flags & 2) == 0) {
-        set_move(1);
-        if (ConsoleGlobal.cursor_active_ != 0) {
-            if (selected_vehicle_ >= 0 &&
-                (veh_ready(selected_vehicle_) != 0 ||
-                 ConsoleGlobal.ready_search(selected_vehicle_) >= 0) &&
-                X_pop("REALLYOVER", nullptr) == 0) {
-                return;
-            }
-        }
-    }
-
-    GameDataStateStorage.fields_.game_state_ |= 2u;
-    const int current_selection = selected_vehicle_;
-    field_23BE4_ = 0;
-    field_23BE8_ = 0;
-    focus_vehicle_ = current_selection;
-}
 
 // Shared no-map interruption state observed in menu/key input and FLIC timer.
 // Start-only binding: original allocation extent and lifetime remain unverified.
@@ -5497,498 +5524,6 @@ void Console::reset_turn_view() {
     MapWinTable[0]->main_caption();
     alpha_menu_.check(selected_vehicle_);
 }
-
-// RECOVERY_ASSOCIATED: v1 switch_targets 0x0051BC70 0x0051D240 0x0051D274 0x0051BE9E
-// RECOVERY_ASSOCIATED: v1 switch_targets 0x0051BC70 0x0051D274 0x0051D2B8 0x0051C15A
-// RECOVERY_ASSOCIATED: v1 switch_targets 0x0051BC70 0x0051D2B8 0x0051D324 0x0051C269
-// RECOVERY_ASSOCIATED: v1 switch_targets 0x0051BC70 0x0051D324 0x0051D368 0x0051C3DB
-// RECOVERY_ASSOCIATED: v1 switch_selector 0x0051BC70 0x0051D394 0x0051D488 0x0051C604
-// RECOVERY_ASSOCIATED: v1 switch_targets 0x0051BC70 0x0051D368 0x0051D394 0x0051C60A
-// RECOVERY_ASSOCIATED: v1 switch_targets 0x0051BC70 0x0051D488 0x0051D4F4 0x0051C8A3
-// RECOVERY_ASSOCIATED: v1 switch_targets 0x0051BC70 0x0051D4F4 0x0051D504 0x0051CB7C
-// RECOVERY_ASSOCIATED: v1 switch_selector 0x0051BC70 0x0051D530 0x0051D54B 0x0051CBE4
-// RECOVERY_ASSOCIATED: v1 switch_targets 0x0051BC70 0x0051D504 0x0051D530 0x0051CBEA
-// RECOVERY_ASSOCIATED: v1 switch_selector 0x0051BC70 0x0051D578 0x0051D631 0x0051CCF8
-// RECOVERY_ASSOCIATED: v1 switch_targets 0x0051BC70 0x0051D54C 0x0051D578 0x0051CCFE
-// RECOVERY_ASSOCIATED: v1 switch_targets 0x0051BC70 0x0051D634 0x0051D658 0x0051CDE6
-// RECOVERY_ASSOCIATED: v1 switch_selector 0x0051BC70 0x0051D6C8 0x0051D71C 0x0051D091
-// RECOVERY_ASSOCIATED: v1 switch_targets 0x0051BC70 0x0051D658 0x0051D6C8 0x0051D097
-// ORIGINAL: 0x0051BC70 ?menu_proc@Console@@QAEXH@Z 0x0051BC70-0x0051D23E
-// RECOVERY_BINDING: v1 {"evidence": ["git:276d612614085e5d57743cf8cc92903d9468e346:src/unrecovered/0051bc70.cpp"], "reason": "Recover complete menu dispatch using genuine Console members, typed owners and original command branches."}
-// TRIED: full transcription of every case in the ~150-target dispatch (mnemonic_similarity 0.45, 834/1610 original mnemonics in common); first divergence is the Win::set_cursor call through the vbtable adjustor near the top loop (mov/add ordering), and downstream case bodies pick up extra instructions from real vtable dispatch (VCall) and MapWin/Console member calls the original inlined more cheaply than /O2 does here.
-// symbol    ?menu_proc@Console@@QAEXH@Z
-void Console::menu_proc(int command) {
-    if (MapBaseDisplayOverride == 0) {
-        ConsoleNoMapOverrideLatch = 1;
-        return;
-    }
-    if (ExitTurnLoop != 0) return;
-
-    TutorialWindow.reset();
-    go_reset();
-    // 0x51BCAE..0x51BD41 is Console::cursor_off (0x510520) expanded.
-    // WORKAROUND(inline): written out; a cursor_off() call stays out of line
-    // here (C4711 refuses it: over the auto-inline size cap).
-    field_23D10_ = 0;
-    for (size_t slot = 0; slot < MapWinTableSlots; ++slot) {
-        MapWin *const window = MapWinTable[slot];
-        if (window == nullptr || (slot != 0 && window->view_active_ == 0)) {
-            continue;
-        }
-        if (window->cursor_sprite_ != nullptr ||
-            window->cursor_resource_id_ != 0x7F00) {
-            window->set_cursor(0x7F00);
-            window->cursor_resource_id_ = 0x7F00;
-            window->cursor_sprite_ = nullptr;
-        }
-        // cursor_off's post-callback reload through the table.
-        const uint32_t dirty = MapWinTable[slot]->field_1DD70_;
-        if ((dirty & 0x00C40000u) != 0) {
-            MapWinTable[slot]->field_1DD70_ = dirty & ~0x00C40000u;
-            MapWinTable[slot]->draw_map(1);
-        }
-        do_non_input();
-    }
-
-    if (IsMultiplayerNet != 0) {
-        if (ConsoleControlTurnActive != 0 ||
-            NetDaemonNet.field_1BB4_ != 0 ||
-            NetDaemonNet.primary_state_.leading_words_[2] != 0) {
-            const int command_group = (command >> 8) & 0xFF;
-            if (command_group != 0 && command_group != 7 &&
-                command_group != 8) {
-                return;
-            }
-        }
-        log_say_hex("Menu Event", command, 0, 0);
-    }
-
-    if (ConsoleGlobal.cursor_active_ != 0 && edit_lock() != 0) {
-        reset_turn_view();
-        return;
-    }
-    if (ConsoleGlobal.cursor_active_ != 0 && selected_vehicle_ < 0 &&
-        command != 0x5D) {
-        return;
-    }
-
-    if (command >= 0x900 && command < 0x913) {
-        terraform(selected_vehicle_, command - 0x900);
-    }
-
-    // Case bodies follow the image's body addresses (0x51BEA5..0x51CEA4).
-    // Several are Console members expanded in place; each is written as the
-    // call so /Ob2 expands it the way the image does.
-    switch (command) {
-    case 0x51: menu_detail(); break;            // 0x516930 expanded
-    case 0x52: menu_simple(); break;            // 0x516970 expanded
-    case 0x53: set_preferences(); break;
-    case 0x55: set_adv_preferences(); break;
-    case 0x54: set_base_preferences(); break;
-    case 0x56: set_auto_preferences(); break;
-    case 0x57: set_audiovisual(); break;
-    case 0x58: set_map_display(); break;
-    case 0x59: save_game(0); break;
-    case 0x5A: load_proc(0, 0); break;
-    case 0x5B: retire_game(); break;
-    case 0x5C: new_game(); break;                // 0x514D30 expanded
-    case 0x5D: quit_game(); break;               // 0x514990 expanded
-    case 0x103: design_new_veh(ConsoleGlobal.faction_id_, -1); break;
-    case 0x105: social_select(ConsoleGlobal.faction_id_); break;
-    case 0x106:
-        // 0x514F50 expanded under the AI-priorities rule.
-        if ((GameDataStateStorage.fields_.game_rules_ & 0x200) != 0) {
-            // WORKAROUND(inline): set_ai written out; a call stays out of line here.
-            const int faction_id = ConsoleGlobal.faction_id_;
-            int *growth = &PlayersData[faction_id].ai_growth;
-            int *tech = &PlayersData[faction_id].ai_tech;
-            int *wealth = &PlayersData[faction_id].ai_wealth;
-            int *power = &PlayersData[faction_id].ai_power;
-            int flags = (*growth != 0) ? 1 : 0;
-            if (*tech != 0) {
-                flags |= 2;
-            } else {
-                flags &= ~2;
-            }
-            if (*wealth != 0) {
-                flags |= 4;
-            } else {
-                flags &= ~4;
-            }
-            if (*power != 0) {
-                flags |= 8;
-            } else {
-                flags &= ~8;
-            }
-            PopupWriteCheckState = static_cast<int>(flags);
-            if (x_pop_short(ConsoleStrTechRandom, 1, (NullCallback)0) >= 0) {
-                *growth = (char)PopupWriteCheckState & 1u;
-                *tech = ((char)PopupWriteCheckState & 2u) >> 1;
-                *wealth = ((char)PopupWriteCheckState & 4u) >> 2;
-                *power = ((char)PopupWriteCheckState & 8u) >> 3;
-                synch_ai(faction_id);
-            }
-        }
-        break;
-    case 0x107:
-        if ((GameDataStateStorage.fields_.game_rules_ & 0x200) == 0) {
-            set_tech(ConsoleGlobal.faction_id_);
-        }
-        break;
-    case 0x114: corner_the_market(); break;
-    case 0x115: show_scen_objectives(); break;
-    case 0x109: report_labs(); break;
-    case 0x10A: report_energy(); break;
-    case 0x10B: report_ops(); break;
-    case 0x10C: report_projects(); break;
-    case 0x10D: report_sat(); break;
-    case 0x10E: report_security(); break;
-    case 0x10F: report_score(0); break;
-    case 0x110: monument(0); break;
-    case 0x111: hall_of_fame(0); break;
-    case 0x113:
-        if (MultiWindow.panel_open() != 0) {
-            MultiWindow.hide();
-        } else {
-            MultiWindow.show();
-        }
-        break;
-    case 0x200:
-        if (edit_lock() == 0) {
-            set_move(0);
-        } else {
-            NetMsgPrimary.pop("PROTECTED", 5000, 0, nullptr);
-        }
-        break;
-    case 0x201:
-        if (ConsoleGlobal.cursor_active_ != 0) {
-            reset_turn_view();
-        }
-        break;
-    case 0x203:
-    case 0x204:
-    case 0x205:
-    case 0x206:
-    case 0x207:
-    case 0x208:
-        zoom(command, 0);
-        break;
-    case 0x209: toggle_flatten(); break;        // 0x515640 expanded
-    case 0x20A: toggle_grid(); break;           // 0x5156A0 expanded
-    case 0x20B: toggle_base_grid(); break;      // 0x5156F0 expanded
-    case 0x20C: toggle_dest(); break;           // 0x515740 expanded
-    case 0x20F: survey(); break;
-    case 0x210: base_names(); break;            // 0x515600 expanded
-    case 0x211: name_landmark(-1, -1); break;
-    case 0x20D: reset_status_and_initialize_desktop(); break;  // 0x515430 expanded
-    case 0x212: erase_landmark(-1, -1); break;
-    case 0x215: toggle_patrol(); break;         // 0x515EF0 expanded
-    case 0x213: go_to(-1, -2, 0); break;
-    case 0x214: center(); break;                // 0x515400 expanded
-    // WORKAROUND(inline): prev_cursor (0x510A60) written out; a call stays out of line.
-    case 0x216:
-        field_23BF8_ = 0;
-        if (survey_mode_ != 0) { survey_mode_ = 0; MapWinTable[0]->draw_map(1); }
-        MapWinTable[0]->draw_cursor();
-        if (ConsoleGlobal.cursor_active_ != 0) reset_turn_view();
-        if (--cursor_history_index_ < 0) cursor_history_index_ = 0x1F;
-        ConsoleStatusWin.set_loc(
-            ConsoleGlobal.cursor_history_x_[ConsoleGlobal.cursor_history_index_],
-            ConsoleGlobal.cursor_history_y_[ConsoleGlobal.cursor_history_index_]);
-        MapWinTable[0]->focus(
-            ConsoleGlobal.cursor_history_x_[ConsoleGlobal.cursor_history_index_],
-            ConsoleGlobal.cursor_history_y_[ConsoleGlobal.cursor_history_index_]);
-        break;
-    case 0x217: next_cursor(); break;
-    case 0x300:
-    case 0x301:
-        new_base(selected_vehicle_);
-        break;
-    case 0x304:
-        // The image tests offense_rating (Weapon+0x8) at 0x0051C81C.
-        if (Chassis[VehPrototypes[Vehs[selected_vehicle_].proto_id].chassis_id].triad == TRIAD_AIR &&
-            Weapon[VehPrototypes[Vehs[selected_vehicle_].proto_id].weapon_id].offense_rating != 0) {
-            automate(selected_vehicle_, 0xC);
-        } else {
-            automate(selected_vehicle_, 3);
-        }
-        break;
-    case 0x302: oblit(selected_vehicle_); break;
-    case 0x305: arty(selected_vehicle_); break;
-    case 0x306: automate(selected_vehicle_, 10); break;
-    case 0x307: automate(selected_vehicle_, 0xB); break;
-    // 0x309 and 0x30A have separate (identical) bodies in the image.
-    case 0x309: use_ability(selected_vehicle_); break;
-    case 0x30A: use_ability(selected_vehicle_); break;
-    case 0x310: go_to(selected_vehicle_, -3, 0); break;
-    case 0x311: destroy(selected_vehicle_); break;
-    case 0x308: convoy(selected_vehicle_); break;
-    case 0x312:
-        if (ConsoleGlobal.cursor_active_ == 0) {
-            disband(ConsoleGlobal.cursor_history_x_[ConsoleGlobal.cursor_history_index_],
-                    ConsoleGlobal.cursor_history_y_[ConsoleGlobal.cursor_history_index_]);
-        } else {
-            disband(selected_vehicle_);
-        }
-        break;
-    case 0x313:
-        // Separate "PROTECTED" literal from case 0x200's (0x68AD7C vs 0x68AD70).
-        if (edit_lock() != 0) {
-            NetMsgPrimary.pop("PROTECTED", 5000, 0, nullptr);
-        } else {
-            activate(ConsoleGlobal.cursor_history_x_[ConsoleGlobal.cursor_history_index_],
-                     ConsoleGlobal.cursor_history_y_[ConsoleGlobal.cursor_history_index_], 1);
-        }
-        break;
-    case 0x314: automate(selected_vehicle_, 0); break;
-    case 0x315: hold(selected_vehicle_, 0); break;
-    case 0x31D: unload(selected_vehicle_); break;
-    case 0x31E: upgrade(selected_vehicle_); break;
-    case 0x31F: give_veh(selected_vehicle_); break;
-    case 0x320: designate(selected_vehicle_); break;
-    case 0x321: sentry(selected_vehicle_, 0); break;
-    case 0x322: sentry(selected_vehicle_, 10); break;
-    case 0x316:
-    case 0x317:
-        go_home(selected_vehicle_);
-        break;
-    case 0x318: go_to(selected_vehicle_, 0x18, 0); break;
-    case 0x31B: explore(selected_vehicle_); break;
-    case 0x319: go_to(selected_vehicle_, 0x18, 1); break;
-    case 0x31A: assemble(); break;
-    case 0x31C: wait(selected_vehicle_); break;
-    case 0x323: skip(selected_vehicle_); break;
-    case 0x600: editor_on(); break;
-    case 0x324: set_patrol(selected_vehicle_); break;
-    case 0x108:
-    case 0x701:
-        help_topic(2, 0);
-        break;
-    case 0x702: help_topic(0, 0); break;
-    case 0x703: help_topic(1, 0); break;
-    case 0x704: help_topic(0xE, 0); break;
-    case 0x705: help_topic(4, 0); break;
-    case 0x706: help_topic(6, 0); break;
-    case 0x707: help_topic(7, 0); break;
-    case 0x708: help_topic(5, 0); break;
-    case 0x709: help_topic(8, 0); break;
-    case 0x70A: help_topic(3, 0); break;
-    case 0x70B: help_topic(10, 0); break;
-    case 0x70C: help_topic(0xB, 0); break;
-    case 0x70D: help_topic(0xC, 0); break;
-    case 0x70E: help_topic(0xF, 0); break;
-    case 0x720: TutorialWindow.set_tour_stage(0); TutorialWindow.tour(); break;
-    case 0x722: TutorialWindow.set_tour_stage(1); TutorialWindow.tour(); break;
-    case 0x721: TutorialWindow.set_tour_stage(3); TutorialWindow.tour(); break;
-    case 0x723: TutorialWindow.set_tour_stage(5); TutorialWindow.tour(); break;
-    case 0x724: TutorialWindow.set_tour_stage(7); TutorialWindow.tour(); break;
-    case 0x725: TutorialWindow.set_tour_stage(6); TutorialWindow.tour(); break;
-    case 0x800: chat(0); break;
-    case 0x801: X_pop("VOICEOVERDATA", &pop_wait); break;
-    case 0x802: MultiWindow.on_button_clicked(2); break;
-    case 0x803: custom_my_faction(); break;
-    case 0x804: time_controls(); break;
-    case 0x805: zoom_to_upkeep_base(); break;
-    case 0x806: use_time_bonus(); break;
-    case 0x807:
-    case 0x808:
-        end_my_turn();
-        break;
-    case 0x750: show_credits(); break;
-    case 0x751: show_version(); break;          // 0x517180 expanded
-    case 0x9F0: road_to(selected_vehicle_, 0x1B); break;
-    case 0x9F8: automate(selected_vehicle_, 4); break;
-    case 0x9F9: automate(selected_vehicle_, 5); break;
-    case 0x9F1: road_to(selected_vehicle_, 0x1C); break;
-    case 0x9F2: automate(selected_vehicle_, 0); break;
-    case 0x9F3: automate(selected_vehicle_, 1); break;
-    case 0x9F6: automate(selected_vehicle_, 6); break;
-    case 0x9F4: automate(selected_vehicle_, 2); break;
-    case 0x9F5: automate(selected_vehicle_, 7); break;
-    case 0x9F7: automate(selected_vehicle_, 3); break;
-    }
-
-    if ((GameDataStateStorage.fields_.game_state_ & 0x40) == 0) return;
-
-    switch (command) {
-    case 0x601:
-        GameDataStateStorage.fields_.game_state_ ^= 0x80;
-        if ((GameDataStateStorage.fields_.game_state_ & 0x80) != 0 &&
-            (GameDataStateStorage.fields_.game_state_ & 0x40) != 0) {
-            MainInterfaceGlobal.flat_button_[2].show(0);
-        } else {
-            MainInterfaceGlobal.flat_button_[2].hide();
-        }
-        ::draw_map(1);
-        WorldClimateWorldWin.GraphicWin::redraw();
-        desktop_update();
-        ConsoleInfoWin.change(0);
-        ConsoleStatusWin.redraw();
-        MapWinTable[0]->main_caption();
-        return;
-    case 0x602: editor_veh(); return;
-    case 0x603: editor_edit_veh(-1); return;
-    case 0x604: tech_advance(ConsoleGlobal.faction_id_); return;
-    case 0x605: editor_tech(); return;
-    case 0x606: editor_view(); return;
-    case 0x607: editor_diff(); return;
-    case 0x608: editor_energy(); return;
-    case 0x609: editor_date(); return;
-    case 0x60A: editor_eliminate(); return;
-    case 0x60B: editor_reload(); return;
-    case 0x60C: editor_kill_vehicles(); return;
-    case 0x60D: show_replay(); return;
-    case 0x60E: show_movies(); return;
-    case 0x60F: editor_reset_tech(); return;
-    case 0x610: editor_reset_faction(); return;
-    case 0x611: editor_diplomacy(); return;
-    case 0x612: editor_personality(); return;
-    case 0x613: editor_strategy(); return;
-    case 0x614: editor_rules(); return;
-    case 0x615: editor_scen_rules(); return;
-    case 0x616: editor_scen_param(); return;
-    case 0x617: editor_scen_victory(); return;
-    case 0x618: editor_undo(); return;
-    case 0x619: editor_redo(); return;
-    case 0x61B: save_game(1); return;
-    case 0x61A: load_proc(1, 0); return;
-    case 0xA00: editor_save(); return;
-    case 0xA01: editor_load(); return;
-    case 0xA10: editor_paints(0); return;
-    case 0xA11: editor_paints(1); return;
-    case 0xA12: editor_paints(2); return;
-    case 0xA13: editor_paints(3); return;
-    case 0xA14: editor_paints(4); return;
-    case 0xA15: editor_terrain(); return;
-    case 0xA16: editor_paints(5); return;
-    case 0xA17: editor_natural(1); return;
-    case 0xA18: editor_natural(0); return;
-    case 0xA19: editor_minor(); return;
-    case 0xA20: MapWinTable[0]->editor(ConsoleGlobal.cursor_history_x_[ConsoleGlobal.cursor_history_index_], ConsoleGlobal.cursor_history_y_[ConsoleGlobal.cursor_history_index_], 0); return;
-    case 0xA21: MapWinTable[0]->editor(ConsoleGlobal.cursor_history_x_[ConsoleGlobal.cursor_history_index_], ConsoleGlobal.cursor_history_y_[ConsoleGlobal.cursor_history_index_], 1); return;
-    case 0xA24: editor_set_brush(); return;
-    case 0xA48: editor_flat(); return;
-    case 0xA30: editor_climate(); return;
-    case 0xA31: editor_generate(); return;
-    case 0xA32: editor_fast(); return;
-    case 0xA36: editor_fungus(); return;
-    case 0xA37: editor_rockiness(); return;
-    case 0xA40: editor_randomize(); return;
-    case 0xA41: editor_clear_random(); return;
-    case 0xA50: editor_clear(); return;
-    case 0xA51: editor_polar(); return;
-    case 0xA52: editor_clear_vehicles(); return;
-    case 0xA53: editor_clear_terrain(); return;
-    case 0xA54: editor_lock2(); return;
-    default: return;
-    }
-}
-
-// Superseded seed deleted; seed paths below are historical Git provenance.
-// ORIGINAL: 0x0051D720 ?menu_daemon@Console@@QAAXH@Z 0x0051D720-0x0051D733 BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/0051d720.cpp"], "reason": "Recover the callback as static cdecl: original forwards to ConsoleGlobal without reading an incoming receiver; retain catalogue identity separately from emitted symbol."}
-// symbol    ?menu_daemon@Console@@SAXH@Z
-void __cdecl Console::menu_daemon(int selection) {
-    ConsoleGlobal.menu_proc(selection);
-}
-
-// Initialize the Console windows/menu and publish the fallback popup parent.
-// Superseded seed deleted; seed paths below are historical Git provenance.
-// ORIGINAL: 0x0051D890 ?init@Console@@QAEXH@Z 0x0051D890-0x0051D9CF BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/0051d890.cpp"], "reason": "Complete genuine Console initialization/shared geometry from original receiver/member/global dataflow; native seed establishes catalogue identity and span. Source uses actual GraphicWin virtual base, AlphaMenu, shared RECT and typed fallback Win pointer. Original seed/claims retained; binding grants no matching or acceptance."}
-// symbol    ?init@Console@@QAEXH@Z
-void Console::init(int) {
-    close();
-
-    focus_vehicle_ = -1;
-    field_23BEC_ = 0;
-
-    if ((~StatusFlags & 1u) != 0) {
-        field_23BCC_ = WinScreenWidth;
-        IfaceScreenWidth = field_23BCC_;
-        field_23BD0_ = WinScreenHeight - MainInterfaceGlobal.panel_height();
-        IfaceScreenHeight = field_23BD0_;
-
-        ConsoleMenuBounds.left = 0;
-        ConsoleMenuBounds.top = 0;
-        ConsoleMenuBounds.right = IfaceScreenWidth;
-        ConsoleMenuBounds.bottom = IfaceScreenHeight;
-        StatusFlags |= 1u;
-    }
-
-    char *const menu_caption = StringTable.get(Labels.strings_ptr[0x1C]);
-    GraphicWin::init(&ConsoleMenuBounds, menu_caption, 0x02400000, 0,
-                     &alpha_menu_, 0);
-
-    cover_window_.init(0, 0, pixel_width(), pixel_height(), 0, 0x01000022,
-                        static_cast<Win *>(this), 0, 0);
-    Win::set_def_focus(static_cast<Win *>(this));
-
-    (void)alpha_menu_.menu_init();
-    alpha_menu_.set_menu_proc(&Console::menu_daemon);
-    load_cursors();
-
-    Win *const window = this;
-    BasePopDefaultField322C = window;
-}
-
-// Unreferenced in the pinned image (no call, jump or data reference).
-// Original effect: return without modifying EAX; callee stack cleanup 0 bytes.
-// ORIGINAL: 0x0051D9D0 nullsub_187 0x0051D9D0-0x0051D9D1 BYTE_EXACT
-// RECOVERY_BINDING: v1 {"reason": "Bind the unreferenced original leaf as an empty/constant source function in the translation unit whose address band contains it; its original name, prototype and callers remain unknown.", "evidence": ["pinned:terranx_original.exe:0x0051D9D0-0x0051D9D1 return without modifying EAX; callee stack cleanup 0 bytes", "pinned scan: no rel32 call/jmp and no dword reference to this address anywhere in the image", "address band: nearest mapped neighbours are 0x0051D890 ?init@Console@@QAEXH@Z (src/console.cpp) and 0x0051D9F0 ??1Console@@QAE@XZ (src/console.cpp)"]}
-// symbol    ?nullsub_187@@YAXXZ
-// kind      game
-void __cdecl nullsub_187() {
-}
-
-// Unreferenced in the pinned image (no call, jump or data reference).
-// Original effect: return without modifying EAX; callee stack cleanup 0 bytes.
-// ORIGINAL: 0x0051D9E0 nullsub_188 0x0051D9E0-0x0051D9E1 BYTE_EXACT
-// RECOVERY_BINDING: v1 {"reason": "Bind the unreferenced original leaf as an empty/constant source function in the translation unit whose address band contains it; its original name, prototype and callers remain unknown.", "evidence": ["pinned:terranx_original.exe:0x0051D9E0-0x0051D9E1 return without modifying EAX; callee stack cleanup 0 bytes", "pinned scan: no rel32 call/jmp and no dword reference to this address anywhere in the image", "address band: nearest mapped neighbours are 0x0051D890 ?init@Console@@QAEXH@Z (src/console.cpp) and 0x0051D9F0 ??1Console@@QAE@XZ (src/console.cpp)"]}
-// symbol    ?nullsub_188@@YAXXZ
-// kind      game
-void __cdecl nullsub_188() {
-}
-
-// Publish current screen geometry independently of init's once-only gate.
-// Superseded seed deleted; seed paths below are historical Git provenance.
-// ORIGINAL: 0x0051D760 sub_51d760 0x0051D760-0x0051D7B5 BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/0051d760.cpp"], "reason": "Complete genuine Console initialization/shared geometry from original receiver/member/global dataflow; native seed establishes catalogue identity and span. Source uses actual GraphicWin virtual base, AlphaMenu, shared RECT and typed fallback Win pointer. Original seed/claims retained; binding grants no matching or acceptance."}
-// symbol    ?set_screen_geometry@Console@@QAEXXZ
-void Console::set_screen_geometry() {
-    field_23BCC_ = WinScreenWidth;
-    IfaceScreenWidth = field_23BCC_;
-    const int height = WinScreenHeight - MainInterfaceGlobal.panel_height();
-    field_23BD0_ = height;
-    IfaceScreenHeight = height;
-    ConsoleMenuBounds.left = 0;
-    ConsoleMenuBounds.top = 0;
-    ConsoleMenuBounds.right = IfaceScreenWidth;
-    ConsoleMenuBounds.bottom = height;
-    StatusFlags |= 1u;
-}
-
-
-
-// The C++ compiler owns the scalar deleting destructor below. Do not
-// add a hand-written deleting wrapper or explicit destructor cascade.
-// Current source ownership is not original TU or COMDAT-selection proof.
-// ORIGINAL: 0x0051DDF0 ??_GConsole@@UAEPAXI@Z 0x0051DDF0-0x0051DE26 FILE BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["historical seed:src/recovered/0051ddf0.cpp", "task:window-generated-deletion-owners", "Pinned entry receives the Console virtual GraphicWin subobject at complete-object+0x23D94; own-part destructor, virtual-base destructor and conditional delete are separate native stages.", "Fresh emitted code and receiver/target controls remain required. Duplicate COMDAT emission does not establish historical translation-unit placement or retained link selection."], "reason": "The existing real class lifetime generates this deleting entry; bind compiler-owned code rather than transcribing receiver arithmetic or invoking member/base destructors twice."}
-
-// Provisional original storage identities: access widths and initial values
-// are observed, but no complete allocation/lifetime interpretation is claimed.
-// Six individually stored bytes at 0x517930-0x51795D initially read as zero. Only the touched cells are known; original allocation extent, terminator and other consumers remain unverified.
-// RECOVERY_OBJECT: v1 0x00939FE0 ?ConsoleKeyByteRegion@@3PAEA
-unsigned char ConsoleKeyByteRegion[6] = {0};
-
-// Interlude selection dword read/written at 0x518871/0x5188AB, initially zero. Its complete original allocation and lifetime remain unverified.
-// RECOVERY_OBJECT: v1 0x00939FCC ?ConsoleInterludeSelection@@3HA
-int ConsoleInterludeSelection = 0;
-
-// Key-cycle dword read/written at 0x5185CE-0x518674, initially -2 in the pinned PE. Adjacent DiploKnownTechColor is independent; full allocation and lifetime remain unverified.
-// RECOVERY_OBJECT: v1 0x0068A5C8 ?ConsoleKeyCycleState@@3HA
-int ConsoleKeyCycleState = -2;
 
 // RECOVERY_ASSOCIATED: v1 switch_selector 0x005178C0 0x0051B690 0x0051B6CA 0x00517923
 // RECOVERY_ASSOCIATED: v1 switch_targets 0x005178C0 0x0051B670 0x0051B690 0x00517929
@@ -7376,10 +6911,475 @@ close_messages:
     return 1;
 }
 
-// ORIGINAL: 0x0051DF00 ?on_nc_left_down@thunk1_Console@@QAEXHH@Z 0x0051DF00-0x0051DF08 FILE BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["Pinned image 01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf: constructor span at 0x0050F460 stores table 0x0066EC18; exact cell 0x0066EC9C is 0x0051DF00.", "The complete original thunk bytes at 0x0051DF00 tail to pinned target 0x0050FB10.", "Fresh full build build-fpcqf1x8: ??_7Console@@6BWin@@@+0x84 COFF relocation selects ?on_nc_left_down@Console@@$4PPPPPPPM@A@AEXHH@Z; thunk bytes and its unique relative tail relocation target ?on_nc_left_down@Console@@UAEXHH@Z.", "The owner compile receipt inputs were unchanged and match current files at proposal emission; selected output is observed in the fresh MAP/PE but this proposal does not claim complete link-preservation acceptance.", "Historical source kind `game`, original identity/name, complete span, and parsed claims/lessons are checked unchanged after native-writer readback."], "reason": "The pinned Console constructor at 0x0050F460 installs the ??_7Console@@6BWin@@@ address point; its exact slot cell at +0x84 selects original identity 0x0051DF00. The fresh full-build owner COFF vftable relocation selects the compiler-generated thunk ?on_nc_left_down@Console@@$4PPPPPPPM@A@AEXHH@Z, whose unique physical relative tail targets ?on_nc_left_down@Console@@UAEXHH@Z. The original marker name and complete source history remain attached to this FILE identity."}
+// RECOVERY_ASSOCIATED: v1 switch_targets 0x0051BC70 0x0051D240 0x0051D274 0x0051BE9E
+// RECOVERY_ASSOCIATED: v1 switch_targets 0x0051BC70 0x0051D274 0x0051D2B8 0x0051C15A
+// RECOVERY_ASSOCIATED: v1 switch_targets 0x0051BC70 0x0051D2B8 0x0051D324 0x0051C269
+// RECOVERY_ASSOCIATED: v1 switch_targets 0x0051BC70 0x0051D324 0x0051D368 0x0051C3DB
+// RECOVERY_ASSOCIATED: v1 switch_selector 0x0051BC70 0x0051D394 0x0051D488 0x0051C604
+// RECOVERY_ASSOCIATED: v1 switch_targets 0x0051BC70 0x0051D368 0x0051D394 0x0051C60A
+// RECOVERY_ASSOCIATED: v1 switch_targets 0x0051BC70 0x0051D488 0x0051D4F4 0x0051C8A3
+// RECOVERY_ASSOCIATED: v1 switch_targets 0x0051BC70 0x0051D4F4 0x0051D504 0x0051CB7C
+// RECOVERY_ASSOCIATED: v1 switch_selector 0x0051BC70 0x0051D530 0x0051D54B 0x0051CBE4
+// RECOVERY_ASSOCIATED: v1 switch_targets 0x0051BC70 0x0051D504 0x0051D530 0x0051CBEA
+// RECOVERY_ASSOCIATED: v1 switch_selector 0x0051BC70 0x0051D578 0x0051D631 0x0051CCF8
+// RECOVERY_ASSOCIATED: v1 switch_targets 0x0051BC70 0x0051D54C 0x0051D578 0x0051CCFE
+// RECOVERY_ASSOCIATED: v1 switch_targets 0x0051BC70 0x0051D634 0x0051D658 0x0051CDE6
+// RECOVERY_ASSOCIATED: v1 switch_selector 0x0051BC70 0x0051D6C8 0x0051D71C 0x0051D091
+// RECOVERY_ASSOCIATED: v1 switch_targets 0x0051BC70 0x0051D658 0x0051D6C8 0x0051D097
+// ORIGINAL: 0x0051BC70 ?menu_proc@Console@@QAEXH@Z 0x0051BC70-0x0051D23E
+// RECOVERY_BINDING: v1 {"evidence": ["git:276d612614085e5d57743cf8cc92903d9468e346:src/unrecovered/0051bc70.cpp"], "reason": "Recover complete menu dispatch using genuine Console members, typed owners and original command branches."}
+// TRIED: full transcription of every case in the ~150-target dispatch (mnemonic_similarity 0.45, 834/1610 original mnemonics in common); first divergence is the Win::set_cursor call through the vbtable adjustor near the top loop (mov/add ordering), and downstream case bodies pick up extra instructions from real vtable dispatch (VCall) and MapWin/Console member calls the original inlined more cheaply than /O2 does here.
+// symbol    ?menu_proc@Console@@QAEXH@Z
+void Console::menu_proc(int command) {
+    if (MapBaseDisplayOverride == 0) {
+        ConsoleNoMapOverrideLatch = 1;
+        return;
+    }
+    if (ExitTurnLoop != 0) return;
+
+    TutorialWindow.reset();
+    go_reset();
+    // 0x51BCAE..0x51BD41 is Console::cursor_off (0x510520) expanded.
+    // WORKAROUND(inline): written out; a cursor_off() call stays out of line
+    // here (C4711 refuses it: over the auto-inline size cap).
+    field_23D10_ = 0;
+    for (size_t slot = 0; slot < MapWinTableSlots; ++slot) {
+        MapWin *const window = MapWinTable[slot];
+        if (window == nullptr || (slot != 0 && window->view_active_ == 0)) {
+            continue;
+        }
+        if (window->cursor_sprite_ != nullptr ||
+            window->cursor_resource_id_ != 0x7F00) {
+            window->set_cursor(0x7F00);
+            window->cursor_resource_id_ = 0x7F00;
+            window->cursor_sprite_ = nullptr;
+        }
+        // cursor_off's post-callback reload through the table.
+        const uint32_t dirty = MapWinTable[slot]->field_1DD70_;
+        if ((dirty & 0x00C40000u) != 0) {
+            MapWinTable[slot]->field_1DD70_ = dirty & ~0x00C40000u;
+            MapWinTable[slot]->draw_map(1);
+        }
+        do_non_input();
+    }
+
+    if (IsMultiplayerNet != 0) {
+        if (ConsoleControlTurnActive != 0 ||
+            NetDaemonNet.field_1BB4_ != 0 ||
+            NetDaemonNet.primary_state_.leading_words_[2] != 0) {
+            const int command_group = (command >> 8) & 0xFF;
+            if (command_group != 0 && command_group != 7 &&
+                command_group != 8) {
+                return;
+            }
+        }
+        log_say_hex("Menu Event", command, 0, 0);
+    }
+
+    if (ConsoleGlobal.cursor_active_ != 0 && edit_lock() != 0) {
+        reset_turn_view();
+        return;
+    }
+    if (ConsoleGlobal.cursor_active_ != 0 && selected_vehicle_ < 0 &&
+        command != 0x5D) {
+        return;
+    }
+
+    if (command >= 0x900 && command < 0x913) {
+        terraform(selected_vehicle_, command - 0x900);
+    }
+
+    // Case bodies follow the image's body addresses (0x51BEA5..0x51CEA4).
+    // Several are Console members expanded in place; each is written as the
+    // call so /Ob2 expands it the way the image does.
+    switch (command) {
+    case 0x51: menu_detail(); break;            // 0x516930 expanded
+    case 0x52: menu_simple(); break;            // 0x516970 expanded
+    case 0x53: set_preferences(); break;
+    case 0x55: set_adv_preferences(); break;
+    case 0x54: set_base_preferences(); break;
+    case 0x56: set_auto_preferences(); break;
+    case 0x57: set_audiovisual(); break;
+    case 0x58: set_map_display(); break;
+    case 0x59: save_game(0); break;
+    case 0x5A: load_proc(0, 0); break;
+    case 0x5B: retire_game(); break;
+    case 0x5C: new_game(); break;                // 0x514D30 expanded
+    case 0x5D: quit_game(); break;               // 0x514990 expanded
+    case 0x103: design_new_veh(ConsoleGlobal.faction_id_, -1); break;
+    case 0x105: social_select(ConsoleGlobal.faction_id_); break;
+    case 0x106:
+        // 0x514F50 expanded under the AI-priorities rule.
+        if ((GameDataStateStorage.fields_.game_rules_ & 0x200) != 0) {
+            // WORKAROUND(inline): set_ai written out; a call stays out of line here.
+            const int faction_id = ConsoleGlobal.faction_id_;
+            int *growth = &PlayersData[faction_id].ai_growth;
+            int *tech = &PlayersData[faction_id].ai_tech;
+            int *wealth = &PlayersData[faction_id].ai_wealth;
+            int *power = &PlayersData[faction_id].ai_power;
+            int flags = (*growth != 0) ? 1 : 0;
+            if (*tech != 0) {
+                flags |= 2;
+            } else {
+                flags &= ~2;
+            }
+            if (*wealth != 0) {
+                flags |= 4;
+            } else {
+                flags &= ~4;
+            }
+            if (*power != 0) {
+                flags |= 8;
+            } else {
+                flags &= ~8;
+            }
+            PopupWriteCheckState = static_cast<int>(flags);
+            if (x_pop_short(ConsoleStrTechRandom, 1, (NullCallback)0) >= 0) {
+                *growth = (char)PopupWriteCheckState & 1u;
+                *tech = ((char)PopupWriteCheckState & 2u) >> 1;
+                *wealth = ((char)PopupWriteCheckState & 4u) >> 2;
+                *power = ((char)PopupWriteCheckState & 8u) >> 3;
+                synch_ai(faction_id);
+            }
+        }
+        break;
+    case 0x107:
+        if ((GameDataStateStorage.fields_.game_rules_ & 0x200) == 0) {
+            set_tech(ConsoleGlobal.faction_id_);
+        }
+        break;
+    case 0x114: corner_the_market(); break;
+    case 0x115: show_scen_objectives(); break;
+    case 0x109: report_labs(); break;
+    case 0x10A: report_energy(); break;
+    case 0x10B: report_ops(); break;
+    case 0x10C: report_projects(); break;
+    case 0x10D: report_sat(); break;
+    case 0x10E: report_security(); break;
+    case 0x10F: report_score(0); break;
+    case 0x110: monument(0); break;
+    case 0x111: hall_of_fame(0); break;
+    case 0x113:
+        if (MultiWindow.panel_open() != 0) {
+            MultiWindow.hide();
+        } else {
+            MultiWindow.show();
+        }
+        break;
+    case 0x200:
+        if (edit_lock() == 0) {
+            set_move(0);
+        } else {
+            NetMsgPrimary.pop("PROTECTED", 5000, 0, nullptr);
+        }
+        break;
+    case 0x201:
+        if (ConsoleGlobal.cursor_active_ != 0) {
+            reset_turn_view();
+        }
+        break;
+    case 0x203:
+    case 0x204:
+    case 0x205:
+    case 0x206:
+    case 0x207:
+    case 0x208:
+        zoom(command, 0);
+        break;
+    case 0x209: toggle_flatten(); break;        // 0x515640 expanded
+    case 0x20A: toggle_grid(); break;           // 0x5156A0 expanded
+    case 0x20B: toggle_base_grid(); break;      // 0x5156F0 expanded
+    case 0x20C: toggle_dest(); break;           // 0x515740 expanded
+    case 0x20F: survey(); break;
+    case 0x210: base_names(); break;            // 0x515600 expanded
+    case 0x211: name_landmark(-1, -1); break;
+    case 0x20D: reset_status_and_initialize_desktop(); break;  // 0x515430 expanded
+    case 0x212: erase_landmark(-1, -1); break;
+    case 0x215: toggle_patrol(); break;         // 0x515EF0 expanded
+    case 0x213: go_to(-1, -2, 0); break;
+    case 0x214: center(); break;                // 0x515400 expanded
+    // WORKAROUND(inline): prev_cursor (0x510A60) written out; a call stays out of line.
+    case 0x216:
+        field_23BF8_ = 0;
+        if (survey_mode_ != 0) { survey_mode_ = 0; MapWinTable[0]->draw_map(1); }
+        MapWinTable[0]->draw_cursor();
+        if (ConsoleGlobal.cursor_active_ != 0) reset_turn_view();
+        if (--cursor_history_index_ < 0) cursor_history_index_ = 0x1F;
+        ConsoleStatusWin.set_loc(
+            ConsoleGlobal.cursor_history_x_[ConsoleGlobal.cursor_history_index_],
+            ConsoleGlobal.cursor_history_y_[ConsoleGlobal.cursor_history_index_]);
+        MapWinTable[0]->focus(
+            ConsoleGlobal.cursor_history_x_[ConsoleGlobal.cursor_history_index_],
+            ConsoleGlobal.cursor_history_y_[ConsoleGlobal.cursor_history_index_]);
+        break;
+    case 0x217: next_cursor(); break;
+    case 0x300:
+    case 0x301:
+        new_base(selected_vehicle_);
+        break;
+    case 0x304:
+        // The image tests offense_rating (Weapon+0x8) at 0x0051C81C.
+        if (Chassis[VehPrototypes[Vehs[selected_vehicle_].proto_id].chassis_id].triad == TRIAD_AIR &&
+            Weapon[VehPrototypes[Vehs[selected_vehicle_].proto_id].weapon_id].offense_rating != 0) {
+            automate(selected_vehicle_, 0xC);
+        } else {
+            automate(selected_vehicle_, 3);
+        }
+        break;
+    case 0x302: oblit(selected_vehicle_); break;
+    case 0x305: arty(selected_vehicle_); break;
+    case 0x306: automate(selected_vehicle_, 10); break;
+    case 0x307: automate(selected_vehicle_, 0xB); break;
+    // 0x309 and 0x30A have separate (identical) bodies in the image.
+    case 0x309: use_ability(selected_vehicle_); break;
+    case 0x30A: use_ability(selected_vehicle_); break;
+    case 0x310: go_to(selected_vehicle_, -3, 0); break;
+    case 0x311: destroy(selected_vehicle_); break;
+    case 0x308: convoy(selected_vehicle_); break;
+    case 0x312:
+        if (ConsoleGlobal.cursor_active_ == 0) {
+            disband(ConsoleGlobal.cursor_history_x_[ConsoleGlobal.cursor_history_index_],
+                    ConsoleGlobal.cursor_history_y_[ConsoleGlobal.cursor_history_index_]);
+        } else {
+            disband(selected_vehicle_);
+        }
+        break;
+    case 0x313:
+        // Separate "PROTECTED" literal from case 0x200's (0x68AD7C vs 0x68AD70).
+        if (edit_lock() != 0) {
+            NetMsgPrimary.pop("PROTECTED", 5000, 0, nullptr);
+        } else {
+            activate(ConsoleGlobal.cursor_history_x_[ConsoleGlobal.cursor_history_index_],
+                     ConsoleGlobal.cursor_history_y_[ConsoleGlobal.cursor_history_index_], 1);
+        }
+        break;
+    case 0x314: automate(selected_vehicle_, 0); break;
+    case 0x315: hold(selected_vehicle_, 0); break;
+    case 0x31D: unload(selected_vehicle_); break;
+    case 0x31E: upgrade(selected_vehicle_); break;
+    case 0x31F: give_veh(selected_vehicle_); break;
+    case 0x320: designate(selected_vehicle_); break;
+    case 0x321: sentry(selected_vehicle_, 0); break;
+    case 0x322: sentry(selected_vehicle_, 10); break;
+    case 0x316:
+    case 0x317:
+        go_home(selected_vehicle_);
+        break;
+    case 0x318: go_to(selected_vehicle_, 0x18, 0); break;
+    case 0x31B: explore(selected_vehicle_); break;
+    case 0x319: go_to(selected_vehicle_, 0x18, 1); break;
+    case 0x31A: assemble(); break;
+    case 0x31C: wait(selected_vehicle_); break;
+    case 0x323: skip(selected_vehicle_); break;
+    case 0x600: editor_on(); break;
+    case 0x324: set_patrol(selected_vehicle_); break;
+    case 0x108:
+    case 0x701:
+        help_topic(2, 0);
+        break;
+    case 0x702: help_topic(0, 0); break;
+    case 0x703: help_topic(1, 0); break;
+    case 0x704: help_topic(0xE, 0); break;
+    case 0x705: help_topic(4, 0); break;
+    case 0x706: help_topic(6, 0); break;
+    case 0x707: help_topic(7, 0); break;
+    case 0x708: help_topic(5, 0); break;
+    case 0x709: help_topic(8, 0); break;
+    case 0x70A: help_topic(3, 0); break;
+    case 0x70B: help_topic(10, 0); break;
+    case 0x70C: help_topic(0xB, 0); break;
+    case 0x70D: help_topic(0xC, 0); break;
+    case 0x70E: help_topic(0xF, 0); break;
+    case 0x720: TutorialWindow.set_tour_stage(0); TutorialWindow.tour(); break;
+    case 0x722: TutorialWindow.set_tour_stage(1); TutorialWindow.tour(); break;
+    case 0x721: TutorialWindow.set_tour_stage(3); TutorialWindow.tour(); break;
+    case 0x723: TutorialWindow.set_tour_stage(5); TutorialWindow.tour(); break;
+    case 0x724: TutorialWindow.set_tour_stage(7); TutorialWindow.tour(); break;
+    case 0x725: TutorialWindow.set_tour_stage(6); TutorialWindow.tour(); break;
+    case 0x800: chat(0); break;
+    case 0x801: X_pop("VOICEOVERDATA", &pop_wait); break;
+    case 0x802: MultiWindow.on_button_clicked(2); break;
+    case 0x803: custom_my_faction(); break;
+    case 0x804: time_controls(); break;
+    case 0x805: zoom_to_upkeep_base(); break;
+    case 0x806: use_time_bonus(); break;
+    case 0x807:
+    case 0x808:
+        end_my_turn();
+        break;
+    case 0x750: show_credits(); break;
+    case 0x751: show_version(); break;          // 0x517180 expanded
+    case 0x9F0: road_to(selected_vehicle_, 0x1B); break;
+    case 0x9F8: automate(selected_vehicle_, 4); break;
+    case 0x9F9: automate(selected_vehicle_, 5); break;
+    case 0x9F1: road_to(selected_vehicle_, 0x1C); break;
+    case 0x9F2: automate(selected_vehicle_, 0); break;
+    case 0x9F3: automate(selected_vehicle_, 1); break;
+    case 0x9F6: automate(selected_vehicle_, 6); break;
+    case 0x9F4: automate(selected_vehicle_, 2); break;
+    case 0x9F5: automate(selected_vehicle_, 7); break;
+    case 0x9F7: automate(selected_vehicle_, 3); break;
+    }
+
+    if ((GameDataStateStorage.fields_.game_state_ & 0x40) == 0) return;
+
+    switch (command) {
+    case 0x601:
+        GameDataStateStorage.fields_.game_state_ ^= 0x80;
+        if ((GameDataStateStorage.fields_.game_state_ & 0x80) != 0 &&
+            (GameDataStateStorage.fields_.game_state_ & 0x40) != 0) {
+            MainInterfaceGlobal.flat_button_[2].show(0);
+        } else {
+            MainInterfaceGlobal.flat_button_[2].hide();
+        }
+        ::draw_map(1);
+        WorldClimateWorldWin.GraphicWin::redraw();
+        desktop_update();
+        ConsoleInfoWin.change(0);
+        ConsoleStatusWin.redraw();
+        MapWinTable[0]->main_caption();
+        return;
+    case 0x602: editor_veh(); return;
+    case 0x603: editor_edit_veh(-1); return;
+    case 0x604: tech_advance(ConsoleGlobal.faction_id_); return;
+    case 0x605: editor_tech(); return;
+    case 0x606: editor_view(); return;
+    case 0x607: editor_diff(); return;
+    case 0x608: editor_energy(); return;
+    case 0x609: editor_date(); return;
+    case 0x60A: editor_eliminate(); return;
+    case 0x60B: editor_reload(); return;
+    case 0x60C: editor_kill_vehicles(); return;
+    case 0x60D: show_replay(); return;
+    case 0x60E: show_movies(); return;
+    case 0x60F: editor_reset_tech(); return;
+    case 0x610: editor_reset_faction(); return;
+    case 0x611: editor_diplomacy(); return;
+    case 0x612: editor_personality(); return;
+    case 0x613: editor_strategy(); return;
+    case 0x614: editor_rules(); return;
+    case 0x615: editor_scen_rules(); return;
+    case 0x616: editor_scen_param(); return;
+    case 0x617: editor_scen_victory(); return;
+    case 0x618: editor_undo(); return;
+    case 0x619: editor_redo(); return;
+    case 0x61B: save_game(1); return;
+    case 0x61A: load_proc(1, 0); return;
+    case 0xA00: editor_save(); return;
+    case 0xA01: editor_load(); return;
+    case 0xA10: editor_paints(0); return;
+    case 0xA11: editor_paints(1); return;
+    case 0xA12: editor_paints(2); return;
+    case 0xA13: editor_paints(3); return;
+    case 0xA14: editor_paints(4); return;
+    case 0xA15: editor_terrain(); return;
+    case 0xA16: editor_paints(5); return;
+    case 0xA17: editor_natural(1); return;
+    case 0xA18: editor_natural(0); return;
+    case 0xA19: editor_minor(); return;
+    case 0xA20: MapWinTable[0]->editor(ConsoleGlobal.cursor_history_x_[ConsoleGlobal.cursor_history_index_], ConsoleGlobal.cursor_history_y_[ConsoleGlobal.cursor_history_index_], 0); return;
+    case 0xA21: MapWinTable[0]->editor(ConsoleGlobal.cursor_history_x_[ConsoleGlobal.cursor_history_index_], ConsoleGlobal.cursor_history_y_[ConsoleGlobal.cursor_history_index_], 1); return;
+    case 0xA24: editor_set_brush(); return;
+    case 0xA48: editor_flat(); return;
+    case 0xA30: editor_climate(); return;
+    case 0xA31: editor_generate(); return;
+    case 0xA32: editor_fast(); return;
+    case 0xA36: editor_fungus(); return;
+    case 0xA37: editor_rockiness(); return;
+    case 0xA40: editor_randomize(); return;
+    case 0xA41: editor_clear_random(); return;
+    case 0xA50: editor_clear(); return;
+    case 0xA51: editor_polar(); return;
+    case 0xA52: editor_clear_vehicles(); return;
+    case 0xA53: editor_clear_terrain(); return;
+    case 0xA54: editor_lock2(); return;
+    default: return;
+    }
+}
+
+// Superseded seed deleted; seed paths below are historical Git provenance.
+// ORIGINAL: 0x0051D720 ?menu_daemon@Console@@QAAXH@Z 0x0051D720-0x0051D733 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/0051d720.cpp"], "reason": "Recover the callback as static cdecl: original forwards to ConsoleGlobal without reading an incoming receiver; retain catalogue identity separately from emitted symbol."}
+// symbol    ?menu_daemon@Console@@SAXH@Z
+void __cdecl Console::menu_daemon(int selection) {
+    ConsoleGlobal.menu_proc(selection);
+}
+
+// Publish current screen geometry independently of init's once-only gate.
+// Superseded seed deleted; seed paths below are historical Git provenance.
+// ORIGINAL: 0x0051D760 sub_51d760 0x0051D760-0x0051D7B5 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/0051d760.cpp"], "reason": "Complete genuine Console initialization/shared geometry from original receiver/member/global dataflow; native seed establishes catalogue identity and span. Source uses actual GraphicWin virtual base, AlphaMenu, shared RECT and typed fallback Win pointer. Original seed/claims retained; binding grants no matching or acceptance."}
+// symbol    ?set_screen_geometry@Console@@QAEXXZ
+void Console::set_screen_geometry() {
+    field_23BCC_ = WinScreenWidth;
+    IfaceScreenWidth = field_23BCC_;
+    const int height = WinScreenHeight - MainInterfaceGlobal.panel_height();
+    field_23BD0_ = height;
+    IfaceScreenHeight = height;
+    ConsoleMenuBounds.left = 0;
+    ConsoleMenuBounds.top = 0;
+    ConsoleMenuBounds.right = IfaceScreenWidth;
+    ConsoleMenuBounds.bottom = height;
+    StatusFlags |= 1u;
+}
+
+// Initialize the Console windows/menu and publish the fallback popup parent.
+// Superseded seed deleted; seed paths below are historical Git provenance.
+// ORIGINAL: 0x0051D890 ?init@Console@@QAEXH@Z 0x0051D890-0x0051D9CF BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/0051d890.cpp"], "reason": "Complete genuine Console initialization/shared geometry from original receiver/member/global dataflow; native seed establishes catalogue identity and span. Source uses actual GraphicWin virtual base, AlphaMenu, shared RECT and typed fallback Win pointer. Original seed/claims retained; binding grants no matching or acceptance."}
+// symbol    ?init@Console@@QAEXH@Z
+void Console::init(int) {
+    close();
+
+    focus_vehicle_ = -1;
+    field_23BEC_ = 0;
+
+    if ((~StatusFlags & 1u) != 0) {
+        field_23BCC_ = WinScreenWidth;
+        IfaceScreenWidth = field_23BCC_;
+        field_23BD0_ = WinScreenHeight - MainInterfaceGlobal.panel_height();
+        IfaceScreenHeight = field_23BD0_;
+
+        ConsoleMenuBounds.left = 0;
+        ConsoleMenuBounds.top = 0;
+        ConsoleMenuBounds.right = IfaceScreenWidth;
+        ConsoleMenuBounds.bottom = IfaceScreenHeight;
+        StatusFlags |= 1u;
+    }
+
+    char *const menu_caption = StringTable.get(Labels.strings_ptr[0x1C]);
+    GraphicWin::init(&ConsoleMenuBounds, menu_caption, 0x02400000, 0,
+                     &alpha_menu_, 0);
+
+    cover_window_.init(0, 0, pixel_width(), pixel_height(), 0, 0x01000022,
+                        static_cast<Win *>(this), 0, 0);
+    Win::set_def_focus(static_cast<Win *>(this));
+
+    (void)alpha_menu_.menu_init();
+    alpha_menu_.set_menu_proc(&Console::menu_daemon);
+    load_cursors();
+
+    Win *const window = this;
+    BasePopDefaultField322C = window;
+}
+
+// Unreferenced in the pinned image (no call, jump or data reference).
+// Original effect: return without modifying EAX; callee stack cleanup 0 bytes.
+// ORIGINAL: 0x0051D9D0 nullsub_187 0x0051D9D0-0x0051D9D1 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"reason": "Bind the unreferenced original leaf as an empty/constant source function in the translation unit whose address band contains it; its original name, prototype and callers remain unknown.", "evidence": ["pinned:terranx_original.exe:0x0051D9D0-0x0051D9D1 return without modifying EAX; callee stack cleanup 0 bytes", "pinned scan: no rel32 call/jmp and no dword reference to this address anywhere in the image", "address band: nearest mapped neighbours are 0x0051D890 ?init@Console@@QAEXH@Z (src/console.cpp) and 0x0051D9F0 ??1Console@@QAE@XZ (src/console.cpp)"]}
+// symbol    ?nullsub_187@@YAXXZ
 // kind      game
-// symbol    ?on_nc_left_down@Console@@$4PPPPPPPM@A@AEXHH@Z
+void __cdecl nullsub_187() {
+}
+
+// Unreferenced in the pinned image (no call, jump or data reference).
+// Original effect: return without modifying EAX; callee stack cleanup 0 bytes.
+// ORIGINAL: 0x0051D9E0 nullsub_188 0x0051D9E0-0x0051D9E1 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"reason": "Bind the unreferenced original leaf as an empty/constant source function in the translation unit whose address band contains it; its original name, prototype and callers remain unknown.", "evidence": ["pinned:terranx_original.exe:0x0051D9E0-0x0051D9E1 return without modifying EAX; callee stack cleanup 0 bytes", "pinned scan: no rel32 call/jmp and no dword reference to this address anywhere in the image", "address band: nearest mapped neighbours are 0x0051D890 ?init@Console@@QAEXH@Z (src/console.cpp) and 0x0051D9F0 ??1Console@@QAE@XZ (src/console.cpp)"]}
+// symbol    ?nullsub_188@@YAXXZ
+// kind      game
+void __cdecl nullsub_188() {
+}
 
 /*
  * RECOVERY_HISTORY: v1 address=0x0051DDE0 source_sha256=5d8f8a1d88dea99894d068cf22393a1686f86c8deab34d7b504349c1d2069549 envelope_sha256=0521c4f5ad1301580c581a88b1479693698786bf2c22227d2ccafa4d64ac80fb
@@ -7399,33 +7399,6 @@ close_messages:
  * [ARCHIVE] Status: Complete
  * [ARCHIVE] * /
  */
-// ORIGINAL: 0x0051DDE0 ??_Gthunk1_Console@@UAEPAXI@Z 0x0051DDE0-0x0051DDE8 FILE BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["Pinned original image 01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf: constructor-installed class-view slot 0 selects the complete original scalar deleting adjustor at 0x0051DDE0.", "The retained terminal artifact set at build/recovery/builds/build-8b7ms_6y recorded ??_EConsole@@$4PPPPPPPM@A@AEPAXI@Z in the actual console.cpp COFF view-table relocation; its adjustment prefix is byte-identical to the pinned thunk.", "That build's selected linked MAP/PE cell and PDB XFIXUP resolve the generated entry to ??_GConsole@@UAEPAXI@Z at 0x00407ED0; the physical COFF E primary is a per-class weak fallback to its G primary (search mode 2).", "That linked primary tests mode bit 0, conditionally calls ??3@YAXPAX@Z, returns the saved object pointer in EAX, and uses ret 4.", "The original identity, spans, catalog purpose, source kind, claim state and formal lessons are retained; this binding is not a new byte claim."], "reason": "Bind the preserved scalar deleting-adjustor identity to the compiler-emitted class-view entry whose actual per-class E-to-G fallback and linked G body preserve the original receiver adjustment, deletion-flag contract, object return and stack cleanup."}
-// symbol    ??_EConsole@@$4PPPPPPPM@A@AEPAXI@Z
-// kind      game
-
-/*
- * RECOVERY_HISTORY: v1 address=0x0051DF50 source_sha256=5d8f8a1d88dea99894d068cf22393a1686f86c8deab34d7b504349c1d2069549 envelope_sha256=28abc097b47dd56ed1ee00d1e916a015f477f4889625fe90dd40a0b9eab886c9
- * [ARCHIVE] /*
- * [ARCHIVE] Purpose: Adjust the receiver from Console's thunk2 subobject to the one
- * [ARCHIVE]          Console::scalar_delete expects, then forward unchanged.
- * [ARCHIVE] // RECOVERY_ROLE: SCAFFOLD Hand-written receiver-adjustment adapter; original compiler thunk still needs a qualified genuine class/view binding.
- * [ARCHIVE] // original marker: 0x0051DF50 ??_Gthunk2_Console@@UAEPAXI@Z 0x0051DF50-0x0051DF61
- * [ARCHIVE] // symbol    ?adjust_console2_scalar_delete@@YIPAXPAX0I@Z
- * [ARCHIVE] // size      17 bytes
- * [ARCHIVE] // prototype void* (__thiscall ??_Gthunk2_Console@@UAEPAXI@Z)(Console* this, unsigned int)
- * [ARCHIVE] // callers   0   call targets   0
- * [ARCHIVE] // kind      game
- * [ARCHIVE] // flags     hidden;sp_ready;purged_ok
- * [ARCHIVE] // calls     (none)
- * [ARCHIVE] Return Value: the forwarded call's
- * [ARCHIVE] Status: Complete
- * [ARCHIVE] * /
- */
-// ORIGINAL: 0x0051DF50 ??_Gthunk2_Console@@UAEPAXI@Z 0x0051DF50-0x0051DF61 FILE BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["Pinned original image 01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf: constructor-installed class-view slot 0 selects the complete original scalar deleting adjustor at 0x0051DF50.", "The retained terminal artifact set at build/recovery/builds/build-8b7ms_6y recorded ??_EConsole@@$4PPPPPLLI@EEE@AEPAXI@Z in the actual console.cpp COFF view-table relocation; its adjustment prefix is byte-identical to the pinned thunk.", "That build's selected linked MAP/PE cell and PDB XFIXUP resolve the generated entry to ??_GConsole@@UAEPAXI@Z at 0x00407ED0; the physical COFF E primary is a per-class weak fallback to its G primary (search mode 2).", "That linked primary tests mode bit 0, conditionally calls ??3@YAXPAX@Z, returns the saved object pointer in EAX, and uses ret 4.", "The original identity, spans, catalog purpose, source kind, claim state and formal lessons are retained; this binding is not a new byte claim."], "reason": "Bind the preserved scalar deleting-adjustor identity to the compiler-emitted class-view entry whose actual per-class E-to-G fallback and linked G body preserve the original receiver adjustment, deletion-flag contract, object return and stack cleanup."}
-// symbol    ??_EConsole@@$4PPPPPLLI@EEE@AEPAXI@Z
-// kind      game
 
 /*
  * RECOVERY_HISTORY: v1 address=0x0051DEF0 source_sha256=15413b6171d7e5cbcaf410d7d03726fa38f9c79dfd96425413bdb2063b85d20f envelope_sha256=7937cba18d6e8aac8c8591100a989f43fdd77ca7f84573d36a51b64fa5368e86
@@ -7481,6 +7454,39 @@ close_messages:
  * [ARCHIVE] Status: Complete
  * [ARCHIVE] * /
  */
+
+/*
+ * RECOVERY_HISTORY: v1 address=0x0051DF50 source_sha256=5d8f8a1d88dea99894d068cf22393a1686f86c8deab34d7b504349c1d2069549 envelope_sha256=28abc097b47dd56ed1ee00d1e916a015f477f4889625fe90dd40a0b9eab886c9
+ * [ARCHIVE] /*
+ * [ARCHIVE] Purpose: Adjust the receiver from Console's thunk2 subobject to the one
+ * [ARCHIVE]          Console::scalar_delete expects, then forward unchanged.
+ * [ARCHIVE] // RECOVERY_ROLE: SCAFFOLD Hand-written receiver-adjustment adapter; original compiler thunk still needs a qualified genuine class/view binding.
+ * [ARCHIVE] // original marker: 0x0051DF50 ??_Gthunk2_Console@@UAEPAXI@Z 0x0051DF50-0x0051DF61
+ * [ARCHIVE] // symbol    ?adjust_console2_scalar_delete@@YIPAXPAX0I@Z
+ * [ARCHIVE] // size      17 bytes
+ * [ARCHIVE] // prototype void* (__thiscall ??_Gthunk2_Console@@UAEPAXI@Z)(Console* this, unsigned int)
+ * [ARCHIVE] // callers   0   call targets   0
+ * [ARCHIVE] // kind      game
+ * [ARCHIVE] // flags     hidden;sp_ready;purged_ok
+ * [ARCHIVE] // calls     (none)
+ * [ARCHIVE] Return Value: the forwarded call's
+ * [ARCHIVE] Status: Complete
+ * [ARCHIVE] * /
+ */
+
+// ORIGINAL: 0x0051DDE0 ??_Gthunk1_Console@@UAEPAXI@Z 0x0051DDE0-0x0051DDE8 FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned original image 01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf: constructor-installed class-view slot 0 selects the complete original scalar deleting adjustor at 0x0051DDE0.", "The retained terminal artifact set at build/recovery/builds/build-8b7ms_6y recorded ??_EConsole@@$4PPPPPPPM@A@AEPAXI@Z in the actual console.cpp COFF view-table relocation; its adjustment prefix is byte-identical to the pinned thunk.", "That build's selected linked MAP/PE cell and PDB XFIXUP resolve the generated entry to ??_GConsole@@UAEPAXI@Z at 0x00407ED0; the physical COFF E primary is a per-class weak fallback to its G primary (search mode 2).", "That linked primary tests mode bit 0, conditionally calls ??3@YAXPAX@Z, returns the saved object pointer in EAX, and uses ret 4.", "The original identity, spans, catalog purpose, source kind, claim state and formal lessons are retained; this binding is not a new byte claim."], "reason": "Bind the preserved scalar deleting-adjustor identity to the compiler-emitted class-view entry whose actual per-class E-to-G fallback and linked G body preserve the original receiver adjustment, deletion-flag contract, object return and stack cleanup."}
+// symbol    ??_EConsole@@$4PPPPPPPM@A@AEPAXI@Z
+// kind      game
+
+
+
+// The C++ compiler owns the scalar deleting destructor below. Do not
+// add a hand-written deleting wrapper or explicit destructor cascade.
+// Current source ownership is not original TU or COMDAT-selection proof.
+// ORIGINAL: 0x0051DDF0 ??_GConsole@@UAEPAXI@Z 0x0051DDF0-0x0051DE26 FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["historical seed:src/recovered/0051ddf0.cpp", "task:window-generated-deletion-owners", "Pinned entry receives the Console virtual GraphicWin subobject at complete-object+0x23D94; own-part destructor, virtual-base destructor and conditional delete are separate native stages.", "Fresh emitted code and receiver/target controls remain required. Duplicate COMDAT emission does not establish historical translation-unit placement or retained link selection."], "reason": "The existing real class lifetime generates this deleting entry; bind compiler-owned code rather than transcribing receiver arithmetic or invoking member/base destructors twice."}
+
 // ORIGINAL: 0x0051DE40 ?on_redraw@thunk4_MapWin@@QAEXXZ 0x0051DE40-0x0051DE4E FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned constructor ??0Console@@QAE@H@Z at 0x0050F460 stores the Console Win view view table at 0066EC18.", "Pinned view slot +0x30 contains original thunk VA 0051DE40.", "Original full-span receiver adjustment is sub ecx, dword ptr [ecx - 4]; sub ecx, 0x2328; its tail reaches 0046B1D0 (?on_redraw@MapWin@@QAEXXZ).", "The original tail target ?on_redraw@MapWin@@QAEXXZ is source-mapped in src/mapwin.cpp; the Console Win view class-view entry is physically emitted in src/console.cpp."], "reason": "Bind the original Console Win-view adjustor identity to the compiler-generated most-derived Console class-view entry in src/console.cpp, while retaining the inherited MapWin callback as its typed target in src/mapwin.cpp. No adapter, vtable, or hierarchy change is authored."}
 // symbol    ?on_redraw@MapWin@@$4PPPPPPPM@CDCI@AEXXZ
@@ -7526,6 +7532,16 @@ close_messages:
 // symbol    ?on_post_redraw_nc_buffer@Console@@$4PPPPPPPM@A@AEXPAVBuffer@@H@Z
 // kind      game
 // RECOVERY_GENERATED: v1 vbtable 0x0066EF04 0x0066EF0C ??_8Console@@7B@ 0x0050F460
+
+// ORIGINAL: 0x0051DF00 ?on_nc_left_down@thunk1_Console@@QAEXHH@Z 0x0051DF00-0x0051DF08 FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned image 01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf: constructor span at 0x0050F460 stores table 0x0066EC18; exact cell 0x0066EC9C is 0x0051DF00.", "The complete original thunk bytes at 0x0051DF00 tail to pinned target 0x0050FB10.", "Fresh full build build-fpcqf1x8: ??_7Console@@6BWin@@@+0x84 COFF relocation selects ?on_nc_left_down@Console@@$4PPPPPPPM@A@AEXHH@Z; thunk bytes and its unique relative tail relocation target ?on_nc_left_down@Console@@UAEXHH@Z.", "The owner compile receipt inputs were unchanged and match current files at proposal emission; selected output is observed in the fresh MAP/PE but this proposal does not claim complete link-preservation acceptance.", "Historical source kind `game`, original identity/name, complete span, and parsed claims/lessons are checked unchanged after native-writer readback."], "reason": "The pinned Console constructor at 0x0050F460 installs the ??_7Console@@6BWin@@@ address point; its exact slot cell at +0x84 selects original identity 0x0051DF00. The fresh full-build owner COFF vftable relocation selects the compiler-generated thunk ?on_nc_left_down@Console@@$4PPPPPPPM@A@AEXHH@Z, whose unique physical relative tail targets ?on_nc_left_down@Console@@UAEXHH@Z. The original marker name and complete source history remain attached to this FILE identity."}
+// kind      game
+// symbol    ?on_nc_left_down@Console@@$4PPPPPPPM@A@AEXHH@Z
+
+// ORIGINAL: 0x0051DF50 ??_Gthunk2_Console@@UAEPAXI@Z 0x0051DF50-0x0051DF61 FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned original image 01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf: constructor-installed class-view slot 0 selects the complete original scalar deleting adjustor at 0x0051DF50.", "The retained terminal artifact set at build/recovery/builds/build-8b7ms_6y recorded ??_EConsole@@$4PPPPPLLI@EEE@AEPAXI@Z in the actual console.cpp COFF view-table relocation; its adjustment prefix is byte-identical to the pinned thunk.", "That build's selected linked MAP/PE cell and PDB XFIXUP resolve the generated entry to ??_GConsole@@UAEPAXI@Z at 0x00407ED0; the physical COFF E primary is a per-class weak fallback to its G primary (search mode 2).", "That linked primary tests mode bit 0, conditionally calls ??3@YAXPAX@Z, returns the saved object pointer in EAX, and uses ret 4.", "The original identity, spans, catalog purpose, source kind, claim state and formal lessons are retained; this binding is not a new byte claim."], "reason": "Bind the preserved scalar deleting-adjustor identity to the compiler-emitted class-view entry whose actual per-class E-to-G fallback and linked G body preserve the original receiver adjustment, deletion-flag contract, object return and stack cleanup."}
+// symbol    ??_EConsole@@$4PPPPPLLI@EEE@AEPAXI@Z
+// kind      game
 
 // Console constructor 0x0050F56E stores this secondary table at Win+0x444;
 // its first slot is the mapped Buffer-view deleting adjustor 0x0051DF50.
