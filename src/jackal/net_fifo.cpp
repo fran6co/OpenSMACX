@@ -3,6 +3,25 @@
 #include "net_fifo.h"
 #include "general.h"  // mem_get
 
+
+/*
+Purpose: Zero the three head words and initialise the lock the fifo guards.
+// ORIGINAL: 0x006339C0 ??0NetFifo@@QAE@XZ 0x006339C0-0x006339DB BYTE_EXACT
+// LEVER: PROMOTED out of src/recovered/units/006339c0.cpp, which reached the CRITICAL_SECTION through `(*reinterpret_cast<InitFn *>(g_00669168))(this + 0xc)` - the import slot spelled as a raw address. A plain `InitializeCriticalSection` call compiles to the image's own `call dword ptr [0x669168]`.
+// LEVER: layout-corrected the IDB gave NetFifo 0x10 bytes and four uint32_t members. It is 0x24: ??0Net builds three of them at 0xE8, 0x10C and 0x130, spaced 0x24 apart, and this body starts a CRITICAL_SECTION at 0xC, which is 24 bytes. The fourth uint32_t was the head of that lock.
+// symbol    ??0NetFifo@@QAE@XZ
+// size      27 bytes
+// kind      game
+Return Value: `this`, which the image leaves in eax
+Status: Complete
+*/
+NetFifo::NetFifo() {
+    head_ = 0;
+    tail_ = 0;
+    count_ = 0;
+    InitializeCriticalSection(&lock_);
+}
+
 // ORIGINAL: 0x006339E0 ??1NetFifo@@QAE@XZ 0x006339E0-0x00633A42 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["pinned span 0x006339E0-0x00633A42", "NetFifo is a 0x24-byte embedded member at Net+0xE8/+0x10C/+0x130", "original instructions inline the same lock/drain/reset/unlock sequence as close before DeleteCriticalSection", "the typed destructor retains that sequence directly; the original instructions do not establish how the source factored the shared cleanup"], "reason": "The original full destructor belongs to the real NetFifo owner: it drains the queue under its lock, resets the queue, unlocks, then destroys the lock."}
 NetFifo::~NetFifo() {
@@ -23,24 +42,6 @@ NetFifo::~NetFifo() {
   count_ = 0;
   LeaveCriticalSection(&lock_);
     DeleteCriticalSection(&lock_);
-}
-
-/*
-Purpose: Zero the three head words and initialise the lock the fifo guards.
-// ORIGINAL: 0x006339C0 ??0NetFifo@@QAE@XZ 0x006339C0-0x006339DB BYTE_EXACT
-// LEVER: PROMOTED out of src/recovered/units/006339c0.cpp, which reached the CRITICAL_SECTION through `(*reinterpret_cast<InitFn *>(g_00669168))(this + 0xc)` - the import slot spelled as a raw address. A plain `InitializeCriticalSection` call compiles to the image's own `call dword ptr [0x669168]`.
-// LEVER: layout-corrected the IDB gave NetFifo 0x10 bytes and four uint32_t members. It is 0x24: ??0Net builds three of them at 0xE8, 0x10C and 0x130, spaced 0x24 apart, and this body starts a CRITICAL_SECTION at 0xC, which is 24 bytes. The fourth uint32_t was the head of that lock.
-// symbol    ??0NetFifo@@QAE@XZ
-// size      27 bytes
-// kind      game
-Return Value: `this`, which the image leaves in eax
-Status: Complete
-*/
-NetFifo::NetFifo() {
-    head_ = 0;
-    tail_ = 0;
-    count_ = 0;
-    InitializeCriticalSection(&lock_);
 }
 
 // ---------------------------------------------------------------------------
@@ -132,120 +133,6 @@ int NetFifo::add(void *data, unsigned long size, unsigned long key, int type,
   ++count_;
   LeaveCriticalSection(&lock_);
   return 0;
-}
-
-// ORIGINAL: 0x00633D90 ?get@NetFifo@@QAEHPAXPAIPAH1@Z 0x00633D90-0x00633E75 BYTE_EXACT
-// symbol    ?get@NetFifo@@QAEHPAXHPAH1@Z
-// size      229 bytes
-// prototype int (__thiscall ?get@NetFifo@@QAEHPAXPAIPAH1@Z)(NetFifo* this, void*, unsigned int*, int*, int*)
-// callers   1   call targets   2
-// kind      game
-// flags     frame;hidden;sp_ready;purged_ok
-// The queue is walked from the head for a matching key, so this is the
-// remove-by-key form; the 0x633F70 overload below pops the head instead.
-// 633DBC/633DC0 compares the raw second argument DWORD, not its pointee.
-int NetFifo::get(void *data, int key, int *type, int *len) {
-  EnterCriticalSection(&lock_);
-
-  if (head_ == 0) {
-    LeaveCriticalSection(&lock_);
-    return 0;
-  }
-  NetFifoNode *cur = head_;
-
-  NetFifoNode *prev = 0;
-  while (cur != 0) {
-    if (cur->key_ == static_cast<uint32_t>(key)) break;
-    prev = cur;
-    cur = cur->next_;
-    if (cur == 0) {
-      LeaveCriticalSection(&lock_);
-      return 0;
-    }
-  }
-  if (cur == 0) {
-    LeaveCriticalSection(&lock_);
-    return 0;
-  }
-
-
-  if (len != 0) {
-    *len = static_cast<int>(cur->data_size_);
-  }
-  if (cur->data_ != 0) {
-    if (data != 0) {
-      memcpy(data, cur->data_, cur->data_size_);
-    }
-    if (cur->data_ != 0) {
-      free(cur->data_);
-    }
-    cur->data_ = 0;
-  }
-
-  if (prev == 0) {
-    head_ = head_->next_;
-  } else {
-    prev->next_ = cur->next_;
-  }
-
-  if (type != 0) {
-    *type = cur->caller_value_;
-  }
-  int result = cur->result_;
-  if (cur != 0) {
-    free(cur);
-  }
-  --count_;
-  LeaveCriticalSection(&lock_);
-  return result;
-}
-
-// ORIGINAL: 0x00633F70 ?get@NetFifo@@QAEHPAXPAIPAHPAI@Z 0x00633F70-0x0063401D BYTE_EXACT
-// symbol    ?get@NetFifo@@QAEHPAXPAKPAH1@Z
-// prototype int (__thiscall ?get@NetFifo@@QAEHPAXPAIPAHPAI@Z)(NetFifo* this, void*, unsigned int*, int*, unsigned int*)
-// kind      game
-// flags     frame;hidden;sp_ready;purged_ok
-// The unsigned-int length pointer repeats the key type (backref 1); the
-// keyed-search overload repeats the int* type (backref 2). Keep the original
-// catalogue names as hints, distinct from these emitted-symbol bindings.
-// The pop-the-head form: whatever is at the front of the queue goes back, and
-// the key comes out with it.
-int NetFifo::get(void *data, unsigned long *key, int *type,
-                 unsigned long *len) {
-  EnterCriticalSection(&lock_);
-
-  if (head_ == 0) {
-    LeaveCriticalSection(&lock_);
-    return 0;
-  }
-  NetFifoNode *node = head_;
-
-  if (len != 0) {
-    *len = node->data_size_;
-  }
-  if (node->data_ != 0 && data != 0) {
-    memcpy(data, node->data_, node->data_size_);
-    if (node->data_ != 0) {
-      free(node->data_);
-    }
-    node->data_ = 0;
-  }
-  // 633FD5 reloads the receiver's head after the output copy/free; the
-  // selected node still supplies the outputs/result and is the node freed.
-  head_ = head_->next_;
-  if (key != 0) {
-    *key = node->key_;
-  }
-  if (type != 0) {
-    *type = node->caller_value_;
-  }
-  int result = node->result_;
-  if (node != 0) {
-    free(node);
-  }
-  --count_;
-  LeaveCriticalSection(&lock_);
-  return result;
 }
 
 // Additional original operations on the same typed FIFO state.
@@ -383,6 +270,72 @@ int NetFifo::remove_key_caller(void *payload_buffer, unsigned int key, int calle
     return result;
 }
 
+// ORIGINAL: 0x00633D90 ?get@NetFifo@@QAEHPAXPAIPAH1@Z 0x00633D90-0x00633E75 BYTE_EXACT
+// symbol    ?get@NetFifo@@QAEHPAXHPAH1@Z
+// size      229 bytes
+// prototype int (__thiscall ?get@NetFifo@@QAEHPAXPAIPAH1@Z)(NetFifo* this, void*, unsigned int*, int*, int*)
+// callers   1   call targets   2
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// The queue is walked from the head for a matching key, so this is the
+// remove-by-key form; the 0x633F70 overload below pops the head instead.
+// 633DBC/633DC0 compares the raw second argument DWORD, not its pointee.
+int NetFifo::get(void *data, int key, int *type, int *len) {
+  EnterCriticalSection(&lock_);
+
+  if (head_ == 0) {
+    LeaveCriticalSection(&lock_);
+    return 0;
+  }
+  NetFifoNode *cur = head_;
+
+  NetFifoNode *prev = 0;
+  while (cur != 0) {
+    if (cur->key_ == static_cast<uint32_t>(key)) break;
+    prev = cur;
+    cur = cur->next_;
+    if (cur == 0) {
+      LeaveCriticalSection(&lock_);
+      return 0;
+    }
+  }
+  if (cur == 0) {
+    LeaveCriticalSection(&lock_);
+    return 0;
+  }
+
+
+  if (len != 0) {
+    *len = static_cast<int>(cur->data_size_);
+  }
+  if (cur->data_ != 0) {
+    if (data != 0) {
+      memcpy(data, cur->data_, cur->data_size_);
+    }
+    if (cur->data_ != 0) {
+      free(cur->data_);
+    }
+    cur->data_ = 0;
+  }
+
+  if (prev == 0) {
+    head_ = head_->next_;
+  } else {
+    prev->next_ = cur->next_;
+  }
+
+  if (type != 0) {
+    *type = cur->caller_value_;
+  }
+  int result = cur->result_;
+  if (cur != 0) {
+    free(cur);
+  }
+  --count_;
+  LeaveCriticalSection(&lock_);
+  return result;
+}
+
 
 /*
 Purpose: Remove one entry from this NetFifo by its caller value: hand the
@@ -456,6 +409,54 @@ int NetFifo::remove_caller(void *payload_buffer, unsigned int *key_out, int call
     return result;
 }
 
+// ORIGINAL: 0x00633F70 ?get@NetFifo@@QAEHPAXPAIPAHPAI@Z 0x00633F70-0x0063401D BYTE_EXACT
+// symbol    ?get@NetFifo@@QAEHPAXPAKPAH1@Z
+// prototype int (__thiscall ?get@NetFifo@@QAEHPAXPAIPAHPAI@Z)(NetFifo* this, void*, unsigned int*, int*, unsigned int*)
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// The unsigned-int length pointer repeats the key type (backref 1); the
+// keyed-search overload repeats the int* type (backref 2). Keep the original
+// catalogue names as hints, distinct from these emitted-symbol bindings.
+// The pop-the-head form: whatever is at the front of the queue goes back, and
+// the key comes out with it.
+int NetFifo::get(void *data, unsigned long *key, int *type,
+                 unsigned long *len) {
+  EnterCriticalSection(&lock_);
+
+  if (head_ == 0) {
+    LeaveCriticalSection(&lock_);
+    return 0;
+  }
+  NetFifoNode *node = head_;
+
+  if (len != 0) {
+    *len = node->data_size_;
+  }
+  if (node->data_ != 0 && data != 0) {
+    memcpy(data, node->data_, node->data_size_);
+    if (node->data_ != 0) {
+      free(node->data_);
+    }
+    node->data_ = 0;
+  }
+  // 633FD5 reloads the receiver's head after the output copy/free; the
+  // selected node still supplies the outputs/result and is the node freed.
+  head_ = head_->next_;
+  if (key != 0) {
+    *key = node->key_;
+  }
+  if (type != 0) {
+    *type = node->caller_value_;
+  }
+  int result = node->result_;
+  if (node != 0) {
+    free(node);
+  }
+  --count_;
+  LeaveCriticalSection(&lock_);
+  return result;
+}
+
 
 /*
 Purpose: Peek one entry of this NetFifo by its key/caller-value pair: copy
@@ -505,6 +506,58 @@ int NetFifo::peek_key_caller(void *payload_buffer, unsigned int key, int caller_
     }
     const int result = node->result_;
     LeaveCriticalSection(&this->lock_);
+    return result;
+}
+
+
+
+/*
+Purpose: The keyed queue reader: under the queue lock, find the entry whose
+         key matches, copy its payload out, and hand back its caller value,
+         result word and size without unlinking the entry.
+
+// ORIGINAL: 0x006340C0 sub_6340c0 0x006340C0-0x00634159 BYTE_EXACT
+// symbol    ?peek_key@NetFifo@@QAEHPAXIPAH1@Z
+// TRIED: the second reader on the queue at Net+0x10C. The two lock slots are the process import table's EnterCriticalSection (0x66917c) and LeaveCriticalSection (0x669174), the same pair the homed NetFifo::get calls by name.
+// size      153 bytes
+// prototype int (__thiscall sub_6340c0)(NetFifo* this, void*, int, int, int)
+// callers   1   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// indirect  0x006340C8 0x006340F3 0x00634134 0x0063414C
+Status: Complete C++ owner body; original span and prior source lessons retained.
+*/
+int NetFifo::peek_key(void *data, unsigned int key, int *caller_value_out, int *size_out) {
+    EnterCriticalSection(&lock_);
+    NetFifoNode *node = head_;
+    if (node == 0) {
+        LeaveCriticalSection(&lock_);
+        return 0;
+    }
+    while (node != 0) {
+      if (node->key_ == static_cast<unsigned int>(key)) break;
+        node = node->next_;
+      if (node == 0) {
+        LeaveCriticalSection(&lock_);
+        return 0;
+      }
+    }
+    if (node == 0) {
+      LeaveCriticalSection(&lock_);
+      return 0;
+    }
+
+    if (size_out != 0) {
+        *size_out = static_cast<int>(node->data_size_);
+    }
+    if (node->data_ != 0 && data != 0) {
+        memcpy(data, node->data_, node->data_size_);
+    }
+    if (caller_value_out != 0) {
+        *caller_value_out = node->caller_value_;
+    }
+    const int result = node->result_;
+    LeaveCriticalSection(&lock_);
     return result;
 }
 
@@ -561,58 +614,6 @@ int NetFifo::peek_caller(void *payload_buffer, unsigned int *key_out, int caller
     }
     const int result = node->result_;
     LeaveCriticalSection(&this->lock_);
-    return result;
-}
-
-
-
-/*
-Purpose: The keyed queue reader: under the queue lock, find the entry whose
-         key matches, copy its payload out, and hand back its caller value,
-         result word and size without unlinking the entry.
-
-// ORIGINAL: 0x006340C0 sub_6340c0 0x006340C0-0x00634159 BYTE_EXACT
-// symbol    ?peek_key@NetFifo@@QAEHPAXIPAH1@Z
-// TRIED: the second reader on the queue at Net+0x10C. The two lock slots are the process import table's EnterCriticalSection (0x66917c) and LeaveCriticalSection (0x669174), the same pair the homed NetFifo::get calls by name.
-// size      153 bytes
-// prototype int (__thiscall sub_6340c0)(NetFifo* this, void*, int, int, int)
-// callers   1   call targets   1
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// indirect  0x006340C8 0x006340F3 0x00634134 0x0063414C
-Status: Complete C++ owner body; original span and prior source lessons retained.
-*/
-int NetFifo::peek_key(void *data, unsigned int key, int *caller_value_out, int *size_out) {
-    EnterCriticalSection(&lock_);
-    NetFifoNode *node = head_;
-    if (node == 0) {
-        LeaveCriticalSection(&lock_);
-        return 0;
-    }
-    while (node != 0) {
-      if (node->key_ == static_cast<unsigned int>(key)) break;
-        node = node->next_;
-      if (node == 0) {
-        LeaveCriticalSection(&lock_);
-        return 0;
-      }
-    }
-    if (node == 0) {
-      LeaveCriticalSection(&lock_);
-      return 0;
-    }
-
-    if (size_out != 0) {
-        *size_out = static_cast<int>(node->data_size_);
-    }
-    if (node->data_ != 0 && data != 0) {
-        memcpy(data, node->data_, node->data_size_);
-    }
-    if (caller_value_out != 0) {
-        *caller_value_out = node->caller_value_;
-    }
-    const int result = node->result_;
-    LeaveCriticalSection(&lock_);
     return result;
 }
 
