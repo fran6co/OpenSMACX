@@ -29,6 +29,11 @@ def compile_cmd(unit):
         _CC={}
         for e in json.load(open(MAIN+'/build/compile_commands.json')):
             _CC[e['file'].replace(MAIN+'/src',R+'/src')]=[t.replace(MAIN+'/src',R+'/src') for t in e['command'].split()]
+        # a worktree's own compile database supplies the units the main one lacks (a unit created by a regroup)
+        if R!=MAIN and os.path.exists(R+'/build/compile_commands.json'):
+            for e in json.load(open(R+'/build/compile_commands.json')):
+                if e['file'] not in _CC and e['file'].startswith(R+'/src'):
+                    _CC[e['file']]=[t.replace(R,MAIN).replace(MAIN+'/src',R+'/src') for t in e['command'].split()]
     return _CC.get(R+'/'+unit)
 SENT=0x5A5A5A5A
 def dis(data,org,relocs=(),lo=None,hi=None,selfsec=None,syms=None):

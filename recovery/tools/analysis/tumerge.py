@@ -16,7 +16,9 @@ comment, #include lines) is dropped except for includes C lacks, which are added
 `git rm`, and CMakeLists.txt, recovery/project.json (measurement.unit_flag_sets) and every
 `// compile_context A` annotation are rewritten to C.
 --move: the same for single functions (the source file is kept; only the includes named with
---include '"x.h"' are added).
+--include '"x.h"' are added). When C.cpp does not exist, `--new-like L.cpp [--after P.cpp]` creates it: the licence
+and #include lines of L, listed after P (default L) in OPENSMACX_SOURCES, L's per-source property commands and
+project.json flag set duplicated (and L's entry in the worktree's build/compile_commands.json, for fe).
 No body is edited. Warnings name what a person must check: unit-level #defines before the includes,
 preprocessor lines inside moved chunks, flag sets that differ."""
 import os, re, sys, json, subprocess
@@ -218,14 +220,72 @@ def rewrite_build(gone, into, dry):
     return notes
 
 
+def create_unit(new, like, after, dry):
+    """a new unit: the licence and the #include lines of `like` (its unit prelude otherwise stays behind), listed
+    after `after` in OPENSMACX_SOURCES, with every per-source property command and the project.json flag set
+    of `like` duplicated, and the worktree's build/compile_commands.json entry copied"""
+    notes = []
+    tl = open(R + '/' + like, encoding='latin-1').read()
+    m = LICENCE.match(tl)
+    pre = (m.group(0) if m else '') + ''.join(re.findall(r'^[ \t]*#[ \t]*include[^\n]*\n', tl[:prelude_end(tl)], re.M))
+    p = R + '/CMakeLists.txt'
+    t = open(p).read()
+    b0 = t.index('set(OPENSMACX_SOURCES'); b1 = t.index(')', b0)
+    head, lst, rest = t[:b0], t[b0:b1], t[b1:]
+    a_ = re.search(r'^([ \t]*)' + re.escape(after) + r'[ \t]*\n', lst, re.M)
+    if not a_:
+        raise SystemExit('--after %s is not in OPENSMACX_SOURCES' % after)
+    lst = lst[:a_.end()] + a_.group(1) + new + '\n' + lst[a_.end():]
+    notes.append('CMakeLists.txt: %s listed after %s' % (new, after))
+    n = [0]
+    def dup(m_):
+        n[0] += 1
+        return m_.group(0) + ('\n' + m_.group(1) + new if m_.group(1) is not None and m_.group(2) == '\n' else ' ' + new)
+    rest = re.sub(r'(?:(?<=\n)([ \t]+)|(?<=[ (]))' + re.escape(like) + r'(?=([\s)]))', dup, rest)
+    notes.append('CMakeLists.txt: %d property command(s) of %s extended to %s' % (n[0], like, new))
+    if not dry:
+        open(p, 'w').write(head + lst + rest)
+    p = R + '/recovery/project.json'
+    t = open(p).read()
+    m = re.search(r'\n([ \t]*)"' + re.escape(like) + r'": (\{\n[ \t]*"flags": \[[^\]]*\]\n[ \t]*\})(,?)', t)
+    if m:
+        ins = '\n' + m.group(1) + '"' + new + '": ' + m.group(2)
+        t = t[:m.end(2)] + ',' + ins + m.group(3) + t[m.end():]
+        notes.append('recovery/project.json: unit_flag_sets[%s] copied from %s' % (new, like))
+        if not dry:
+            json.loads(t)
+            open(p, 'w').write(t)
+    p = R + '/build/compile_commands.json'
+    if os.path.exists(p) and not dry:
+        d = json.load(open(p))
+        if not any(e['file'] == R + '/' + new for e in d):
+            for i, e in enumerate(d):
+                if e['file'] == R + '/' + like:
+                    d.insert(i + 1, {k: v.replace(like, new) for k, v in e.items()})
+                    json.dump(d, open(p, 'w'), indent=1)
+                    notes.append('build/compile_commands.json (worktree copy): entry for %s' % new)
+                    break
+    if not dry:
+        open(R + '/' + new, 'w', encoding='latin-1').write(pre)
+        subprocess.run(['git', 'add', '-N', new], cwd=R, check=True)
+    return notes
+
+
 def unit_flags(u):
     d = json.load(open(R + '/recovery/project.json'))['measurement']['unit_flag_sets']
     return sorted(set(d.get(u, {}).get('flags', [])) - {'/Z7'})
 
 
-def merge(srcs, into, dry=False, addrs=None, top=False, with_inc=None):
+def merge(srcs, into, dry=False, addrs=None, top=False, with_inc=None, new_like=None, after=None):
     skipped = []
     into = os.path.relpath(os.path.abspath(into), R) if os.path.isabs(into) else into
+    made = []
+    if not os.path.exists(R + '/' + into):
+        if not new_like:
+            raise SystemExit('%s does not exist (pass --new-like UNIT [--after UNIT] to create it)' % into)
+        if dry:
+            raise SystemExit('--dry cannot create %s' % into)
+        made = create_unit(into, new_like, after or new_like, dry)
     srcs = [os.path.relpath(os.path.abspath(s), R) if os.path.isabs(s) else s for s in srcs]
     tc = open(R + '/' + into, encoding='latin-1').read()
     pe = prelude_end(tc)
@@ -275,9 +335,9 @@ def merge(srcs, into, dry=False, addrs=None, top=False, with_inc=None):
         print('  includes of the source file NOT added (pass --include NAME for the ones the moved bodies need): ' + ' '.join(skipped))
     for w in warn:
         print('  WARN ' + w)
-    notes = []
+    notes = list(made)
     if addrs is None:
-        notes = rewrite_build(srcs, into, dry)
+        notes += rewrite_build(srcs, into, dry)
     for nt in notes:
         print('  ' + nt)
     if dry:
