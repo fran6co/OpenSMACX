@@ -195,8 +195,8 @@ void __cdecl name_proto(char *output, int prototype_id, int faction_id,
             quality = 1;
         }
         not_sea = Chassis[chassis_id].triad != TRIAD_SEA;
-        if (!strlen(StringTable.get(Chassis[chassis_id].offsv_lrg_name))
-            || !strlen(StringTable.get(Chassis[chassis_id].defsv_lrg_name))) {
+        if (!strlen(table_text(Chassis[chassis_id].offsv_lrg_name))
+            || !strlen(table_text(Chassis[chassis_id].defsv_lrg_name))) {
             quality = 0;
         }
     }
@@ -217,7 +217,7 @@ void __cdecl name_proto(char *output, int prototype_id, int faction_id,
                     alternate[strlen(output) - 1] = '\0';
                 }
             } else if (Weapon[weapon_id].offense_rating >= 2) {
-                strcat(output, StringTable.get(Labels.strings_ptr[0x2D8 / 4]));
+                strcat(output, table_text(Labels.strings_ptr[0x2D8 / 4]));
                 strcat(alternate, label_get(0x2D8 / 4));
             } else {
                 strcat(output, label_get(0x248 / 4));
@@ -258,12 +258,12 @@ void __cdecl name_proto(char *output, int prototype_id, int faction_id,
         }
         strcat(output, BufferJoinSpace);
         strcat(alternate, BufferJoinSpace);
-        strcat(output, StringTable.get(Chassis[chassis_id].defsv_1_name));
+        strcat(output, table_text(Chassis[chassis_id].defsv_1_name));
         if (unique && prototype_id & 1) {
-            strcat(alternate, StringTable.get(quality && not_sea
+            strcat(alternate, table_text(quality && not_sea
                 ? Chassis[chassis_id].defsv_lrg_name : Chassis[chassis_id].defsv_1_name));
         } else {
-            strcat(alternate, StringTable.get(quality && !not_sea
+            strcat(alternate, table_text(quality && !not_sea
                 ? Chassis[chassis_id].defsv_lrg_name : Chassis[chassis_id].defsv_2_name));
         }
     } else if (Chassis[chassis_id].triad == TRIAD_AIR && ability_flags & ABL_AIR_SUPERIORITY
@@ -279,37 +279,37 @@ void __cdecl name_proto(char *output, int prototype_id, int faction_id,
         }
         strcat(output, BufferJoinSpace);
         strcat(alternate, BufferJoinSpace);
-        strcat(output, StringTable.get(Chassis[chassis_id].defsv_1_name));
+        strcat(output, table_text(Chassis[chassis_id].defsv_1_name));
         if (unique && prototype_id & 1) {
-            strcat(alternate, StringTable.get(quality && not_sea
+            strcat(alternate, table_text(quality && not_sea
                 ? Chassis[chassis_id].defsv_lrg_name : Chassis[chassis_id].defsv_1_name));
         } else {
-            strcat(alternate, StringTable.get(quality && !not_sea
+            strcat(alternate, table_text(quality && !not_sea
                 ? Chassis[chassis_id].defsv_lrg_name : Chassis[chassis_id].defsv_2_name));
         }
     } else if (Chassis[chassis_id].missile && Weapon[weapon_id].offense_rating >= 99) {
-        strcat(output, StringTable.get(Reactor[reactor_id - 1].name_short));
-        strcat(alternate, StringTable.get(Reactor[reactor_id - 1].name_short));
+        strcat(output, table_text(Reactor[reactor_id - 1].name_short));
+        strcat(alternate, table_text(Reactor[reactor_id - 1].name_short));
         strcat(output, BufferJoinSpace);
         strcat(alternate, BufferJoinSpace);
-        strcat(output, StringTable.get(Weapon[weapon_id].name_short));
-        strcat(alternate, StringTable.get(Weapon[weapon_id].name_short));
+        strcat(output, table_text(Weapon[weapon_id].name_short));
+        strcat(alternate, table_text(Weapon[weapon_id].name_short));
     } else if (Chassis[chassis_id].missile && (weapon_id == 24 || weapon_id == 25)) {
-        strcat(output, StringTable.get(Weapon[weapon_id].name_short));
-        strcat(alternate, StringTable.get(Weapon[weapon_id].name_short));
+        strcat(output, table_text(Weapon[weapon_id].name_short));
+        strcat(alternate, table_text(Weapon[weapon_id].name_short));
         strcat(output, BufferJoinSpace);
         strcat(alternate, BufferJoinSpace);
-        strcat(output, StringTable.get(Reactor[reactor_id - 1].name_short));
-        strcat(alternate, StringTable.get(Reactor[reactor_id - 1].name_short));
+        strcat(output, table_text(Reactor[reactor_id - 1].name_short));
+        strcat(alternate, table_text(Reactor[reactor_id - 1].name_short));
         strcat(output, BufferJoinSpace);
         strcat(alternate, BufferJoinSpace);
-        strcat(output, StringTable.get(Chassis[chassis_id].offsv_1_name));
-        strcat(alternate, StringTable.get(Chassis[chassis_id].offsv_1_name));
+        strcat(output, table_text(Chassis[chassis_id].offsv_1_name));
+        strcat(alternate, table_text(Chassis[chassis_id].offsv_1_name));
     } else {
         if (Weapon[weapon_id].mode >= 3 && chassis_id) {
             if (reactor_id > 1) {
-                strcat(output, StringTable.get(Reactor[reactor_id - 1].name_short));
-                strcat(alternate, StringTable.get(Reactor[reactor_id - 1].name_short));
+                strcat(output, table_text(Reactor[reactor_id - 1].name_short));
+                strcat(alternate, table_text(Reactor[reactor_id - 1].name_short));
                 strcat(output, BufferJoinSpace);
                 strcat(alternate, BufferJoinSpace);
             }
@@ -318,11 +318,11 @@ void __cdecl name_proto(char *output, int prototype_id, int faction_id,
                     || !strchr(output, ' '))) {
                 if ((Weapon[weapon_id].mode == 8 || Weapon[weapon_id].mode == 9)
                     && chassis_id == 3) {
-                    strcat(output, StringTable.get(Labels.strings_ptr[0x28C / 4]));
-                    strcat(alternate, StringTable.get(Labels.strings_ptr[0x28C / 4]));
+                    strcat(output, table_text(Labels.strings_ptr[0x28C / 4]));
+                    strcat(alternate, table_text(Labels.strings_ptr[0x28C / 4]));
                 } else {
-                    strcat(output, StringTable.get(Chassis[chassis_id].offsv_1_name));
-                    strcat(alternate, StringTable.get(Chassis[chassis_id].offsv_2_name));
+                    strcat(output, table_text(Chassis[chassis_id].offsv_1_name));
+                    strcat(alternate, table_text(Chassis[chassis_id].offsv_2_name));
                 }
                 strcat(output, BufferJoinSpace);
                 strcat(alternate, BufferJoinSpace);
@@ -330,8 +330,8 @@ void __cdecl name_proto(char *output, int prototype_id, int faction_id,
         }
         if (!unique) {
             gendered ^= Weapon[weapon_id].offense_rating & 1;
-            strcat(output, StringTable.get(Weapon[weapon_id].name_short));
-            strcat(alternate, StringTable.get(Weapon[weapon_id].name_short));
+            strcat(output, table_text(Weapon[weapon_id].name_short));
+            strcat(alternate, table_text(Weapon[weapon_id].name_short));
         }
         if (Weapon[weapon_id].mode < 3) {
             if (ability_flags & ABL_ARTILLERY) {
@@ -348,16 +348,16 @@ void __cdecl name_proto(char *output, int prototype_id, int faction_id,
             } else {
                 strcat(output, BufferJoinSpace);
                 if (lower) {
-                    strcat(output, StringTable.get(Reactor[reactor_id - 1].name_short));
+                    strcat(output, table_text(Reactor[reactor_id - 1].name_short));
                 } else {
-                    strcat(output, StringTable.get(quality && not_sea
+                    strcat(output, table_text(quality && not_sea
                         ? Chassis[chassis_id].offsv_lrg_name : Chassis[chassis_id].offsv_1_name));
                 }
                 strcat(alternate, BufferJoinSpace);
                 if (lower) {
-                    strcat(alternate, StringTable.get(Reactor[reactor_id - 1].name_short));
+                    strcat(alternate, table_text(Reactor[reactor_id - 1].name_short));
                 } else {
-                    strcat(alternate, StringTable.get(quality && !not_sea
+                    strcat(alternate, table_text(quality && !not_sea
                         ? Chassis[chassis_id].offsv_lrg_name : Chassis[chassis_id].offsv_2_name));
                 }
             }
