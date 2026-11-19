@@ -89,7 +89,7 @@ class SetupWin : public GraphicWin {
   GraphicWin *opening_window_snapshot_;  // 0xA40
   Buffer buffer_;  // 0xA44
   // RECOVERY_MEMBER: v1 SetupWin row_count_ 0xFCC 0x004AE4D0
-  uint32_t row_count_;  // 0xFCC
+  int row_count_;  // 0xFCC
   // RECOVERY_MEMBER: v1 SetupWin selected_row_ 0xFD0 0x004AE380
   uint32_t selected_row_;  // 0xFD0
   Spot spot_;  // 0xFD4

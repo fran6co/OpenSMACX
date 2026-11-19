@@ -259,7 +259,7 @@ int SetupWin::do_menu_rightside(char *filename, int flags) {
         if (menu_popup_->caption_text() != nullptr) {
             strcat(token, menu_popup_->caption_text());
         }
-        spot_.init(static_cast<int>(row_count_) + 2);
+        spot_.init(row_count_ + 2);
     } else {
         row_count_ = 0;
         int seen_blank = 0;
@@ -287,7 +287,7 @@ int SetupWin::do_menu_rightside(char *filename, int flags) {
                 }
                 seen_blank = 1;
             } else {
-                const int position = static_cast<int>(row_count_);
+                const int position = row_count_;
                 seen_blank = 1;
                 ++row_count_;
                 entries->pending_text_ = line;
@@ -298,7 +298,7 @@ int SetupWin::do_menu_rightside(char *filename, int flags) {
         }
         item_texts_ = entries;
         text_close();
-        spot_.init(static_cast<int>(row_count_) + 2);
+        spot_.init(row_count_ + 2);
     }
 
     buffer2_.init(0x162, 0x4B, 0, nullptr);
@@ -306,7 +306,7 @@ int SetupWin::do_menu_rightside(char *filename, int flags) {
 
     // Native arithmetic carries DIB::biHeight (negative for this
     // top-down surface) and reloads it at every use.
-    int menu_height = -(buffer2_.dib_.bmiHeader.biHeight * static_cast<int>(row_count_));
+    int menu_height = -(buffer2_.dib_.bmiHeader.biHeight * row_count_);
     if (token[0] != '\0') {
         menu_height += 0x14 - buffer2_.dib_.bmiHeader.biHeight;
         ++row_count_;
@@ -335,7 +335,7 @@ int SetupWin::do_menu_rightside(char *filename, int flags) {
         started = timeGetTime();
         flic.decode_stored_frame();
         int y = 0;
-        for (int copy_row_intro = 0; copy_row_intro < static_cast<int>(row_count_);
+        for (int copy_row_intro = 0; copy_row_intro < row_count_;
              ++copy_row_intro) {
             buffer2_.copy(this, 0, 0, 0, y, buffer2_.pixel_width(),
                           buffer2_.pixel_height());
@@ -364,7 +364,7 @@ int SetupWin::do_menu_rightside(char *filename, int flags) {
         title_rect.bottom += title_rect.top;
     }
 
-    for (int spot_row = 0; spot_row < static_cast<int>(row_count_); ++spot_row) {
+    for (int spot_row = 0; spot_row < row_count_; ++spot_row) {
         spot_.add(spot_row, 0, title_rect.left, title_rect.top,
                   title_rect.right - title_rect.left,
                   title_rect.bottom - title_rect.top);
@@ -372,7 +372,7 @@ int SetupWin::do_menu_rightside(char *filename, int flags) {
     }
 
     WinFlipClipped = 0;
-    for (int draw_row = 0; draw_row < static_cast<int>(row_count_); ++draw_row) {
+    for (int draw_row = 0; draw_row < row_count_; ++draw_row) {
         draw_item(draw_row, draw_row == static_cast<int>(selected_row_));
     }
     soft_update();
@@ -384,7 +384,7 @@ int SetupWin::do_menu_rightside(char *filename, int flags) {
         started = timeGetTime();
         flic.decode_stored_frame();
         int y = 0;
-        for (int copy_row_outro = 0; copy_row_outro < static_cast<int>(row_count_);
+        for (int copy_row_outro = 0; copy_row_outro < row_count_;
              ++copy_row_outro) {
             buffer2_.copy(this, 0, 0, 0, y, buffer2_.pixel_width(),
                           buffer2_.pixel_height());
@@ -437,7 +437,7 @@ void SetupWin::on_mouse_move(int x, int y) {
 // The catalogue's int return is wrong: the early exit (0x004AE4E3) and the
 // end both reach `ret 8` without setting eax, and no caller reads it.
 void SetupWin::draw_item(int position, int selected) {
-    if (position < static_cast<int>(row_count_)) {
+    if (position < row_count_) {
         RECT row;
         spot_.get_rect(position, 0, &row);
         row.top += 31;
@@ -569,11 +569,11 @@ int SetupWin::on_key_click(int, int key) {
     switch (key) {
     case 0x26:
         current = static_cast<int>(selected_row_);
-        next = current == 0 ? static_cast<int>(row_count_) - 1 : current - 1;
+        next = current == 0 ? row_count_ - 1 : current - 1;
         goto selection_changed;
     case 0x28:
         current = static_cast<int>(selected_row_);
-        next = current == static_cast<int>(row_count_) - 1 ? 0 : current + 1;
+        next = current == row_count_ - 1 ? 0 : current + 1;
 selection_changed:
         draw_item(current, 0);
         selected_row_ = static_cast<uint32_t>(next);
