@@ -106,19 +106,6 @@ void __cdecl slide_hide(GraphicWin *window, int mode);
 
 
 
-// Recompute can change the worked-square allocation. Network notification is
-// conditional on that live state changing, not simply on invoking the screen.
-void BaseWin::compute_selected_base() {
-    const int old = Bases[focusedBaseID_].resource_sqr_radius;
-    set_base(static_cast<int>(focusedBaseID_));
-    base_compute(0);
-    if (IsMultiplayerNet && !ConsoleControlTurnActive
-        && old != Bases[focusedBaseID_].resource_sqr_radius) {
-        if (NetDaemonNet.lock_base(BaseIDCurrentSelected, 0, -1, -1) == 0)
-            NetDaemonNet.unlock_base(BaseIDCurrentSelected);
-    }
-}
-
 static inline int specialist_type(int i) {
     return i >= 16 ? best_specialist()
         : (BaseCurrent->spec[i >> 3] >> ((i & 7) * 4)) & 15;
@@ -569,7 +556,7 @@ void BaseWin::queue_click(int row, int x, int y, int right) {
                 for (int i = 0; i < 8; ++i)
                     menu.dialogs().item(PlayersData[faction].saved_queue_name[i], i);
                 const int picked = menu.exec(x, y, pop_expire);
-                compute_selected_base();
+                focus();
                 if (picked < 0 || (GameDataStateStorage.fields_.game_state_ & 0x800)) break;
                 char *name = PlayersData[faction].saved_queue_name[picked];
                 if (X_pop_ask("TEMPNAME", 23, name, 0, 0)) break;
@@ -593,7 +580,7 @@ void BaseWin::queue_click(int row, int x, int y, int right) {
                 for (int i = 0; i < 8; ++i)
                     menu.dialogs().item(PlayersData[faction].saved_queue_name[i], i);
                 const int picked = menu.exec(x, y, pop_expire);
-                compute_selected_base();
+                focus();
                 if (picked < 0 || (GameDataStateStorage.fields_.game_state_ & 0x800)) break;
                 for (int old_index = 0; old_index <= BaseCurrent->queue_size; ++old_index) {
                     const int entry = BaseCurrent->queue_production_id[old_index];
@@ -631,7 +618,7 @@ void BaseWin::queue_click(int row, int x, int y, int right) {
 // RECOVERY_BINDING: v1 {"evidence": ["git:649230f6:src/unrecovered/0040a1d0.cpp", "source:src/basewin.h", "image:0x40a1d0"], "reason": "Recover the complete original operation through genuine owning C++ classes, members and natural lifetimes; preserve retained seed evidence and historical restoration obligations separately from fresh matching."}
 void BaseWin::farm_click(int x, int y, int) {
     int previous = -1;
-    compute_selected_base();
+    focus();
     const int faction = BaseCurrent->faction_id_current;
     if ((faction != ConsoleGlobal.faction_id_ && !(GameDataStateStorage.fields_.game_state_ & STATE_OMNISCIENT_VIEW))
         || field_40AFC_) return;
@@ -782,7 +769,7 @@ void BaseWin::pop_click(int position, int, int, int) {
     Popup popup;
     int selected = 999;
     int too_small = 0;
-    compute_selected_base();
+    focus();
     if (BaseCurrent->faction_id_current != ConsoleGlobal.faction_id_
         && !(GameDataStateStorage.fields_.game_state_ & STATE_OMNISCIENT_VIEW)) return;
     int current;
@@ -4026,16 +4013,19 @@ void BaseWin::draw_info(int update_mode) {
 
 // ORIGINAL: 0x00415DD0 ?focus@BaseWin@@QAEXXZ 0x00415DD0-0x00415E52 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["image:0x00415DD0-0x00415E52 reads focusedBaseID_ and Base::resource_sqr_radius, selects and computes that base, then conditionally acquires/releases the multiplayer base lock after observing a changed radius.", "source:src/basewin.h", "source:src/base.h", "source:src/game.h", "source:src/console.h", "source:src/netdaemon.h"], "reason": "Recover BaseWin focus through its source-owned focused base, typed Base fields and NetDaemon lock interface while retaining the original refresh and lock sequence."}
+// The image expands this body at basewin.cpp's own recompute sites (queue_click
+// 0x409A85..0x409B04 and 23 more; orphanowner/rscan), so they call focus()
+// rather than an invented twin. Spelled without `!= 0` and the base_id local:
+// same bytes, but those nodes are charged at every expansion and move
+// production's and hurry's teardown decisions (MATCHING_GUIDE 2.8).
 void BaseWin::focus() {
-    const int base_id = static_cast<int>(focusedBaseID_);
-    const int worked_tiles = Bases[base_id].resource_sqr_radius;
-    set_base(base_id);
+    const int worked_tiles = Bases[focusedBaseID_].resource_sqr_radius;
+    set_base(static_cast<int>(focusedBaseID_));
     base_compute(0);
-    if (IsMultiplayerNet != 0 && ConsoleControlTurnActive == 0
+    if (IsMultiplayerNet && !ConsoleControlTurnActive
         && worked_tiles != Bases[focusedBaseID_].resource_sqr_radius) {
-        if (NetDaemonNet.lock_base(BaseIDCurrentSelected, 0, -1, -1) == 0) {
+        if (NetDaemonNet.lock_base(BaseIDCurrentSelected, 0, -1, -1) == 0)
             NetDaemonNet.unlock_base(BaseIDCurrentSelected);
-        }
     }
 }
 
@@ -4171,7 +4161,7 @@ void BaseWin::iface_click(int x, int y, int right, int is_double) {
         type = 1;
     }
     if (prodPicker_.is_visible() && type != 8) return;
-    compute_selected_base();
+    focus();
     const int faction = BaseCurrent->faction_id_current;
     if (faction != ConsoleGlobal.faction_id_ && !(GameDataStateStorage.fields_.game_state_ & STATE_OMNISCIENT_VIEW)
         && !(PlayersData[ConsoleGlobal.faction_id_].diplo_treaties[faction] & 1)
@@ -4306,7 +4296,7 @@ void BaseWin::click(int x, int y, int right, int is_double) {
     }
     int position, type;
     if (spot2_.check(x, y, &position, &type) < 0) return;
-    compute_selected_base();
+    focus();
     const int faction = BaseCurrent->faction_id_current;
     if (faction != ConsoleGlobal.faction_id_ && !(GameDataStateStorage.fields_.game_state_ & STATE_OMNISCIENT_VIEW)
         && !(PlayersData[ConsoleGlobal.faction_id_].diplo_treaties[faction] & 1)
@@ -4438,7 +4428,7 @@ void BaseWin::production(int a1, int a2) {
     (void)popup_secondary;
     (void)popup_tertiary;
 
-    compute_selected_base();
+    focus();
     if (Bases[focusedBaseID_].faction_id_current != ConsoleGlobal.faction_id_
         && (GameDataStateStorage.fields_.game_state_ & 0x80u) == 0)
         return;
@@ -4463,7 +4453,7 @@ void BaseWin::production(int a1, int a2) {
     }
 
 setup:
-    compute_selected_base();
+    focus();
     picker_preview.init(0x17, 0, pixel_width() - 0x2E, pixel_height(), 0,
                         0x01000020, this, 0, 0);
     buffer1_.copy(&picker_preview, 0x17, 0, 0, 0,
@@ -4480,7 +4470,7 @@ setup:
             BaseCurrent->queue_size = saved_queue_size;
             draw_production(0);
         }
-        compute_selected_base();
+        focus();
         g_FX.play(0x0F);
 
         if (sel <= -9999
@@ -4542,19 +4532,19 @@ setup:
         case 2:
             TutWinDesWindow.exec(BaseCurrent->faction_id_current,
                                  sel < 0 ? -1 : sel);
-            compute_selected_base();
+            focus();
             prodPicker_.calculate();
             goto setup;
         case 3:
             TutWinDesWindow.exec(BaseCurrent->faction_id_current, -1);
-            compute_selected_base();
+            focus();
             prodPicker_.calculate();
             goto setup;
         }
 
         if (sel == 9999) {
             design_workshop(BaseCurrent->faction_id_current, 1);
-            compute_selected_base();
+            focus();
             prodPicker_.calculate();
             goto setup;
         }
@@ -4725,7 +4715,7 @@ void BaseWin::hurry() {
     int faction_id;  // declared first: the image keeps lock_held at [ebp-0x14]
     int lock_held = 0;
     Popup popup;
-    compute_selected_base();
+    focus();
     if (Bases[focusedBaseID_].faction_id_current != ConsoleGlobal.faction_id_
         && (GameDataStateStorage.fields_.game_state_ & 0x80u) == 0) return;
 
@@ -4777,7 +4767,7 @@ void BaseWin::hurry() {
 
     const int choice = popup.exec(ConsoleControlTurnActive ? 0 : pop_expire);
     g_FX.play(0x0F);
-    compute_selected_base();
+    focus();
     if (choice < 1 || (GameDataStateStorage.fields_.game_state_ & 0x800u) != 0) {
         if (lock_held) NetDaemonNet.unlock_base(BaseIDCurrentSelected);
         return;
@@ -4822,7 +4812,7 @@ void BaseWin::hurry() {
 // ORIGINAL: 0x00419A90 ?governor@BaseWin@@QAEHH@Z 0x00419A90-0x0041A010 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["git:649230f6:src/unrecovered/00419a90.cpp", "source:src/basewin.h", "image:original instruction and dispatch evidence for the BaseWin owner"], "reason": "Recover this original base-window operation through the real BaseWin owner, existing typed members and source-owned shared dependencies; catalogue naming and original intervals remain distinct from current compiler symbols."}
 int BaseWin::governor(int settings_only) {
-    compute_selected_base();
+    focus();
     if (Bases[focusedBaseID_].faction_id_current != ConsoleGlobal.faction_id_
         && !(GameDataStateStorage.fields_.game_state_ & STATE_OMNISCIENT_VIEW)) return 1;
     const int faction = BaseCurrent->faction_id_current;
@@ -5048,7 +5038,7 @@ void BaseWin::next() {
 // ORIGINAL: 0x0041A2B0 ?rename@BaseWin@@QAEXXZ 0x0041A2B0-0x0041A4B6 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["git:649230f6:src/recovered/units/0041a2b0.cpp", "source:src/basewin.h", "image:original instruction and dispatch evidence for the BaseWin owner"], "reason": "Recover this original base-window operation through the real BaseWin owner, existing typed members and source-owned shared dependencies; catalogue naming and original intervals remain distinct from current compiler symbols."}
 void BaseWin::rename() {
-    compute_selected_base();
+    focus();
     if (BaseCurrent->faction_id_current != ConsoleGlobal.faction_id_
         && !(GameDataStateStorage.fields_.game_state_ & STATE_OMNISCIENT_VIEW)) return;
     if (NetDaemonNet.lock_base(BaseIDCurrentSelected, 0, -1, -1)) return;
@@ -5175,7 +5165,7 @@ void BaseWin::zoom(int base_id, int wait) {
     TutorialWindow.reset();
     focusedBaseID_ = base_id;
     BaseComputedID = -1;
-    compute_selected_base();
+    focus();
 
     BaseCurrent->state &= ~BSTATE_UNK_10;
     zoom_wait_pending_ = 1;
@@ -5607,7 +5597,7 @@ void BaseWin::on_mouse_move(int x, int y) {
     if (field_40B00_ >= 0) {
         field_40B00_ = -1;
         field_40B04_ = 0;
-        compute_selected_base();
+        focus();
         draw_production(1);
     }
     if ((field_40B4C_ != 0 && field_40B4C_ != 1) || field_40B54_ < 0) return;
@@ -5723,7 +5713,7 @@ void BaseWin::on_button_toggled(int, int) {
 // ORIGINAL: 0x0041B4F0 ?staple_the_bastards@BaseWin@@QAEXXZ 0x0041B4F0-0x0041B78D BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["git:649230f6:src/recovered/units/0041b4f0.cpp", "source:src/basewin.h", "image:original instruction and dispatch evidence for the BaseWin owner"], "reason": "Recover this original base-window operation through the real BaseWin owner, existing typed members and source-owned shared dependencies; catalogue naming and original intervals remain distinct from current compiler symbols."}
 void BaseWin::staple_the_bastards() {
-    compute_selected_base();
+    focus();
     if (Bases[focusedBaseID_].faction_id_current != ConsoleGlobal.faction_id_
         && !(GameDataStateStorage.fields_.game_state_ & STATE_OMNISCIENT_VIEW)) return;
     const int faction = BaseCurrent->faction_id_current;
@@ -6203,7 +6193,7 @@ static inline void set_view_mode(BaseWin *win, uint32_t mode) {
 // RECOVERY_BINDING: v1 {"evidence": ["git:649230f6:src/recovered/units/0041d500.cpp", "source:src/basewin.h", "image:original instruction and dispatch evidence for the BaseWin owner"], "reason": "Recover this original base-window operation through the real BaseWin owner, existing typed members and source-owned shared dependencies; catalogue naming and original intervals remain distinct from current compiler symbols."}
 // symbol    ?on_button_clicked@BaseWin@@UAEXH@Z
 void BaseWin::on_button_clicked(int button_id) {
-    compute_selected_base();
+    focus();
     TutorialWindow.reset();
     if (IfaceIdToSlotStorage[ActiveIfaceIdStorage] != 3) return;
     ok_callback();
@@ -6721,7 +6711,7 @@ void BaseWin::on_iface_mouse_move(int a1, int a2) {
         if (field_40B00_ < 0) return;
         field_40B00_ = -1;
         field_40B04_ = 0;
-        compute_selected_base();
+        focus();
         draw_production(1);
         return;
     }
@@ -6731,13 +6721,13 @@ void BaseWin::on_iface_mouse_move(int a1, int a2) {
             if (field_40B00_ < 0) return;
             field_40B00_ = -1;
             field_40B04_ = 0;
-            compute_selected_base();
+            focus();
             draw_production(1);
         } else {
             if (field_40B00_ == position) return;
             field_40B00_ = position;
             field_40B04_ = type == 7;
-            compute_selected_base();
+            focus();
             draw_flash(1);
         }
     } else if (field_40B4C_ == 0 || field_40B4C_ == 1) {
@@ -6798,7 +6788,7 @@ void BaseWin::on_iface_mouse_leave(int, int) {
     if (field_40B00_ >= 0) {
         field_40B00_ = -1;
         field_40B04_ = 0;
-        compute_selected_base();
+        focus();
         draw_production(1);
     }
 }
