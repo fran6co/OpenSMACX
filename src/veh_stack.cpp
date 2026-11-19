@@ -817,7 +817,7 @@ void __cdecl spot_all(int veh_id, int toggle) {
             // 0x5B75F9
             if (!(PlayersData[faction_id].diplo_treaties[stack_faction] & 1) && toggle) {
                 wake_stack(stack_id);
-                if (is_human(stack_faction)) {
+                if ((GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & (1 << stack_faction))) {
                     // 0x5B764F
                     if (low_terrain == contact_low_terrain
                         && want_to_wake(faction_id, stack_id, veh_id)) {
@@ -849,7 +849,7 @@ void __cdecl spot_all(int veh_id, int toggle) {
             spot_stack(stack_id, faction_id);
         }
         // 0x5B7995: is_human(faction_id) CSE'd with faction_mask
-        if (is_human(faction_id)) {
+        if ((GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & (1 << faction_id))) {
             if ((low_terrain == contact_low_terrain || triad == TRIAD_AIR)
                 && want_to_wake(stack_faction, veh_id, stack_id)) {
                 veh_move_end(veh_id); // 0x5B79D5 inlined
