@@ -4731,11 +4731,11 @@ int __cdecl propose_pact(int myFac, int otherFac) {
         }
         if (response) {
             accepted_offer = 1;
-            int tech_id = DiploScratchFAA8;
-            net_tech(otherFac, tech_id, myFac, 1);
+            other_commerce = DiploScratchFAA8;
+            net_tech(otherFac, other_commerce, myFac, 1);
             if (DiploScratchFA18 >= 0) {
-                tech_id = DiploScratchFA18;
-                net_tech(otherFac, tech_id, myFac, 1);
+                other_commerce = DiploScratchFA18;
+                net_tech(otherFac, other_commerce, myFac, 1);
             }
             cause_friction(otherFac, myFac, -(tech_val(DiploScratchFAA8, otherFac, 1) / 2));
             diplomacy_caption(myFac, otherFac);
