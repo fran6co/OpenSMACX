@@ -5875,170 +5875,164 @@ L_570456:
         goto L_570ac2;
     }
 L_570466:
-    if (!on_map(tx, ty)) {
-        goto L_570aa9;
-    }
-    if (map_loc(tx, ty)->region != region) {
-        goto L_570aaf;
-    }
-    m = whose_territory(faction_id, tx, ty, NULL, 0);
-    if (region_plan != 8 && m != faction_id && m >= 0) {
-        goto L_570aa9;
-    }
-    if (base_territory(faction_id, tx, ty) >= 0) {
-        goto L_570aa9;
-    }
-    if ((!j || !((GameDataStateStorage.fields_.turn_current_num_ + faction_id) & 15))
-        && (is_known(tx, ty, faction_id)
-            || (GameDataStateStorage.fields_.diff_level_current_ > 3
-                && !(faction_bit & GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_)))
-        && goody_at(tx, ty)) {
-        int b = base_find(tx, ty);
-        if ((b >= 0 && Bases[b].faction_id_current == faction_id) || m == faction_id) {
-            add_site(faction_id, 3, (BaseFindDist < 6) + 1, tx, ty);
+    if (on_map(tx, ty)) {
+        if (map_loc(tx, ty)->region != region) {
+            goto L_570aaf;
         }
-    }
-    if (is_ocean(tx, ty)) {
-        goto L_570aaf;
-    }
-    if ((map_loc(tx, ty)->bit & 0x20) && (map_loc(tx, ty)->climate & ~0x1F) >= 0x40) {
-        goto L_570aaf;
-    }
-    if (map_loc(tx, ty)->bit & 0x2000) {
-        goto L_570aaf;
-    }
-    if ((map_loc(tx, ty)->val3 & ~0x3F) > 0x40) {
-        goto L_570aaf;
-    }
-    if ((m == faction_id || m < 0) && !is_known(tx, ty, faction_id)) {
-        // Unexplored tile: rate how much unknown land/pods lie around it.
-        score = 0;
-        // keep_count is strength-reduced by VC6: its slot holds 4*k (0..0x54).
-        for (keep_count = 0; keep_count < 21; keep_count++) {
-            int nx = xrange(tx + RadiusOffsetX[keep_count]);
-            int ny = ty + RadiusOffsetY[keep_count];
-            if (on_map(nx, ny) && map_loc(nx, ny)->region == region) {
-                if (at_site(faction_id, 3, nx, ny)) {
-                    goto L_570725;
-                }
-                if (is_known(nx, ny, faction_id)) {
-                    if ((GameDataStateStorage.fields_.diff_level_current_ > 3
-                         && !(faction_bit
-                              & GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_))
-                        || keep_count < 9) {
-                        score |= 0x20;
-                    }
-                } else {
-                    score++;
-                    if (goody_at(nx, ny)) {
-                        score++;
+        m = whose_territory(faction_id, tx, ty, NULL, 0);
+        if (!(region_plan != 8 && m != faction_id && m >= 0)) {
+            if (base_territory(faction_id, tx, ty) < 0) {
+                if ((!j || !((GameDataStateStorage.fields_.turn_current_num_ + faction_id) & 15))
+                    && (is_known(tx, ty, faction_id)
+                        || (GameDataStateStorage.fields_.diff_level_current_ > 3
+                            && !(faction_bit & GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_)))
+                    && goody_at(tx, ty)) {
+                    int b = base_find(tx, ty);
+                    if ((b >= 0 && Bases[b].faction_id_current == faction_id) || m == faction_id) {
+                        add_site(faction_id, 3, (BaseFindDist < 6) + 1, tx, ty);
                     }
                 }
-            }
-        }
-        if (score >= 0x21) {
-            add_site(faction_id, 3, score >= 0x28 ? 3 : (score >= 0x23) + 1, tx, ty);
-        }
-    }
+                if (is_ocean(tx, ty)) {
+                    goto L_570aaf;
+                }
+                if ((map_loc(tx, ty)->bit & 0x20) && (map_loc(tx, ty)->climate & ~0x1F) >= 0x40) {
+                    goto L_570aaf;
+                }
+                if (map_loc(tx, ty)->bit & 0x2000) {
+                    goto L_570aaf;
+                }
+                if ((map_loc(tx, ty)->val3 & ~0x3F) > 0x40) {
+                    goto L_570aaf;
+                }
+                if ((m == faction_id || m < 0) && !is_known(tx, ty, faction_id)) {
+                    // Unexplored tile: rate how much unknown land/pods lie around it.
+                    score = 0;
+                    // keep_count is strength-reduced by VC6: its slot holds 4*k (0..0x54).
+                    for (keep_count = 0; keep_count < 21; keep_count++) {
+                        int nx = xrange(tx + RadiusOffsetX[keep_count]);
+                        int ny = ty + RadiusOffsetY[keep_count];
+                        if (on_map(nx, ny) && map_loc(nx, ny)->region == region) {
+                            if (at_site(faction_id, 3, nx, ny)) {
+                                goto L_570725;
+                            }
+                            if (is_known(nx, ny, faction_id)) {
+                                if ((GameDataStateStorage.fields_.diff_level_current_ > 3
+                                     && !(faction_bit
+                                          & GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_))
+                                    || keep_count < 9) {
+                                    score |= 0x20;
+                                }
+                            } else {
+                                score++;
+                                if (goody_at(nx, ny)) {
+                                    score++;
+                                }
+                            }
+                        }
+                    }
+                    if (score >= 0x21) {
+                        add_site(faction_id, 3, score >= 0x28 ? 3 : (score >= 0x23) + 1, tx, ty);
+                    }
+                }
 L_570725:
-    if (region_plan != 8 && m != faction_id) {
-        goto L_570aaf;
-    }
-    // keep_count's slot is written at 0x570758 with the byte offset
-    // faction_id*sizeof(PlayerData) + region*2 (VC6 CSE spill of the unk_77/unk_81
-    // element address, reused at 0x5708f7), not a source assignment.
-    if (!(PlayersData[faction_id].unk_77[region] & 0x80)
-        && !is_coast(tx, ty, 0)
-        && (Continents[region].open_terrain - PlayersData[faction_id].unk_81[region]) < 20) {
-        goto L_570aa9;
-    }
-    score = site_at(tx, ty, 0);
-    if (!score) {
-        goto L_570aa9;
-    }
-    if (score < (8 - BaseFindDist) * 2
-                - (PlayersData[faction_id].region_total_bases[region] < 2 ? 2 : 0)
-        && score < PlayersData[faction_id].unk_82[region]
-        && PlayersData[faction_id].region_total_bases[region]
-        && PlayersData[faction_id].current_num_bases >= 2) {
-        goto L_570aa9;
-    }
-    // n: no better site in the surrounding ring.
-    n = 1;
-    // tile_owner is strength-reduced by VC6: its slot holds 4*k (0..0x60).
-    for (tile_owner = 0; tile_owner < 24; tile_owner++) {
-        int nx = xrange(tx + RadiusOffsetX[tile_owner + 1]);
-        int ny = ty + RadiusOffsetY[tile_owner + 1];
-        if (!on_map(nx, ny)) {
-            continue;
-        }
-        if (map_loc(nx, ny)->region != region) {
-            continue;
-        }
-        if ((map_loc(nx, ny)->bit & 0x20) && (map_loc(nx, ny)->climate & ~0x1F) >= 0x40) {
-            continue;
-        }
-        if (map_loc(nx, ny)->bit & 0x2000) {
-            continue;
-        }
-        if ((map_loc(nx, ny)->val3 & ~0x3F) > 0x40) {
-            continue;
-        }
-        if (base_territory(faction_id, nx, ny) >= 0) {
-            continue;
-        }
-        if (map_loc(nx, ny)->bit & 0x1000) {
-            continue;
-        }
-        {
-            int site = site_at(nx, ny, 0);
-            if (site < score || (site == score && !at_site(faction_id, 8, nx, ny))) {
-                continue;
-            }
-        }
-        if (!(PlayersData[faction_id].unk_77[region] & 0x80)
-            && !is_coast(nx, ny, 0)
-            && (Continents[region].open_terrain
-                     - PlayersData[faction_id].unk_81[region]) < 20) {
-            continue;
-        }
-        if (region_plan == 8 || whose_territory(faction_id, nx, ny, NULL, 0) == faction_id) {
-            goto L_570969;  // chunk 3: n = 0 (the loop's break block)
-        }
-    }
-    goto L_570970;
-    // ---- chunk 3: 0x570969-0x5725b0 ----
-    // Tail of the coastal-site tile scan (the inner ring loop above breaks
-    // here with n = 0).
+                if (region_plan != 8 && m != faction_id) {
+                    goto L_570aaf;
+                }
+                // keep_count's slot is written at 0x570758 with the byte offset
+                // faction_id*sizeof(PlayerData) + region*2 (VC6 CSE spill of the unk_77/unk_81
+                // element address, reused at 0x5708f7), not a source assignment.
+                if (!(!(PlayersData[faction_id].unk_77[region] & 0x80)
+                    && !is_coast(tx, ty, 0)
+                        && (Continents[region].open_terrain - PlayersData[faction_id].unk_81[region]) < 20)) {
+                    score = site_at(tx, ty, 0);
+                    if (score) {
+                        if (!(score < (8 - BaseFindDist) * 2
+                                    - (PlayersData[faction_id].region_total_bases[region] < 2 ? 2 : 0)
+                            && score < PlayersData[faction_id].unk_82[region]
+                            && PlayersData[faction_id].region_total_bases[region]
+                                && PlayersData[faction_id].current_num_bases >= 2)) {
+                            // n: no better site in the surrounding ring.
+                            n = 1;
+                            // tile_owner is strength-reduced by VC6: its slot holds 4*k (0..0x60).
+                            for (tile_owner = 0; tile_owner < 24; tile_owner++) {
+                                int nx = xrange(tx + RadiusOffsetX[tile_owner + 1]);
+                                int ny = ty + RadiusOffsetY[tile_owner + 1];
+                                if (!on_map(nx, ny)) {
+                                    continue;
+                                }
+                                if (map_loc(nx, ny)->region != region) {
+                                    continue;
+                                }
+                                if ((map_loc(nx, ny)->bit & 0x20) && (map_loc(nx, ny)->climate & ~0x1F) >= 0x40) {
+                                    continue;
+                                }
+                                if (map_loc(nx, ny)->bit & 0x2000) {
+                                    continue;
+                                }
+                                if ((map_loc(nx, ny)->val3 & ~0x3F) > 0x40) {
+                                    continue;
+                                }
+                                if (base_territory(faction_id, nx, ny) >= 0) {
+                                    continue;
+                                }
+                                if (map_loc(nx, ny)->bit & 0x1000) {
+                                    continue;
+                                }
+                                {
+                                    int site = site_at(nx, ny, 0);
+                                    if (site < score || (site == score && !at_site(faction_id, 8, nx, ny))) {
+                                        continue;
+                                    }
+                                }
+                                if (!(PlayersData[faction_id].unk_77[region] & 0x80)
+                                    && !is_coast(nx, ny, 0)
+                                    && (Continents[region].open_terrain
+                                             - PlayersData[faction_id].unk_81[region]) < 20) {
+                                    continue;
+                                }
+                                if (region_plan == 8 || whose_territory(faction_id, nx, ny, NULL, 0) == faction_id) {
+                                    goto L_570969;  // chunk 3: n = 0 (the loop's break block)
+                                }
+                            }
+                            goto L_570970;
+                            // ---- chunk 3: 0x570969-0x5725b0 ----
+                            // Tail of the coastal-site tile scan (the inner ring loop above breaks
+                            // here with n = 0).
 L_570969:
-    n = 0;
+                            n = 0;
 L_570970:
-    {
-        int s; // edi
-        s = (score << 16) / (map_range(x, y, tx, ty) + 1);
-        if (n) {
-            if (s > best_score || is_known(tx, ty, faction_id) ||
-                (GameDataStateStorage.fields_.diff_level_current_ > 3 &&
-                 !(faction_bit & GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_))) {
-                if (Paths.find(tx, ty, x, y, whose_territory(faction_id, tx, ty, NULL, 0),
-                               faction_id, 0x201, -1) >= 0) {
-                    if (is_known(tx, ty, faction_id) ||
-                        (GameDataStateStorage.fields_.diff_level_current_ > 3 &&
-                         !(faction_bit & GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_))) {
-                        del_site(faction_id, 8, tx, ty, 2);
-                        add_site(faction_id, 8, 2, tx, ty);
-                        j++;
-                    }
-                    if (s > best_score) {
-                        best_score = s;
-                        if (!i && plan == 8) go_to(veh_id, 'c', tx, ty);
+                            {
+                                int s; // edi
+                                s = (score << 16) / (map_range(x, y, tx, ty) + 1);
+                                if (n) {
+                                    if (s > best_score || is_known(tx, ty, faction_id) ||
+                                        (GameDataStateStorage.fields_.diff_level_current_ > 3 &&
+                                         !(faction_bit & GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_))) {
+                                        if (Paths.find(tx, ty, x, y, whose_territory(faction_id, tx, ty, NULL, 0),
+                                                       faction_id, 0x201, -1) >= 0) {
+                                            if (is_known(tx, ty, faction_id) ||
+                                                (GameDataStateStorage.fields_.diff_level_current_ > 3 &&
+                                                 !(faction_bit & GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_))) {
+                                                del_site(faction_id, 8, tx, ty, 2);
+                                                add_site(faction_id, 8, 2, tx, ty);
+                                                j++;
+                                            }
+                                            if (s > best_score) {
+                                                best_score = s;
+                                                if (!i && plan == 8) go_to(veh_id, 'c', tx, ty);
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                            // Rotated map scan loops opened in chunk 2 (x step 2, y step 1).
+                        }
                     }
                 }
             }
         }
     }
-    // Rotated map scan loops opened in chunk 2 (x step 2, y step 1).
-L_570aa9:
+
 L_570aaf:
     tx += 2;
     if (tx < MapLongitudeBounds) goto L_570466;
