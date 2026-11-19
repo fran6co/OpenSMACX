@@ -4368,7 +4368,7 @@ again:
                 continue;
             StringTemp[0] = 0;
             strcat(StringTemp, "- ");
-            strcat(StringTemp, StringTable.get(Labels.strings_ptr[0x1b8 / 4]));
+            strcat(StringTemp, label_get(0x1b8 / 4));
             strcat(StringTemp, " -");
             popup.item(StringTemp, prototype_id);
         } else {
