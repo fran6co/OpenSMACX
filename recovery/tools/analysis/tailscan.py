@@ -15,6 +15,8 @@ its middle, so a pair that one side keeps and the other lacks is a tail-merge di
   OURS-MERGES  the image keeps two copies; ours lacks one of them
   (--agree also prints pairs both sides keep)
 
+`JJ` lists our jumper-into-jumper merges (a `jmp` into the middle of another statement's code whose
+block then leaves by `jmp`): rare in exact functions, common where the image keeps the copies.
 It also lists every unconditional `jmp` whose image and our targets disagree (fe's `!>` rows on
 `jmp`), with the source lines at the jumper and at both targets: a `jmp` that lands K rows
 earlier in the image than in ours is a K-instruction cross-jump the image made and ours did not.
@@ -298,8 +300,32 @@ def scan(unit, addr, text, c, cod, kmin=2, agree=False, quiet=False):
         out.append('  JMP x%d img ->%x (%s)  ours ->%x (%s)  %s; from %s' % (
             len(js), lo + it, iline(it), ot, oline(ot), rel,
             ' '.join('%x(%s)' % (lo + a_, oline(b_)) for a_, b_ in js[:6]) + (' ..' if len(js) > 6 else '')))
-    head = 'TS %08X %-34s diff=%d jt=%d img-merges=%d ours-merges=%d jmp-target=%d dups img/ours=%d/%d' % (
-        addr, sym[:34], r['diff'], r['jt'], cnt['img_merges'], cnt['ours_merges'], cnt['jt_jmp'],
+    # jumper-into-jumper merges in ours (MATCHING_GUIDE 3.7): a jmp into the middle of another
+    # statement's code whose block then leaves by jmp, not by falling into a label
+    cidx = {x[0]: n for n, x in enumerate(C)}
+    clabels = {x[3] for x in C if x[3] is not None}
+    jj = []
+    for x in C:
+        if x[1] != 'jmp L' or x[3] not in cidx or cidx[x[3]] == 0:
+            continue
+        k = cidx[x[3]]
+        p = C[k - 1]
+        if p[1].startswith('j') or p[1].startswith('ret') or src.get(p[0]) != src.get(x[3]) \
+                or src.get(x[0]) == src.get(x[3]) or x[3] not in src:
+            continue
+        for y in C[k:]:
+            if y[0] != x[3] and y[0] in clabels:
+                break
+            if y[1].startswith('jmp') or y[1].startswith('ret'):
+                if y[1].startswith('jmp'):
+                    jj.append((x[0], x[3]))
+                break
+    cnt['jj'] = len(jj)
+    if jj:
+        out.append('  JJ   ours jumper-into-jumper merges: ' + ' '.join(
+            '%x(%s)->%x(%s)' % (a_, oline(a_), b_, oline(b_)) for a_, b_ in jj[:8]))
+    head = 'TS %08X %-34s diff=%d jt=%d img-merges=%d ours-merges=%d jmp-target=%d jj=%d dups img/ours=%d/%d' % (
+        addr, sym[:34], r['diff'], r['jt'], cnt['img_merges'], cnt['ours_merges'], cnt['jt_jmp'], cnt['jj'],
         cnt['img_dups'], cnt['ours_dups'])
     cnt.update(diff=r['diff'], sym=sym)
     return [head] + out, cnt
@@ -368,11 +394,12 @@ def main():
         with ThreadPoolExecutor(jobs) as ex:
             for o in ex.map(lane, range(jobs)):
                 allr += o
-        hit = [x for x in allr if x['img_merges'] or x['ours_merges'] or x['jt_jmp']]
+        hit = [x for x in allr if x['img_merges'] or x['ours_merges'] or x['jt_jmp'] or x['jj']]
         hit.sort(key=lambda x: -(x['img_merges'] + x['ours_merges'] + x['jt_jmp']))
         for x in hit:
-            print('%s %-28s %-30s diff=%-5d img-merges=%d ours-merges=%d jmp-target=%d' % (
-                x['addr'], x['unit'][4:], x['sym'][:30], x['diff'], x['img_merges'], x['ours_merges'], x['jt_jmp']))
+            print('%s %-28s %-30s diff=%-5d img-merges=%d ours-merges=%d jmp-target=%d jj=%d' % (
+                x['addr'], x['unit'][4:], x['sym'][:30], x['diff'], x['img_merges'], x['ours_merges'], x['jt_jmp'],
+                x['jj']))
         print('functions', len(allr), 'with tail/jump disagreements', len(hit))
         if a.json:
             json.dump(hit, open(a.json, 'w'), indent=0)
