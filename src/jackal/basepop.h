@@ -632,7 +632,7 @@ class BasePop : public GraphicWin {
   Spot spot_;
   uint32_t field_30A4_;
   uint32_t field_30A8_;
-  uint32_t field_30AC_;
+  int field_30AC_;
   uint32_t field_30B0_;
   uint32_t field_30B4_;
   uint32_t field_30B8_;

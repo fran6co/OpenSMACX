@@ -500,7 +500,7 @@ Return Value: n/a
 Status: Complete
 */
 void Popup::on_adjust_button_width() {
-    const int32_t scaled = static_cast<int32_t>(field_30AC_) / 10000;
+    const int32_t scaled = field_30AC_ / 10000;
     if (scaled != 1000) {
         field_30D0_ = 20;
     }
@@ -633,7 +633,7 @@ void Popup::on_redraw() {
 // RECOVERY_BINDING: v1 {"evidence": ["git:db6d1ed8:src/recovered/units/00405050.cpp;src/basepop.h:field_30AC_"], "reason": "Popup button-placement adjustment reads its inherited auto-hide mode and external window pointer, matching the original owner fields"}
 // symbol    ?on_adjust_button_placement@Popup@@UAEXPAH00@Z
 void Popup::on_adjust_button_placement(int *, int *y, int *) {
-    if (static_cast<int>(field_30AC_) / 10000 != 1000) {
+    if (field_30AC_ / 10000 != 1000) {
         if (external_window_ != 0) {
             *y = -30;
         } else {
@@ -646,7 +646,7 @@ void Popup::on_adjust_button_placement(int *, int *y, int *) {
 // RECOVERY_BINDING: v1 {"evidence": ["git:db6d1ed8:src/recovered/units/00406330.cpp;src/popup.cpp:scroll_hide"], "reason": "Popup owns the scroll lifecycle callback and forwards visibility cleanup to the existing scroll_hide helper"}
 // symbol    ?on_listbox_scroll_delete@Popup@@UAEPAVScroll@@PAV2@@Z
 Scroll *Popup::on_listbox_scroll_delete(Scroll *scroll) {
-    if (static_cast<int>(field_30AC_) / 10000 == 1000) {
+    if (field_30AC_ / 10000 == 1000) {
         return scroll;
     }
     if (Win::is_visible()) {
@@ -684,7 +684,7 @@ Scroll *Popup::on_listbox_scroll_delete(Scroll *scroll) {
 
 void Popup::hide() {
     if (is_visible()) {
-        const int auto_hide_selector = static_cast<int>(field_30AC_) / 10000;
+        const int auto_hide_selector = field_30AC_ / 10000;
         // The 1000 selector's own hide-and-return arm is what makes the image
         // save edi in the prologue (deferred-save rule).
         if (auto_hide_selector == 1000) {
@@ -727,7 +727,7 @@ void Popup::hide() {
 
 void Popup::on_post_window_init() {
     if (external_window_ == 0
-        && static_cast<int>(field_30AC_) / 10000 != 1000) {
+        && field_30AC_ / 10000 != 1000) {
         dialogs_.RadioButton::unchecked_sprite_ = 0;
         dialogs_.RadioButton::checked_sprite_ = 0;
         set_border_thickness(0);
@@ -878,7 +878,7 @@ fallback:
 //   of the rectangle walk while this tree loads them at first use.
 
 Scroll *Popup::on_listbox_scroll_create() {
-    if (static_cast<int>(field_30AC_) / 10000 == 1000) {
+    if (field_30AC_ / 10000 == 1000) {
         return 0;
     }
     scroll_normal();
@@ -934,7 +934,7 @@ Scroll *Popup::on_listbox_scroll_create() {
 // fixed-slot bindings and no cast of this.
 
 int Popup::on_exec() {
-    const int value = static_cast<int>(field_30AC_);
+    const int value = field_30AC_;
     if (value / 10000 == 1000 || value % 10000 == 0) {
         return 1;
     }
@@ -1153,7 +1153,7 @@ void Popup::show(int requested_mode) {
         return;
     }
 
-    const int auto_hide_mode = static_cast<int>(field_30AC_) / 10000;
+    const int auto_hide_mode = field_30AC_ / 10000;
     if (auto_hide_mode == 1000) {
         Win::show(requested_mode);
         return;
@@ -1354,7 +1354,7 @@ static inline void popup_inset_rect(RECT *r, int d) {
 }
 
 int Popup::on_draw_background() {
-  const int type = static_cast<int>(field_30AC_) / 10000;
+  const int type = field_30AC_ / 10000;
   if (type == 1000) {
     return 0;
   }
@@ -1569,7 +1569,7 @@ Status: Coverage transcription - unclaimed body, seed
 
 int Popup::on_dialog_item_back_draw(GraphicWin *a1, int, int a3, RECT *a4) {
     if (a1 == 0 || a4 == 0 ||
-        static_cast<int>(field_30AC_) / 10000 == 1000) {
+        field_30AC_ / 10000 == 1000) {
         return 0;
     }
 
