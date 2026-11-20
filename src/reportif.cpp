@@ -817,13 +817,6 @@ void ReportWin::init() {
     field_E268_ = font_line_advance(*ReportIfGlobal.field_1E184_);
 }
 
-// Guarded full-length right-aligned write; callers inline the null test.
-static inline int report_write_right(char *text, int x, int y) {
-    if (text == 0) {
-        return x;
-    }
-    return MainInterfaceGlobal.Buffer::write_right_l(text, x, y, static_cast<int>(strlen(text)));
-}
 
 /*
 Purpose: Reset the seven report buttons, initialize the report text buffer,
@@ -7542,7 +7535,7 @@ void ReportIf::draw_security() {
         strcat(StringTemp, "-");
         _itoa(lost, lost_text, 10);
         strcat(StringTemp, lost_text);
-        report_write_right(StringTemp, field_C_ + field_14_, field_10_);
+        MainInterfaceGlobal.Buffer::write_right_l(StringTemp, field_C_ + field_14_, field_10_);
         set_rectangle_dimensions(&draw_workspace_rect_, field_C_, field_10_, field_14_, field_1C_);
         spot_.add(filter, 0, &draw_workspace_rect_);
         if (filter == 3) {
