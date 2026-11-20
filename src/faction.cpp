@@ -7521,10 +7521,12 @@ again:
         }
     }
 
-    // 0x541719: fifteen tests share the REJTECHLATER block below.
-    if (DiploScratchFAA8 < 0) goto reject_later;
-    if (want_tech == 0) goto reject_later;
-    if (DiploScratchFA3C != 0) goto reject_later;
+    // 0x541719: fifteen tests share the REJTECHLATER block below. The first
+    // three are one `||` goto: that form lays the label block after every
+    // other exit (0x5437B7, last) and makes its final return the host of the
+    // shared ~GraphicWin/~BasePop teardown tail, as the image does; separate
+    // gotos keep it at its flow position (probe: MATCHING_GUIDE 3.7).
+    if (DiploScratchFAA8 < 0 || want_tech == 0 || DiploScratchFA3C != 0) goto reject_later;
     if (IsMultiplayerNet != 0) {
         if (has_agenda(actor, partner, 0x80) &&
             actor == (int)GameDataStateStorage.fields_.ranking_faction_id_unk1_ &&
@@ -7735,7 +7737,8 @@ again:
     // the earlier five-state exits (zero-sum; the original caller was larger).
     if (0) {
         DiploScratchFA60 = 0; DiploScratchFA60 = 1; DiploScratchFA60 = 2;
-        DiploScratchFA60 = 3; DiploScratchFA60 = 4;
+        DiploScratchFA60 = 3; DiploScratchFA60 = 4; DiploScratchFA60 = 5;
+        DiploScratchFA60 = 6; DiploScratchFA60 = 7;
     }
     // 0x541EBC
     if (request_mode) {
