@@ -2297,9 +2297,8 @@ MEASURED inline void __cdecl ascent() {
 // ORIGINAL: 0x00523C60 ?set_time_controls@@YAXXZ 0x00523C60-0x00523DC9
 // RECOVERY_BINDING: v1 {"evidence": ["task:time-control-calculation-and-dialog", "historical seed:src/recovered/units/00523c60.cpp", "Pinned original native instructions and existing typed source layout; seed aliases independently reconciled."], "reason": "Recover complete turn-duration calculation through typed rules, faction and vehicle records and actual NetDaemon state; preserve the native bonus-update order and state predicates."}
 void __cdecl set_time_controls() {
-    int active_factions = 0;
-    int weighted_base_count = 0;
-    int eligible_vehicle_support = 0;
+    int active_factions, weighted_base_count, eligible_vehicle_support;
+    active_factions = weighted_base_count = eligible_vehicle_support = 0;
     int seconds = TimeControl[GameDataStateStorage.fields_.time_controls_selection_].turn;
 
     for (int faction_id = 1; faction_id < MaxPlayerNum; ++faction_id) {
@@ -2340,12 +2339,7 @@ void __cdecl set_time_controls() {
     const int event_bonus = TimeControl[GameDataStateStorage.fields_.time_controls_selection_].event *
         static_cast<int>(NetDaemonNet.field_1BD8_);
     if (active_factions != 0) {
-        const int candidate =
-            (weighted_base_count + eligible_vehicle_support) / active_factions +
-            event_bonus;
-        if (seconds <= candidate) {
-            seconds = candidate;
-        }
+        seconds = max(seconds, (weighted_base_count + eligible_vehicle_support) / active_factions + event_bonus);
     }
     if (GameDataStateStorage.fields_.turn_current_num_ <= 5) {
         seconds *= 2;
