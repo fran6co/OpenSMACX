@@ -517,9 +517,10 @@ int CouncWin::make_resolution(int resolve) {
     int vote_total = 0;
     int governor_objection = 0;
     int option_votes[MaxPlayerNum];
-    for (int i = 0; i < MaxPlayerNum; ++i) {
+    int i = 0;
+    do {
         option_votes[i] = 0;
-    }
+    } while (++i < MaxPlayerNum);
 
     for (int faction = 1; faction < MaxPlayerNum; ++faction) {
         if ((Players[faction].rule_flags & RFLAG_ALIEN) != 0) {
@@ -561,9 +562,10 @@ int CouncWin::make_resolution(int resolve) {
                 if (candidate != 0) {
                     const int count = option_votes[candidate];
                     if (count >= greatest) {
-                        if (count == greatest &&
-                            GameDataStateStorage.fields_.governor_faction_ != candidate) {
-                            if (GameDataStateStorage.fields_.governor_faction_ != static_cast<int>(field_A20_)) {
+                        if (count == greatest) {
+                            if (GameDataStateStorage.fields_.governor_faction_ == candidate) {
+                                field_A20_ = candidate;
+                            } else if (GameDataStateStorage.fields_.governor_faction_ != static_cast<int>(field_A20_)) {
                                 field_A20_ = 0;
                             }
                         } else {
