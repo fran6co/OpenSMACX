@@ -3484,9 +3484,12 @@ Status: Complete
 void DipEdit::on_redraw() {
 }
 
-// stand-in: a plain /Ob2 label lookup instead of alpha.h's __forceinline
-// label_get; it reads the label before loading StringTable, as the image does,
+// WORKAROUND(inline): a plain /Ob2 label lookup instead of alpha.h's label_get;
+// it reads the label before loading StringTable, as the image does,
 // and costs the inline budget that keeps the -1 row's Popup teardown shallow.
+// Measured 2026-11-20: label_get at either DipEdit site gives 13/5 rows (both
+// 18), written out 56; custom_my_faction (0x004DD1B0, 5 rows) 61 with
+// label_get, 137 written out. The original's spelling is still unknown.
 static inline char *dip_label(int offset) {
     return StringTable.get(Labels.strings_ptr[offset]);
 }
