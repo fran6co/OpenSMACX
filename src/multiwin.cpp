@@ -486,7 +486,7 @@ void MultiWin::draw_player(int faction_id, int row, RECT *bounds) {
     if (!ConsoleControlTurnActive) {
       uint32_t treaties = PlayersData[ConsoleGlobal.faction_id_].diplo_treaties[faction_id];
       if (treaties & 1) {
-        strcat(StringTemp, label_get(0xA14 / 4));
+        strcat(StringTemp, StringTable.get(Labels.strings_ptr[0xA14 / 4]));
       } else if (treaties & 2) {
         strcat(StringTemp, label_get(0xA10 / 4));
       } else if (treaties & 4) {
