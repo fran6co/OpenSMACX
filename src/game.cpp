@@ -1965,12 +1965,6 @@ SaveNameDefaultStorage SaveNameDefaultStorageGlobal;
 inline LPSTR load_game_label_branch(int label_offset) {
     return StringTable.get(Labels.strings_ptr[label_offset]);
 }
-// WORKAROUND(inline): image 0x005AAFC5..0x005AAFDB loads StringTable into ECX
-// before the label word; only a plain-inline temp-form body schedules it so.
-inline LPSTR load_game_label(int label_offset) {
-    LPSTR label_value = Labels.strings_ptr[label_offset];
-    return StringTable.get(label_value);
-}
 // WORKAROUND(inline): budget stand-in. The image's earliest return teardown
 // (0x005AB05C) leaves both FlatButton and the FileWin destructors out of
 // line; the original spent this /Ob2 budget on an inline not yet identified.
@@ -2299,7 +2293,7 @@ again:
     parse_says(2, get_name(ConsoleGlobal.faction_id_), -1, -1);
     parse_says(3, get_noun(ConsoleGlobal.faction_id_), -1, -1);
     clear();
-    says(load_game_label(0));
+    says(label_get(0));
     space();
     say_year(StringTemp);
     parse_says(4, StringTemp, -1, -1);
