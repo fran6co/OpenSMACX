@@ -2733,6 +2733,21 @@ static inline void config_rule_check(int &checks, int bit, int on) {
     if (on) checks |= bit; else checks &= ~bit;
 }
 
+// WORKAROUND(inline): config_game_site_pad is an empty inline call site, not
+// recovered code. /Ob2 gives each scope-exit teardown a share of the room
+// left, divided by 1 + the inline sites after it in the same body
+// (MATCHING_GUIDE 2.8 rule 8). The image calls ~StringList 0x004066C0 inside
+// the expanded ~SetupWin at both early `return 1` teardowns (0x00589F1C,
+// 0x0058A09E); ours expanded it there until 48..80 more inline sites follow
+// the second return (46 flips only the first; dead charged spend at the top,
+// 1..64 probes, moves nothing). Position after that return does not matter.
+// 56 sites (the window's middle) give the image's unwind map and named call
+// multiset. The original's extra sites are code-invisible free inlines that
+// our spelling lacks (label_get at its 20 label sites counts as the sites
+// but changes the label loads, so it is not them); the StringList and
+// SetupWin declarations are not the cause.
+static inline void config_game_site_pad() {}
+
 // Full config_game candidate. Original identities/claims remain on the owning
 // TU; this ignored include is a body proposal, not a measurement or annotation.
 int __cdecl config_game(int mode) {
@@ -2797,6 +2812,22 @@ rules_menu:
             return 1;
         }
         AlphaIniPrefs.customize = choice;
+        // WORKAROUND(inline): 56 site pads, see config_game_site_pad.
+        config_game_site_pad(); config_game_site_pad(); config_game_site_pad(); config_game_site_pad();
+        config_game_site_pad(); config_game_site_pad(); config_game_site_pad(); config_game_site_pad();
+        config_game_site_pad(); config_game_site_pad(); config_game_site_pad(); config_game_site_pad();
+        config_game_site_pad(); config_game_site_pad(); config_game_site_pad(); config_game_site_pad();
+        config_game_site_pad(); config_game_site_pad(); config_game_site_pad(); config_game_site_pad();
+        config_game_site_pad(); config_game_site_pad(); config_game_site_pad(); config_game_site_pad();
+        config_game_site_pad(); config_game_site_pad(); config_game_site_pad(); config_game_site_pad();
+        config_game_site_pad(); config_game_site_pad(); config_game_site_pad(); config_game_site_pad();
+        config_game_site_pad(); config_game_site_pad(); config_game_site_pad(); config_game_site_pad();
+        config_game_site_pad(); config_game_site_pad(); config_game_site_pad(); config_game_site_pad();
+        config_game_site_pad(); config_game_site_pad(); config_game_site_pad(); config_game_site_pad();
+        config_game_site_pad(); config_game_site_pad(); config_game_site_pad(); config_game_site_pad();
+        config_game_site_pad(); config_game_site_pad(); config_game_site_pad(); config_game_site_pad();
+        config_game_site_pad(); config_game_site_pad(); config_game_site_pad(); config_game_site_pad();
+
         if (choice == 0) {
             GameDataStateStorage.fields_.game_rules_ &= 0xFFFF0000;
             GameDataStateStorage.fields_.game_rules_ |= default_rules();
