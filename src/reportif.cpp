@@ -3019,11 +3019,16 @@ void ReportWin::draw_energy() {
         parse_num(1, PlayersData[faction].loan_balance[other]
                          ? PlayersData[faction].loan_balance[other]
                          : PlayersData[other].loan_balance[faction]);
-        parse_num(0, PlayersData[faction].loan_balance[other]
-                         ? PlayersData[faction].loan_payment[other]
-                         : PlayersData[other].loan_payment[faction]);
-        parse_it(ScriptPopupFile, PlayersData[faction].loan_balance[other]
-                                      ? "LOANPAYMENT" : "LOANINCOME");
+        if (PlayersData[faction].loan_balance[other]) {
+            parse_num(0, PlayersData[faction].loan_payment[other]);
+        } else {
+            parse_num(0, PlayersData[other].loan_payment[faction]);
+        }
+        if (PlayersData[faction].loan_balance[other]) {
+            parse_it(ScriptPopupFile, "LOANPAYMENT");
+        } else {
+            parse_it(ScriptPopupFile, "LOANINCOME");
+        }
         Buffer::wrap_flying(StringTemp, rect1_.left, rect1_.top, rect1_.right);
         Buffer::wrap_flying_flush();
     }
