@@ -2430,7 +2430,16 @@ The rule for the non-exact functions:
   per-iteration local (`int refresh = TimeControl[sel].refresh;` as the
   loop body's first statement) gives the image's one load (72 -> 24 rows
   with both). Screen: `analysis/localinplace.py` (`ALL:v`) for the first,
-  `ctrscan.py` hoist counts for both.
+  `ctrscan.py` hoist counts for both. Tree sweep 2026-11-20 (localinplace
+  over all 309 non-exact functions under 800 rows, a per-statement and a
+  loop-body-top per-iteration-local deck over 114 functions, ctrscan
+  `hoist 0/1` loops): kept draw_energy_alloc (exact) and design_workshop
+  (13 -> 8); every other rows gain was a slot the image does home
+  (StringBox width, draw_farm base_y, draw_supported faction), an fe
+  realignment in a giant (consider_designs 950 -> 607 with the image's
+  CSE'd read already matching ours at the site, air_power) or slot
+  numbering (draw_player_names). Read the image's rows at the copy before
+  keeping a rows gain.
 - **The in-place read is another program wherever the field can change**
   between the copy and the use (a store, a call). Only the image's rows at
   the site decide; never respell a statement that names both the copy and
