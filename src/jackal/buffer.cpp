@@ -10151,8 +10151,10 @@ int Buffer::write_vertical(char *text, RECT *area) {
     char one_character[2];
     one_character[1] = 0;
     char *p = text;
-    while (*p != 0) {
-        one_character[0] = *p++;
+    char c;
+    while ((c = *p) != 0) {
+        one_character[0] = c;
+        p++;
         write_cent_text(one_character, x, y, width);
         y += advance;
     }
