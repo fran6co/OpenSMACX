@@ -1968,12 +1968,29 @@ Zero webs on one side only (2026-11-20 par-1; candset.py over the 288 rung
     counting scratch pieces and register stores), memory compares (including
     `mov r,[m]; test r,r`) and pushes, and flags a register on one side whose
     store weight is under four.
-  - Credits::exec 0x004289F0 (probe `unload` shape, c_zform-style): the
-    inlined unload pair after the free loop is immediates in a probe whose
-    counts sit at offsets 0/4, and a piece as soon as they sit at any other
-    offset (4 to 0xA14), with the same instructions otherwise; under /Oy
-    both are immediates. The piece/immediate choice for that pair depends on
-    the field offsets, not on the zero's references; still open.
+  - Credits::exec 0x004289F0 (probe `unload` shape, c_zform-style): a
+    pair of adjacent zero stores stays two immediates when one of the two
+    stores has no displacement (`mov dword ptr [reg],0`, a field at offset
+    0); when both stores carry a displacement (any offsets, 4 to 0xA14) the
+    pair becomes the Z1 `xor eax,eax` piece. The earlier "offsets 0/4"
+    reading was the `[reg]` store, not the offsets: Credits' own offsets are
+    not the cause of its piece/immediate difference (still open). Under /Oy
+    both are immediates.
+  - `x = a && b && c` (stack_veh 0x005B8EE0, 46 -> 10). An assignment of a
+    short-circuit chain writes one FALSE store (the chain's shared false
+    target), so it adds one store to the Z9 count. When the image has a zero
+    register the visible stores cannot explain, and the assignment's FALSE
+    arm is the only zero store near it, write it as nested if/else with a
+    store per failed test (`if (a) { if (b) { if (c) x = TRUE; else x =
+    FALSE; } else x = FALSE; } else x = FALSE;`): three stores before
+    cross-jumping (VC6 merges them back into the single store the image
+    shows), which materialises the zero and gives every `cmp r,ebx` /
+    `cmp [m],ebx` of the range.
+  - Census caveat (candset.py): `#0` is the zero *constant* web (every
+    definition is `xor r,r`); `init#0` is a *variable* whose first
+    definition is 0 and that is redefined later (Z6). Only `#0` rows are Z9
+    material; an `init#0` on one side only is a variable-web question
+    (rule 4 priority of that variable), and the store count does not apply.
   - DiploPop::draw_info 0x0043FA90 (constant 3 in edi in ours only, from the
     entry `+ 3` through the four loop-top adjustments): both sides have the
     same constant-3 references; the image keeps `r.right`'s reload in edi
