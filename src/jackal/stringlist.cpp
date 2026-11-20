@@ -104,7 +104,7 @@ void StringList::sort(int) {
         stringlist_sort_budget_probe(0);
         // The guarded current_entry() chase (StringList::current_text's
         // body): its repeated head test keeps every link in eax.
-        char *smallest_text = head_ ? current_entry()->text : 0;
+        char *smallest_text = current_text();
         int smallest_position = position;
 
         for (int candidate = position + 1; candidate < entry_count_;
@@ -114,7 +114,7 @@ void StringList::sort(int) {
             // payload (608877), as current_entry() would.
             char *candidate_text = current_ ? current_entry()->text : 0;
             if (strcmp(candidate_text, smallest_text) < 0) {
-                smallest_text = head_ ? current_entry()->text : 0;
+                smallest_text = current_text();
                 smallest_position = current_position_;
             }
         }

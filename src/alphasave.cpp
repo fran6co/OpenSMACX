@@ -351,7 +351,7 @@ void AlphaSave::on_selected(int) {
     StringList &list = file_win_.list_box_.item_list_;
     list.seek_pos(file_win_.list_box_.selected_position_);
     file_win_.edit_box_.set_text(
-        list.head_ != 0 ? list.current_entry()->text : 0);
+        list.current_text());
     file_win_.edit_box_.select_all();
     file_win_.edit_box_.redraw();
 }

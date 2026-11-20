@@ -33,13 +33,6 @@
 // body src/popmenu.h
 // symbol    ??1PopMenu@@UAE@XZ
 
-// WORKAROUND(inline): StringList::current_text (0x005E3630) expanded
-// inline; exec tests head_ straight off the member, then reloads it through
-// the list pointer for the id (0x0059D2F5..0x0059D32C), which is the header
-// inline StringStruct::current_id (0x00401640).
-static inline char *popmenu_current_text(StringList *list) {
-    return list->head_ != 0 ? list->current_entry()->text : 0;
-}
 
 
 // ORIGINAL: 0x0059D250 ?exec@PopMenu@@QAEXHHP6AHXZ@Z 0x0059D250-0x0059D392 BYTE_EXACT
@@ -49,7 +42,7 @@ int PopMenu::exec(int x, int y, int (*poll)()) {
     PullDown::init(0);
     for (int i = 0; i < dialogs_.get_num_items(); ++i) {
         dialogs_.item_list_.seek_pos(i);
-        char *text = popmenu_current_text(&dialogs_.item_list_);
+        char *text = dialogs_.item_list_.current_text();
         int id = dialogs_.item_list_.current_id();
         // Dialog menu separator literal at 0x006900C8.
         if (strcmp(text, "*") == 0) PullDown::add_separator(id);

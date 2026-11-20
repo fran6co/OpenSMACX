@@ -44,11 +44,6 @@
 #include "tutwin.h"
 
 
-// This checked lookup describes the existing StringList current-text operation.
-// Its two call sites retain separate original lookup phases; the name is local.
-static inline char *current_message_text(StringList &items) {
-    return items.head_ != 0 ? items.current_entry()->text : 0;
-}
 static inline uint32_t current_message_height(StringList &items) {
     return items.head_ != 0 ? items.current_->string_payload()->field_C_ : 0;
 }
@@ -178,8 +173,8 @@ inline void MessageWin::remove_selected_message() {
 void MessageWin::add_message(char *text, int item_id) {
     if (ConsoleGlobal.message_count_ != 0) {
         listBox_.item_list_.seek_pos(ConsoleGlobal.message_count_ - 1);
-        if (current_message_text(listBox_.item_list_) != 0) {
-            if (item_id == 0 && strcmp(text, current_message_text(listBox_.item_list_)) == 0) {
+        if (listBox_.item_list_.current_text() != 0) {
+            if (item_id == 0 && strcmp(text, listBox_.item_list_.current_text()) == 0) {
                 return;
             }
         }

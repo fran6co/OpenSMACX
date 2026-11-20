@@ -9870,7 +9870,7 @@ Purpose: Return the current StringList text, or null when the list is empty.
 //            whole chase and every guard-clause / named-link / walking-
 //            pointer spelling still routes the middle link through ecx.
 // symbol    ?current_text@StringList@@QAEPADXZ
-// body      src/jackal/buffer.cpp
+// body      src/jackal/stringstruct.h
 // size      20 bytes
 // prototype
 // callers   2   call targets   0
@@ -9880,12 +9880,6 @@ Purpose: Return the current StringList text, or null when the list is empty.
 Return Value: mutable text, or null when head_ is null
 Status: Complete
 */
-char *StringList::current_text() {
-    if (head_) {
-        return current_entry()->text;
-    }
-    return 0;
-}
 
 // current_text is a provisional descriptive name, not a recovered original
 // spelling. Its six original Buffer callers use this out-of-line boundary;

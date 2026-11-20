@@ -593,6 +593,17 @@ inline StringStructPayload *StringStruct::current_entry() {
     }
     return 0;
 }
+
+// 0x005E3630: the header inline over current_entry. Expanded where the
+// image chases the text inline (PopMenu::exec, SetupWin::draw_item,
+// AlphaSave::on_selected, StringList::sort, ...); Buffer's string writers
+// call the out-of-line copy (buffer.cpp keeps the marker).
+inline char *StringList::current_text() {
+    if (head_) {
+        return current_entry()->text;
+    }
+    return 0;
+}
 #endif
 
 // 0x00401640 has one caller in the image (Buffer::write_strings' plain-text

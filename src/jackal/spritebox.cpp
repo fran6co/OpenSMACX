@@ -518,9 +518,6 @@ static inline int current_list_id(SpriteList &list) {
     return list.head_ ? list.current_->id : 0;
 }
 
-static inline char *current_list_text(StringList &list) {
-    return list.head_ ? list.current_entry()->text : 0;
-}
 
 void SpriteBox::draw_item(int position) {
     Win *const parent = win_parent_;
@@ -582,7 +579,7 @@ void SpriteBox::draw_item(int position) {
 
     // The guarded two-argument writer: the image forms the Buffer receiver
     // (no null check) before testing the text (0x0061100C..0x00611018).
-    Buffer::write_l(current_list_text(Dialog::item_list_), &area);
+    Buffer::write_l(Dialog::item_list_.current_text(), &area);
 }
 
 /*
