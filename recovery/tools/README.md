@@ -723,3 +723,9 @@ an explicit `--pfx` is only needed to pick another lane.
   PART only in base_build (owned) and vehdraw_scoot_start (ours cross-jumps identical cases 0/6, which the image
   allocated apart: a scratch-register question, not labels); pre-fix vehdraw_construct_chassis reads PART [1,5] +
   DFLT 0/9. The other BLK rows are default blocks, `abs`-style arms beside a tree, or regalloc tails.
+- `analysis/cmpscan.py [unit ..] [--all] [--weak] [--addr A,..] [--json F]` compare operand order / jcc sense (VC6 keeps
+  both from the source): pairs each image `cmp a,b; jcc` on a differing row with an ours `cmp; jcc` within 8 rows and
+  flags `SWAP` (`cmp b,a; j<mirror>`), `INV` (same operands, negated jcc) and `SWAPINV`; `--weak` adds register-renamed
+  shapes (RSWAP/RINV, mostly allocation noise). 50 s tree-wide. 2026-11-20: SWAP is the useful class (prune_protos fixed;
+  SpriteBox::calculate_dimensions is a ternary whose arm order VC6 picks itself); INV rows are block layout or epilogue
+  duplication, and spelling the test the other way compiles identically (Console::activate, veh_init).

@@ -40,7 +40,7 @@ def pairs(rows, side):
         ops = [x.strip() for x in op.split(',')]
         if len(ops) != 2:
             continue
-        out.append((i, j, ops, jm[1:], rows[i][0] != '  ' or rows[j][0] != '  '))
+        out.append((i, j, ops, jm[1:], rows[i][0] == '!!' or rows[j][0] == '!!'))
     return out
 
 
