@@ -3606,7 +3606,10 @@ void __cdecl repair_phase(int faction_id) {
             }
         }
         int base_id = base_at(x, y);
-        if (base_id >= 0 && !(Bases[base_id].state & BSTATE_DRONE_RIOTS_ACTIVE)) {
+        // Computed as a value: the image keeps repair_rate homed across the
+        // rioting test (frame 0x28), which the threaded `&&` loses.
+        int in_base = base_id >= 0 && !(Bases[base_id].state & BSTATE_DRONE_RIOTS_ACTIVE);
+        if (in_base) {
             repair_rate++;
             if (get_proto_offense_rating(Vehs[veh_id].proto_id) < 0
                 && Vehs[veh_id].proto_id < MaxVehProtoFactionNum) {
