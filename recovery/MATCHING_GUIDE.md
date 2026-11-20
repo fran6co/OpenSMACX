@@ -3198,6 +3198,12 @@ we cannot see, so the numbers are fitted within about 0.3 unit.
      exact functions, among them ~StringList 0x004066C0 itself (diff 3),
      so it is wrong against the image. `~StringStruct() { remove_all();
      current_position_ = 0; }` loses 18.
+     three identical orphans (set_center, focus, follow_center); the bytes
+     do not decide it, but the menu label does (r51): case 2 is label 0x245
+     "Recenter this window here", which MapWin::right_menu pairs with its
+     own set_center (0x244 with MapWinTable[0]->set_center in both), so it
+     calls set_center (expanded, code-neutral). For identical orphans, read
+     the strings and the sibling menus/dialogs that use them.
 
 Using it
 - Run inlinemap. For each callee row:
@@ -8024,14 +8030,28 @@ Layout
     slot, 0x60 against 0x5C), which keeps that call private.
   - Buffer::write_strings_height 0x5DAD70: the reverse; ours reloads ebp and
     re-zeros edi after arm 2's call, so ours keeps three wrap_height_flying
-    calls where the image shares one.
+    calls where the image shares one. Cause (r51): in the expanded
+    wrap_height the image tests `cmp eax,edi` with edi still the function's
+    zero and moves the text into edi only on the non-null path, so both
+    exits reach the flying init with edi = 0 (`push edi` in all three arms,
+    joined at `mov ecx,esi; call`); ours schedules `xor ecx,ecx; cmp eax,ecx;
+    mov edi,eax` before the branch and uses ecx as the zero. A text local,
+    `total =`, a named height temporary or `0` for nullptr are neutral
+    (100-103); one call after the if/else with a ternary text is 175.
   - Not explained: menu_proc 0x51BC70 keeps four identical
     `call prefs_save; push 1; call draw_map; add esp,8; jmp 51C23B` tails
     (ours merges them into base_names' copy). Neutral in ours: up to 128 dead
     calls, dead locals, 64 extra cases, the toggles written out by hand, a
     `{ int z = 0; prefs_save(z); }` argument. Only `return` in place of `break`
     unmerges (wrong target). Since bytes and target are equal at the end, the
-    targets must have differed when VC6 merged. Likewise Console::go_to
+    targets must have differed when VC6 merged. (r51: the image's tails are
+    not byte-identical before scheduling either: each toggle loads the
+    preference into a different scratch, ecx/edx/eax, and the image
+    schedules `push edi` between that load and the `ip` store, in the
+    toggles, in base_names and in the standalone toggle_flatten 0x515640;
+    ours shows the store/push order only where the push starts a merged
+    block. So the image never formed the shared `push edi; ...` block.)
+    Likewise Console::go_to
     0x4D61A0: the image cross-jumps the three Psi Gate `NetMsgPrimary.pop`
     calls into the first and lays the `finish:` unlock right after it; ours
     keeps three identical `mov ecx; call pop; jmp finish` copies.
@@ -8329,9 +8349,21 @@ Layout
     threaded unlock_veh) and cross-jumps the other copies into it. The old
     `if (order == -1) ... else if (order != -2) unlock_veh` made the finish
     the host; the inverted inner test (`order != -1`) hosts unlock_base.
-  - vehdraw_scoot_start 0x004BFE00 (171 -> 81): `if (!terrain) { flat }
-    else { switch }` makes case 7 the last arm and host (case 3 cross-jumps
-    into it); `if (terrain) { switch } else { flat }` hosted the flat arm.
+  - vehdraw_scoot_start 0x004BFE00: REVERSED 2026-11-20 (par-6 r51).
+    `if (!terrain) { flat } else { switch }` (81 rows) made case 7 the
+    host, and every case's last `vector_add` cross-jumped into it (31/25),
+    but the image does not host in case 7: it branches `jb` to the flat
+    stores laid out after the switch (0x4C0E50, falling into the join),
+    case 7 ends with its own `jmp` over them and the switch's `ja` goes to
+    the join. `if (terrain) { switch } else { flat }` has the image's block
+    order and 31/30 calls (171 rows: ours merges case 6 into case 4 and
+    case 7's tail back into case 3, where the image cross-jumps case 3
+    forward into case 7 at 0x4C0840). Neutral there: no `break` in case 7,
+    `default: break;`, `goto` a label after the if/else, a label, block or
+    empty/void inline at the switch end. A real store at the switch end
+    makes case 7 the host again (73 rows, 31/25: the old shape); the
+    normalize call written in both arms gives 109 rows and 4 normalize
+    calls. Open.
   - communicate 0x0054FFD0 (host only, 1568 -> 1566): the pay code written
     after the bribe arm (half-pay falls into it), the non-bribe test as
     `if (result != 2) { if (!result) goto refuse; }`, refusal as a goto-only
