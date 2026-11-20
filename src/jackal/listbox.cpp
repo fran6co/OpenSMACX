@@ -799,8 +799,8 @@ void ListBox::on_left_down(int x, int y) {
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/0060af90.cpp"], "reason": "Rehome seed catalogue identity and original extents into compiled owning class; native-emitted symbol is separate and no new byte claim granted."}
 // symbol    ?on_key_down@ListBox@@UAEHH@Z
 int ListBox::on_key_down(int key) {
-    WinCallbackWindow = parent_window();
     const int count = Dialog::item_list_.entry_count_;
+    WinCallbackWindow = parent_window();
     // Columns needed for every entry: the row count rounded up.
     int columns_needed = count / Dialog::row_count_;
     if (Dialog::row_count_ * columns_needed < count) {
@@ -843,7 +843,7 @@ int ListBox::on_key_down(int key) {
                 }
             } else {
                 if (old_selected + 1 > last_visible
-                    && static_cast<int>(field_18_) + Dialog::row_count_ <= count - 1) {
+                    && old_top + Dialog::row_count_ <= count - 1) {
                     field_18_ += static_cast<uint32_t>(Dialog::row_count_);
                 }
                 if (Dialog::selected_position_ == count - 1
@@ -878,14 +878,14 @@ int ListBox::on_key_down(int key) {
         }
         if (static_cast<int>(field_1C_) < count) {
             if (old_selected >= (Dialog::column_count_ - 1) * Dialog::row_count_
-                                    + field_18_) {
-                if (field_18_ + Dialog::row_count_ <= count - 1) {
-                    field_18_ += static_cast<uint32_t>(Dialog::row_count_);
+                                    + old_top) {
+                if (old_top + Dialog::row_count_ <= count - 1) {
+                    field_18_ = old_top + Dialog::row_count_;
                 }
             } else if (old_selected >= (columns_needed - 1) * Dialog::row_count_
-                                           + field_18_
-                       && field_18_ < (columns_needed - 1) * Dialog::row_count_) {
-                field_18_ += static_cast<uint32_t>(Dialog::row_count_);
+                                           + old_top
+                       && old_top < (columns_needed - 1) * Dialog::row_count_) {
+                field_18_ = old_top + Dialog::row_count_;
             }
         }
         if (Dialog::selected_position_ < (columns_needed - 1) * Dialog::row_count_) {
