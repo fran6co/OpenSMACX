@@ -1320,7 +1320,7 @@ void BaseWin::draw_supported(int update_mode) {
         }
         if (Vehs[vehicle_id].state & 0x600000u) {
             const int facility = has_fac(35, BaseIDCurrentSelected, 0);
-            total += 1 + (PlayersData[faction].soc_effect_pending.values_[SocialEffect::POLICE] + 2 * facility <= -5);
+            total += (PlayersData[faction].soc_effect_pending.values_[SocialEffect::POLICE] + 2 * facility <= -5) ? 2 : 1;
         }
         if (VehPrototypes[Vehs[vehicle_id].proto_id].plan == 10 && Vehs[vehicle_id].order == 3) {
             // A supply convoy on a base square: the image inlines base_who and
