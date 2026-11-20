@@ -3126,10 +3126,7 @@ void BaseWin::draw_expenses(int update_mode) {
     space();
     line.left = Buffer::write_l(StringTemp, &line);
     StringTemp[0] = 0;
-    tile.left = line.left;
-    tile.right = line.left + max(1, unit - 1);
-    tile.top = (line.bottom - line.top - font.pixel_height()) / 2 + line.top;
-    tile.bottom = tile.top + font.pixel_height();
+    set_rectangle_dimensions(&tile, line.left, (line.bottom - line.top - font.pixel_height()) / 2 + line.top, max(1, unit - 1), font.pixel_height());
     count = 0;
     if (nutrient > 0) {
         for (i = 0; i < nutrient_cons; i++) {
@@ -3281,10 +3278,7 @@ void BaseWin::draw_expenses(int update_mode) {
     Buffer::set_text_color(TextColourTable[94], TextColourTable[95], 1, 1);
     line.left = Buffer::write_l(StringTemp, &line);
     StringTemp[0] = 0;
-    tile.left = line.left;
-    tile.right = line.left + max(1, unit - 1);
-    tile.top = (line.bottom - line.top - font.pixel_height()) / 2 + line.top;
-    tile.bottom = tile.top + font.pixel_height();
+    set_rectangle_dimensions(&tile, line.left, (line.bottom - line.top - font.pixel_height()) / 2 + line.top, max(1, unit - 1), font.pixel_height());
     count = 0;
     if (mineral > 0) {
         for (i = 0; i < mineral_cons; i++) {
@@ -3442,10 +3436,7 @@ void BaseWin::draw_expenses(int update_mode) {
     space();
     line.left = Buffer::write_l(StringTemp, &line);
     StringTemp[0] = 0;
-    tile.left = line.left;
-    tile.right = line.left + max(1, unit - 1);
-    tile.top = (line.bottom - line.top - font.pixel_height()) / 2 + line.top;
-    tile.bottom = tile.top + font.pixel_height();
+    set_rectangle_dimensions(&tile, line.left, (line.bottom - line.top - font.pixel_height()) / 2 + line.top, max(1, unit - 1), font.pixel_height());
     count = 0;
     if (0 <= energy) {
         for (i = 0; i < energy_ineff; i++) {
