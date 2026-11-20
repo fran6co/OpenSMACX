@@ -97,6 +97,11 @@ V = {
  'tg3':       'if (g8) { if (g9) U(20); return 0; } ' + LOOP + 'U(1); if (a) { U(2); goto fin; } U(3); goto fin; found: U(40); if (b & 0x100) { U(41); } else if (b & 0x200) { U(43); } else { U(44); } U(45); fin: use(9); use(10); use(11); return 1;',
  'tg4':       LOOP + 'U(1); if (a || g8) { U(2); goto fin; } U(3); goto fin; found: U(40); if (b & 0x100) { U(41); } else if (b & 0x200) { U(43); } else { U(44); } U(45); fin: use(9); use(10); use(11); return 1;',
  'tg5':       'if (g6 && (g8 || g9)) { U(19); return 0; } ' + LOOP + 'U(1); if (a) { U(2); goto fin; } U(3); goto fin; found: U(40); if (b & 0x100) { U(41); } else if (b & 0x200) { U(43); } else { U(44); } U(45); fin: use(9); use(10); use(11); return 1;',
+ # proposal_menu 0x0054DCF0: a fall-through label block also reached by later gotos (fail:)
+ 'pm1':       'U(1); if (a) { U(2); if (b) { if (g7) goto cl; U(3); } fail: g5 = 0; done: g6 = 1; use(10); use(11); return g5; } cl: if (c == 13) { U(4); if (g8) goto fail; U(5); if (g9 < 0) goto fail; U(6); } U(7); if (!g5) goto done; U(8); return 1;',
+ 'pm2':       'U(1); if (a) { U(2); if (b) { if (g7) goto cl; U(3); } goto fail; } cl: if (c == 13) { U(4); if (g8) goto fail; U(5); if (g9 < 0) goto fail; U(6); } U(7); if (!g5) goto done; U(8); return 1; fail: g5 = 0; done: g6 = 1; use(10); use(11); return g5;',
+ 'pm3':       'U(1); if (a) { U(2); if (b) { if (g7) goto cl; U(3); } fail: g5 = 0; done: g6 = 1; use(10); use(11); return g5; } cl: if (c == 13) { U(4); if (g8) goto fail; U(5); if (g9 >= 0) { U(6); } else goto fail; } U(7); if (!g5) goto done; U(8); return 1;',
+ 'pm4':       'U(1); if (a) { U(2); if (b) { if (g7) goto cl; U(3); } fail: g5 = 0; done: g6 = 1; use(10); use(11); return g5; } cl: if (c == 13) { U(4); if (g8) goto fail; U(5); if (g9 < 0) goto fail; U(6); } U(7); if (!g5) goto done; U(8); return 1;',
 }
 if __name__ == '__main__':
     sel = sys.argv[1:] or list(V)

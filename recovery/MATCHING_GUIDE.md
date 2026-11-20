@@ -8482,6 +8482,24 @@ Counters and tie arms (par-5 2026-11-20, councwin)
   image's placement is not a spelling of the fail path or the scan; the
   remaining candidates are whole-function. Do not retry fail-path
   spellings without new evidence.
+- **The loop counter VC6 keeps is the variable the body's tests read.**
+  load_vehicles 0x00454270 loops `chassis` 0..18 with `row = chassis - 9`;
+  the image counts `row` (edx from -9, skip test `lea eax,[edx+9]; cmp
+  eax,9`, latch `cmp eax,0x13`, `cmp edx,9` for `row == 9`). `if (chassis
+  < 9) continue;` keeps chassis as the counter and VC6 folds both tests
+  into the derived source_y IV (`cmp ecx,2`, `cmp ecx,0x304`); `if (row +
+  9 < 9)` gives the image's loop (cb1f79b9be; `row < 0`, `chassis - 9 <
+  0`, row-counted `for` headers are worse). When the image compares a
+  derived `lea` against a constant where ours compares another IV, write
+  the test on the variable the image counts.
+- **A flag re-tested in an else-if chain is not threaded; a nested test
+  is.** MultiWin::draw_player 0x00478630: `if (in_turn && !F && (A || B))
+  {} else if (in_turn && F) {X} else if (F) {Y} else {W}` re-tests F after
+  B fails (`cmp [F],0`); every polarity spelling and a local copy of F
+  keep the re-test. The image's `jne X | A | B | je W | jmp past` is
+  `if (in_turn) { if (!F) { if (!A && !B) goto W; } else {X} } else if
+  (F) {Y} else { W: ... }` (78b0474751; W gets two entries, one reloading
+  a register).
 
 ### 3.8 VC5 (Caviar/VOX) x87 rules (2026-11-19 par-5)
 
