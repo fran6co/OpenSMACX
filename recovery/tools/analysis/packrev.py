@@ -22,7 +22,12 @@ Also printed:
   BLOCKERS            per disagreeing unit: the image slot the model wanted, and the occupant whose (heavier)
                       count makes that slot exist too early / the interference that keeps it out
   OFFSET ORDER        image slot totals against offsets (the model's step 4 must hold on the image)
-Screen only.  Register-resident stretches have no frame access, so counts are frame accesses as in packsim."""
+Dead parameter homes (probe tempslot/g17, default; --no-params = old model): every parameter slot the image stores
+to is a pre-existing slot, founded by the parameter (the reads only its entry value reaches, plus the webs our
+source gives the parameter's own name: a reassigned parameter), tried by every unit before any local slot, the
+parameter read first first (a home stored before any read is an empty pre-existing slot, --unread first|last).
+Address-taken scalars in a parameter home are ordinary units (battle_fight's inlined bitmask offset/mask).
+Screen only.  Counts are frame accesses as in packsim (packsim --count measured the alternatives, 2026-11-20)."""
 import sys, os, re, argparse, collections
 H = os.path.dirname(os.path.abspath(__file__))
 T_ = os.path.dirname(H)
@@ -122,6 +127,14 @@ def webs_labelled(F, slot, lab, A):
         nb[u].add(d)
         if L(d) is not None and L(d) == L(u) or L(d) is None and L(u) is None:
             parent[find(d)] = find(u)
+    stored_ = {u for _, u in edges}
+    if slot >= 8:
+        # a parameter home: every read only the entry value reaches is the parameter (one web); a read a store
+        # also reaches is a maybe-uninitialised local packed into the home (it keeps its store's web)
+        stored = {u for _, u in edges}
+        fe_ = sorted(from_entry - stored)
+        for u in fe_[1:]:
+            parent[find(u)] = find(fe_[0])
     for n in defs + uses:
         if L(n) is None:
             ls = {L(m) for m in nb[n] if L(m) is not None}
@@ -136,7 +149,7 @@ def webs_labelled(F, slot, lab, A):
     for u in uses:
         g = groups[find(u)]
         g[1].add(u)
-        if u in from_entry:
+        if u in from_entry and (slot < 8 or u not in stored_):
             g[0].add('entry')
     return list(groups.values())
 
@@ -199,16 +212,24 @@ def main():
                     help='order among equal counts: earlier last access first (probe g14) or the image slot (oracle)')
     ap.add_argument('--no-tail', dest='tail', action='store_false', help='plain home liveness for temporaries')
     ap.add_argument('--slots', default='', help='print the web timeline of these image slots')
+    ap.add_argument('--unread', default='first', choices=['first', 'last'],
+                    help='where a parameter home with no entry read (stored before any read) sits among the homes')
+    ap.add_argument('--no-params', dest='params', action='store_false', help='leave dead parameter homes out (the '
+                    'model before 2026-11-20; default: every unit tries them first, the earliest-read first, g17)')
     a = ap.parse_args()
     unit = a.unit if a.unit.startswith('src/') else 'src/' + a.unit
     src = os.path.abspath(a.src) if a.src else R + '/' + unit
     addr = int(a.addr, 16)
     r, I, lab, our_slots, our_cnt, oline = build(unit, src, addr, a.pfx)
     A = [i['a'] for i in I.ins]
-    global TIE
+    global TIE, UNREAD
     TIE = a.tie
+    UNREAD = a.unread
     aggregate = {n for n, s in our_slots.items() if len(s) > 1 and not TEMP.match(n)}
     slots = sorted({s for i in I.ins for s in i['rd'] | i['wr'] if isinstance(s, int) and s < 0}, reverse=True)
+    # dead parameter homes (probe tempslot/g17): a parameter slot the image stores to is a pre-existing slot
+    # that every unit tries before any local slot, the parameter read first first
+    pslots = sorted({s for i in I.ins for s in i['wr'] if isinstance(s, int) and s >= 8}) if a.params else []
     fixed = set()
     # C++ EH registration: [ebp-4] state, [ebp-8] handler, [ebp-0xc] previous record (push -1; push handler)
     head = ' '.join(i['txt'] for i in I.ins[:6])
@@ -229,7 +250,7 @@ def main():
     # webs -> labelled pieces
     webs = []  # (slot, idxset, label)
     multi = []
-    for s in slots:
+    for s in slots + pslots:
         for defs, uses in (webs_noentry(I, s) if a.raw_webs else webs_labelled(I, s, lab, A)):
             idx = {x for x in defs | uses if x != 'entry'}
             if not idx:
@@ -241,6 +262,8 @@ def main():
                 multi.append((s, idx, named))
             if nm in aggregate:
                 fixed.add(s)
+            if s >= 8 and 'entry' in defs and not any(x in defs for x in idx):
+                nm = nm or 'param%s' % hex(s)
             webs.append(dict(slot=s, idx=idx, name=nm, entry='entry' in defs, addr=False,
                              lines=sorted({oline[A[x]] for x in idx if A[x] in oline})))
         for n in leas.get(s, ()):
@@ -310,7 +333,9 @@ def main():
             s = ws[0]['slot']
             mine = set().union(*(w['idx'] for w in ws))
             out.append(dict(webs=g, slot=s, n=len(mine), live=liveness(g, s, mine, any(w['addr'] for w in ws)),
-                            name='+'.join(sorted({w['name'] or '?' for w in ws}))))
+                            name='+'.join(sorted({w['name'] or '?' for w in ws})),
+                            param=s >= 8 and any(w['entry'] for w in ws),
+                            first=min(A[x] for w in ws for x in w['idx'])))
         return out
 
     def interferes(x, y):
@@ -335,8 +360,24 @@ def main():
             order = sorted(U, key=lambda u: (-u['n'], max(A[x] for i in u['webs'] for x in webs[i]['idx'])))
         G = []
         where = {}
+        # parameter homes: founded by the parameter (its entry web), ordered by its first read
+        P = []
+        for u in sorted((u for u in U if u['param']), key=lambda u: u['first']):
+            g = [u]
+            P.append(g)
+            where[u['webs']] = g
+        pslot = {id(g): g[0]['slot'] for g in P}
+        # a parameter whose home the image stores before any read has no entry web: an empty pre-existing home
+        have = {g[0]['slot'] for g in P}
+        for s_ in pslots:
+            if s_ not in have and s_ not in fixed:
+                g = []
+                (P.insert(0, g) if UNREAD == 'first' else P.append(g))
+                pslot[id(g)] = s_
         for u in order:
-            for g in reversed(G):
+            if u['param']:
+                continue
+            for g in P + list(reversed(G)):
                 if not any(intf(u, m) for m in g):
                     g.append(u)
                     where[u['webs']] = g
@@ -354,7 +395,7 @@ def main():
             for s_, k in cnt.items():
                 ov.append((-k, id(g), s_))
         ov.sort()
-        gs, taken = {}, set()
+        gs, taken = dict(pslot), set(pslot.values())
         for k, gi, s_ in ov:
             if gi in gs or s_ in taken:
                 continue
@@ -362,13 +403,18 @@ def main():
             taken.add(s_)
         for g in G:
             gs.setdefault(id(g), 1 << 20)
+        G = P + G
+        U = [u for u in U if not u['param']]
         ok = [u for u in U if gs[id(where[u['webs']])] == u['slot']]
         return U, G, where, gs, len(ok), sum(u['n'] for u in ok), sum(u['n'] for u in U)
 
-    # H0
+    # H0 (a parameter's own later webs, the reassigned parameter, join its home's founder)
+    pnames = {w['slot']: w['name'] for w in webs if w['entry'] and w['slot'] >= 8 and is_named(w['name'])}
     by = collections.defaultdict(list)
     for w in webs:
-        key = (w['slot'], w['name']) if is_named(w['name']) else (w['slot'], 'w%d' % w['id'])
+        key = ((w['slot'], 'entry') if w['slot'] >= 8 and (w['entry'] or w['name'] and w['name'] == pnames.get(w['slot']))
+               else
+               (w['slot'], w['name']) if is_named(w['name']) else (w['slot'], 'w%d' % w['id']))
         by[key].append(w['id'])
     H0 = [frozenset(v) for v in by.values()]
     U, G, where, gs, ok, wok, tot = run(H0)

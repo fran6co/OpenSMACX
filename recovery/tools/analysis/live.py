@@ -254,3 +254,39 @@ def ours(unit, src, addr, pfx=os.environ.get('FE_PFX_BASE', '2')):
             p += 4
         tables[('jmp', a)] = out
     return _build(data, 0, code_end, tables)
+
+
+_SUB = {'eax': ('eax', 'ax', 'al', 'ah'), 'ebx': ('ebx', 'bx', 'bl', 'bh'), 'ecx': ('ecx', 'cx', 'cl', 'ch'),
+        'edx': ('edx', 'dx', 'dl', 'dh'), 'esi': ('esi', 'si'), 'edi': ('edi', 'di')}
+_REGPAT = {r: re.compile(r'\b(%s)\b' % '|'.join(v)) for r, v in _SUB.items()}
+
+
+def reg_uses(F, n, r, limit=400):
+    """Instruction indices that read the value register r holds after instruction n (flow successors until r
+    is redefined; a call ends a scratch register's value).  Used for the register-resident part of a variable's
+    packing count (MATCHING_GUIDE 3.3: VC6's count includes register references after copy propagation)."""
+    if r not in _SUB:
+        return set()
+    pat = _REGPAT[r]
+    out, seen, work = set(), set(), list(F.ins[n]['s'])
+    while work and len(seen) < limit:
+        k = work.pop()
+        if k in seen:
+            continue
+        seen.add(k)
+        t = F.ins[k]['txt']
+        mn, _, ops = t.partition(' ')
+        dst, _, srcs = ops.partition(',')
+        dst = dst.strip()
+        reads = bool(pat.search(srcs)) or ('[' in dst and pat.search(dst)) or (not srcs and pat.search(dst)
+                                                                                and mn not in ('pop',)) \
+            or (pat.fullmatch(dst) and mn not in WRITE_ONLY and not (mn == 'xor' and dst == srcs.strip()))
+        if reads:
+            out.add(k)
+        kill = (pat.fullmatch(dst) and dst in (r,) and (mn in WRITE_ONLY or mn == 'xor' or mn not in READ_ONLY)) \
+            or (mn == 'call' and r in ('eax', 'ecx', 'edx'))
+        if kill and not (mn in ('add', 'sub', 'inc', 'dec', 'and', 'or', 'shl', 'sar', 'shr', 'neg', 'imul', 'lea')
+                         and False):
+            continue
+        work.extend(F.ins[k]['s'])
+    return out

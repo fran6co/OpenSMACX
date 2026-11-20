@@ -49,6 +49,12 @@ ap.add_argument('--no-params', dest='params', action='store_false', help='leave 
 ap.add_argument('--param-order', default='first', choices=['first', 'last', 'oldest'],
                 help='where parameter homes sit among the candidates: first (before local slots, probe g17), last '
                 '(after them), oldest (after them, latest-read parameter first)')
+ap.add_argument('--count', default='frame', choices=['frame', 'src', 'max', 'reg1', 'reg2', 'reg1all', 'reg2all', 'reg3', 'reg4', 'reg3all', 'reg4all'],
+                help='packing count of a named variable (experiments, 2026-11-20; frame accesses stay the best fit): '
+                'src = lexical source references (refcount.py), max = larger of src and frame; reg1 = frame + register '
+                'uses after each load, reg2 = also after each store; reg3 = a load counts its register uses (at least '
+                '1), reg4 = reg3 + uses after stores; *all = temporaries too. Agreement battle_fight/go_to/boom/'
+                'enemy_move units: frame 53/46/25/113, src 51/44/25/95, reg1 49/43/24/84, reg3 49/46/24/95')
 ap.add_argument('--tie', default='last', choices=['last', 'first', 'actual'],
                 help='order among equal counts: earlier LAST reference first (probe g14, default), or the actual slot (oracle)')
 a = ap.parse_args()
@@ -157,6 +163,42 @@ def interferes(x, y):
 
 actual = {sym: sym_slot[sym].most_common(1)[0][0] for sym in sym_ins}
 count = {sym: len(sym_ins[sym]) for sym in sym_ins}
+if a.count.startswith('reg'):
+    LD = re.compile(r'^mov (e[a-ds][xi]), dword ptr \[ebp')
+    ST = re.compile(r'^mov dword ptr \[ebp [-+] \w+\], (e[a-ds][xi])$')
+    for sym in sym_ins:
+        if not a.count.endswith('all') and (sym.startswith('T') and '@' in sym or sym.startswith('$T') or sym.startswith('tv')):
+            continue
+        if a.count[:4] in ('reg3', 'reg4'):
+            k = 0
+            for n in sym_ins[sym]:
+                tx = F.ins[n]['txt']
+                m = LD.match(tx)
+                if m:
+                    k += max(1, len(live.reg_uses(F, n, m.group(1))))
+                    continue
+                k += 1
+                m = a.count.startswith('reg4') and ST.match(tx)
+                if m:
+                    k += len(live.reg_uses(F, n, m.group(1)))
+            count[sym] = k
+            continue
+        extra = set()
+        for n in sym_ins[sym]:
+            tx = F.ins[n]['txt']
+            m = LD.match(tx) or (a.count.startswith('reg2') and ST.match(tx))
+            if m:
+                extra |= live.reg_uses(F, n, m.group(1))
+        count[sym] += len(extra - sym_ins[sym])
+elif a.count != 'frame':
+    import refcount
+    RC = refcount.Counts(text, addr)
+    for sym in sym_ins:
+        if sym.startswith('T') and '@' in sym or sym.startswith('$T') or sym.startswith('tv'):
+            continue
+        k = RC.count(sym, [line_of.get(addr_of[n], 0) for n in sym_ins[sym]])
+        if k:
+            count[sym] = k if a.count == 'src' else max(k, count[sym])
 if a.tie == 'last':  # probe g14: of two equal counts, the one whose last reference comes first is created first
     order = sorted(sym_ins, key=lambda x: (-count[x], max(addr_of[n] for n in sym_ins[x])))
 elif a.tie == 'first':  # control: earlier first reference first
@@ -246,6 +288,9 @@ ok = sum(1 for s in model if gslot[id(model[s])] == actual[s])
 w_ok = sum(count[s] for s in model if gslot[id(model[s])] == actual[s])
 print('symbols %d  model slot = actual for %d (%d of %d accesses); model slots %d, actual slots %d' % (
     len(model), ok, w_ok, sum(count[s] for s in model), len(groups), len({actual[s] for s in model})))
+if os.environ.get('PACKSIM_LIST'):
+    for s in model:
+        print('SYM %s n=%d frame=%d ok=%d actual=%s' % (s, count[s], len(sym_ins[s]), gslot[id(model[s])] == actual[s], hex(actual[s])))
 # actual slot creation order: by offset (frame offsets in creation order)
 act_order = sorted({actual[s] for s in model}, reverse=True)
 for g in groups:
