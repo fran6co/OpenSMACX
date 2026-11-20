@@ -1452,11 +1452,15 @@ L_597350:
                 }
             }
             // 597cce
-            spotted = (faction == ConsoleGlobal.faction_id_
+            if (faction == ConsoleGlobal.faction_id_
                        || (Vehs[veh_id].faction_id == ConsoleGlobal.faction_id_
                            && (Vehs[veh_id].flags & 0x440) != 0x440)
                        || (Vehs[veh_id].visibility & (1 << ConsoleGlobal.faction_id_))
-                       || (GameDataStateStorage.fields_.game_state_ & 0x80));
+                       || (GameDataStateStorage.fields_.game_state_ & 0x80)) {
+                spotted = 1;
+            } else {
+                spotted = 0;
+            }
             // 597d18
             if (((GameDataStateStorage.fields_.game_state_ & 0x80)
                     || (PlayersData[ConsoleGlobal.faction_id_].flags & 0x200)
@@ -1773,8 +1777,13 @@ L_598cb9:
 
         // 598db1: air units out of range / out of moves.
         if (get_triad(veh_id) == TRIAD_AIR) {
-            int stranded = base_who(dest_x, dest_y) < 0
-                && !(bit_at(dest_x, dest_y) & BIT_AIRBASE);
+            int stranded;
+            if (base_who(dest_x, dest_y) < 0
+                && !(bit_at(dest_x, dest_y) & BIT_AIRBASE)) {
+                stranded = 1;
+            } else {
+                stranded = 0;
+            }
             for (int stack_id = veh_top(veh_id); stranded && stack_id >= 0;
                     stack_id = Vehs[stack_id].next_veh_id_stack) {
                 if (has_abil(Vehs[stack_id].proto_id, ABL_CARRIER))
