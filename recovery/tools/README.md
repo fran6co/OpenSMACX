@@ -462,6 +462,11 @@ an explicit `--pfx` is only needed to pick another lane.
   invented twin) with a call to the orphan. First pass (par-6): DesignWin::on_iface_right_click exact,
   DiploWin::exec 279 -> 227, battle_fight 2409 -> 2346, base_terraform 893 -> 873, the StatusWin::redraw inline and
   MEASURED stand-ins and the terraform_arid_count/emit_help twins retired, eight neutral re-spellings.
+- `analysis/capprobe.py <unit> <0xADDR> '<call>' [--decl TEXT] [--src ALT.cpp]` per-callee auto-inline cap probe
+  (MATCHING_GUIDE 2.8 "The per-callee cap counts IL nodes"): appends a one-statement caller and prints CALLED (over
+  the cap) or EXPANDED, plus the callee's own fe result in that compile. `analysis/capscan.py [--max-callers N]
+  [--all] [unit ...]` does it for every orphan (or marker with at most N rel32 references) of every /Ob2 unit, one
+  compile per unit (35 s tree-wide); join its CALLED rows with `orphanowner.py scan --exact-hosts --callers N`.
 - `analysis/rscan.py <host> [--min N] [--thr R]` reverse owner scan (MATCHING_GUIDE 2.8 "Referenced owners too"):
   every marker's image body, referenced or not, searched inside ONE host's image body (score*prec >= R, default
   0.9; min N tokens, default 4), so header inlines with an out-of-line copy show up too (orphanowner skips them).

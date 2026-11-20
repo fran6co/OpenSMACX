@@ -3431,6 +3431,39 @@ What the model does not predict (2026-11-19)
   16 combinations): with all four EH 3 / named calls 9 / 119 rows, all
   written out EH 27 / calls 34 / 347; every single write-out is worse, so the
   owners stay until a real spelling with the same charge is found.
+- **The per-callee cap counts IL nodes, not instructions: a compact spelling
+  of the same body passes it** (2026-11-20 par-6, Sprite::close 0x005E3820).
+  Eight separate `field = 0;` statements put close() over the auto-inline cap
+  (ours calls it from a one-statement caller); the same stores as ONE chained
+  assignment `a = b = ... = h = 0;` (VC6 stores right to left, so write the
+  first image store last) are under it, and its out-of-line copy is
+  byte-identical. Every statement node costs; a chained assignment, a
+  combined declaration or an expression-only form costs less than the
+  equivalent statements while generating the same code. So before inventing
+  an inner helper (previous rule), try a compact spelling of the callee's own
+  body: screen it with `capprobe` and keep it when the callee stays exact out
+  of line and its hosts' call multisets move toward the image (Sprite::extract
+  and Sprite::load then dropped their hand-written copies of close()).
+  The strongest compact spelling is a call to a REAL small function the body
+  wrote out: Win::dispatch_17..29 each wrote Win::play_if_idle (0x005F86A0)
+  out twice and were over the cap; with `play_if_idle(val_N_)` every one is
+  under it and still exact, and on_l_button_up, on_r_button_down,
+  on_r_button_up and on_mouse_move then call the dispatchers instead of
+  writing them out, still exact (2026-11-20). A budget probe in a host may
+  need re-tuning when its written-out tail becomes a charged call (show:
+  22-25 -> 8-12 tests). Not every orphan has such a spelling:
+  GraphicWin::compute_min_size (two 4-test/4-store arms) stays over the cap
+  in every member spelling; a reference-parameter helper passes it but moves
+  the loads (52 rows), so apply_frame_sprites keeps its written-out copy.
+  Units whose last /Ob flag is /Ob1 (pulldown, uv/, Caviar) never
+  auto-inline: an invented header helper there is not a cap question.
+  Tools: `analysis/capprobe.py <unit> <0xADDR> '<call>'` (one callee) and
+  `analysis/capscan.py [--max-callers N] [unit ...]` (every orphan or
+  low-reference marker, one compile per unit, 35 s tree-wide); join its
+  CALLED rows with `orphanowner.py scan --exact-hosts --callers N` hits.
+  2026-11-20 census (max-callers 3, score >= 0.85): 25 over-cap orphans with
+  a host copy, all in exact hosts except Console::selected (a false match on
+  cursor_off's loop).
 - **Popup::start, five arguments (0x0043EF70), editor_who copies**
   (2026-11-19 par-6, screen only). With editor_diplomacy calling the plain
   `editor_who` (auto-inlined, as in the image) instead of the
