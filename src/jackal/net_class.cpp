@@ -1372,7 +1372,10 @@ int Net::join_session(NetAllocationNode *session, char *player_name,
     Font older_version_shadow;
 
     {
-        if (NetDirectPlay == 0 || player_name == 0) {
+        if (NetDirectPlay == 0) {
+            return 0;
+        }
+        if (player_name == 0) {
             return 0;
         }
 
@@ -1536,10 +1539,15 @@ int Net::join_session(NetAllocationNode *session, char *player_name,
             while (field_6DC_ == 0 && timeGetTime() - start_time < 10000) {
                 do_task();
             }
-            if (field_6DC_ != 0) {
+            // if/else (success last) with the opening guard as two separate
+            // returns: the image lays the success return after close() and
+            // hosts the return-0 teardown after close() (MATCHING_GUIDE 3.7,
+            // host orientation; 22 -> 2 rows).
+            if (field_6DC_ == 0) {
+                close();
+            } else {
                 return static_cast<int>(local_player_id_);
             }
-            close();
         }
     }
     return 0;
