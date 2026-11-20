@@ -150,7 +150,7 @@ void StatusWin::on_right_click(int x, int y, int) {
         if (menu_id != 2) {
             if (menu_id == 0 || menu_id == 10) {
                 if (menu_id == 10) object_index = ConsoleGlobal.selected_vehicle_;
-                menu.add_item(6, label_get(0x958 / 4));
+                menu.add_item(6, StringTable.get(Labels.strings_ptr[0x958 / 4]));
                 menu.add_item(7, label_get(0x112C / 4));
                 if (GameDataStateStorage.fields_.game_state_ & STATE_SCENARIO_EDITOR) {
                     menu.add_item(90, label_get(0xDFC / 4));
@@ -1003,7 +1003,7 @@ void StatusWin::draw_status(int veh, int a2, int a3, int x, int a5) {
                     if (strlen(StringTemp)) {
                         say_comma();
                     }
-                    strcat(StringTemp, label_get(0x48c / 4));
+                    strcat(StringTemp, StringTable.get(Labels.strings_ptr[0x48c / 4]));
                 }
                 if (strlen(StringTemp)) {
                     col = MainInterfaceGlobal.write_l(StringTemp, text_x, line_y);
