@@ -8557,9 +8557,11 @@ if (DiploScratchF7D4 &&
         // emit five probe calls). Six eight-test probes leave this
         // net_treaty_on expanded and a seventh is itself refused; five plus
         // two four-test probes refuse it with no probe call, which gives the
-        // image's call multiset (net_treaty_on 23, treaty_on 7). The natural
-        // spend before this point is still unknown.
-        communicate_budget_probe(0); communicate_budget_probe(0); communicate_budget_probe(0); communicate_budget_probe(0); communicate_budget_probe(0); communicate_budget_probe4(0); communicate_budget_probe4(0);
+        // image's call multiset (net_treaty_on 23, treaty_on 7). After the
+        // lock-mask header batch (cheaper member paths) five plus two leave it
+        // expanded; four+4, six+1 and seven+0 refuse it (five+3 does not).
+        // The natural spend before this point is still unknown.
+        communicate_budget_probe(0); communicate_budget_probe(0); communicate_budget_probe(0); communicate_budget_probe(0); communicate_budget_probe(0); communicate_budget_probe(0); communicate_budget_probe4(0);
         net_treaty_on(faction_id, DiploScratchF7D4, 0x8000008, 0);
         diplo_unlock();
         DiploScratchFA8C = DiploScratchF7D4;
