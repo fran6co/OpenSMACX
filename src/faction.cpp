@@ -4125,7 +4125,7 @@ void __cdecl make_gift(int giver, int receiver) {
     }
 
     if (mode == 8) {
-        const int base_value = value_of_base(
+        int base_value = value_of_base(
             DiploScratchFA30, receiver, giver, DiploScratchFA98,
             (DiploScratchFA68 != 0 || DiploScratchFAA0 != 0));
 
@@ -4133,14 +4133,15 @@ void __cdecl make_gift(int giver, int receiver) {
             diplo_sub(0, diplo_mul(base_value, 3)) / 2;
         cause_friction(receiver, giver, friction_delta);
 
-        int favored_value = base_value;
+        // One variable: the image doubles base_value in place (0x0054832D
+        // `add ebx,ebx`) and keeps no undoubled copy.
         if (strcmp(Players[giver].search_key, "SPARTANS") == 0)
-            favored_value = diplo_mul(favored_value, 2);
+            base_value = diplo_mul(base_value, 2);
 
         int favored =
-            favored_value >= static_cast<int>(PlayersData[receiver].energy_reserves) / 2 &&
-            favored_value >= static_cast<int>(PlayersData[giver].energy_reserves) / 3 &&
-            favored_value >= diplo_mul(GameDataStateStorage.fields_.turn_current_num_, 2);
+            base_value >= static_cast<int>(PlayersData[receiver].energy_reserves) / 2 &&
+            base_value >= static_cast<int>(PlayersData[giver].energy_reserves) / 3 &&
+            base_value >= diplo_mul(GameDataStateStorage.fields_.turn_current_num_, 2);
         if (strcmp(Players[giver].filename, "BELIEVE") == 0)
             favored = 1;
 
