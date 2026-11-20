@@ -1987,11 +1987,9 @@ L_4fc68f:
                 w = w * 2 / 3;
                 l_80 = 1;
             }
-        } else if (l_2c <= 1) {
-            if (wv > l_a0 + ((l_c == 7 && l_f4) ? 0 : 1)) {
+        } else if ((l_2c <= 1 && wv > l_a0 + ((l_c == 7 && l_f4) ? 0 : 1)) != 0) {
                 l_80 = 1;
             }
-        }
         if (sp > a_1ec[Chassis[VehPrototypes[l_14].chassis_id].triad]) {
             l_80 = 1;
         }
