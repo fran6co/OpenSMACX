@@ -309,8 +309,7 @@ void __cdecl colortables_init() {
     int body_colors[8] = {96, 105, 156, 0, 85, 47, 89, 227};
     int armor_colors[4] = {0, 0, 0, 0};
     int transparent_color = 0;
-    int transparent_first = 50;
-    int transparent_second = 100;
+    int transparent_weights[2] = {50, 100};
     int territory_colors[8] = {96, 105, 156, 0, 85, 47, 89, 227};
     int territory_weights[8] = {80, 80, 80, 80, 80, 80, 80, 80};
     // Required sections: the original does not initialize these arrays if
@@ -396,8 +395,8 @@ make_basic:
     if (text_open("system", "ARMORCOLORING_TRANS") == 0) {
         text_get();
         transparent_color = static_cast<unsigned char>(text_item_number() + 10);
-        transparent_first = text_item_number();
-        transparent_second = text_item_number();
+        transparent_weights[0] = text_item_number();
+        transparent_weights[1] = text_item_number();
     }
     if (text_open("system", "boundarypercents") == 0) {
         for (i = 0; i < 8; ++i) {
@@ -435,7 +434,7 @@ make_basic:
             out += sizeof(armor_colors);
             if (memcmp(&transparent_color, out, sizeof(transparent_color))) goto compared;
             out += sizeof(transparent_color);
-            if (!memcmp(&transparent_first, out, sizeof(transparent_first))) matched = 1;
+            if (!memcmp(transparent_weights, out, sizeof(transparent_weights[0]))) matched = 1;
         }
     }
 compared:
@@ -453,9 +452,11 @@ compared:
         memcpy(out, territory_colors, sizeof(territory_colors)); out += sizeof(territory_colors);
         memcpy(out, armor_colors, sizeof(armor_colors)); out += sizeof(armor_colors);
         memcpy(out, &transparent_color, sizeof(transparent_color)); out += sizeof(transparent_color);
-        memcpy(out, &transparent_first, sizeof(transparent_first)); out += sizeof(transparent_first);
-        // Only 0x710 bytes are persisted. The second transparent weight
-        // is deliberately absent from the original comparison and cache.
+        memcpy(out, transparent_weights, sizeof(transparent_weights[0])); out += sizeof(transparent_weights[0]);
+        // Only 0x710 bytes are persisted: the two transparent weights are
+        // one array (address-taken, so the transparent loop rereads both and
+        // keeps i; the 8-byte array sits above the 32-byte ones), and only
+        // its first element is compared and cached.
         file.close(out);
     }
 make_explosions:
@@ -568,7 +569,7 @@ make_armor:
     if (regenerate) {
 make_transparent:
         for (i = 0; i < 24; ++i) {
-            const int weight = ((24 - i) * transparent_first + i * transparent_second) / 24;
+            const int weight = ((24 - i) * transparent_weights[0] + i * transparent_weights[1]) / 24;
             g_PALETTE1.create_table_from_color(transparent_color, ArmorTransparentColorTables[i], 10, 236, 100 - weight, weight);
         }
         cache = file.create("armorgrads_trans.tmp", sizeof(ArmorTransparentColorTables), 1);
