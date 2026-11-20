@@ -1396,10 +1396,12 @@ void __cdecl base_kill(int base_id) {
         }
         TutWinBaseWindow.base_killed(base_id);
     } else {
-        for (veh_id = GameDataStateStorage.fields_.vehicle_current_count_; veh_id >= 0; veh_id--) {
-            if (get_triad(veh_id) == TRIAD_SEA
-                && !map_range(Vehs[veh_id].x, Vehs[veh_id].y, x, y)) {
-                kill(veh_id);
+        // The sea-unit sweep counts on faction_id (dead here): the image's
+        // counter shares faction_id's home (loopreuse, slot swap resolved).
+        for (faction_id = GameDataStateStorage.fields_.vehicle_current_count_; faction_id >= 0; faction_id--) {
+            if (get_triad(faction_id) == TRIAD_SEA
+                && !map_range(Vehs[faction_id].x, Vehs[faction_id].y, x, y)) {
+                kill(faction_id);
             }
         }
         TutWinBaseWindow.base_killed(base_id);
