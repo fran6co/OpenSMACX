@@ -2987,6 +2987,36 @@ size or the order of its decisions:
     propose_attack 0x00545E80 (remove_all, indirect calls) and tech_trade
     0x00541100 (the cross-jump host of its ~BasePop exits, a layout
     question; see 3.7). A teardown lever does not apply.
+  Round results (2026-11-20 par-1, sdeck):
+  - base_editor_proj: the PICKAPLACE `label_get` results passed straight to
+    `popup.item(label_get(..), id)`, not through a block-scoped local:
+    EH stays 0, call distance 10 -> 8, rows 29 -> 25. The base_editor_copy
+    noun spelling (parse_set + noun_faction) costs 1-3 EH states at every
+    probe count.
+  - pick_player (C): the two extra states are at the closing teardown
+    (ours 36,34,33,31,30 against 36,31,30), so one ~StringList level
+    expands there where the image calls it. label_get / raw / argument /
+    `!_strnicmp` spellings leave EH at 2. Charged one-site probes, placed
+    anywhere, add expansions (B grows with caller size), so no probe is
+    the lever either.
+  - call_council (A, one extra state at the close): the CouncWin GOVVOTE
+    picture block (`int picture_size[2]`, `== 0`), `popup.item`,
+    `exec()`, the short `start` overload and `table_text` all cost 9-12
+    EH states. `popup.item` against `popup.dialogs().item` compiles the
+    same. spellsweep's is_human -> raw costs +9 calls at any single site.
+  - tech_trade (D): the image keeps its four `ret`s with every return-0
+    copy merged into the reject_later tail. Ours has six: the 0x21, 0x25
+    and 0x2f exits keep their own epilogue (`lea; mov [ebp-4],esi; call
+    ~BasePop; ret`) and REJTECHSECOND hosts. Hence ??1BasePop 2/5. The
+    reject_later block cannot move in source. After `goto again` under
+    its label it costs 25 EH states, because the front end numbers its
+    states 0x35-0x42, between the exits at 0x30 and 0x44, as written.
+    `goto speak; reject_later: ...; speak:`, `if (0) { reject_later: ... }`,
+    one `&&` condition, and `do/while` or `while (1)` for the `again`
+    loop all compile byte-identically to the current source. An `else {}`
+    or `{}` around the rest, or `for (;;)` with the return inside, adds 16
+    phantom states (2.2). So the host comes from block order after the
+    front end, not from where the block is written. Still open.
 
 What the model does not predict (2026-11-19)
 - **MapWin::click 0x0046D5D0** (solved 2026-11-19 par-6). The image calls
