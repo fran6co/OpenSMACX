@@ -3591,11 +3591,10 @@ void BaseWin::draw_pop(int update_mode) {
     Random random;
     random.reseed(timeGetTime());
 
-    RECT *const rect = &population_rect_;
-    RECT inner = *rect;
+    RECT inner = population_rect_;
     RECT saved_clip = MainInterfaceGlobal.current_clip();
     MainInterfaceGlobal.set_clip(&inner);
-    MainInterfaceGlobal.box_sprite(rect, &InterfaceBoxStyles[3]);
+    MainInterfaceGlobal.box_sprite(&population_rect_, &InterfaceBoxStyles[3]);
     // Per-type specialist tally; filled below and never read.
     int specialist_counts[7];
     for (int clear = 0; clear < 7; clear++) {
@@ -3605,18 +3604,13 @@ void BaseWin::draw_pop(int update_mode) {
     spot1_.kill_type(1);
 
     RECT panel;
-    panel.left = rect->left + 3;
-    panel.top = rect->top + 3;
-    panel.bottom = rect->bottom - 3;
-    panel.right = rect->right - 3;
+    panel.left = population_rect_.left + 3;
+    panel.top = population_rect_.top + 3;
+    panel.bottom = population_rect_.bottom - 3;
+    panel.right = population_rect_.right - 3;
     MainInterfaceGlobal.set_clip(&panel);
 
     int height = panel.bottom - panel.top;
-    RECT cell;
-    cell.left = panel.left;
-    cell.top = panel.top;
-    cell.bottom = cell.top + height;
-    cell.right = cell.left + height;
     int population = BaseCurrent->population_size;
     int spacing;
     if (population <= 1) {
@@ -3632,6 +3626,11 @@ void BaseWin::draw_pop(int update_mode) {
         }
     }
 
+    RECT cell;
+    cell.left = panel.left;
+    cell.top = panel.top;
+    cell.bottom = cell.top + height;
+    cell.right = cell.left + height;
     int i;
     if (ExpansionEnabled && (Players[BaseCurrent->faction_id_current].rule_flags & 0x80)) {
         for (i = 0; i < BaseCurrent->population_size; i++) {
@@ -3642,18 +3641,16 @@ void BaseWin::draw_pop(int update_mode) {
                         - BaseCurrent->specialist_total) mood = 2;
                 if (i >= BaseCurrent->population_size - BaseCurrent->super_drone_total
                         - BaseCurrent->specialist_total) mood = 3;
-                g_AL_CITIZEN_LG_CURSOR_SPRITES[mood].draw(&MainInterfaceGlobal,
-                    g_AL_CITIZEN_LG_CURSOR_SPRITES[mood].transparent_index(),
-                    cell.left, cell.top + (cell.bottom - cell.top - 48) / 2, 1, 1);
+                const int y = cell.top + (cell.bottom - cell.top - 48) / 2;
+                g_AL_CITIZEN_LG_CURSOR_SPRITES[mood].draw(&MainInterfaceGlobal, cell.left, y, 1, 1);
                 spot1_.add(-1, 1, cell.left, cell.top, cell.right - cell.left, cell.bottom - cell.top);
             } else {
                 const int specialist = i - (BaseCurrent->population_size - BaseCurrent->specialist_total);
                 const int type = specialist >= 16 ? best_specialist()
                     : (BaseCurrent->spec[specialist >> 3] >> ((specialist & 7) * 4)) & 15;
                 specialist_counts[type]++;
-                g_AL_SPECIALIST_LG_CURSOR_SPRITES[type].draw(&MainInterfaceGlobal,
-                    g_AL_SPECIALIST_LG_CURSOR_SPRITES[type].transparent_index(),
-                    cell.left, cell.top + (cell.bottom - cell.top - 48) / 2, 1, 1);
+                const int y = cell.top + (cell.bottom - cell.top - 48) / 2;
+                g_AL_SPECIALIST_LG_CURSOR_SPRITES[type].draw(&MainInterfaceGlobal, cell.left, y, 1, 1);
                 spot1_.add(specialist, 1, cell.left, cell.top, cell.right - cell.left, cell.bottom - cell.top);
             }
             cell.right += spacing;
@@ -3680,7 +3677,6 @@ void BaseWin::draw_pop(int update_mode) {
                     : (BaseCurrent->spec[specialist >> 3] >> ((specialist & 7) * 4)) & 15;
                 specialist_counts[type]++;
                 g_SPECIALIST_LG_CURSOR_SPRITES[type].draw(&MainInterfaceGlobal,
-                    g_SPECIALIST_LG_CURSOR_SPRITES[type].transparent_index(),
                     cell.left, cell.top + (cell.bottom - cell.top - 48) / 2, 1, 1);
                 spot1_.add(specialist, 1, cell.left, cell.top, cell.right - cell.left, cell.bottom - cell.top);
             }
@@ -3690,11 +3686,9 @@ void BaseWin::draw_pop(int update_mode) {
     }
 
     if (update_mode) {
-        MainInterfaceGlobal.update(rect, 0);
+        MainInterfaceGlobal.update(&population_rect_, 0);
     } else {
-        MainInterfaceGlobal.soft_update(rect);
-        MainInterfaceGlobal.set_clip(&saved_clip);
-        return;
+        MainInterfaceGlobal.soft_update(&population_rect_);
     }
     MainInterfaceGlobal.set_clip(&saved_clip);
 }
