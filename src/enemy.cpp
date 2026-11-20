@@ -4253,8 +4253,8 @@ int __cdecl enemy_move(int veh_id) {
     near_hostile = 0;
     keep_wp = 0;
     defend = 0;
-    stay = 0;
     coast_goal = 0;
+    stay = 0;
     no_moves = 0;
     if (veh_id < 0) {
         // Hint mode: the caller passes -(veh_id + 1); the image open-codes |veh_id + 1|.
@@ -5058,8 +5058,8 @@ L_56dc57:
                 goto L_578b34;
 L_56de10:
                 // Reached only from the adjacent-transport scan above.
-                Vehs[veh_id].move_to_ai_type = 0x64;
                 best_dir = rad;
+                Vehs[veh_id].move_to_ai_type = 0x64;
                 goto L_578b26;
             }
             {
@@ -7251,8 +7251,8 @@ L_574a88:
     }
     hint = 0;
     garrison_count = 0;
-    i = 0;
     m = 0;
+    i = 0;
     j = 0;
     if (plan != PLAN_NAVAL_TRANSPORT) {
         goto L_5767ed;
@@ -7625,8 +7625,8 @@ L_574a88:
                             }
                         }
                         if (score > best_score) {
-                            best_score = score;
                             best_dir = j - 1;
+                            best_score = score;
                         }
                     }
                 }
