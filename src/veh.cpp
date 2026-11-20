@@ -3596,9 +3596,11 @@ Status: Complete
 // including 0x439D5A/0x439D9A/0x439E26. Same-TU Veh calls still auto-inline;
 // this placement does not establish the original translation-unit boundaries.
 int __cdecl abil_index(int ability_id) {
+    int check = ability_id;
     int index = 0;
-    for (int check = ability_id; !(check & 1); index++) {
+    while (!(check & 1)) {
         check >>= 1;
+        index++;
     }
     return index;
 }
