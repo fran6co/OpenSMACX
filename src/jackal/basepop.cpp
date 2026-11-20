@@ -1044,9 +1044,8 @@ int BasePop::exec(int flags, int (__cdecl *callback)()) {
             item_ids_.seek_pos(-1);
             for (int index = 0; index < item_ids_.entry_count_; index++) {
                 item_buttons_[index] = new FlatButton();
-                item_ids_.next_entry();
                 item_buttons_[index]->init(
-                    item_ids_.current_ != 0 ? item_ids_.current_entry()->text : 0,
+                    item_ids_.next_text(),
                     index + 1, x, y, static_cast<int>(field_30CC_),
                     static_cast<int>(field_30D0_), this, row_style);
                             basepop_set_tiles(item_buttons_[index], 0, default_block_[0], default_block_[1], default_block_[2]);
@@ -3739,29 +3738,20 @@ int BasePop::calculate_dimensions() {
         field_30D4_ += owner_window_->text_line_height();
         owner_window_->wrap_height_flying(static_cast<char *>(0), text_left);
     } else if (wrap_kind == 2) {
-        char *text = unit_ids_.head_ != 0 ? unit_ids_.current_->string_payload()->text
-                                          : static_cast<char *>(0);
+        char *text = unit_ids_.current_text();
         field_30D4_ += owner_window_->wrap_height(text, text_left);
         owner_window_->wrap_height_flying(static_cast<char *>(0), text_left);
     } else {
-        char *text = unit_ids_.head_ != 0 ? unit_ids_.current_->string_payload()->text
-                                          : static_cast<char *>(0);
+        char *text = unit_ids_.current_text();
         owner_window_->wrap_height_flying(text, text_left);
     }
 
     // The remaining items, each reached through the inline next_entry().
     for (int index = 0; index < unit_ids_.entry_count_ - 1; ++index) {
-        unit_ids_.next_entry();
-
-        // StringStruct::current_entry()->text, open-coded. BUG IN THE
-        // Original behavior: the middle arm dereferences a null payload and reads
-        // address 4 when the list has a cursor but no head - the image emits
-        // `xor eax,eax / mov ebp,[eax+4]` there. Reproduced as shipped.
-        char *text = unit_ids_.current_ != 0
-                   ? (unit_ids_.head_ != 0 ? unit_ids_.current_->string_payload()
-                                           : static_cast<StringStructPayload *>(0))
-                         ->text
-                   : static_cast<char *>(0);
+        // StringList::next_text. BUG IN THE original: with a cursor but no
+        // head the text is read through a null payload (address 4); the
+        // image emits `xor eax,eax / mov ebp,[eax+4]` there.
+        char *text = unit_ids_.next_text();
 
         // Only the wrap-kind-2 arm uses `text`; every other arm reads the
         // current entry's text afresh (`head_ ? payload->text : 0`).
@@ -3780,14 +3770,12 @@ int BasePop::calculate_dimensions() {
                                                   text_left);
             } else {
                 owner_window_->wrap_height_flying(
-                    unit_ids_.head_ != 0 ? unit_ids_.current_->string_payload()->text
-                                         : static_cast<char *>(0),
+                    unit_ids_.current_text(),
                     text_left);
             }
         } else {
             owner_window_->wrap_height_flying(
-                unit_ids_.head_ != 0 ? unit_ids_.current_->string_payload()->text
-                                     : static_cast<char *>(0));
+                unit_ids_.current_text());
         }
     }
 
