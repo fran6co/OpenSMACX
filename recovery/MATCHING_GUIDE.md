@@ -3090,6 +3090,51 @@ we cannot see, so the numbers are fitted within about 0.3 unit.
    - In probe, demoting 58 later inline sites (has_treaty, says, clear
      after the vulnerable call) to non-inline twins also expands x_dist:
      the division by later_j is the lever, not B.
+   - **An orphan whose body is calls puts those calls at depth 2 in every
+     host** (high; Win z-order, ad0dc1c26a, 2026-11-20 par-6). A function
+     with no image callers (every use expands it) whose body is a few inline
+     calls, such as bring_to_top 0x005F4AB0 = `parent ?
+     parent->bring_child_to_top(this) : bring_parent_to_top(this)`, makes
+     its callees depth-2 sites in each host: they share the orphan's body
+     budget S_j = (S - spent)/(1 + later_j) greedily in source order. One
+     host-level fact (later_j, the sites after the orphan in that host)
+     then decides all of them at once, and the image's split per host is
+     the check: bring_to_top standalone and in OnLButtonDown expands both
+     raises and their update_zorder copies, show and on_r_button_down call
+     both raises, on_l_button_down calls bring_child_to_top and expands
+     bring_parent_to_top with update_zorder called. Written out at depth 1
+     (each raise as its own statement in the host, or the raise bodies
+     copied in), those sites take the host's own greedy decision
+     `cost <= S - spent` with no division, so a host whose image *calls*
+     one of them cannot be matched while its siblings expand: one direct
+     call in a host cannot be refused while the orphan is expanded. The
+     #pragma inline_depth(0) and hand copies that had been tuned around it
+     were all retired. Screen: for every orphan whose image body has calls,
+     look for hosts that copy its body or call its callees directly, then
+     check that the image's expand/call split in every host fits one
+     later_j per host (`analysis/inlinemap.py` per callee). Free filler
+     sites after the orphan (a marked WORKAROUND(inline) empty inline)
+     stand in for unidentified later sites when the count is the only
+     unknown.
+     Follow-ups (2026-11-20 par-6 r50): (a) the shared callee's own
+     spelling is then pinned by all its hosts at once: update_zorder as a
+     do-while left hide()'s copy in on_char 8 rows off, as an `&&` for-loop
+     it was too cheap for update_back_to_window (client_to_screen expanded
+     one level deeper), and as the for-loop with the null test nested as
+     its own `if` (same standalone bytes) it fits every host, which let
+     hide() and set_base_window call it too. When two hosts want different
+     costs of one helper, screen same-code spellings of the helper (nested
+     ifs, `!= 0`, named locals) before adding stand-ins in the hosts. (b)
+     Tree screen of orphans with calls (`orphanowner.py scan --thr 0.5
+     --exact-hosts` crossed with a source scan for hosts calling the
+     orphan's callees in a short window): the only new owner was
+     sub_510c90 (0x00510C90) in Console::ready, set_move and human_turn
+     (code-neutral, all three exact). The rung-2 call-count gaps of
+     2026-11-20 (menu_proc, editor, write_strings_height, tech_trade, ...)
+     involve no orphan: they are cross-jumped tails or budget, not
+     written-out owners. WorldWin::right_menu's case 2 is the body of
+     three identical orphans (set_center, focus, follow_center); which one
+     it called is not decidable from the bytes.
 
 Using it
 - Run inlinemap. For each callee row:
