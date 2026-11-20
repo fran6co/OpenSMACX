@@ -141,6 +141,17 @@ an explicit `--pfx` is only needed to pick another lane.
   ours (same mnemonic) has a register. 30 s tree-wide. 2026-11-20: 22 functions with such pairs; on reading,
   the ones in small functions (set_time_controls, repair_phase, battle_compute) are register pressure or
   operand order, not aliasing. Screen only.
+- `analysis/inlparamscan.py <unit> <addr[,..]> | --from FEALL.json [--json F] [--sites]` inline-parameter home screen
+  (MATCHING_GUIDE 3.3 "A never-reloaded store ... is an inline function's parameter", draw_expenses): flow-sensitive
+  dead frame stores on both sides (`used` = the stored register is read again, `imm`), plus `tern` (`mov [m],K; jcc L;
+  mov [m],r; L:`, a select materialised in its home); image events are paired with ours through fe's row alignment
+  (IP_WIN rows) and the unpaired ones listed with our nearest source line (header line for an expanded inline).
+  Address-taken frame aggregates count as read by calls over IP_AGG bytes (default 0x10); functions without an ebp
+  frame are skipped. 75 s over the non-exact set. Validated on the pre-fix draw_expenses (the three tile.top homes,
+  the two max homes). 2026-11-20: 24 functions flagged; the clean rows were not inline parameters but local RECT copies
+  whose overwritten fields the image still stores (DiploPop::init rect.left, AlphaSave::init frame.top/bottom,
+  DiploWin::exec row/rc), the draw_expenses nested-max ternary temporary (-0x24) and NetDaemon::synch's 0x8D loop
+  IVs; RECT pointer-copy loops (NewTechWin::exec) read as dead stores (noise).
 - `analysis/ivscan.py <unit> <addr[,..]> | --tree [unit ..] [--all] [--json F]` induction-step census of both sides
   (MATCHING_GUIDE 2.7 "Strength reduction is a candidate-set question"): every `add/sub/lea/inc/dec` of a register (or
   `add dword ptr [slot], K`) inside a natural loop, at any stride and sign, whose register is used as an address or
