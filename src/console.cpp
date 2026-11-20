@@ -5381,7 +5381,11 @@ int Console::on_key_click(int a1, int a2) {
             (*map_slot)->on_mouse_move(x, y);
             return 1;
         }
-        if (normalized == 'g' || normalized == ' ') {
+        // 0x517C74: 'g' jumps into the arm and ' ' falls into it (jne to the
+        // clear at 0x517DA1, laid after the arm): the test was a value. A
+        // bare `if (a || b)` arm ending in `return` is laid after the clear.
+        int go = normalized == 'g' || normalized == ' ';
+        if (go) {
             if ((Vehs[selected_vehicle_].state & 0x01000200) == 0x01000200) {
                 if (Vehs[selected_vehicle_].waypoint_count < 3) {
                     ++Vehs[selected_vehicle_].waypoint_count;
