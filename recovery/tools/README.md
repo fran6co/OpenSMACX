@@ -743,6 +743,16 @@ an explicit `--pfx` is only needed to pick another lane.
   PART only in base_build (owned) and vehdraw_scoot_start (ours cross-jumps identical cases 0/6, which the image
   allocated apart: a scratch-register question, not labels); pre-fix vehdraw_construct_chassis reads PART [1,5] +
   DFLT 0/9. The other BLK rows are default blocks, `abs`-style arms beside a tree, or regalloc tails.
+- `analysis/switchtail.py <unit> <addr[,addr]> [--src ALT] | --from FEALL.json [--units u,..] [--json F]` shared
+  switch-tail screen (MATCHING_GUIDE 3.7 "A switch arm that falls into a shared tail"): per jump table, the joins two or
+  more case regions reach by `jmp`, each with its HOST (the case that falls into it), matched to ours through the fe
+  alignment (or, unaligned, by shared case values). `HOST ... img-first` = the image's earliest case falls into the
+  tail and ours a later one (the on_key_click goto-label shape: write `break` + a flag-tested tail after the switch);
+  `HOST` otherwise = the default or another case hosts (communicate: ours `ja` went to a label before the tail);
+  `NJOIN` = jumper counts differ (a case that keeps its own copy of part of the tail: an arm-local push or store).
+  70 s on the non-exact set. 2026-11-20 pass (327 functions): the img-first shape occurs only in the pre-fix
+  on_key_click; communicate (late-contact menu breaks) and MainInterface::init (inline argument in every case)
+  fixed; base_build, probe, menu_proc (toggle tails, 3.7) and vehdraw_scoot_start (3.7) open.
 - `analysis/cmpscan.py [unit ..] [--all] [--weak] [--addr A,..] [--json F]` compare operand order / jcc sense (VC6 keeps
   both from the source): pairs each image `cmp a,b; jcc` on a differing row with an ours `cmp; jcc` within 8 rows and
   flags `SWAP` (`cmp b,a; j<mirror>`), `INV` (same operands, negated jcc) and `SWAPINV`; `--weak` adds register-renamed
