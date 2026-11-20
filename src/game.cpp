@@ -1967,15 +1967,6 @@ SaveNameDefaultStorage SaveNameDefaultStorageGlobal;
 inline LPSTR load_game_label_branch(int label_offset) {
     return StringTable.get(Labels.strings_ptr[label_offset]);
 }
-// WORKAROUND(inline): budget stand-in. The image's earliest return teardown
-// (0x005AB05C) leaves both FlatButton and the FileWin destructors out of
-// line; the original spent this /Ob2 budget on an inline not yet identified.
-inline void load_game_reload_faction_art() {
-    for (int faction = 1; faction < MaxPlayerNum; ++faction) {
-        load_faction_art(faction);
-    }
-    load_flags();
-}
 
 static int load_map_budget_probe(int x);
 
@@ -2228,7 +2219,10 @@ again:
     }
 
     if (mode != 0) {
-        load_game_reload_faction_art();
+        for (int faction = 1; faction < MaxPlayerNum; ++faction) {
+            load_faction_art(faction);
+        }
+        load_flags();
         GameDataStateStorage.fields_.game_state_ &= 0xF79FCF16u;
         if ((GameDataStateStorage.fields_.game_state_ & 0x80u) != 0 &&
             (GameDataStateStorage.fields_.game_state_ & 0x40u) != 0) {
@@ -2287,7 +2281,12 @@ again:
         goto done;
     }
 
-    load_game_reload_faction_art();
+    {   // VC6 scopes a for-init variable to the enclosing block; `goto done` crosses it
+        for (int faction = 1; faction < MaxPlayerNum; ++faction) {
+            load_faction_art(faction);
+        }
+        load_flags();
+    }
     parse_say(0, Difficulty[GameDataStateStorage.fields_.diff_level_current_],
               -1, -1);
     // Image 0x005AAF35: slot 1 is the leader's title (+0x4C).
