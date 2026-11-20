@@ -3229,7 +3229,7 @@ void Win::on_paint(RECT *area) {
             } else {
                 // One tile in the centre, the four strips around it filled.
                 set_rectangle_dimensions(&edge, 0, 0,
-                    rect_width(&outer_rect_), y);
+                    outer_rect_.right - outer_rect_.left, y);
                 FillRect(hdc, &edge, brush);
                 source->copy_to_window(this, 0, 0, x, y,
                     source->pixel_width(), source->pixel_height());
@@ -3239,7 +3239,7 @@ void Win::on_paint(RECT *area) {
                     outer_rect_.right - outer_rect_.left - x - width, height);
                 FillRect(hdc, &edge, brush);
                 set_rectangle_dimensions(&edge, 0, y + height,
-                    outer_rect_.right - outer_rect_.left,
+                    rect_width(&outer_rect_),
                     outer_rect_.bottom - outer_rect_.top - y - height);
                 FillRect(hdc, &edge, brush);
             }
