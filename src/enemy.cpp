@@ -5221,7 +5221,7 @@ L_56e4a4:
             && !(Vehs[veh_id].state & 0x20)
             && !((uint8_t)faction_bit & GameDataStateStorage.fields_.lock_masks_.human_mask_)
             && damage < 4) {
-            if (!near_dist || (map_loc(x, y)->bit & 0x40000))
+            if ((!near_dist || (map_loc(x, y)->bit & 0x40000)) != 0)
                 goto L_56e6a9;
             if (whose_territory(faction_id, x, y, NULL, 0) == faction_id
                 && Vehs[veh_id].order != 0x18 && home_base >= 0)
