@@ -3588,6 +3588,30 @@ What the model does not predict (2026-11-19)
   probe went from 6 to 40 blocks; sweep the count, 36-48 all worked).
   So: respell the family first, then re-sweep the pad, and judge by the
   EH map and call multiset, never by the rows of the intermediate step.
+  Open residue in probe after that (2026-11-20 par-4, all screens negative):
+  - *x_dist at level 3 (vulnerable -> vector_dist -> x_dist) is not a room
+    or size question.* It stays a call at every pad count 0..64, with whole
+    arms deleted (action 1, 3, 7 or 8: hundreds of statements), and with
+    the free helpers after it turned back into raw macros. Only lowering
+    it to level 2 (`vector_dist(x_dist(..), abs(..))` in vulnerable)
+    expands it, and that breaks vulnerable 0x0059E980's out-of-line copy
+    (the image loads both `Bases[i]` coordinates before x_dist: four-argument
+    parameters) and mind_control. Look for a level-3 ordering rule, not spend.
+  - *The six NetMsg::pop tails ours merges are a layout question.* The
+    action dispatch's join (the prb_defense ternary head, 0x5A36EE) has no
+    fall-through predecessor at its source position (the -1 arm ends in
+    `goto`), so VC6 lays it after one arm that jumps to it: the image after
+    action 2 (check_base/draw_tile), ours after action 3 (the TOOKENERGY
+    pop). Cross-jumping then merges identical `call pop; add esp,8` tails
+    into the block that falls into the join, so ours folds six pops into
+    action 3's while the image (join behind draw_tile) keeps each with its
+    own `jmp`. Fix the join's placement, not the tails; action 3 nested,
+    inverted, or an explicit `goto` join after action 2 did not move it.
+  - *veh_at < 0 return 1:* `if (v >= 0) { loop } else return 1;` makes that
+    site jump to the shared 0x5A5509 block as the image does, but moves the
+    action_mode block and shifts the early frame slots (708 -> 752 rows);
+    `<= -1`, `!(>= 0)`, if/else with the return first and a goto to a label
+    on the FRAMED return keep the copy or worsen layout.
 - **A helper with a literal inside its body is refuted by per-site
   literals** (high; 2026-11-19 par-4). An argument-free inline such as
   `say_plus() { strcat(StringTemp, "+"); }` emits ONE literal
