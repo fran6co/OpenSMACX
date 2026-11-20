@@ -8547,6 +8547,17 @@ Constant registers (measured with standalone probes, 2026-11-18)
   (k-counter, two induction variables, `attempt - start + 1`) reproduce it;
   the image also keeps special_b in ebx through the random loop and hoists
   `1 - start` into [ebp-0x2c], ours keeps `start` in ebx.
+  Solved for layout (par-5 round 54, b9e49b888b, 162 -> 90 rows, control
+  flow equal): **a reset block the image lays straight after one branch is
+  that branch's own copy, cross-jumped**. Writing the reset in every arm
+  (count==1 unconditionally, the random arm after its `||` test, a final
+  `else`) lets VC6 merge the copies with the count==1 arm as the fall-in.
+  The ebx/[ebp-0x20] split was a second variable: count==1 and the random
+  loop fill `pick` (ebx), the random arm copies `special_b = pick` just
+  before its test (0x58B5A8), the main loop reads special_b's home; the
+  random loop is a do-while (no entry guard). Still open: the hoisted
+  `1 - start` (every two-IV/countdown form is worse), the image's dead
+  init store of special_b (0x58B375), and the custom-names CSE slot order.
 
 - **A store through a pointer is a scheduling barrier for an address-taken
   local; a store into a global array is not** (par-5 2026-11-20, game_data
