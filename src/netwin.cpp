@@ -25,6 +25,10 @@
 // ORIGINAL: 0x0047B010 _$E19 0x0047B010-0x0047B01A FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned CRT slot0x682560 selects initializer0x47aff0..0x47b006, registering exit0x47b010..0x47b01a. Root independent complete decode confirms exclusive RET/JMP bounds; original/source-owned storage is0x80a6f8 bound to?NetWinDialog@@3VNetWin@@A.", "Original startup instruction evidence: [[\"0x47aff0\", \"mov\", \"ecx, 0x80a6f8\"], [\"0x47aff5\", \"call\", \"0x481c50\"], [\"0x47affa\", \"push\", \"0x47b010\"], [\"0x47afff\", \"call\", \"0x645398\"], [\"0x47b004\", \"pop\", \"ecx\"], [\"0x47b005\", \"ret\", \"\"]]. Original exit instruction evidence: [[\"0x47b010\", \"mov\", \"ecx, 0x80a6f8\"], [\"0x47b015\", \"jmp\", \"0x4834e0\"]]. Preserve constructor arguments, array counts/strides, registration and reverse destruction without authored callback stand-ins.", "Fresh complete build-iveupb5l physical src/netwin.cpp COFF selects _$E21 via .CRT$XCU, registering _$E19. Startup relocation targets: [\"?NetWinDialog@@3VNetWin@@A\", \"??0NetWin@@QAE@XZ\", \"_$E19\", \"_atexit\"]; exit targets: [\"?NetWinDialog@@3VNetWin@@A\", \"??1NetWin@@UAE@XZ\"]. Actual linked helper occurs once at CRT slot0x63f2cc; selected same-owner order agrees with the pinned order.", "BaseWin/DesignWin definitions now precede their Wave globals as pinned. Existing DesignWin Wave mappings retain original names/spans and current helper overrides after fresh emission proof. Scalar constructor effects and array construction/cleanup belong to genuine source globals, classes and compiler-generated lifetime machinery.", "Current local labels are emission interpretations, not original debug names or recovered historical TU boundaries. Start bindings grant no allocation extent. Selected same-owner linked order is not full CRT/global-order, retained-selection, reference-target, dependency-provider, runtime or full-game acceptance. Guarded callbacks excluded; no claim grant or bug fix."], "reason": "Bind original exit operation to the genuine compiler-emitted lifetime of source-owned ?NetWinDialog@@3VNetWin@@A; preserve complete original identity and remaining restoration/structure obligations."}
 // symbol    _$E14
+// WORKAROUND(noinline): draw_session_info's StringList local calls
+// StringStruct::StringStruct (0x00401000) out of line (0x00480956), giving
+// its three-state EH layout; see stringstruct.h.
+#define STRINGSTRUCT_CTOR_OUT_OF_LINE
 #include "stdafx.h"
 #include "interface_fonts.h"
 #include "netwin.h"
@@ -2724,7 +2728,7 @@ char NetWinWindowTitleInitialText;
 // choice shows (the leading clear stays at the call site).
 static void netwin_pcx_name(const char *name) {
     strcat(StringTemp, name);
-// RECOVERY_LITERAL: v1 0x00686940 0x00686945 $SG58048 0x00481FD0
+// RECOVERY_LITERAL: v1 0x00686940 0x00686945 $SG58043 0x00481FD0
     strcat(StringTemp, ".pcx");
 }
 
@@ -2789,7 +2793,7 @@ void NetWin::setup_faction_data(MessageFactionData *message_faction_data) {
     // Slow path: rebuild the table from the localized faction text. The
     // CUSTOMFACTIONS count is discovered by walking until text_item is empty.
     int custom_count = 0;
-// RECOVERY_LITERAL: v1 0x00686908 0x00686917 $SG58063 0x00481FD0
+// RECOVERY_LITERAL: v1 0x00686908 0x00686917 $SG58058 0x00481FD0
     if (text_open(AlphaxFileID, "CUSTOMFACTIONS") == 0) {
         text_get();
         while (*text_item() != 0) {
@@ -2818,7 +2822,7 @@ void NetWin::setup_faction_data(MessageFactionData *message_faction_data) {
 
     faction_records_->record_count_ = static_cast<uint8_t>(record_count);
     faction_records_->record_type_ = 7;
-// RECOVERY_LITERAL: v1 0x00686918 0x00686921 $SG58076 0x00481FD0
+// RECOVERY_LITERAL: v1 0x00686918 0x00686921 $SG58071 0x00481FD0
     if (text_open(AlphaxFileID, "FACTIONS") != 0) {
         return;
     }
@@ -2831,7 +2835,7 @@ void NetWin::setup_faction_data(MessageFactionData *message_faction_data) {
         text_get();
         strcpy(faction_records_->records_[name_index++].filename_, text_item());
     }
-// RECOVERY_LITERAL: v1 0x00686924 0x00686930 $SG58083 0x00481FD0
+// RECOVERY_LITERAL: v1 0x00686924 0x00686930 $SG58078 0x00481FD0
     if (text_open(AlphaxFileID, "NEWFACTIONS") != 0) {
         return;
     }
@@ -2840,7 +2844,7 @@ void NetWin::setup_faction_data(MessageFactionData *message_faction_data) {
         text_get();
         strcpy(faction_records_->records_[name_index++].filename_, text_item());
     }
-// RECOVERY_LITERAL: v1 0x00686930 0x0068693F $SG58088 0x00481FD0
+// RECOVERY_LITERAL: v1 0x00686930 0x0068693F $SG58083 0x00481FD0
     if (text_open(AlphaxFileID, "CUSTOMFACTIONS") != 0) {
         return;
     }
@@ -2873,7 +2877,7 @@ void NetWin::setup_faction_data(MessageFactionData *message_faction_data) {
         netwin_pcx_name(faction_records_->records_[record_index].filename_);
 
         if (buffer.load_pcx(StringTemp, 0, 0xa, 0xec) != 0) {
-// RECOVERY_LITERAL: v1 0x00686948 0x00686954 $SG58099 0x00481FD0
+// RECOVERY_LITERAL: v1 0x00686948 0x00686954 $SG58094 0x00481FD0
             buffer.load_pcx("faction.pcx", 0, 0xa, 0xec);
         }
         faction_records_->records_[record_index].color_ =
