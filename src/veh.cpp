@@ -2407,8 +2407,8 @@ void __cdecl name_proto(char *output, int prototype_id, int faction_id,
             quality = 1;
         }
         not_sea = Chassis[chassis_id].triad != TRIAD_SEA;
-        if (!strlen(table_text(Chassis[chassis_id].offsv_lrg_name))
-            || !strlen(table_text(Chassis[chassis_id].defsv_lrg_name))) {
+        if (!strlen(StringTable.get(Chassis[chassis_id].offsv_lrg_name))
+            || !strlen(StringTable.get(Chassis[chassis_id].defsv_lrg_name))) {
             quality = 0;
         }
     }
