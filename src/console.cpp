@@ -2597,11 +2597,10 @@ void Console::give_hints() {
             Bases[cursor_base].faction_id_current == faction_id_) {
             const int current_proto = Vehs[selected_vehicle_].proto_id;
             const Base &base = Bases[cursor_base];
-            if (base.population_size > 2 ||
+            if (((base.population_size > 2 ||
                 PlayersData[faction_id_].total_mil_veh > 3 ||
-                PlayersData[faction_id_].proto_id_active[current_proto] > 1) {
-                if (enemy_move(-1 - selected_vehicle_) != 0 &&
-                    (GameDataStateStorage.fields_.tutwin_flags_9a64bc_ & 0x800000u) == 0) {
+                PlayersData[faction_id_].proto_id_active[current_proto] > 1) && enemy_move(-1 - selected_vehicle_) != 0 &&
+                    (GameDataStateStorage.fields_.tutwin_flags_9a64bc_ & 0x800000u) == 0) != 0) {
                     StringTemp[0] = '\0';
                     say_stats_3(StringTemp, Vehs[selected_vehicle_].proto_id);
                     parse_says(2, StringTemp, -1, -1);
@@ -2624,7 +2623,6 @@ void Console::give_hints() {
                         0x800000, -1, -1);
                     return;
                 }
-            }
         }
 
         // 0x512959 empty-base scan. The image checks the current weapon before
