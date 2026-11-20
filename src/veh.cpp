@@ -3880,7 +3880,7 @@ void __cdecl consider_designs(int faction_id) {
                     }
                     if (upgrade) {
                         armor = new_armor;
-                    } else if (armor != new_armor && weapon != new_weapon) {
+                    } else if (armor != new_armor && new_weapon != weapon) {
                         break;
                     }
                 }
