@@ -1619,9 +1619,9 @@ void StatusWin::draw_active(int vehicle_id, int base_id, int add_spot) {
                                        area.right - area.left);
             StringTemp[0] = '\0';
             if (has_fac(FAC_TACHYON_FIELD, base_id, 0)) {
-                strcat(StringTemp, StringTable.get(Facility[FAC_TACHYON_FIELD].name));
+                strcat(StringTemp, table_text(Facility[FAC_TACHYON_FIELD].name));
             } else if (has_fac(FAC_PERIMETER_DEFENSE, base_id, 0)) {
-                strcat(StringTemp, StringTable.get(Facility[FAC_PERIMETER_DEFENSE].name));
+                strcat(StringTemp, table_text(Facility[FAC_PERIMETER_DEFENSE].name));
             }
             if (strlen(StringTemp)) {
                 line_y = MainInterfaceGlobal.wrap_cent(StringTemp, content_x, line_y,
