@@ -2747,8 +2747,8 @@ void BaseWin::draw_energy_alloc(int update_mode) {
     int psych_pct = PlayersData[faction].se_alloc_psych;
     int econ_pct = 10 - psych_pct - labs_pct;
     int energy = range(BaseCurrent->energy_surplus, 0, 9999);
-    int psych = range((psych_pct * energy + 4) / 10, 0, energy);
-    int econ = range((econ_pct * energy + 4) / 10, 0, energy - psych);
+    int psych = range((PlayersData[faction].se_alloc_psych * energy + 4) / 10, 0, energy);
+    int econ = range(((10 - psych_pct - labs_pct) * energy + 4) / 10, 0, energy - psych);
     int labs = energy - econ - psych;
     int econ_total = BaseCurrent->economy_total;
     int econ_extra = econ_total - econ;
