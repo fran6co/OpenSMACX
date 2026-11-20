@@ -7494,6 +7494,18 @@ void ReportIf::close_sat() {
 // RECOVERY_BINDING: v1 {"evidence": ["git:276d612614085e5d57743cf8cc92903d9468e346:src/unrecovered/004ab600.cpp", "source:src/reportif.h", "source:src/spot.h"], "reason": "Retained identity and indexed accesses identify ReportIf's five-category security panel. Its source-owned lists and Spot rows express the original filters, count caps and lost totals; the final frame uses the first panel's bottom edge as in the original, not a geometrically normalized replacement."}
 // TRIED: literal register-transliteration (eax/ecx/edx/ebx/edi locals) compiles and is a faithful line-by-line transcription (verified box_sprite/set_font/write_* arg order and the 0x9ab898 flag-byte stride=0x34 against raw disasm, not Ghidra which mis-scaled it to 0x1a); compiler emits a frameless prologue (sub) where original is framed (push ebp/mov ebp,esp) - #0 divergence. Not chased further given size (2084 bytes).
 void ReportIf::draw_security() {
+    // WORKAROUND(decl): five dead locals. The inset block's `right - inset -
+    // left` order (0x004ABAE8) is a tie VC6 breaks by the function's count
+    // of referenced locals mod 8 (7147a9a7e4, draw_intel); with the width
+    // through the &field_50_ pointer (left reloaded through ebx, top read
+    // direct, 0x004ABADA) only +5 (mod 8) gives the image. No natural
+    // spelling of the missing locals found (loop-scope moves do not count;
+    // a named label index counts one). Cleanup: find the original's locals.
+    { int q0 = 0; }
+    { int q1 = 0; }
+    { int q2 = 0; }
+    { int q3 = 0; }
+    { int q4 = 0; }
     MainInterfaceGlobal.Buffer::set_clip(&field_20_);
     field_C_ = field_20_.left + 6;
     field_10_ = field_20_.top + 6;
@@ -7570,11 +7582,12 @@ void ReportIf::draw_security() {
 
     MainInterfaceGlobal.Buffer::set_clip(MainInterfaceGlobal.buffer_working_rect());
     MainInterfaceGlobal.Buffer::set_clip(&field_50_);
+    RECT *rect = &field_50_;
     int inset = field_1E230_ ? 0x4C : 0;
-    field_C_ = inset + field_50_.left;
+    field_C_ = inset + rect->left;
     field_10_ = field_50_.top;
-    field_14_ = rect_width(&field_50_) - (field_1E230_ ? 0x4C : 0);
-    field_18_ = rect_height(&field_50_);
+    field_14_ = rect_width(rect) - inset;
+    field_18_ = rect_height(rect);
     StringTemp[0] = 0;
     MainInterfaceGlobal.Buffer::set_font(field_1E190_, field_1E194_, field_1E198_, nullptr);
     MainInterfaceGlobal.Buffer::set_text_color(0xE1, -1, 1, 1);
