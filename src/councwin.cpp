@@ -508,7 +508,7 @@ redraw:
     MainInterfaceGlobal.soft_update(&panel_rect_);
 }
 
-// ORIGINAL: 0x00424410 ?make_resolution@CouncWin@@QAEHH@Z 0x00424410-0x0042471F FILE
+// ORIGINAL: 0x00424410 ?make_resolution@CouncWin@@QAEHH@Z 0x00424410-0x0042471F FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["git:276d612614085e5d57743cf8cc92903d9468e346:src/unrecovered/00424410.cpp", "image:terranx_original.exe:0x00424410", "Council interface/window declarations identify embedded fonts/buttons, voting arrays and existing MainInterface/Console owners; original instructions determine call and state order."], "reason": "Recover the original in its genuine UI owner using typed members, real globals and declared operations. Retain seed spans and evidence; no current matching or runtime claim."}
 // TRIED: full Ghidra-faithful translation compiles and matches control flow (do/while record scan, max-index tie-break, vtable slot 001/002/062 calls); diverges at instr #0 (prologue shape), not yet chased further - large function, landed at MISMATCH.
 int CouncWin::make_resolution(int resolve) {
@@ -1652,7 +1652,7 @@ void CouncWin::show(int visible) {
 // case map and call evidence; source ownership and exactness are checked
 // separately.
 // RECOVERY_ASSOCIATED: v1 switch_targets 0x00425DB0 0x0042645C 0x00426470 0x00426198
-// ORIGINAL: 0x00425DB0 ?draw_leader@CouncWin@@QAEXH@Z 0x00425DB0-0x00426459
+// ORIGINAL: 0x00425DB0 ?draw_leader@CouncWin@@QAEXH@Z 0x00425DB0-0x00426459 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/00425db0.cpp"], "reason": "Home leader rendering in CouncWin with typed faction, portrait and label members"}
 // The image's centred writes test the text for null before strlen, the
 // guarded-writer shape buffer.h uses for write_l; the receiver is this
