@@ -1314,11 +1314,11 @@ L_5a2dcd:
         if (!HUMAN_BIT(faction)) {
             if (morale_veh(veh_id, 1, 0) >= 5 && !diff_modifier && !HUMAN_BIT(faction_tgt)) {
                 for (mode = 1; mode < MaxPlayerNum; mode++) {
-                    if (mode != faction && mode != faction_tgt
+                    if ((mode != faction && mode != faction_tgt
                         && HUMAN_BIT(mode) && ALIVE_BIT(mode)
                         && mode == GameDataStateStorage.fields_.ranking_faction_id_unk1_
                         && !(PlayersData[faction_tgt].diplo_treaties[mode] & 0x10)
-                        && (PlayersData[faction_tgt].diplo_treaties[mode] & 8)) {
+                        && (PlayersData[faction_tgt].diplo_treaties[mode] & 8)) != 0) {
                         break;
                     }
                 }
