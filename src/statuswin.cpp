@@ -1013,14 +1013,14 @@ void StatusWin::draw_status(int veh, int a2, int a3, int x, int a5) {
                 StringTemp[0] = '\0';
                 if (ExpansionEnabled
                     && (map_loc(x, y)->bit2 & 0x80008000) == BIT2_FOSSIL) {
-                    strcat(StringTemp, table_text(Natural[15].name_short));
+                    strcat(StringTemp, StringTable.get(Natural[15].name_short));
                 }
                 if ((map_loc(x, y)->bit2 & BIT2_FRESH)
                     && (map_loc(x, y)->climate & ~0x1F) < ALT_BIT_SHORE_LINE) {
-                    strcat(StringTemp, table_text(Natural[7].name_short));
+                    strcat(StringTemp, StringTable.get(Natural[7].name_short));
                 }
                 if ((map_loc(x, y)->bit2 & 0x80000400) == BIT2_GEOTHERMAL) {
-                    strcat(StringTemp, table_text(Natural[10].name_short));
+                    strcat(StringTemp, StringTable.get(Natural[10].name_short));
                 }
                 if ((map_loc(x, y)->bit & BIT_FUNGUS)
                     && (map_loc(x, y)->climate & ~0x1F) >= ALT_BIT_OCEAN_SHELF) {
