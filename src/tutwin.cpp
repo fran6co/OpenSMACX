@@ -1326,8 +1326,8 @@ void TutWin::tour() {
             for (int dir = 0; dir < 8; dir++) {
                 int x_adj = wrap_map_x(x + VehMoveDeltaX[dir]);
                 int y_adj = VehMoveDeltaY[dir] + y;
-                if (y_adj < 0 || y_adj >= MapLatitudeBounds || x_adj < 0
-                    || x_adj >= MapLongitudeBounds) {
+                if ((y_adj < 0 || y_adj >= MapLatitudeBounds || x_adj < 0
+                    || x_adj >= MapLongitudeBounds) != 0) {
                     continue;
                 }
                 int altitude_adj = map_loc(x_adj, y_adj)->climate & ~0x1F;
