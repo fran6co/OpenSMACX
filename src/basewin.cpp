@@ -4364,7 +4364,6 @@ void BaseWin::production(int a1, int a2) {
     Popup popup_tertiary;
     GraphicWin picker_preview;
     int saved_queue[10];
-    char strictness_text[0x50];
     int sel;
     int displayed_id;
     int i;
@@ -4530,14 +4529,13 @@ setup:
 
                     StringTemp[0] = 0;
                     strcat(StringTemp, "RETOOLPENALTY");
-                    _itoa(Rules.retool_strictness, strictness_text, 10);
-                    strcat(StringTemp, strictness_text);
+                    say_num(Rules.retool_strictness);
                     if (Rules.retool_exemption != 0) strcat(StringTemp, "A");
 
                     popup.start(PopupStartCaption, StringTemp, -1, 0, 0, 0);
                     if (BaseCurrent->queue_size == 0)
                         popup.item(StringTable.get(Labels.strings_ptr[0xB0C / 4]), 2);
-                    popup.item(label_get(0xB10 / 4), 3);
+                    popup.item(StringTable.get(Labels.strings_ptr[0xB10 / 4]), 3);
                     switch (popup.exec()) {
                     case 0:
                         if (a2 == 0)
