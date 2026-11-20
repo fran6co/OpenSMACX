@@ -3263,19 +3263,24 @@ void ReportWin::draw_ops() {
     const int faction = ReportIfGlobal.report_faction_id_;       // edi, spilled to [ebp-0x74]
     Random rng;                                                  // [ebp-0x54]
     rng.reseed(timeGetTime());
-    // Image stores 59A0 then 59A4 from one register.
-    field_59A0_ = field_59A4_ = 40;
-    const int split = energy_panel_rect_.top + 34 + field_E268_;
-    RECT upper = {energy_panel_rect_.left, energy_panel_rect_.top,           // [ebp-0x94]
-        energy_panel_rect_.right, split};
+    // The rectangles chain: lower starts below upper, icon below lower.top,
+    // text right of icon (image: icon.top = lower.top + 3, text.left =
+    // icon.right + 2 from registers, 0x49D61D..0x49D62C). upper goes through
+    // set_rect before the 59A0/59A4 stores; this homes faction at [ebp-0x74]
+    // and title at [ebp-0x6c] as in the image.
+    RECT upper;                                                  // [ebp-0x94]
+    set_rect(&upper, energy_panel_rect_.left, energy_panel_rect_.top,
+        energy_panel_rect_.right, energy_panel_rect_.top + field_E268_ + 34);
+    field_59A0_ = 40;
+    field_59A4_ = 40;
     RECT title = {energy_panel_rect_.left + 3, energy_panel_rect_.top + 3,   // [ebp-0x6c]
         energy_panel_rect_.right - 3, energy_panel_rect_.top + field_E268_ + 9};
-    RECT lower = {energy_panel_rect_.left, split + 2,                        // [ebp-0x84]
+    RECT lower = {energy_panel_rect_.left, upper.bottom + 2,                 // [ebp-0x84]
         energy_panel_rect_.right, energy_panel_rect_.bottom};
-    RECT icon = {energy_panel_rect_.left + 3, split + 5,                     // [ebp-0x34]
-        energy_panel_rect_.left + 43, split + 45};
-    RECT text = {energy_panel_rect_.left + 45, split + 5,                    // [ebp-0x48]
-        energy_panel_rect_.right - 3, split + 45};
+    RECT icon = {energy_panel_rect_.left + 3, lower.top + 3,                 // [ebp-0x34]
+        energy_panel_rect_.left + 43, lower.top + 43};
+    RECT text = {icon.right + 2, icon.top,                                   // [ebp-0x48]
+        energy_panel_rect_.right - 3, icon.bottom};
     Buffer::box_sprite(&upper, &InterfaceBoxStyles[0]);
     Buffer::box_sprite(&title, &InterfaceBoxStyles[1]);
     Buffer::box_sprite(&lower, &InterfaceBoxStyles[0]);
