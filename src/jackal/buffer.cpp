@@ -25,9 +25,6 @@
 // ORIGINAL: 0x005D71F0 sub_5d71f0 0x005D71F0-0x005D720F FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned startup 0x005D71D0..0x005D71E6 constructs the Sprite at 0x009B3A50..0x009B3A7C and registers finalizer 0x005D71F0..0x005D720F. Cleanup publishes bit 2 of the same byte 0x009B37CC before Sprite::close at 0x005E3820; constructors do not reset the guard.", "Buffer::shared_sprite_ is ordinary class-static storage defined after the special-text array. Physical compiler output supplies the shared guard and registration edges; consumers access the actual typed Sprite directly.", "Original identities, full spans and historical claims remain unchanged. Static members add no instance fields. Current compiler symbols are binding facts, not historical debug names; complete original TU boundaries, linked storage placement and game fidelity remain unproved. Fresh strict measurement is required; this binding grants no claim."], "reason": "Bind the original lifetime to ordinary typed storage and its compiler-generated initialization/destruction, preserving guard, order and restoration obligations."}
 // symbol    _$E16
-// WORKAROUND(decl): the string writers call next_entry (0x00402500) out of
-// line at every site.
-#define STRINGSTRUCT_NEXT_ENTRY_OUT_OF_LINE
 // WORKAROUND(decl): current_text expands current_entry (0x005E3637) while
 // the string writers' copies of it call 0x00402530.
 #define STRINGSTRUCT_CURRENT_ENTRY_INLINE
@@ -2132,7 +2129,7 @@ int Buffer::load_pcx(const char *filename, Palette *palette, int tgl, int height
         --scan;
     }
     if (scan == path) {
-// RECOVERY_LITERAL: v1 0x00696C88 0x00696C8D $SG43404 0x005D7DE0
+// RECOVERY_LITERAL: v1 0x00696C88 0x00696C8D $SG43409 0x005D7DE0
         strcat(path, ".pcx");
     }
 
@@ -5181,11 +5178,11 @@ int __stdcall Buffer::load_tga(const char * a1, Palette * a2, int a3, int a4) {
         goto has_ext;
     }
     switch (Language) {
-// RECOVERY_LITERAL: v1 0x00696C58 0x00696C5D $SG44398 0x005D7B40
+// RECOVERY_LITERAL: v1 0x00696C58 0x00696C5D $SG44403 0x005D7B40
         case 1: strcat(path, ".tgf"); break;
-// RECOVERY_LITERAL: v1 0x00696C60 0x00696C65 $SG44400 0x005D7B40
+// RECOVERY_LITERAL: v1 0x00696C60 0x00696C65 $SG44405 0x005D7B40
         case 2: strcat(path, ".tgg"); break;
-// RECOVERY_LITERAL: v1 0x00696C68 0x00696C6D $SG44402 0x005D7B40
+// RECOVERY_LITERAL: v1 0x00696C68 0x00696C6D $SG44407 0x005D7B40
         default: strcat(path, ".tga"); break;
     }
   has_ext:
@@ -7738,11 +7735,11 @@ int __stdcall Buffer::load_bmp(const char * a1, Palette * a2, int a3, int a4) {
         goto has_ext;
     }
     switch (Language) {
-// RECOVERY_LITERAL: v1 0x00696C70 0x00696C75 $SG45317 0x005D7CA0
+// RECOVERY_LITERAL: v1 0x00696C70 0x00696C75 $SG45322 0x005D7CA0
         case 1: strcat(path, ".bmf"); break;
-// RECOVERY_LITERAL: v1 0x00696C78 0x00696C7D $SG45319 0x005D7CA0
+// RECOVERY_LITERAL: v1 0x00696C78 0x00696C7D $SG45324 0x005D7CA0
         case 2: strcat(path, ".bmg"); break;
-// RECOVERY_LITERAL: v1 0x00696C80 0x00696C85 $SG45321 0x005D7CA0
+// RECOVERY_LITERAL: v1 0x00696C80 0x00696C85 $SG45326 0x005D7CA0
         default: strcat(path, ".bmp"); break;
     }
   has_ext:
