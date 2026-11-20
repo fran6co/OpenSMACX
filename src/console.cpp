@@ -5337,11 +5337,11 @@ int Console::on_key_click(int a1, int a2) {
 
     if (a2 == 0x0D && (GameDataStateStorage.fields_.game_state_ & STATE_OMNISCIENT_VIEW) != 0 &&
         (MapWinTable[0]->field_1DD70_ & 0x4000) != 0) {
-        // UNCERTAIN (0x517B39): the image retests the current id for < 0
-        // after the order test; this loop has no such test.
+        // 0x517B39 retests the current id for < 0 after the order test:
+        // the step is veh_next_stack_id's guarded read.
         for (int veh_id = veh_at(ConsoleGlobal.cursor_history_x_[ConsoleGlobal.cursor_history_index_],
                                  ConsoleGlobal.cursor_history_y_[ConsoleGlobal.cursor_history_index_]);
-             veh_id >= 0; veh_id = Vehs[veh_id].next_veh_id_stack) {
+             veh_id >= 0; veh_id = veh_next_stack_id(veh_id)) {
             if (Vehs[veh_id].order == 0x18) {
                 Paths.move(veh_id, Vehs[veh_id].faction_id);
                 break;
