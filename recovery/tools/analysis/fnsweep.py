@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""fnsweep.py <unit> <addr> [--rules r1,r2,..] [--armwo d,t,c,r] [--steps N] [--min-rows K] [--write] [--json OUT]
+"""fnsweep.py <unit> <addr> [--rules r1,r2,..] [--armwo d,t,c,r] [--steps N] [--fast] [--on-step CMD] [--min-rows K] [--write] [--json OUT]
 
 Single-site rewrite sweep of one function, ranked by the sdeck structural key (EH distance, named call
 distance, jcc/jmp/call/ret count distance, control-flow hunks, rows). Every candidate site of the rules
@@ -12,9 +12,12 @@ ranks only them.
 
 Comparison (better()): EH distance, then named call distance; when the branch/call count distance of the two
 keys differs by at most 1, control-flow hunks decide before that count, then rows; otherwise count, hunks, rows.
+--fast: after a step, the next round re-evaluates only the previous round's other winning sites (a full sweep
+confirms flat). --on-step CMD runs a shell command after each written step (FNSWEEP_LABEL, FNSWEEP_LINE,
+FNSWEEP_KEYS in its environment), e.g. a per-step commit.
 --min-rows K: a step that changes nothing but rows must save more than K rows.
 Lanes FE_PFX_BASE..FE_PFX_BASE+FE_JOBS-1. Screens only; confirm with `recover measure`."""
-import sys, os, re, json
+import sys, os, re, json, subprocess
 from concurrent.futures import ThreadPoolExecutor
 S = os.path.dirname(os.path.abspath(__file__)); T = os.path.dirname(S)
 sys.path.insert(0, T); sys.path.insert(0, S)
@@ -59,11 +62,18 @@ def candidates(t, addr, names, arm=None):
     return out
 
 
-def sweep(unit, addr, t, names, base, jobs, verbose=True, arm=None):
+def ident(t, c):
+    """position-independent identity of a candidate: its rule, the text it replaces and the replacement"""
+    s, e, rep, label, at = c
+    return (label, t[s:e], rep) if s or e != len(t) else (label, None)
+
+
+def sweep(unit, addr, t, names, base, jobs, verbose=True, arm=None, only=None):
     _, _, ilo, ihi = span(t, addr)
     cands = candidates(t, addr, [n for n in names if n], arm)
+    if only is not None: cands = [c for c in cands if ident(t, c) in only]
     B = sdeck.evaluate(unit, addr, ilo, ihi, t, base)
-    if verbose: print('BASE', B, 'sites', len(cands), flush=True)
+    if verbose: print('BASE', B, 'sites', len(cands), '(previous winners)' if only is not None else '', flush=True)
     res = [None] * len(cands)
 
     def lane(k):
@@ -86,19 +96,28 @@ def main():
     global MIN_ROWS; MIN_ROWS = int(opt('--min-rows', '0'))
     base = int(os.environ.get('FE_PFX_BASE', '8')); jobs = int(os.environ.get('FE_JOBS', '5'))
     path = fe.R + '/src/' + unit; t = open(path, encoding='latin-1').read()
-    log = []
-    for step in range(steps):
-        B, cands, res = sweep(unit, addr, t, names, base, jobs, arm=arm)
+    hook = opt('--on-step')
+    log = []; only = None; step = 0
+    while step < steps:
+        B, cands, res = sweep(unit, addr, t, names, base, jobs, arm=arm, only=only)
+        win = [i for i, r in enumerate(res) if better(r, B)]
         best = None
-        for i, r in enumerate(res):
-            if better(r, B) and (best is None or better(r, res[best])): best = i
+        for i in win:
+            if best is None or better(res[i], res[best]): best = i
         if best is None:
+            if only is not None:   # the previous round's winners are spent: confirm with a full sweep
+                only = None; continue
             print('FLAT', B); log.append(dict(step=step, base=B, accepted=None)); break
         s, e, rep, label, at = cands[best]; line = t.count('\n', 0, at) + 1
         print('STEP', step, label, 'L%d' % line, B, '->', res[best], flush=True)
         log.append(dict(step=step, base=B, key=res[best], label=label, line=line))
+        # --fast: the next round re-evaluates only this round's other winning sites (a full sweep when they are spent)
+        only = {ident(t, cands[i]) for i in win if i != best} if '--fast' in a else None
         t = t[:s] + rep + t[e:]
         if '--write' in a: open(path, 'w', encoding='latin-1').write(t)
+        if hook: subprocess.run(hook, shell=True, env=dict(os.environ, FNSWEEP_LABEL=label, FNSWEEP_LINE='L%d' % line,
+                                                          FNSWEEP_KEYS='%s -> %s' % (B, res[best])))
+        step += 1
     if out: json.dump(log, open(out, 'w'))
 
 
