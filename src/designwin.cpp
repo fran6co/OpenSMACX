@@ -3900,7 +3900,7 @@ void DesignWin::select_name() {
     // The original prompt token at 0x006838F4 is DESIGNNAME.
 // The retained prototype-name prompt identifies DESIGNNAME independently of measurement.
 // Bounds cover the literal payload, not surrounding allocation or lifetime.
-// RECOVERY_LITERAL: v1 0x006838F4 0x006838FF $SG62489 0x0043BE30
+// RECOVERY_LITERAL: v1 0x006838F4 0x006838FF $SG62497 0x0043BE30
     if (X_pop_ask("DESIGNNAME", 31, name, 0, 0) == 0) {
         if (strlen(ParseStrBuffer[0].str) == 0) {
             prototype_name_[0] = 0;
