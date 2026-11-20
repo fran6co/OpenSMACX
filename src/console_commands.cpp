@@ -129,6 +129,22 @@ void ConsoleCommandsDeclFnPad30();
 void ConsoleCommandsDeclFnPad31();
 void ConsoleCommandsDeclFnPad32();
 void ConsoleCommandsDeclFnPad33();
+void ConsoleCommandsDeclFnPad34();
+void ConsoleCommandsDeclFnPad35();
+void ConsoleCommandsDeclFnPad36();
+void ConsoleCommandsDeclFnPad37();
+void ConsoleCommandsDeclFnPad38();
+void ConsoleCommandsDeclFnPad39();
+void ConsoleCommandsDeclFnPad40();
+void ConsoleCommandsDeclFnPad41();
+void ConsoleCommandsDeclFnPad42();
+void ConsoleCommandsDeclFnPad43();
+void ConsoleCommandsDeclFnPad44();
+void ConsoleCommandsDeclFnPad45();
+void ConsoleCommandsDeclFnPad46();
+void ConsoleCommandsDeclFnPad47();
+void ConsoleCommandsDeclFnPad48();
+void ConsoleCommandsDeclFnPad49();
 
 
 void __cdecl base_kill(int base_id);
