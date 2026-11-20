@@ -4450,7 +4450,7 @@ void NetDaemon::process_message(char *message, unsigned long message_size, int s
         // 0x0053780E lea r,[r+r*2+0xD2]; MATCHING_GUIDE 3.4).
         const int project_facility = FacilitySPStart + project_id;
         RulesFacility *project = &Facility[project_facility];
-        log_say("Received PROJECT", StringTable.get(project->name),
+        log_say("Received PROJECT", table_text(project->name),
                 project_faction, packet->payload_14_, related_id);
         if (project_faction == ConsoleGlobal.faction_id_) {
             break;
