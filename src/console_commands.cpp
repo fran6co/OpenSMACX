@@ -859,10 +859,7 @@ int Console::upgrade(int veh_id) { // 0x004D06C0
             }
             choice = upgrade_cost(faction_id, proto_id, Vehs[veh_id].proto_id) * 10;
             if (!(is_human(faction_id))) {
-                int threshold =
-                    static_cast<int>(static_cast<uint32_t>(GameDataStateStorage.fields_.diff_level_current_)
-                                     * static_cast<uint32_t>(choice)) / 10
-                    / (8 - PlayersData[GameDataStateStorage.fields_.ranking_faction_id_unk1_].ranking);
+                int threshold = GameDataStateStorage.fields_.diff_level_current_ * choice / 10 / (8 - PlayersData[GameDataStateStorage.fields_.ranking_faction_id_unk1_].ranking);
                 if (PlayersData[faction_id].energy_reserves
                     > PlayersData[GameDataStateStorage.fields_.ranking_faction_id_unk2_].energy_reserves) {
                     if (PlayersData[faction_id].energy_reserves >= 1000) {
