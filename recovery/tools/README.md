@@ -712,3 +712,12 @@ an explicit `--pfx` is only needed to pick another lane.
   `--json` items: each probe statement set, function-pointer local, pragma region, `__forceinline` and volatile cast
   removed alone, every marker of the unit measured (DEAD / KEEP / NO); --write applies DEAD and KEEP cumulatively.
   fe masks relocations: confirm with `recover measure` (a load-order volatile reads DEAD and is not).
+- `analysis/casescan.py <unit> <addr[,addr]> [--src ALT] [-v] | --from FEALL.json [--json F]` switch case-label screen
+  (MATCHING_GUIDE Z9 "Shared case labels"): per jump table (byte index tables included) and per compare tree
+  (concrete per-value walk of `cmp/sub/dec/test` + jcc chains), the image's case value -> block partition against
+  ours. PART split/merge = ours shares a block the image keeps apart (write the cases apart) or the reverse; DFLT =
+  one side joins the bound check's default block; BLK = a case's straight run differs in length (cross-jumped tail);
+  TGT/NTAB/NTREE/BIAS as named. 60 s on the non-exact set. 2026-11-20 pass (327 functions, 53 with dispatches):
+  PART only in base_build (owned) and vehdraw_scoot_start (ours cross-jumps identical cases 0/6, which the image
+  allocated apart: a scratch-register question, not labels); pre-fix vehdraw_construct_chassis reads PART [1,5] +
+  DFLT 0/9. The other BLK rows are default blocks, `abs`-style arms beside a tree, or regalloc tails.
