@@ -5945,6 +5945,37 @@ result over 64 symbol-counter pads, so none of these is a counter canary.
     `display |= any_visible` forms) change nothing. Open: which original
     spelling puts rx between them (the image's loop keeps x in esi with two
     `mov [ebp+0x20],esi` stores, one per wrap_map_x arm).
+    The count is taken AFTER copy propagation (par-2 2026-11-20, 18-variant
+    deck): `int x = wrap(..); rx = x;` with rx written at the first k loop
+    sites (k = 1..6) compiles exactly like the x-copy base (rows 2442, frame
+    0x134: copy propagation turns every rx use back into x), and `rx =
+    wrap(..);` followed by `int x = rx;` at any point, `int x = rx =
+    wrap(..)` or the all-rx loop compile exactly like each other (2768,
+    0x130: x becomes rx). `rx = x = wrap(..)` = base; the copy after the
+    loop body (`rx = x;` last) 2781/0x134. So a lexical (pre-copy-propagation)
+    count is refuted, and no spelling with ONE copy direction lands rx between
+    nerve_gas and display: the intermediate count needs references that
+    copy propagation cannot fold (a second definition of rx, or uses on a
+    path where the copy does not dominate). Note the image's L_509923 block
+    also stores ry to its home (-0x34, 0x509965) where ours keeps ry in ebx.
+    No general register-inclusive count reproduces our own compiles either:
+    packsim `--count` (lexical source references `src`, register uses after
+    loads/stores `reg1..reg4`, with or without temporaries) lowers agreement
+    on battle_fight/go_to/boom/enemy_move from 53/46/25/113 units (frame
+    accesses) to at best 49-51/46/24-25/95-103. Keep frame accesses.
+  - packrev.py models the dead parameter homes too (2026-11-20, default;
+    `--no-params`): an image parameter slot that is stored to is a
+    pre-existing slot founded by the parameter (the reads only its entry
+    value reaches, plus webs of the reassigned parameter's own name), tried
+    before every local slot in first-read order; address-taken scalars there
+    are ordinary units. Console::go_to (current source) reads 40 of 43 units
+    right at H0; its residue is has_fac's mask (L2291) joining base_id's
+    -0x18 (the search merges them) and the two L2606 front-end temporaries
+    at +0x10 where the model tries +0xc (index's home) first. can_terraform
+    0x00565320 has the same kind of residue: mine_count/solar_count/base_x
+    sit in y/force_improve/x homes (+0x10/+0x14/+0xc) where the model, in
+    first-read order, offers +0xc first; so "read first" in final-code
+    address order is not always the original's home order (open).
 
 - **A loop counter the image keeps in memory while a callee-saved register
   holds a per-iteration conversion** (par-2 2026-11-19, ReportWin::draw_ops
