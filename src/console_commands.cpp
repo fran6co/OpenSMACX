@@ -5102,8 +5102,8 @@ void Console::editor_edit_veh(int vehicle_id) {
     popup_set_write_check_bit_inline(5, (Vehs[vehicle_id].flags & VFLAG_INVISIBLE) != 0);
     popup_set_write_check_bit_inline(6, Vehs[vehicle_id].state & VSTATE_MONOLITH_UPGRADED);
 
-    StringTemp[0] = '\0';
-    strcat(StringTemp, VehPrototypes[Vehs[vehicle_id].proto_id].veh_name);
+    ::clear();
+    says(VehPrototypes[Vehs[vehicle_id].proto_id].veh_name);
     strcat(StringTemp, console_space_text());
     editor_edit_veh_budget_probe4(5);  // WORKAROUND(inline): see editor_edit_veh_budget_probe4
     strcat(StringTemp, console_open_paren_text());
@@ -5221,7 +5221,8 @@ void Console::editor_edit_veh(int vehicle_id) {
         popup.start(PopupStartCaption, "EDITVEHWHO", -1, nullptr, 0x42);
         for (int faction_id = 0; faction_id < MaxPlayerNum; ++faction_id) {
             StringTemp[0] = '\0';
-            strcat(StringTemp, get_noun(faction_id));
+            parse_set(Players[faction_id].noun_gender, Players[faction_id].is_noun_plural);
+            strcat(StringTemp, Players[faction_id].noun_faction);
             popup.item(StringTemp, faction_id);
         }
         popup.set_value(Vehs[vehicle_id].faction_id);
@@ -5233,7 +5234,7 @@ void Console::editor_edit_veh(int vehicle_id) {
     } else if (ConsoleGroupAction == 4) {
         popup.start(PopupStartCaption, "EDITVEHHOME", -1, nullptr, 0x42);
         StringTemp[0] = '\0';
-        strcat(StringTemp, StringTable.get(Labels.strings_ptr[25]));
+        strcat(StringTemp, table_text(Labels.strings_ptr[25]));
         popup.item(StringTemp, 9999);
         for (int base_id = 0; base_id < GameDataStateStorage.fields_.base_current_count_; ++base_id) {
             if (Bases[base_id].faction_id_current == Vehs[vehicle_id].faction_id) {
