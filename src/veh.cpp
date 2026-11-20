@@ -3786,29 +3786,28 @@ void __cdecl consider_designs(int faction_id) {
     }
     if (new_weapon >= 0 || new_armor >= 0) {
         for (int i = 0; i < MaxVehProtoFactionNum; i++) {
-            int proto_id = faction_id * MaxVehProtoFactionNum + i;
-            if (!(VehPrototypes[proto_id].flags & PROTO_ACTIVE)
-                || VehPrototypes[proto_id].obsolete_factions & (1 << faction_id)) {
+            if (!(VehPrototypes[faction_id * MaxVehProtoFactionNum + i].flags & PROTO_ACTIVE)
+                || VehPrototypes[faction_id * MaxVehProtoFactionNum + i].obsolete_factions & (1 << faction_id)) {
                 continue;
             }
-            if (Chassis[VehPrototypes[proto_id].chassis_id].missile) {
+            if (Chassis[VehPrototypes[faction_id * MaxVehProtoFactionNum + i].chassis_id].missile) {
                 continue;
             }
             int weapon;
             int armor;
-            switch (VehPrototypes[proto_id].plan) {
+            switch (VehPrototypes[faction_id * MaxVehProtoFactionNum + i].plan) {
             case PLAN_OFFENSIVE:
             case PLAN_AIR_SUPERIORITY:
                 if (new_weapon >= 0) {
-                    propose_proto(faction_id, VehPrototypes[proto_id].chassis_id, new_weapon,
-                                  VehPrototypes[proto_id].armor_id,
-                                  VehPrototypes[proto_id].ability_flags, reactor,
-                                  VehPrototypes[proto_id].unk_1, 0);
+                    propose_proto(faction_id, VehPrototypes[faction_id * MaxVehProtoFactionNum + i].chassis_id, new_weapon,
+                                  VehPrototypes[faction_id * MaxVehProtoFactionNum + i].armor_id,
+                                  VehPrototypes[faction_id * MaxVehProtoFactionNum + i].ability_flags, reactor,
+                                  VehPrototypes[faction_id * MaxVehProtoFactionNum + i].unk_1, 0);
                 }
                 break;
             case PLAN_COMBAT:
                 if (new_weapon >= 0) {
-                    armor = VehPrototypes[proto_id].armor_id;
+                    armor = VehPrototypes[faction_id * MaxVehProtoFactionNum + i].armor_id;
                     if (new_armor >= 0) {
                         scratch = (reactor == 1) ? 2 : 1;
                         int offense = Weapon[new_weapon].offense_rating;
@@ -3822,12 +3821,12 @@ void __cdecl consider_designs(int faction_id) {
                             armor = new_armor;
                         }
                     }
-                    propose_proto(faction_id, VehPrototypes[proto_id].chassis_id, new_weapon, armor,
-                                  VehPrototypes[proto_id].ability_flags, reactor,
-                                  VehPrototypes[proto_id].unk_1, 0);
+                    propose_proto(faction_id, VehPrototypes[faction_id * MaxVehProtoFactionNum + i].chassis_id, new_weapon, armor,
+                                  VehPrototypes[faction_id * MaxVehProtoFactionNum + i].ability_flags, reactor,
+                                  VehPrototypes[faction_id * MaxVehProtoFactionNum + i].unk_1, 0);
                 } else {
                     scratch = (reactor == 1) ? 2 : 1;
-                    weapon = VehPrototypes[proto_id].weapon_id;
+                    weapon = VehPrototypes[faction_id * MaxVehProtoFactionNum + i].weapon_id;
                     int offense = Weapon[weapon].offense_rating;
                     int limit = scratch * reactor_power * 4 / offense;
                     if (limit < 2 || offense < 2) {
@@ -3836,30 +3835,30 @@ void __cdecl consider_designs(int faction_id) {
                         offense = limit;
                     }
                     if (Armor[new_armor].defense_rating <= offense) {
-                        propose_proto(faction_id, VehPrototypes[proto_id].chassis_id, weapon, new_armor,
-                                      VehPrototypes[proto_id].ability_flags, reactor,
-                                      VehPrototypes[proto_id].unk_1, 0);
+                        propose_proto(faction_id, VehPrototypes[faction_id * MaxVehProtoFactionNum + i].chassis_id, weapon, new_armor,
+                                      VehPrototypes[faction_id * MaxVehProtoFactionNum + i].ability_flags, reactor,
+                                      VehPrototypes[faction_id * MaxVehProtoFactionNum + i].unk_1, 0);
                     }
                 }
                 break;
             case PLAN_DEFENSIVE:
                 if (new_armor >= 0) {
-                    propose_proto(faction_id, VehPrototypes[proto_id].chassis_id,
-                                  VehPrototypes[proto_id].weapon_id, new_armor,
-                                  VehPrototypes[proto_id].ability_flags, reactor,
-                                  VehPrototypes[proto_id].unk_1, 0);
+                    propose_proto(faction_id, VehPrototypes[faction_id * MaxVehProtoFactionNum + i].chassis_id,
+                                  VehPrototypes[faction_id * MaxVehProtoFactionNum + i].weapon_id, new_armor,
+                                  VehPrototypes[faction_id * MaxVehProtoFactionNum + i].ability_flags, reactor,
+                                  VehPrototypes[faction_id * MaxVehProtoFactionNum + i].unk_1, 0);
                 }
                 break;
             case PLAN_NAVAL_SUPERIORITY:
-                armor = VehPrototypes[proto_id].armor_id;
-                weapon = VehPrototypes[proto_id].weapon_id;
+                weapon = VehPrototypes[faction_id * MaxVehProtoFactionNum + i].weapon_id;
+                armor = VehPrototypes[faction_id * MaxVehProtoFactionNum + i].armor_id;
                 if (new_weapon >= 0) {
                     int margin = 5;
                     if (reactor * reactor >= 5) {
                         margin = reactor * reactor;
                     }
-                    if (proto_cost(VehPrototypes[proto_id].chassis_id, new_weapon, armor,
-                                   VehPrototypes[proto_id].ability_flags, reactor)
+                    if (proto_cost(VehPrototypes[faction_id * MaxVehProtoFactionNum + i].chassis_id, new_weapon, armor,
+                                   VehPrototypes[faction_id * MaxVehProtoFactionNum + i].ability_flags, reactor)
                         <= PlayersData[faction_id].ai_growth
                            + PlayersData[faction_id].ai_power + margin) {
                         weapon = new_weapon;
@@ -3872,8 +3871,8 @@ void __cdecl consider_designs(int faction_id) {
                         if (reactor * reactor >= 5) {
                             margin = reactor * reactor;
                         }
-                        if (proto_cost(VehPrototypes[proto_id].chassis_id, weapon, new_armor,
-                                       VehPrototypes[proto_id].ability_flags, reactor)
+                        if (proto_cost(VehPrototypes[faction_id * MaxVehProtoFactionNum + i].chassis_id, weapon, new_armor,
+                                       VehPrototypes[faction_id * MaxVehProtoFactionNum + i].ability_flags, reactor)
                             <= PlayersData[faction_id].ai_growth
                                + PlayersData[faction_id].ai_power + margin) {
                             upgrade = true;
@@ -3885,9 +3884,9 @@ void __cdecl consider_designs(int faction_id) {
                         break;
                     }
                 }
-                propose_proto(faction_id, VehPrototypes[proto_id].chassis_id, weapon, armor,
-                              VehPrototypes[proto_id].ability_flags, reactor,
-                              VehPrototypes[proto_id].unk_1, 0);
+                propose_proto(faction_id, VehPrototypes[faction_id * MaxVehProtoFactionNum + i].chassis_id, weapon, armor,
+                              VehPrototypes[faction_id * MaxVehProtoFactionNum + i].ability_flags, reactor,
+                              VehPrototypes[faction_id * MaxVehProtoFactionNum + i].unk_1, 0);
                 break;
             }
         }
