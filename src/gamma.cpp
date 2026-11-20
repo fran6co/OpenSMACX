@@ -48,13 +48,6 @@ static const double GammaPositionScale = 0.01;
 // RECOVERY_OBJECT: v1 0x0066FA78 _GammaComponentScale
 static const double GammaComponentScale = 1.0 / 235.0;
 
-static inline void gamma_inset(RECT *rect, int dx, int dy) {
-    rect->left += dx;
-    rect->right -= dx;
-    rect->top += dy;
-    rect->bottom -= dy;
-}
-
 /*
 Purpose: Step the receiver back to the subobject ??_GGamma@@UAEPAXI@Z expects,
          then forward unchanged.
@@ -155,7 +148,7 @@ double Gamma::exec(Palette *target, float initial_gamma, int apply_only) {
     offset_rect(&rect2_, 0, rect_height(&rect2_) + gap);
     rect3_ = rect1_;
     offset_rect(&rect3_, 0, rect_height(&rect1_) + gap);
-    gamma_inset(&rect3_, 0, inset);
+    expand_rect(&rect3_, 0, -inset);
     rect4_ = rect3_;
     offset_rect(&rect4_, 0, rect_height(&rect4_) + gap);
     rect4_.right = rect4_.left + (rect_width(&rect4_) + 3) / 2 - 3;
@@ -320,14 +313,6 @@ int Gamma::on_key_click(int, int) {
 // RECOVERY_BINDING: v1 {"evidence": ["src/unrecovered/005c9420.cpp records the 236-line palette strip and the gamma label", "src/gamma.h owns rect1_, font_, gamma_ and the Buffer base at their measured offsets", "Original format string at 0x00691E7C is %f"], "reason": "Draw the dialog's colour ramp and current gamma through its actual GraphicWin and Buffer bases, overriding Win's slot 12."}
 // Gamma overrides the existing Win redraw slot; its emitted method is virtual.
 // symbol    ?on_redraw@Gamma@@UAEXXZ
-// Guarded centered write, inlined: the image keeps the null test on the
-// stack buffer before strlen.
-static inline void gamma_write_cent(Gamma *win, char *text, RECT *rect) {
-    if (text != 0) {
-        win->Buffer::write_cent_l(text, rect, strlen(text));
-    }
-}
-
 void Gamma::on_redraw() {
     RECT label_area = rect1_;
     int x = label_area.left;
@@ -348,7 +333,7 @@ void Gamma::on_redraw() {
     char value_text[80];
     value_text[0] = 0;
     sprintf(value_text, "%f", gamma_);
-    gamma_write_cent(this, value_text, &label_area);
+    Buffer::write_cent_l(value_text, &label_area);
     GraphicWin::soft_update();
 }
 
