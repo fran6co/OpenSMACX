@@ -463,14 +463,17 @@ int __cdecl base_build(int base_id, int *out_secondary, int *out_tertiary, int *
     }
 
     // Secret projects: those of this base, and of the faction per group of eight.
+    l_148 = 0;
     for (int z_a_3e4 = 0; z_a_3e4 < 8; z_a_3e4++) {
         a_3e4[z_a_3e4] = 0;
     }
-    for (int z_a_694 = 0; z_a_694 < 64; z_a_694++) {
-        a_694[z_a_694] = 0;
-    }
-    l_148 = 0;
+    // a_694 is cleared inside the census loop: VC6 distributes the store into
+    // the rep stosd at 0x004F891D, and the second i-indexed array keeps the
+    // census on `[esi*4+project_base]` with i in esi and BaseIDCurrentSelected
+    // hoisted into edi (a separate clearing loop lets VC6 strength-reduce
+    // project_base[i] into a pointer that takes edi's place; MATCHING_GUIDE 2.7).
     for (i = 0; i < 64; i++) {
+        a_694[i] = 0;
         if (GameDataStateStorage.fields_.secret_project_[i] == BaseIDCurrentSelected) {
             l_148++;
         }
