@@ -189,10 +189,3 @@ inline void __cdecl strcat_period(char *text) {
 // a header inline. Defined in string_table.cpp, bound to the literal's
 // address. Cleanup: find top_menu's overspend, then use space().
 extern const char BufferJoinSpace[];
-// WORKAROUND(inline): unused since their last hosts took the helpers
-// (2026-11-20); kept one commit so their removal, which shifts the front-end
-// symbol counter of every includer, lands on its own.
-extern char SocialWinCommaSpaceText[];
-extern char SocialWinColonSpaceText[];
-extern char SocialWinCloseParenText[];
-extern char SocialWinOpenParenText[];

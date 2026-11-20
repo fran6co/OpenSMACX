@@ -56,21 +56,12 @@ Strings::Strings() : is_populated_(false) {}
 // RECOVERY_OBJECT: v2 0x009B90D8 0x009B90F0 ?StringTable@@3VStrings@@A 0x00490140
 Strings StringTable;  // 0x009B90D8
 
-// WORKAROUND(inline): stand-ins for strings.h's separator literals in the
-// seven functions that cannot yet afford the helpers (see strings.h). The
-// image has no such objects: the texts are COMDAT literals kept by popup.cpp
-// (" ") and basewin.cpp (the rest), whose merged literal bindings share these
-// extents.
+// WORKAROUND(inline): stand-in for strings.h's " " literal in top_menu, the
+// one function that cannot yet afford the helper (see strings.h). The image
+// has no such object: the text is a COMDAT literal kept by popup.cpp, whose
+// merged literal binding shares this extent.
 // RECOVERY_OBJECT: v2 0x00682820 0x00682822 ?BufferJoinSpace@@3QBDB 0x0058E360
 extern const char BufferJoinSpace[] = " ";
-// RECOVERY_OBJECT: v2 0x00682E90 0x00682E93 ?SocialWinCommaSpaceText@@3PADA 0x005A9EB0
-char SocialWinCommaSpaceText[] = ", ";
-// RECOVERY_OBJECT: v2 0x00682E94 0x00682E97 ?SocialWinColonSpaceText@@3PADA 0x004D06C0
-char SocialWinColonSpaceText[] = ": ";
-// RECOVERY_OBJECT: v2 0x00682E98 0x00682E9A ?SocialWinCloseParenText@@3PADA 0x0043AC70
-char SocialWinCloseParenText[] = ")";
-// RECOVERY_OBJECT: v2 0x00682E9C 0x00682E9E ?SocialWinOpenParenText@@3PADA 0x0043AC70
-char SocialWinOpenParenText[] = "(";
 
 /*
 Purpose: Initialize the class instance with a new string table of the specified size.
