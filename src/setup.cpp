@@ -1318,7 +1318,7 @@ search:
                 // Original 5B204E measures from the old centre, not from
                 // this candidate. Keep that quirk when choosing a site.
                 for (int vehicle3 = 0; vehicle3 < GameDataStateStorage.fields_.vehicle_current_count_; ++vehicle3) {
-                    int distance = vector_dist(x, y, Vehs[vehicle3].x, Vehs[vehicle3].y);
+                    int distance = vector_dist(x_dist(x, Vehs[vehicle3].x), abs(y - Vehs[vehicle3].y));
                     if (distance < BaseFindDist) BaseFindDist = distance;
                 }
                 if (BaseFindDist < 6) continue;
