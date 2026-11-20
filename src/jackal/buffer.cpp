@@ -9905,6 +9905,21 @@ static inline void string_writer_budget_probe(int x) {
     if (x == 8) x = 25;
 }
 
+// WORKAROUND(inline): write_strings_height's share of the dead budget probe
+// (2026-11-20 par-6): with the full nine-test probe its loop calls
+// current_id out of line (0x005DAF67 expands it: `cmp [list+8],0; je;
+// mov eax,[list+0xc]; mov eax,[eax+4]`) and keeps three
+// wrap_height_flying(char *) calls in the head (28 calls, image 25); six to
+// eight tests expand current_id and leave 26. Same unknown original spelling.
+static inline void string_height_budget_probe(int x) {
+    if (x == 0) x = 1;
+    if (x == 1) x = 4;
+    if (x == 2) x = 7;
+    if (x == 3) x = 10;
+    if (x == 4) x = 13;
+    if (x == 5) x = 16;
+}
+
 // StringStruct::current_id (0x00401640) is the header inline. Both writers
 // expand it at their first callback site (`cmp [list+8],0; ...;
 // mov eax,[list+0xc]; mov eax,[eax+4]`) and write_strings calls it out of
@@ -9946,7 +9961,7 @@ int Buffer::write_strings_height(StringList *strings, int width, int flags) {
         wrap_height_flying(strings->current_text(), width);
     }
 
-    string_writer_budget_probe(0);  // WORKAROUND(inline): see the probe
+    string_height_budget_probe(0);  // WORKAROUND(inline): see the probe
     while (strings->current_position_ < strings->entry_count_ - 1) {
         strings->next_text();
 
