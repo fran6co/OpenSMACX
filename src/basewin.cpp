@@ -3612,6 +3612,11 @@ void BaseWin::draw_pop(int update_mode) {
     MainInterfaceGlobal.set_clip(&panel);
 
     int height = panel.bottom - panel.top;
+    RECT cell;
+    cell.left = panel.left;
+    cell.top = panel.top;
+    cell.bottom = cell.top + height;
+    cell.right = cell.left + height;
     int population = BaseCurrent->population_size;
     int spacing;
     if (population <= 1) {
@@ -3627,11 +3632,6 @@ void BaseWin::draw_pop(int update_mode) {
         }
     }
 
-    RECT cell;
-    cell.left = panel.left;
-    cell.top = panel.top;
-    cell.bottom = cell.top + height;
-    cell.right = cell.left + height;
     int i;
     if (ExpansionEnabled && (Players[BaseCurrent->faction_id_current].rule_flags & 0x80)) {
         for (i = 0; i < BaseCurrent->population_size; i++) {
