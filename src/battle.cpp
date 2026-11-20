@@ -273,29 +273,30 @@ int __cdecl shoot(int atk_factionID, int def_factionID, int xDest, int yDest) {
                     parse_says(0, get_noun(def_factionID), -1, -1);
                     popp(ScriptPopupFile, "THEYMUSTSAC", 0, "space_sm.pcx", 0);
                 }
-            } else {
-                parse_num(0, PlayersData[def_factionID].satellites_[sat]);
-                // base_find runs before parse_says pushes its arguments.
-                const int near_base = base_find(xDest, yDest);
-                parse_says(0, Bases[near_base].name_string, -1, -1);
-                parse_says(1, get_adjective(atk_factionID), -1, -1);
-                if (popp(ScriptPopupFile, "BUSTERSAC", 0, "space_sm.pcx", 0)) {
-                    goto failed;
-                }
+                goto sacrifice;
             }
-        } else {
-        failed:
-            if (adjacent_flechette) {
-                if (def_factionID == ConsoleGlobal.faction_id_) {
-                    parse_says(1, get_adjective(atk_factionID), -1, -1);
-                    popp(ScriptPopupFile, "WEFAILEDFLECHETTE", 0, "space_sm.pcx", 0);
-                } else if (atk_factionID == ConsoleGlobal.faction_id_) {
-                    parse_says(1, get_adjective(def_factionID), -1, -1);
-                    popp(ScriptPopupFile, "THEYFAILEDFLECHETTE", 0, "space_sm.pcx", 0);
-                }
+            parse_num(0, PlayersData[def_factionID].satellites_[sat]);
+            // base_find runs before parse_says pushes its arguments.
+            const int near_base = base_find(xDest, yDest);
+            parse_says(0, Bases[near_base].name_string, -1, -1);
+            parse_says(1, get_adjective(atk_factionID), -1, -1);
+            // Both sacrifice arms jump to the decrement, which the image lays
+            // after the failure block's return (goto, not an if/else join).
+            if (!popp(ScriptPopupFile, "BUSTERSAC", 0, "space_sm.pcx", 0)) {
+                goto sacrifice;
             }
-            return 0;
         }
+        if (adjacent_flechette) {
+            if (def_factionID == ConsoleGlobal.faction_id_) {
+                parse_says(1, get_adjective(atk_factionID), -1, -1);
+                popp(ScriptPopupFile, "WEFAILEDFLECHETTE", 0, "space_sm.pcx", 0);
+            } else if (atk_factionID == ConsoleGlobal.faction_id_) {
+                parse_says(1, get_adjective(def_factionID), -1, -1);
+                popp(ScriptPopupFile, "THEYFAILEDFLECHETTE", 0, "space_sm.pcx", 0);
+            }
+        }
+        return 0;
+    sacrifice:
         --PlayersData[def_factionID].satellites_[sat];
         if ((PlayersData[def_factionID].satellites_[sat]
                 - PlayersData[def_factionID].sat_odp_deployed) < 0) {
