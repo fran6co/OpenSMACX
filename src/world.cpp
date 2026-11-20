@@ -2151,10 +2151,11 @@ void __cdecl world_borehole(int x, int y) {
             world_alt_set(x_radius, y_radius, ALT_SHORE_LINE, true);
         }
     }
-    for (i = 0; i < 8; i++) {
-        int x_radius = wrap_map_x(x + RadiusOffsetX[val3]) + RadiusOffsetX[i + 1];
+    // The last ring has its own counter (its own frame slot, 0x005C743C).
+    for (int j = 0; j < 8; j++) {
+        int x_radius = wrap_map_x(x + RadiusOffsetX[val3]) + RadiusOffsetX[j + 1];
         x_radius = wrap_map_x(x_radius);
-        int y_radius = y + RadiusOffsetY[val3] + RadiusOffsetY[i + 1];
+        int y_radius = y + RadiusOffsetY[val3] + RadiusOffsetY[j + 1];
         if (on_map(x_radius, y_radius) && is_ocean(x_radius, y_radius)) {
             world_alt_set(x_radius, y_radius, ALT_SHORE_LINE, true);
         }
