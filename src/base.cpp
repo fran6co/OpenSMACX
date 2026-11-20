@@ -5326,7 +5326,7 @@ relocate:
         energy_low = BaseCurrent->y;
         // BUG(original): the guard is 25 or 50, never zero, so this raise-land
         // goal east of the base is never set.
-        if (!(GameDataStateStorage.fields_.turn_current_num_ >= wet ? 25 : 50)
+        if (!(GameDataStateStorage.fields_.turn_current_num_ < wet ? 50 : 25)
             && on_map(best, energy_low) && (map_loc(best, energy_low)->climate & ~0x1F) >= ALT_BIT_SHORE_LINE
             && (map_loc(best, energy_low)->climate & ~0x1F) <= ALT_BIT_2_LEVELS_ABOVE_SEA) {
             int occupant = anything_at(best, energy_low);
