@@ -4638,7 +4638,11 @@ void __cdecl load_vehicles() {
     for (chassis = 0; chassis < 19; ++chassis) {
         row = chassis - 9;
         source_y = 2 + row * 77;
-        if (chassis < 9) {
+        // The image counts `row` (edx from -9, `lea eax,[edx+9]; cmp eax,9`
+        // here and `cmp eax,0x13` at the latch, `cmp edx,9` for row == 9);
+        // a `chassis < 9` test keeps chassis as the counter and folds the
+        // tests into source_y (`cmp ecx,2`). The test reads row.
+        if (row + 9 < 9) {
             continue;
         }
         count = 1;
