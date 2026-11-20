@@ -8559,6 +8559,33 @@ Counters and tie arms (par-5 2026-11-20, councwin)
   `if (in_turn) { if (!F) { if (!A && !B) goto W; } else {X} } else if
   (F) {Y} else { W: ... }` (78b0474751; W gets two entries, one reloading
   a register).
+- **A test that the image makes and then ignores is a ternary with equal
+  arms** (high in one real function; ReportWin::draw_labs 0x00498B30,
+  2026-11-20 par-4). The image loads `datalink`, `test`s it and pushes the
+  same value on both paths with no branch (0x0049AFEF..0x0049AFFB): VC6
+  folds `c ? X : X` inside an expression but keeps the test. Two identical
+  `if (c) S; else S;` arms keep their branches (test; jne; S; jmp; S). So
+  write `f(c ? X : X)` at the argument the arms share (here inside
+  StringTable.get), not around the call (blocks 282 -> 279 = image, 0
+  control-flow hunks).
+- **An else-if whose test the image never re-tests is a goto target laid
+  after the first arm** (draw_labs, same day). The image tests
+  `ids[1] >= 0 && ids[2] >= 0` once, jumps to the two-arm, and lays the
+  one-arm first with only its own `ids[1] + 1 != 0` test. `if ((A || B) &&
+  C) one; else if (!A && !B) two;` re-tests both ids; a nested if/else or
+  the chain in the other order lays two first; `goto two; ... goto done;
+  two: ...` is not it either. Only `if (!A && !B) goto two; if (C) { one }
+  if (0) { two: two-arm }` gives the image's tests and order (blocks
+  284 -> 282, first diverging block 3383 -> 9407).
+- **Small polarity / width checks worth a jseq pass on every rung-4
+  function** (2026-11-20 par-4; `analysis/jseq.py <unit.cpp> <src> <addr>`
+  prints the jcc/jmp hunks): `mov eax, A; je; mov eax, B` against ours
+  `jne` is the ternary written with the other polarity (Console::upgrade's
+  `Language ? .. : ..` -> `!Language ? .. : ..`); `dec ecx; js` against
+  `dec; test; jl` is an int-promoted byte (`range(byte - 1, ..)`) against a
+  uint32_t copy; `cmp esi, [edx]; jle` against `cmp; jge` is the
+  comparison written with its operands swapped (diplomacy_check
+  `other > faction`).
 
 ### 3.8 VC5 (Caviar/VOX) x87 rules (2026-11-19 par-5)
 
