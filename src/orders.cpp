@@ -407,6 +407,15 @@ static inline void order_veh_synch(int veh_id) {
 // the move itself. `mode` is stored as NetDaemonNet's order flags word and
 // read back from there (bits 0 and 1). Transcribed from the image in its
 // block order; the single Popup is the function's only automatic object.
+// WORKAROUND(inline): caller-size stand-in for order_veh (never stored; the
+// dead blocks below fold to no code). order_veh is over VC6's /Ob2 total-size
+// ceiling (MATCHING_GUIDE 2.8 rule 7): with three supply_options probes and 22
+// to 24 of these blocks before the final return, the unwind map and the named
+// call multiset equal the image's (the closing teardown calls ??1StringList
+// 0x0059A0xx, the vehicle-count return expands its ??_DStringList). 21 or fewer
+// leave the closing StringList expanded, 25 or more refuse ??_DStringList.
+// The statements the original had beyond ours are not identified.
+static int order_veh_size_pad;
 // ORIGINAL: 0x005947C0 ?order_veh@@YAHHHH@Z 0x005947C0-0x0059A1AB;0x00660F47-0x00661200
 // symbol    ?order_veh@@YAHHHH@Z
 // kind      game
@@ -863,7 +872,9 @@ L_595083:
                     // (MATCHING_GUIDE 2.8 "Total-size ceiling") before the
                     // vehicle-count return, whose ??_DStringList the image expands;
                     // three or none leave the final teardown 16 deep. The original
-                    // spending is not identified.
+                    // spending is not identified. (2026-11-20: three, with the
+                    // order_veh_size_pad blocks before the final return.)
+                    supply_options_budget_probe(2);
                     supply_options_budget_probe(2);
                     supply_options_budget_probe(2);
                     Vehs[veh_id].order = ORDER_NONE;
@@ -2056,6 +2067,13 @@ L_599b2a:
             }
         }
     }
+    // WORKAROUND(inline): see order_veh_size_pad.
+    if (0) { order_veh_size_pad = 0; } if (0) { order_veh_size_pad = 1; } if (0) { order_veh_size_pad = 2; } if (0) { order_veh_size_pad = 3; }
+    if (0) { order_veh_size_pad = 4; } if (0) { order_veh_size_pad = 5; } if (0) { order_veh_size_pad = 6; } if (0) { order_veh_size_pad = 7; }
+    if (0) { order_veh_size_pad = 8; } if (0) { order_veh_size_pad = 9; } if (0) { order_veh_size_pad = 10; } if (0) { order_veh_size_pad = 11; }
+    if (0) { order_veh_size_pad = 12; } if (0) { order_veh_size_pad = 13; } if (0) { order_veh_size_pad = 14; } if (0) { order_veh_size_pad = 15; }
+    if (0) { order_veh_size_pad = 16; } if (0) { order_veh_size_pad = 17; } if (0) { order_veh_size_pad = 18; } if (0) { order_veh_size_pad = 19; }
+    if (0) { order_veh_size_pad = 20; } if (0) { order_veh_size_pad = 21; } if (0) { order_veh_size_pad = 22; }
     return selector;
 }
 
