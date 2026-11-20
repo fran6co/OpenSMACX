@@ -3570,6 +3570,24 @@ What the model does not predict (2026-11-19)
   tails merge (jmp 0x4D64CE) with no special source shape. No effect in
   terraform, config_game, queue_click, pick_player, base_editor_proj,
   popb or save_game (all single-site and ALL rows equal or worse).
+- **Late free helpers reserve by count, and in a ceiling-bound caller they
+  must be paired with a size pad** (high; probe 0x0059F120, 2026-11-20
+  par-4, ce5ae6b8ee). The reservation that refuses the early level-2 sites
+  grows with the number of free expansions laid after them, not with
+  their size or kind: probe's 52 human/alive/treaty tests (each a few
+  bytes) refuse ~Scroll at the first nine ~Popup teardowns (EH 27 -> 0,
+  named calls 52 -> 16), where dead spend at the top, after site 9, mid
+  or end (2-16 charged or free probes) and 20-800 size statements moved
+  none of those sites. Second effect: a free helper in place of a raw
+  test makes the caller *smaller* (its body is not counted as caller
+  statements), so in a function that hits the /Ob2 total-size ceiling
+  (rule 7, `analysis/ceilscan.py` `Ec`) the ceiling stop moves later and
+  one more late site expands (probe: the return 1 after the FRAME block
+  kept an expanded ~Popup). Restore the stop with a caller-size pad (dead
+  `if (0) { g = k; }` blocks after the declarations, WORKAROUND(inline);
+  probe went from 6 to 40 blocks; sweep the count, 36-48 all worked).
+  So: respell the family first, then re-sweep the pad, and judge by the
+  EH map and call multiset, never by the rows of the intermediate step.
 - **A helper with a literal inside its body is refuted by per-site
   literals** (high; 2026-11-19 par-4). An argument-free inline such as
   `say_plus() { strcat(StringTemp, "+"); }` emits ONE literal
