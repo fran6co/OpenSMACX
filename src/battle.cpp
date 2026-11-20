@@ -2201,12 +2201,11 @@ Purpose: Resolve a stack's worth of chaff deaths after a battle.
 Return Value: n/a
 Status: MISMATCH.
 */
-// WORKAROUND(inline): battle_fight (0x00506AF0) expands this body at
-// 0x50AAE0 (no callers in the image; orphanowner.py). A plain call there is
-// refused by battle_fight's /Ob2 ceiling (2436 rows, battle_kill_chaff called);
-// __forceinline expands it (2409 -> 2344 rows, named call distance 2 -> 1) and
-// MEASURED keeps the out-of-line copy the image has.
-MEASURED __forceinline void __cdecl battle_kill_chaff(int veh_id, int *attacker_out,
+// battle_fight (0x00506AF0) expands this body at 0x50AAE0 (no callers in the
+// image; orphanowner.py); MEASURED keeps the out-of-line copy the image has.
+// A plain inline now expands there by itself (2026-11-20: 2349 rows, named
+// call distance 1, against 2442 / 3 with the former __forceinline stand-in).
+MEASURED inline void __cdecl battle_kill_chaff(int veh_id, int *attacker_out,
                                int *defender_out, int *odds_out, int killer_id,
                                int credit_faction) {
     if (veh_id < 0) {
