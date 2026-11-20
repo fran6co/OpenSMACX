@@ -705,7 +705,7 @@ L_59fb64:
                    VehPrototypes[Bases[base_id].queue_production_id[0]].veh_name);
             cost = VehPrototypes[Bases[base_id].queue_production_id[0]].cost;
         } else {
-            strcat(prod_name, table_text(
+            strcat(prod_name, StringTable.get(
                 Facility[-Bases[base_id].queue_production_id[0]].name));
             cost = Facility[-Bases[base_id].queue_production_id[0]].cost;
         }
