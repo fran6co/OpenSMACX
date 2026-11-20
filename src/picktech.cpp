@@ -360,8 +360,15 @@ int PickTech::draw_tech(int tech, RECT *rect, int) {
     Buffer::set_text_color2(0x5F, 0, 1, 1);
 
     int metric;
+    // 4850C8..4850DB: the 800-wide arm keeps two explicit stores (`jl;
+    // mov -12; jmp | mov -14; jmp`) where a two-way if/else becomes setcc.
+    // A third test whose arm repeats -14 gives that: VC6 skips the setcc
+    // form for the three-way chain and later cross-jumps the identical
+    // arms, deleting the middle compare. The middle threshold is not in
+    // the image (0xB4 mirrors the other arm).
     if (WinScreenWidth == 800) {
         if (cell_width_ >= 0xF0) metric = -0x0C;
+        else if (cell_width_ >= 0xB4) metric = -0x0E;
         else metric = -0x0E;
     } else if (cell_width_ >= 0xB4) {
         metric = -0x0A;
