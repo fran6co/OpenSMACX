@@ -3068,7 +3068,7 @@ void BaseWin::draw_expenses(int update_mode) {
     title.bottom -= 3;
     Buffer::set_text_color(TextColourTable[90], TextColourTable[91], 1, 1);
     StringTemp[0] = 0;
-    strcat(StringTemp, label_get(520));
+    strcat(StringTemp, StringTable.get(Labels.strings_ptr[520]));
     CharUpperA(StringTemp);
     Buffer::write_cent_l(StringTemp, &title);
 
