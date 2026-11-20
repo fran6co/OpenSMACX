@@ -25,6 +25,7 @@
 // After the dead-helper batch (d64959c815), whole-unit fe sweep: exact at 0-1, 14, 16-27, 32-35, 39, 62-63, so 21.
 // Re-tuned 2026-11-19 against the sprite.h/popup.h headers (declpad padfree): exact at 10, 22-28, 38-39, 42-47 and
 // 51-62, so 56.
+// After veh_stack_top (veh.h, 2026-11-20): exact at 3, 15-17, 31-40 and 44-55, so 50.
 // HEADER-PADS: function VehicleRenderHeaderPad
 void VehicleRenderHeaderPad0();
 void VehicleRenderHeaderPad1();
@@ -76,12 +77,6 @@ void VehicleRenderHeaderPad46();
 void VehicleRenderHeaderPad47();
 void VehicleRenderHeaderPad48();
 void VehicleRenderHeaderPad49();
-void VehicleRenderHeaderPad50();
-void VehicleRenderHeaderPad51();
-void VehicleRenderHeaderPad52();
-void VehicleRenderHeaderPad53();
-void VehicleRenderHeaderPad54();
-void VehicleRenderHeaderPad55();
 
 #include "general.h"  // range is used by veh.h inline members.
 #include "veh.h"

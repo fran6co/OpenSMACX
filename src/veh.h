@@ -865,6 +865,24 @@ MEASURED inline int __cdecl veh_top(int veh_id) {
     return top_veh_id;
 }
 
+// WORKAROUND(decl): the image walks a stack to its top in two loop shapes.
+// best_defender, stack_fix, spot_loc, action_airdrop and action_give keep
+// veh_top's while form (the slot reloaded through an int); value_of_base
+// (0x0054CB50) and veh_pick (0x0048D175..0x0048D1A6) walk an int16_t link
+// instead. Measured 2026-11-20: this shape everywhere loses the five above,
+// in these two it makes both exact. The original's second spelling (a
+// written-out loop or another helper) and its name are unknown.
+inline int __cdecl veh_stack_top(int veh_id) {
+    int top_veh_id = veh_id;
+    if (veh_id < 0) {
+        return -1;
+    }
+    for (int16_t i = Vehs[top_veh_id].prev_veh_id_stack; i >= 0; i = Vehs[i].prev_veh_id_stack) {
+        top_veh_id = i;
+    }
+    return top_veh_id;
+}
+
 MEASURED inline void __cdecl veh_put(int veh_id, int x, int y) {
     veh_drop(veh_lift(veh_id), x, y);
 }

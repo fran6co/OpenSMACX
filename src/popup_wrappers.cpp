@@ -435,9 +435,10 @@ int __cdecl veh_pick(int veh_id, const char *label, int flags) {
     popup.dialogs().SpriteBox::field_20_ = 2;
 
     int listed_count = 0;
-    // The stack walk is veh_top's inline expansion (0x48D175..0x48D1A6); its
-    // -1 return is threaded straight past the loop (jl at 0x48D175).
-    for (int listed_vehicle = veh_top(veh_id); listed_vehicle >= 0;
+    // The stack walk is an inline expansion (0x48D175..0x48D1A6) in
+    // veh_stack_top's int16_t shape; its -1 return is threaded straight past
+    // the loop (jl at 0x48D175).
+    for (int listed_vehicle = veh_stack_top(veh_id); listed_vehicle >= 0;
          listed_vehicle = Vehs[listed_vehicle].next_veh_id_stack) {
         StringTemp[0] = '\0';
         say_morale(listed_vehicle, 0);

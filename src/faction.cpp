@@ -3375,23 +3375,9 @@ Purpose: Determine the value of the specified base between the requester and the
 Return Value: Value of base or -1 for invalid requests
 Status: Complete - testing
 */
-// The image inlines veh_top here (no call to 0x00579920).
-// WORKAROUND(inline): veh.h's while-form veh_top gives 4 rows here. Measured
-// 2026-11-20: veh_top respelled in this int16_t for-form retires the twin
-// (and makes veh_pick exact, standalone veh_top stays exact) but loses
-// best_defender, stack_fix and spot_loc, whose image keeps the while form's
-// reload (int i: 17 lost). The image has both loop forms, so the original
-// likely wrote this loop out or had a second helper.
-static inline int value_of_base_veh_top(int veh_id) {
-    int top_veh_id = veh_id;
-    if (veh_id < 0) {
-        return -1;
-    }
-    for (int16_t i = Vehs[top_veh_id].prev_veh_id_stack; i >= 0; i = Vehs[i].prev_veh_id_stack) {
-        top_veh_id = i;
-    }
-    return top_veh_id;
-}
+// The image inlines the stack-top walk here (no call to 0x00579920), in the
+// int16_t loop shape of veh.h's veh_stack_top: veh_top's while form gives 4
+// rows.
 
 int __cdecl value_of_base(int base_id, int faction_id_req, int faction_id_res,
                           int overmatch_deg, BOOL tgl) {
@@ -3480,7 +3466,7 @@ int __cdecl value_of_base(int base_id, int faction_id_req, int faction_id_res,
         }
     }
     // The image also inlines veh_next_stack_id (0x0050B8F0) for the walk.
-    for (int veh = value_of_base_veh_top(veh_id); veh >= 0; veh = veh_next_stack_id(veh)) {
+    for (int veh = veh_stack_top(veh_id); veh >= 0; veh = veh_next_stack_id(veh)) {
         if (Vehs[veh].faction_id == faction_id_req) {
             value += VehPrototypes[Vehs[veh].proto_id].cost * 2;
         }
