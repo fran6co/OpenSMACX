@@ -37,6 +37,8 @@ two definitions: a threshold that moves by one between them is an exact tie.
 | c_sr.spec | strength reduction of a large-stride table index: blocked by an index read in an inner loop; a pointer stepped beside the index (setup_game) |
 | c_zero.spec | constant pieces against immediates below the four-store rule: other references (push, memory compare), free register over the range, shared register, typed zero webs, compares against a known-zero variable (MATCHING_GUIDE 2.7 "Constant pieces and immediates") |
 | c_zform.spec, zgrid.py | constant formation (which references make 0 a candidate), materialisation (four stores weighted 2^depth; compares and pushes never count) and rank against a rival (memory compares count, pushes do not) (MATCHING_GUIDE 2.7 Z9; `python3 zgrid.py [stores loop arms rank]`) |
+| gen_zsplit.py | what splits a constant-zero web: calls, ifs, loops, returns do not; three interfering webs over an unreferenced stretch do (MATCHING_GUIDE 2.7 Z10) |
+| gen_loopctr.py | 64-way bisection of TutWin::tour's dir loop body: when a call-free loop counter leaves the scratch registers and inherits the zero web's register (MATCHING_GUIDE 2.7 G1/G2) |
 | c_wthru.spec | write-through pieces: rule-9 prefixes, constant initialisers, memory-homed losers with a free stretch, address-taken locals (MATCHING_GUIDE 2.7 "Write-through pieces") |
 | c_looppiece.spec | a memory-homed parameter read once per iteration of two loops: scratch read against per-iteration callee-saved load |
 | duel.py, m_*.spec | which removed references count: CSE, copy, dead code (no) against tail-merged copies (yes) (`python3 duel.py m_tail.spec`) |

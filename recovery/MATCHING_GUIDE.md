@@ -1727,6 +1727,48 @@ not see, and those are the levers:
   instead. The flat-first ternary body gives the image's map (336 -> 325).
   The same body change in course_xrange/territory_xrange moves nothing: the
   form matters where the wrap's arms reach the caller's variable or invariant.
+- **Call-free loop counters, hoisted globals and the scratch registers**
+  (2026-11-20 par-2; `regalloc/gen_loopctr.py`, `analysis/regalloc` probes
+  `zc`/`ec`/`tr` in the round's scratch, about 230 probes, /Oy-).
+  - G1 (high). A loop counter (strength-reduced to a byte offset, `add r,4;
+    cmp r,0x20`) of a call-free loop takes a SCRATCH register with its own
+    `xor eax,eax` when one scratch register is free over the whole loop,
+    even with esi/edi/ebx unused (`z4call_ilocal`: edi never saved). It then
+    never joins a live zero web. A value live through the loop without a
+    call (a mask such as tour's `elevated`) also takes a scratch register
+    there (`ecx`, `ec` family). Bisection of tour's dir-loop body over six
+    parts (wrap, bounds test against globals, tile load `MT[(x>>1)+y*ML]`,
+    compare with `tile->climate`, `!dir || dir >= 6`, `index` tests): the
+    counter stays in eax/ecx/edx in every body without the tile load, and
+    with the tile load alone; tile load + wrap or tile load + bounds test
+    (24 of 64 bodies) leave no scratch register free at some point and the
+    counter goes to esi/edi. The other three parts never matter.
+  - G2 (high). A counter that goes to a callee-saved register takes the
+    register a zero web held up to the loop entry, with no `xor` of its own:
+    the zero's last stores (`higher = 0; lower = 0;`) and the counter are one
+    candset `init#0` web (Z4). So "the image's counter in eax with its own
+    `xor`, ours in edi after `mov [m],edi` zero stores" is a G1 question
+    (what keeps a scratch register busy over our loop), not a zero question.
+  - G3 (medium). A loop-invariant global of a call-free loop is hoisted into
+    whatever register is still free over the loop, scratch ones included:
+    MapLongitude (one `imul` per iteration) into eax or esi, MapLongitudeBounds
+    into eax/edi/ebx, `MapIsFlat & 1` into edi; with none free it is read at
+    each use (`mov ecx,[B]` once in the wrap arm, `cmp edx,[B]`). A hoisted
+    global therefore competes with the counter for the last scratch register:
+    in the full tour-shaped body MapLongitude takes eax and the counter esi.
+  - TutWin::tour 0x004BC6E0 (open). Image dir loop: counter eax (own `xor`),
+    MapTiles in edi (reloaded after crop_yield for `tile` and kept through the
+    loop), `elevated` in ebx, esi for pieces (x, y_adj, tile, index);
+    MapLongitude/MapLongitudeBounds read per use. Ours: counter + zero web in
+    edi, MapLongitudeBounds in ebx, `elevated` in eax. A probe copy of the
+    outer body (`tr` family, 36 variants) never lets the counter leave the
+    callee-saved register: `elevated` read after a call (it then takes ebx as
+    in the image, but a hoisted global takes eax), its later uses removed,
+    the bounds/MapLongitude references removed, nested ifs instead of
+    `continue`, fungus/step/higher/lower spellings, `while`. In tour itself
+    xrange_inline, the statement wrap, nested bounds (299), `dir != 8` and
+    the tile-compare spellings move nothing (303). The image's body holds one
+    scratch-holding value fewer than ours; which one is still unknown.
 - **Compiler temporaries the source count misses.** A base-class `this`
   (`this+0x444`, the Buffer of a Win; FlatButton::on_redraw holds it in edi
   with 21 uses), an address CSE that replaces an index (`&rows_[slot].field`
@@ -2015,6 +2057,36 @@ Zero webs on one side only (2026-11-20 par-1; candset.py over the 288 rung
     same constant-3 references; the image keeps `r.right`'s reload in edi
     there. Reordering the four adjustments, `x = x + 3`, `RECT r; r = box;`
     and four spellings of the half-width expression do not move it (29).
+- Z10 (high, 2026-11-20 par-2; `regalloc/gen_zsplit.py`, 135 probes, /Oy-).
+  **A zero web splits only under register pressure, never at a gap.** Two
+  groups of zero stores (1, 2 or 4 stores each, calls between) separated by
+  a stretch without zero references stay ONE web (one `xor`, every store
+  through the register, or all immediates under Z2) across: one or three
+  calls, three conditional calls, an early `return`, a loop with a call, a
+  call-free loop, two variables live across the stretch (the zero then
+  takes ebx), and two variables followed by a third. It splits (a second
+  `xor r,r` after the stretch) when three other webs are live together in the
+  stretch and each outranks the zero there (`pqr`, `pqrs`: the variables
+  take esi/edi/ebx, the zero's pieces both land in esi). If the zero
+  outranks the weakest of them (8 stores against three variables of 2
+  references, `f4_pqr_weak_l4`) it keeps its register over the stretch and
+  the weak variable loses instead. One zero reference inside the stretch
+  keeps the web whole only if it lets the zero outrank the third rival
+  (`f2_pqr_z1_l4` whole, `f2_pqr_z1_l2` split with the inner store an
+  immediate). Each piece then follows Z2/Z4 on its own: a piece whose
+  register another web also uses is materialised even with two stores
+  (`f1_pqr_l2`: first store immediate, last two through a fresh `xor esi`).
+  Reading it: "ours one zero web from entry to teardown, the image local
+  webs" means the image has three webs outranking the zero somewhere in the
+  middle (or ours has one fewer, or a heavier zero); "two zero webs in ours,
+  one in the image" (DiploWin::exec, ProdPicker::calculate in the screen
+  below) is the reverse. Look for the third rival over the zero-free
+  stretch, not for a call or a loop boundary. make_gift 0x00547C10: after
+  the `gift_value = 0` and in-place base_value fixes (151 -> 112) both sides
+  have the same three `#0` webs (candset); the residue is parameter-home
+  packing (3.3 "Dead parameter homes are taken first": packrev wants
+  gift_value(10) in receiver's +0xc, read first, where the image has the
+  mode-8 `favored` web(5) and gift_value in giver's +8).
 - Screen (2026-11-20, rung 4-7 functions): image-only `#0` webs in
   CouncWin::make_resolution 0x00424410, MapWin::init 0x00470A90 (ebx, 18
   refs), draw_tech 0x00484C60, vehdraw_construct_chassis 0x004C2470 (ebx, 22
