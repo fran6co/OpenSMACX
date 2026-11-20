@@ -3749,7 +3749,7 @@ int __cdecl air_power(int veh_id, int a2, int a3, int *a4, int *a5) {
                 }
             }
             if (Vehs[veh_id].order == ORDER_MOVE_TO) {
-                return (a3 != 0) - 2;
+                return a3 ? -1 : -2;
             }
         }
         if (Vehs[veh_id].order != ORDER_MOVE_TO
