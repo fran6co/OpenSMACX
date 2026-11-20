@@ -57,6 +57,13 @@ an explicit `--pfx` is only needed to pick another lane.
   predicted placement and the source line laid before the label block in ours and in the image (found through the
   image targets of our goto jumps); `MOVE` = different predecessor. 2 min over the non-exact set; the predecessor line
   is the listing's attribution, so a tail-duplicated return reads as the shared return's line.
+- `analysis/tailcopyscan.py <unit> <addr[,..]>|--all [--list]` / `--tree [unit ..] [--from FEALL.json] [--json F] [--list]`
+  join-copy screen (MATCHING_GUIDE 3.7 "Ours merges a tail that the image keeps"): identical runs ending in `jmp T`
+  (or falling into T) that one side copies into a jumping arm and the other keeps joined, with the copy's bytes and
+  the joining side's block bytes (from the label its arms jump to up to its `jmp`); `SIZE` = the joining side's block
+  is over 15 bytes and the copy is not, with the copy as the joining block's tail. 70 s over the non-exact set.
+  2026-11-20: 16 functions, 3 SIZE rows (menu_proc, pulldown_update, communicate), all known or register noise; the
+  image's prefix copies (editor, enemy_planet_buster, MATCHING_GUIDE 3.7) read `tail differs`.
 - `objdis.py <unit> <src> <addr>` raw listing of our function with real jump targets.
 - `objdis.py <unit> <src> <addr>` raw listing of our function with real jump targets (unit as `picktech`, `picktech.cpp`,
   `src/picktech.cpp`, or a basename found in a subdirectory; lane FE_PFX_BASE).

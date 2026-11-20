@@ -7653,6 +7653,36 @@ Layout
     same arm of the erase branch's range merges; neither a spelling of the
     `changed` tests without `goto` nor the operand order changes it),
     use_ability L2853, menu_proc, vehdraw_scoot_start (above).
+  - *In situ, and prefix copies* (par-5 round 42, `analysis/tailcopyscan.py`).
+    In communicate's own compile the 15-byte limit holds at L8497: with the
+    tail cut to `diplomacy_caption(f, fw);` (10 bytes) or to the store alone
+    (11) ours copies it into the message_data arm (the `add esp,0x28` flushed
+    in front); with both (22) it stays joined. So the image's 22-byte copies
+    are not explained by the source tail's size. (The scan's other
+    communicate row is not a copy: the written-out `FA8C = F7D4; F7E8 = 0;
+    F7D4 = 0` ends of both arms of L8551/L8580 stay two identical 22-byte
+    runs in ours, each `jmp` to the join, while the image cross-jumps arm 2's
+    into arm 1's, which falls into the join's three stores at 0x552321: an
+    open cross-jump miss, see "Cross-jumping ground truth".) The image also
+    copies a PREFIX of a join, its first statement,
+    and jumps to the next statement: MapWin::editor 0x46B791 copies the
+    `rocky_set` call (11 bytes) into range's `2` arm and jumps to the
+    `cmp ebx,2` of `if (rocky < 2)`; enemy_planet_buster 0x56AE62 copies the
+    `x = wrap_map_x(..)` store into the `x + bounds` arm and jumps to the
+    `y = ..` statement. The copied store there uses ecx and the original
+    eax (`add ecx,eax; mov [ebp-0x10],ecx` against the shared `mov
+    [ebp-0x10],eax`), so the copy was made before register allocation; that
+    copy is also why the image's add is `add ecx,eax` and ours `add eax,ecx`
+    (not the 3.4 counter: 0..3 self-assignment pads of the bounds, the base
+    or the vehicle and dead locals leave it; any dead local moves the /Ob2
+    budget, 45 rows). Ours makes neither prefix copy. Tested without effect
+    (enemy_planet_buster 20 rows, editor 6): a label, `goto` to the next
+    statement or a block around the next statement; x declared at function
+    scope beside y; wrap_map_x as single- or multi-return inline, `bounds +
+    x`, xrange_inline (52); editor's case 1 as two breaks, label outside
+    the `if`, `if`/else swapped, a range local, both `goto`s. A one-function
+    probe of editor's case 1 (`probe` in the round-42 scratch: switch in a
+    loop, range inline, two rocky_set arms) copies neither arm either, as ours.
 - **Cross-jumping ground truth** (par-2 2026-11-19,
   `analysis/probes/crossjump/run.py`, one-function probes with `use(K)`
   markers; names below are its variants).
