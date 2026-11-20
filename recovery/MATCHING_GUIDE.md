@@ -1546,6 +1546,12 @@ loop2d and armd were the "ties"). Rerun: `python3 ties.py ties.spec --n 1-30`.
    Chow-Hennessy deferral of unconstrained ranges); a 256-byte frame that
    pushes the parameters past disp8 does not move `this` against a
    parameter. Served-in-order greedy plus 4j stands.
+   4j from source (2026-11-20 par-5, Buffer::write_vertical 0x005DB450,
+   a3295b4331, 51 -> 44): when the image's ebp web (and its `push ebp; push
+   esi` save class) needs a byte web that ours lacks, the byte web is often
+   a char LOCAL the original read the value into (`char c = *p; ... buf[0] =
+   c`), not a cast: a direct `buf[0] = *p++` copy forms no byte web, so `this`
+   keeps ebx.
 
 Using it (regprio.py uses 4b, 4c and 4j by default; `--model old` is rule 4 only, `--no-bytepref` drops 4j;
 candset.py `--opt bytepref=0` drops 4j there, `candset.py --census [units] --opts A --opts B` compares option
