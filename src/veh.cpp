@@ -4523,12 +4523,13 @@ static inline void dw_probe(int x) { if (x == 1) x = 8; if (x == 2) x = 9; if (x
 int __cdecl design_workshop(int faction_id, int mode) {
     Popup popup;
     char number[80];
+    int slot;
 
     // Native mode zero skips the automatic-design search and enters the list.
     if (mode != 0) {
         int best_score = 0;
         int best_prototype = -1;
-        for (int slot = 0; slot < MaxVehProtoFactionNum; ++slot) {
+        for (slot = 0; slot < MaxVehProtoFactionNum; ++slot) {
             const int prototype_id = faction_id * MaxVehProtoFactionNum + slot;
             int score;
             if (VehPrototypes[prototype_id].flags & PROTO_ACTIVE) {
@@ -4633,7 +4634,6 @@ again:
         if (NetDaemonNet.lock(2, -1, -1, 0, -1, -1) != 0)
             goto again;
         UpgradePromptAnswered = 0;
-        int slot;
         for (slot = 0; slot < MaxVehProtoFactionNum; ++slot) {
             const int candidate_id = faction_id * MaxVehProtoFactionNum + slot;
             if (candidate_id == selected)
