@@ -2415,6 +2415,22 @@ The rule for the non-exact functions:
   gives it a register: that is a ranking question (the first bullet), not a
   spelling. Reading it in place there changes the code (the image reads the
   slot, the variant reads the field: 16-bit compares on a `short` field).
+  Exception: **a slot written once before a loop and read only inside it
+  can be VC6's own loop-invariant hoist** (high, set_time_controls
+  0x00523C60, 2026-11-20 par-2). The image's `mov eax,[human_mask]; and
+  eax,0xff; mov [ebp-0x14],eax` before the faction loop comes out of the
+  plain in-loop `G & (1u << f)` read; our `const unsigned active_mask = G;`
+  at the function head was instead a named web with an entry definition,
+  which won ebx as a write-back piece and kept the loop's counter out of
+  it. Tell them apart by where the store sits: a hoist is stored in the
+  loop preheader (after the loop's own initialisation), a named local at
+  its source position. The reverse holds for a value read twice per
+  iteration: when the image loads it once per iteration into a scratch
+  register and ours CSEs the two reads into a callee-saved piece, a
+  per-iteration local (`int refresh = TimeControl[sel].refresh;` as the
+  loop body's first statement) gives the image's one load (72 -> 24 rows
+  with both). Screen: `analysis/localinplace.py` (`ALL:v`) for the first,
+  `ctrscan.py` hoist counts for both.
 - **The in-place read is another program wherever the field can change**
   between the copy and the use (a store, a call). Only the image's rows at
   the site decide; never respell a statement that names both the copy and
