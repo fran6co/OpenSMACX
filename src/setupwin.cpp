@@ -23,6 +23,9 @@
 // WORKAROUND(decl): basepop.h's guarded friend; image 0x004AE225..0x004AE22E
 // reaches pos_to_id through the popup's dialogs_ member, not dialogs().
 #define BASEPOP_FRIEND_SETUPWIN
+// WORKAROUND(decl): stringstruct.h's gated current_entry body, for
+// setupwin_current_text (draw_item 0x004AE4D0).
+#define STRINGSTRUCT_CURRENT_ENTRY_INLINE
 #include "stdafx.h"
 #include "interface_fonts.h"
 #include "setupwin.h"
@@ -429,6 +432,16 @@ void SetupWin::on_mouse_move(int x, int y) {
     soft_update();
 }
 
+// WORKAROUND(inline): StringList::current_text (0x005E3630) expanded
+// inline, as in popmenu.cpp. draw_item reads the label through it twice
+// (0x004AE5D0, 0x004AE616): the inline boundary with current_entry's own head
+// test folded away is what keeps each link chase in eax and the null text
+// flowing into write_cent_l's test; the same expression written at the call
+// sites (with or without current_entry) leaves 9..37 rows.
+static inline char *setupwin_current_text(StringList *list) {
+    return list->head_ ? list->current_entry()->text : 0;
+}
+
 // ORIGINAL: 0x004AE4D0 ?draw_item@SetupWin@@QAEHHH@Z 0x004AE4D0-0x004AE757
 // RECOVERY_BINDING: v1 {"evidence": ["git:276d612614085e5d57743cf8cc92903d9468e346:src/unrecovered/004ae4d0.cpp", "source:src/setupwin.h:SetupWin", "source:src/stringstruct.h:StringList", "source:src/game.h:opening_window"], "reason": "Restore the item-row painter, text cursor, and selected overlay through typed SetupWin members and a real StringList; the opening-window producer remains a separate storage migration."}
 // symbol    ?draw_item@SetupWin@@QAEXHH@Z
@@ -458,8 +471,7 @@ void SetupWin::draw_item(int position, int selected) {
 
         if (position >= 0) {
             item_texts_->seek_pos(position);
-            char *name = item_texts_->head_ != 0
-                ? item_texts_->current_->string_payload()->text : 0;
+            char *name = setupwin_current_text(item_texts_);
             CharUpperA(name);
             char *pipe = strchr(name, '|');
             if (pipe != 0) *pipe = ' ';
@@ -467,10 +479,7 @@ void SetupWin::draw_item(int position, int selected) {
             if (paren != 0) paren[-1] = 0;
 
             // The original re-reads the live list and label after string calls.
-            if (item_texts_->head_ != 0) {
-                Buffer::write_cent_l(
-                    item_texts_->current_->string_payload()->text, &row);
-            }
+            Buffer::write_cent_l(setupwin_current_text(item_texts_), &row);
         }
 
         if (selected && OpeningWindow != 0 &&
