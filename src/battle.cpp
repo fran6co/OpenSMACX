@@ -2797,7 +2797,7 @@ int __cdecl battle_fight(int veh_id, int dir, int target_x, int target_y,
             att_strength = moves * att_strength / Rules.move_rate_roads;
             // inlined add_bat: label_get() runs before the modifier is computed
             add_bat(0, (moves - Rules.move_rate_roads) * 100 / Rules.move_rate_roads,
-                    label_get(0x153));
+                    StringTable.get(Labels.strings_ptr[0x153]));
         }
         // 0x5074DD
         if (mode != 1) {
