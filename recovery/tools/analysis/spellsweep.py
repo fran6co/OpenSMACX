@@ -39,6 +39,9 @@ RULES=collections.OrderedDict([
  # the reverse: a table_text stand-in written as the direct call (probe 0x0059F120: the image hoists the shared
  # x*3 of both arms only with the direct call)
  ('table_raw',(r'(?<![\w.>])table_text\(', lambda m:'StringTable.get(')),
+ # alpha.h label_get(k) against the written-out StringTable.get(Labels.strings_ptr[k]) (MATCHING_GUIDE 3.2 S7)
+ ('label_raw',(r'(?<![\w.>])label_get\('+ARG+r'\)', lambda m:'StringTable.get(Labels.strings_ptr[%s])'%m.group(1))),
+ ('label_fn',(r'(?<![\w.>])StringTable\.get\(Labels\.strings_ptr\['+r'((?:[^\[\]]|\[[^\[\]]*\])+)'+r'\]\)', lambda m:'label_get(%s)'%m.group(1))),
  ('treaty_fn',(r'(?<![\w.>])PlayersData\[([^\[\]]+)\]\.diplo_treaties\[([^\[\]]+)\] & (\w+)\b(?!\s*[\[(])', lambda m:'has_treaty(%s, %s, %s)'%(m.group(1),m.group(2),m.group(3)))),
  ('rw_raw',(r'\brect_width\(&('+OBJ+r')\)', lambda m:'(%s.right - %s.left)'%(m.group(1),m.group(1)))),
  ('rh_raw',(r'\brect_height\(&('+OBJ+r')\)', lambda m:'(%s.bottom - %s.top)'%(m.group(1),m.group(1)))),
@@ -62,7 +65,10 @@ def sites(t,addr,rules):
             out.append((s+m.start(),s+m.end(),rep(m),r))
     out.sort(); return out
 def apply(t,sel):
-    for a,b,rep,r in sorted(sel,reverse=True): t=t[:a]+rep+t[b:]
+    lo=None
+    for a,b,rep,r in sorted(sel,reverse=True):
+        if lo is not None and b>lo: continue   # overlapping sites (table_fn and label_fn on one call): first wins
+        t=t[:a]+rep+t[b:]; lo=a
     return t
 def evaluate(unit,addr,deck):
     base=int(os.environ.get('FE_PFX_BASE','2')); jobs=int(os.environ.get('FE_JOBS','5'))
