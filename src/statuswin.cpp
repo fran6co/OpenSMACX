@@ -1345,9 +1345,9 @@ void StatusWin::draw_active(int vehicle_id, int base_id, int add_spot) {
         strcat(StringTemp, VehPrototypes[Vehs[vehicle_id].proto_id].veh_name);
         if ((GameDataStateStorage.fields_.game_state_ & STATE_SCENARIO_EDITOR) &&
             (GameDataStateStorage.fields_.game_state_ & STATE_DEBUG_MODE)) {
-            strcat(StringTemp, SocialWinOpenParenText);
+            say_open_paren();
             say_num(vehicle_id);
-            strcat(StringTemp, SocialWinCloseParenText);
+            say_close_paren();
         }
         MainInterfaceGlobal.set_text_color(TextColourTable[12], TextColourTable[13], 1, 1);
         line_y = MainInterfaceGlobal.wrap_cent(&font3_, StringTemp, content_x, line_y,
@@ -1360,19 +1360,19 @@ void StatusWin::draw_active(int vehicle_id, int base_id, int add_spot) {
                 strcat(StringTemp,
                        Players[Vehs[vehicle_id].faction_id].adj_name_faction);
             } else {
-                strcat(StringTemp, SocialWinOpenParenText);
+                say_open_paren();
                 parse_set(Players[Vehs[vehicle_id].faction_id].noun_gender,
                           Players[Vehs[vehicle_id].faction_id].is_noun_plural);
                 strcat(StringTemp,
                        Players[Vehs[vehicle_id].faction_id].noun_faction);
-                strcat(StringTemp, SocialWinCloseParenText);
+                say_close_paren();
             }
             line_y = MainInterfaceGlobal.wrap_cent(StringTemp, content_x, line_y,
                                        area.right - area.left);
         }
 
         StringTemp[0] = '\0';
-        strcat(StringTemp, SocialWinOpenParenText);
+        say_open_paren();
         say_stats_3(StringTemp, Vehs[vehicle_id].proto_id);
         if (Vehs[vehicle_id].state & VSTATE_DESIGNATE_DEFENDER) {
             strcat(StringTemp, "#");
@@ -1380,11 +1380,11 @@ void StatusWin::draw_active(int vehicle_id, int base_id, int add_spot) {
         for (int ability = 0; ability < MaxAbilityNum; ++ability) {
             if (has_abil(Vehs[vehicle_id].proto_id, 1 << ability)
                 && strlen(table_text(Ability[ability].abbreviation))) {
-                strcat(StringTemp, SocialWinCommaSpaceText);
+                say_comma();
                 strcat(StringTemp, StringTable.get(Ability[ability].abbreviation));
             }
         }
-        strcat(StringTemp, SocialWinCloseParenText);
+        say_close_paren();
         line_y = MainInterfaceGlobal.wrap_cent(StringTemp, content_x, line_y,
                                    area.right - area.left);
         if ((Vehs[vehicle_id].faction_id != 0
@@ -1423,12 +1423,12 @@ void StatusWin::draw_active(int vehicle_id, int base_id, int add_spot) {
                 } else {
                     StringTemp[0] = '\0';
                     strcat(StringTemp, label_get(0x1c / 4));
-                    strcat(StringTemp, SocialWinColonSpaceText);
+                    say_colon();
                     int moves = veh_moves(vehicle_id);
                     int fraction = moves % Rules.move_rate_roads;
                     say_num(moves / Rules.move_rate_roads);
                     if (fraction) {
-                        strcat(StringTemp, BufferJoinSpace);
+                        space();
                         say_num(fraction);
                         strcat(StringTemp, "/");
                         say_num(Rules.move_rate_roads);
@@ -1440,7 +1440,7 @@ void StatusWin::draw_active(int vehicle_id, int base_id, int add_spot) {
             if (Chassis[VehPrototypes[Vehs[vehicle_id].proto_id].chassis_id].range) {
                 StringTemp[0] = '\0';
                 strcat(StringTemp, label_get(0x30c / 4));
-                strcat(StringTemp, SocialWinColonSpaceText);
+                say_colon();
                 next_x = MainInterfaceGlobal.write_l(StringTemp, content_x, line_y);
                 StringTemp[0] = '\0';
                 int moves = veh_moves(vehicle_id);
@@ -1474,7 +1474,7 @@ void StatusWin::draw_active(int vehicle_id, int base_id, int add_spot) {
             if (veh_cargo(vehicle_id)) {
                 StringTemp[0] = '\0';
                 strcat(StringTemp, label_get(0x360 / 4));
-                strcat(StringTemp, SocialWinColonSpaceText);
+                say_colon();
                 int cargo = veh_cargo(vehicle_id) - stack_veh(vehicle_id, 0);
                 say_num(cargo);
                 strcat(StringTemp, "/");
@@ -1487,7 +1487,7 @@ void StatusWin::draw_active(int vehicle_id, int base_id, int add_spot) {
         if (Vehs[vehicle_id].dmg_incurred) {
             StringTemp[0] = '\0';
             strcat(StringTemp, label_get(0x628 / 4));
-            strcat(StringTemp, SocialWinColonSpaceText);
+            say_colon();
             next_x = MainInterfaceGlobal.write_l(StringTemp, content_x, line_y);
             MainInterfaceGlobal.set_text_color(0xfa, -1, 1, 1);
             if (Vehs[vehicle_id].dmg_incurred >= proto_power(vehicle_id) / 3) {
@@ -1528,7 +1528,7 @@ void StatusWin::draw_active(int vehicle_id, int base_id, int add_spot) {
                 StringTemp[0] = '\0';
                 strcat(StringTemp, "[");
                 strcat(StringTemp, label_get(0x71c / 4));
-                strcat(StringTemp, SocialWinColonSpaceText);
+                say_colon();
                 say_num(turns + 1);
                 strcat(StringTemp, "]");
                 MainInterfaceGlobal.set_text_color(0xfb, -1, 1, 1);
@@ -1581,10 +1581,10 @@ void StatusWin::draw_active(int vehicle_id, int base_id, int add_spot) {
         strcat(StringTemp, Bases[base_id].name_string);
         if ((GameDataStateStorage.fields_.game_state_ & STATE_SCENARIO_EDITOR) &&
             (GameDataStateStorage.fields_.game_state_ & STATE_DEBUG_MODE)) {
-            strcat(StringTemp, BufferJoinSpace);
-            strcat(StringTemp, SocialWinOpenParenText);
+            space();
+            say_open_paren();
             say_num(base_id);
-            strcat(StringTemp, SocialWinCloseParenText);
+            say_close_paren();
         }
         line_y = MainInterfaceGlobal.wrap_cent(&font3_, StringTemp, content_x, line_y,
                                    area.right - area.left);
@@ -1594,19 +1594,19 @@ void StatusWin::draw_active(int vehicle_id, int base_id, int add_spot) {
                 strcat(StringTemp,
                        Players[Bases[base_id].faction_id_current].adj_name_faction);
             } else {
-                strcat(StringTemp, SocialWinOpenParenText);
+                say_open_paren();
                 parse_set(Players[Bases[base_id].faction_id_current].noun_gender,
                           Players[Bases[base_id].faction_id_current].is_noun_plural);
                 strcat(StringTemp,
                        Players[Bases[base_id].faction_id_current].noun_faction);
-                strcat(StringTemp, SocialWinCloseParenText);
+                say_close_paren();
             }
             line_y = MainInterfaceGlobal.wrap_cent(StringTemp, content_x, line_y,
                                        area.right - area.left);
             if (Bases[base_id].faction_id_current != ConsoleGlobal.faction_id_) {
                 StringTemp[0] = '\0';
             } else {
-                strcat(StringTemp, BufferJoinSpace);
+                space();
             }
             strcat(StringTemp, has_fac(FAC_HEADQUARTERS, base_id, 0)
                 ? label_get(0x5c4 / 4)
@@ -1635,7 +1635,7 @@ void StatusWin::draw_active(int vehicle_id, int base_id, int add_spot) {
             if (Bases[base_id].nerve_staple_turns_left) {
                 StringTemp[0] = '\0';
                 strcat(StringTemp, label_get(0xb08 / 4));
-                strcat(StringTemp, SocialWinColonSpaceText);
+                say_colon();
                 say_num(Bases[base_id].nerve_staple_turns_left);
                 MainInterfaceGlobal.set_text_color(0xfb, -1, 1, 1);
                 line_y = MainInterfaceGlobal.wrap_cent(StringTemp, content_x, line_y,
@@ -1650,7 +1650,7 @@ void StatusWin::draw_active(int vehicle_id, int base_id, int add_spot) {
             || spying(Bases[base_id].faction_id_current)) {
             StringTemp[0] = '\0';
             strcat(StringTemp, label_get(0x798 / 4));
-            strcat(StringTemp, SocialWinColonSpaceText);
+            say_colon();
             int cost;
             if (Bases[base_id].queue_production_id[0] >= 0) {
                 strcat(StringTemp,
@@ -1662,13 +1662,13 @@ void StatusWin::draw_active(int vehicle_id, int base_id, int add_spot) {
                 cost = Facility[-Bases[base_id].queue_production_id[0]].cost;
             }
             if (Bases[base_id].queue_production_id[0] != -69) {
-                strcat(StringTemp, BufferJoinSpace);
-                strcat(StringTemp, SocialWinOpenParenText);
+                space();
+                say_open_paren();
                 say_num(Bases[base_id].minerals_accumulated);
                 strcat(StringTemp, "/");
                 cost *= cost_factor(Bases[base_id].faction_id_current, 1, -1);
                 say_num(cost);
-                strcat(StringTemp, SocialWinCloseParenText);
+                say_close_paren();
             }
             if (strlen(StringTemp)) {
                 line_y = MainInterfaceGlobal.wrap_cent(StringTemp, content_x, line_y,

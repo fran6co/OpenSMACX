@@ -180,22 +180,18 @@ inline void __cdecl strcat_period(char *text) {
     strcat(text, ". ");
 }
 
-// WORKAROUND(inline): named stand-ins for the helper literals, used only in
-// top_menu, Console::upgrade (4 of 17 sites), Console::editor_edit_veh,
-// DesignWin::select_special and StatusWin::draw_active. save_game and
-// PickTech::draw_tech take the literal through strcat_X(StringTemp) instead
-// of say_X() (fe 2026-11-19: save_game unchanged, draw_tech 303 -> 294;
-// say_X() there moves them), as do 13 of upgrade's sites (147 -> 145).
-// One more inline expansion per site moves their /Ob2 decisions away from
-// the image (fe 2026-11-19: top_menu loses an init_opening_spend expansion
-// with any inline at its one " " site, even an expression-only one;
-// save_game, upgrade, editor_edit_veh and select_special change their call
-// multisets, draw_active refuses
-// proto_power, draw_tech's block layout moves), so the original spent less
-// there than these helpers do. Defined in string_table.cpp, bound to the
-// literals' addresses. Cleanup: the original helper set that fits these
-// budgets.
+// WORKAROUND(inline): named stand-in for the " " literal, used only in
+// top_menu 0x0058E360. Any inline at its one " " site, even an
+// expression-only one, costs top_menu an init_opening_spend expansion (fe
+// 2026-11-20: call distance 0 -> 5), so the original spent less there than
+// our source does. The image pushes the shared COMDAT 0x00682820 there
+// (MATCHING_GUIDE 2.8, "A pushed literal's address decides"), so the site is
+// a header inline. Defined in string_table.cpp, bound to the literal's
+// address. Cleanup: find top_menu's overspend, then use space().
 extern const char BufferJoinSpace[];
+// WORKAROUND(inline): unused since their last hosts took the helpers
+// (2026-11-20); kept one commit so their removal, which shifts the front-end
+// symbol counter of every includer, lands on its own.
 extern char SocialWinCommaSpaceText[];
 extern char SocialWinColonSpaceText[];
 extern char SocialWinCloseParenText[];

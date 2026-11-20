@@ -739,14 +739,14 @@ int Console::upgrade(int veh_id) { // 0x004D06C0
         strcat_open_paren(StringTemp);
         say_stats_2(StringTemp, Vehs[veh_id].proto_id);
         if (VehPrototypes[Vehs[veh_id].proto_id].ability_flags) {
-            strcat(StringTemp, BufferJoinSpace);
+            strcat_space(StringTemp);
             for (int i = 0; i < MaxAbilityNum; i++) {
                 if (has_abil(Vehs[veh_id].proto_id, 1 << i)) {
                     strcat(StringTemp, table_text(Ability[i].abbreviation));
                 }
             }
         }
-        strcat(StringTemp, SocialWinCloseParenText);
+        strcat_close_paren(StringTemp);
         parse_says(0, StringTemp, -1, -1);
         popup.start("WHICHUPGRADE", 0x40);
 
@@ -875,8 +875,8 @@ int Console::upgrade(int veh_id) { // 0x004D06C0
             }
             StringTemp[0] = '\0';
             strcat(StringTemp, VehPrototypes[proto_id].veh_name);
-            strcat(StringTemp, BufferJoinSpace);
-            strcat(StringTemp, SocialWinOpenParenText);
+            strcat_space(StringTemp);
+            strcat_open_paren(StringTemp);
             say_stats_2(StringTemp, proto_id);
             if (VehPrototypes[proto_id].ability_flags) {
                 strcat_space(StringTemp);
@@ -5086,11 +5086,11 @@ void Console::editor_edit_veh(int vehicle_id) {
 
     StringTemp[0] = '\0';
     strcat(StringTemp, VehPrototypes[Vehs[vehicle_id].proto_id].veh_name);
-    strcat(StringTemp, BufferJoinSpace);
+    space();
     editor_edit_veh_budget_probe4(5);  // WORKAROUND(inline): see editor_edit_veh_budget_probe4
-    strcat(StringTemp, SocialWinOpenParenText);
+    say_open_paren();
     append_decimal(StringTemp, vehicle_id);
-    strcat(StringTemp, SocialWinCloseParenText);
+    say_close_paren();
     if (x_pop_short("EDITVEH", 0x41, nullptr) < 0) {
         return;
     }

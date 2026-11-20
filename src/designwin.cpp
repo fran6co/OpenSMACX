@@ -3726,11 +3726,11 @@ void DesignWin::select_special(int which) {
 
         StringTemp[0] = 0;
         strcat(StringTemp, table_text(Ability[i].name));
-        strcat(StringTemp, SocialWinColonSpaceText);
+        strcat_colon(StringTemp);
         strcat(StringTemp, table_text(Ability[i].description));
         strcat(StringTemp, "|");
         say_label(0x58);
-        strcat(StringTemp, SocialWinColonSpaceText);
+        strcat_colon(StringTemp);
 
         RulesAbility *ability = &Ability[i];
         if (ability->cost_factor < 0) {
@@ -3738,86 +3738,86 @@ void DesignWin::select_special(int which) {
             case -1: {
                 say_num(range(Weapon[protoWeaponType_].cost
                               / Armor[protoArmorType_].cost, 0, 2));
-                strcat(StringTemp, BufferJoinSpace);
-                strcat(StringTemp, SocialWinOpenParenText);
+                strcat_space(StringTemp);
+                strcat_open_paren(StringTemp);
                 say_label(0x7C);
                 strcat(StringTemp, "/");
                 say_label(0x55);
-                strcat(StringTemp, SocialWinCloseParenText);
+                strcat_close_paren(StringTemp);
                 break;
             }
             case -2:
                 say_num(Weapon[protoWeaponType_].cost - 1);
-                strcat(StringTemp, BufferJoinSpace);
-                strcat(StringTemp, SocialWinOpenParenText);
+                strcat_space(StringTemp);
+                strcat_open_paren(StringTemp);
                 say_label(0x7C);
                 strcat(StringTemp, "-1");
-                strcat(StringTemp, SocialWinCloseParenText);
+                strcat_close_paren(StringTemp);
                 break;
             case -3:
                 say_num(Armor[protoArmorType_].cost - 1);
-                strcat(StringTemp, BufferJoinSpace);
-                strcat(StringTemp, SocialWinOpenParenText);
+                strcat_space(StringTemp);
+                strcat_open_paren(StringTemp);
                 say_label(0x55);
                 strcat(StringTemp, "-1");
-                strcat(StringTemp, SocialWinCloseParenText);
+                strcat_close_paren(StringTemp);
                 break;
             case -4:
                 say_num(Chassis[protoChassisType_].speed - 1);
-                strcat(StringTemp, BufferJoinSpace);
-                strcat(StringTemp, SocialWinOpenParenText);
+                strcat_space(StringTemp);
+                strcat_open_paren(StringTemp);
                 say_label(0x2C5);
                 strcat(StringTemp, "-1");
-                strcat(StringTemp, SocialWinCloseParenText);
+                strcat_close_paren(StringTemp);
                 break;
             case -5:
                 say_num(Armor[protoArmorType_].cost
                         + Weapon[protoWeaponType_].cost - 2);
-                strcat(StringTemp, BufferJoinSpace);
-                strcat(StringTemp, SocialWinOpenParenText);
+                strcat_space(StringTemp);
+                strcat_open_paren(StringTemp);
                 say_label(0x7C);
                 strcat(StringTemp, "+");
                 say_label(0x55);
                 strcat(StringTemp, "-2");
-                strcat(StringTemp, SocialWinCloseParenText);
+                strcat_close_paren(StringTemp);
                 break;
             case -6:
                 say_num(Chassis[protoChassisType_].speed
                         + Weapon[protoWeaponType_].cost - 2);
-                strcat(StringTemp, BufferJoinSpace);
-                strcat(StringTemp, SocialWinOpenParenText);
+                strcat_space(StringTemp);
+                strcat_open_paren(StringTemp);
                 say_label(0x7C);
                 strcat(StringTemp, "+");
                 say_label(0x2C5);
                 strcat(StringTemp, "-2");
-                strcat(StringTemp, SocialWinCloseParenText);
+                strcat_close_paren(StringTemp);
                 break;
             case -7:
                 say_num(Chassis[protoChassisType_].speed
                         + Armor[protoArmorType_].cost - 2);
-                strcat(StringTemp, BufferJoinSpace);
-                strcat(StringTemp, SocialWinOpenParenText);
+                strcat_space(StringTemp);
+                strcat_open_paren(StringTemp);
                 say_label(0x55);
                 strcat(StringTemp, "+");
                 say_label(0x2C5);
                 strcat(StringTemp, "-2");
-                strcat(StringTemp, SocialWinCloseParenText);
+                strcat_close_paren(StringTemp);
                 break;
             }
         } else if (ability->flags & 0x400) {
             // Cost scales with the triad: one more on land.
             if (Chassis[protoChassisType_].triad == 0) {
                 say_num(ability->cost_factor + 1);
-                strcat(StringTemp, BufferJoinSpace);
-                strcat(StringTemp, SocialWinOpenParenText);
+                strcat_space(StringTemp);
+                strcat_open_paren(StringTemp);
             } else {
                 say_num(ability->cost_factor);
-                strcat(StringTemp, BufferJoinSpace);
-                strcat(StringTemp, SocialWinOpenParenText);
+                strcat_space(StringTemp);
+                strcat_open_paren(StringTemp);
             }
             strcat(StringTemp,
                    table_text(Triad[Chassis[protoChassisType_].triad]));
-            strcat(StringTemp, SocialWinCloseParenText);
+            strcat_close_paren(StringTemp);
         } else {
             say_num(ability->cost_factor);
         }
