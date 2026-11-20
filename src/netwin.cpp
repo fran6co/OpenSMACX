@@ -691,12 +691,12 @@ void NetWin::pick_player() {
     // window, not an original array/padding declaration or overflow layout.
     char gender_text[0x100];
     strcpy(gender_text,
-           StringTable.get(NetWinLobbyRows.rows_[slot].tail_[0] != 0
+           table_text(NetWinLobbyRows.rows_[slot].tail_[0] != 0
                                ? Labels.strings_ptr[0xB8C / 4]
                                : Labels.strings_ptr[0xB88 / 4]));
     popup.start(PopupStartCaption, "CUSTOMNAMES", -1, 0, 0x200044, 0);
     {
-        char *label = label_get(0x2B8 / 4);
+        char *label = StringTable.get(Labels.strings_ptr[0x2B8 / 4]);
         popup.dialogs().edit(label, NetWinLobbyRows.rows_[slot].leader_name_, 0x17);
     }
     {
