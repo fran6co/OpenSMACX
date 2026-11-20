@@ -500,12 +500,12 @@ void __cdecl capture_base(int base_id, int faction_id, int mode) {
     PlayersData[faction_id_def].energy_reserves =
         range(PlayersData[faction_id_def].energy_reserves - energy_stolen, 0, 9999999);
 
-    if (!mode && !liberated
+    if ((!mode && !liberated
         && !(Bases[base_id].state & BSTATE_ASSISTANT_KILLER_HOME)
         && !is_objective(base_id)
         && (Bases[base_id].population_size > 1
             || (Bases[base_id].visibility & GameDataStateStorage.fields_.lock_masks_.human_mask_)
-            || IsMultiplayerNet)) {
+            || IsMultiplayerNet)) != 0) {
         if (!--Bases[base_id].population_size) {
             base_kill(base_id);
             draw_map(1);
