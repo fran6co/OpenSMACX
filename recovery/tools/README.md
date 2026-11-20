@@ -89,6 +89,12 @@ an explicit `--pfx` is only needed to pick another lane.
   40 s tree-wide; most rows are register-allocation noise, the clean ones are a bool/uint8_t local the image keeps
   as int. A per-local retype sweep (every char/short/bool local of a non-exact function to int) finds the same
   cases more directly.
+- `analysis/aliasscan.py <unit> <addr[,..]> | --from FEALL.json [--json F]` "scalar that was an array element"
+  screen (MATCHING_GUIDE 3.3, colortables_init): per natural loop, `imul r,[ebp-N]` and reads of ebp slots the
+  loop never writes or address-takes, on both sides, plus the aligned rows where the image reads such a slot and
+  ours (same mnemonic) has a register. 30 s tree-wide. 2026-11-20: 22 functions with such pairs; on reading,
+  the ones in small functions (set_time_controls, repair_phase, battle_compute) are register pressure or
+  operand order, not aliasing. Screen only.
 - `analysis/ivscan.py <unit> <addr[,..]> | --tree [unit ..] [--all] [--json F]` induction-step census of both sides
   (MATCHING_GUIDE 2.7 "Strength reduction is a candidate-set question"): every `add/sub/lea/inc/dec` of a register (or
   `add dword ptr [slot], K`) inside a natural loop, at any stride and sign, whose register is used as an address or
