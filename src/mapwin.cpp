@@ -5375,7 +5375,7 @@ int MapWin::right_menu(int tile_x, int tile_y, int screen_x, int screen_y) {
             // BufferJoinSpace; production also includes the label before the name.
             ::clear();
             space();
-            strcat(StringTemp, label_get(0x898 / 4));
+            strcat(StringTemp, StringTable.get(Labels.strings_ptr[0x898 / 4]));
             menu.add_item(0x33, StringTemp);
 
             ::clear();
