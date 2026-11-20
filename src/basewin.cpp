@@ -5801,11 +5801,13 @@ again:
 
 // WORKAROUND(inline): dead /Ob2 budget probe for base_editor_proj (folds
 // away). The image's first cancel return calls ~Scroll and ~BasePop out of
-// line (0x0041BD5D, 0x0041BD6F) while the second expands ~BasePop fully;
-// six one-test expansions after the first return reproduce both (EH map
-// 1,2,7,9,7,11 against the image's 1,2,7,9,7,9: the closing teardown still
-// expands ??_DDialogs and both ??_DStringList, 0x00406AF0/0x00406820, at every
-// probe count and placement tried). The original's spend is not identified.
+// line (0x0041BD5D, 0x0041BD6F) while the second expands ~BasePop fully.
+// With the PICKAPLACE labels read through label_get (as base_editor_copy
+// does) and the owner store written on project_base, four one-test
+// expansions after the first return give the image's unwind map exactly; the
+// closing teardown still expands ??_DDialogs (0x0041C1AF calls it) and three
+// ??_DStringList sites expand where the image calls 0x00406820. The
+// original's spend is not identified.
 static inline int base_editor_proj_budget_probe(int x) {
     if (x == 0) x = 7;
     return x;
@@ -5854,8 +5856,6 @@ void BaseWin::base_editor_proj() {
     base_editor_proj_budget_probe(1002);  // WORKAROUND(inline)
     base_editor_proj_budget_probe(1003);  // WORKAROUND(inline)
     base_editor_proj_budget_probe(1004);  // WORKAROUND(inline)
-    base_editor_proj_budget_probe(1005);  // WORKAROUND(inline)
-    base_editor_proj_budget_probe(1006);  // WORKAROUND(inline)
     // A named facility id: in an EH function VC6 keeps the +70 in the scaled
     // index (0x0041BD85 lea edx,[esi+esi*2+0xD2]; MATCHING_GUIDE 3.4).
     const int facility_id = FacilitySPStart + project;
@@ -5863,11 +5863,11 @@ void BaseWin::base_editor_proj() {
     PopupModalState = 6;
     popup.start("PICKAPLACE", 0x42);
     {
-        char *text = StringTable.get(Labels.strings_ptr[0xD64 / 4]);
+        char *text = label_get(0xD64 / 4);
         popup.item(text, 9999);
     }
     {
-        char *text = StringTable.get(Labels.strings_ptr[0xD68 / 4]);
+        char *text = label_get(0xD68 / 4);
         popup.item(text, 9998);
     }
     // Current-faction bases precede other bases, preserving original index IDs.
@@ -5891,11 +5891,9 @@ void BaseWin::base_editor_proj() {
     PopupModalState = 0;
     if (owner_base < 0) return;
     if (owner_base >= 9000) owner_base -= 10000;
-    // Use the existing typed SecretProject table owner/access convention.
-    // Its current declaration is64 consecutive named int fields; base_project
-    // uses this same indexed run. A future array migration must preserve all
-    // named consumers centrally; this body introduces no independent storage.
-    GameDataStateStorage.fields_.secret_project_[project] = owner_base;
+    // The owner word is stored on project_base directly: through the
+    // operator[] inline the unwind map gains a teardown state.
+    GameDataStateStorage.fields_.secret_project_.project_base[project] = owner_base;
     redraw();
     // Popup owns complete member/base teardown, including cancellation paths.
 }
