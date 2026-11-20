@@ -2405,9 +2405,8 @@ void NetWin::draw_session_info() {
         && NetWinSessionData.fields_.scenario_text_wire_tail_[0] == 0) {
         spot_.add(8, 0, col, bottom, written - col + 0x1E, next - bottom);
     }
+    next += Buffer::text_line_height();
     row = next;
-
-    row += Buffer::text_line_height();
 
     if (NetWinSessionData.fields_.mode_ == 3 || NetWinSessionData.fields_.mode_ == 2) {
         // Factions with a password that no connected player holds.
