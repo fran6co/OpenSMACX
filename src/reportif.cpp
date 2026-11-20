@@ -4710,14 +4710,16 @@ void ReportWin::draw_intel() {
     rect1_.top += field_E268_;
     report_intel_label(0x5C0 / 4);
     int shown = 0;
-    const int category = Players[subject].soc_ideology_category[0];
-    if (category >= 0) {
-        const int model = Players[subject].soc_ideology_model[0];
-        if (model != 0) {
-            strcat(StringTemp, StringTable.get(SocialCategories[category].type));
-            say_colon();
-            strcat(StringTemp, StringTable.get(SocialCategories[category].name[model]));
-            shown = 1;
+    for (int ideology = 0; ideology < 1; ++ideology) {
+        const int category = Players[subject].soc_ideology_category[ideology];
+        if (category >= 0) {
+            const int model = Players[subject].soc_ideology_model[ideology];
+            if (model != 0) {
+                strcat(StringTemp, StringTable.get(SocialCategories[category].type));
+                say_colon();
+                strcat(StringTemp, StringTable.get(SocialCategories[category].name[model]));
+                shown = 1;
+            }
         }
     }
     if (shown) {
