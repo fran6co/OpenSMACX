@@ -1595,14 +1595,14 @@ void SocialWin::draw_info() {
             > 10 - PlayersData[factionID_].se_alloc_psych - PlayersData[factionID_].se_alloc_labs) {
             _itoa(-range(shift * imbalance, 0, 0x28), number, 10);
             strcat(StringTemp, number);
-// RECOVERY_LITERAL: v1 0x00687480 0x00687483 $SG59400 0x004AFB60
+// RECOVERY_LITERAL: v1 0x00687480 0x00687483 $SG59388 0x004AFB60
             strcat(StringTemp, "% ");
             strcat(StringTemp, label_get(60));
             if (10 - PlayersData[factionID_].se_alloc_psych - PlayersData[factionID_].se_alloc_labs != 0) {
                 say_comma();
                 _itoa(-range(shift * imbalance * 2, 0, 0x50), number, 10);
                 strcat(StringTemp, number);
-// RECOVERY_LITERAL: v1 0x00687484 0x00687487 $SG59402 0x004AFB60
+// RECOVERY_LITERAL: v1 0x00687484 0x00687487 $SG59390 0x004AFB60
                 strcat(StringTemp, "% ");
                 strcat(StringTemp, label_get(169));
             }
@@ -1610,14 +1610,14 @@ void SocialWin::draw_info() {
             if (PlayersData[factionID_].se_alloc_labs != 0) {
                 _itoa(-range(shift * imbalance * 2, 0, 0x50), number, 10);
                 strcat(StringTemp, number);
-// RECOVERY_LITERAL: v1 0x00687488 0x0068748B $SG59405 0x004AFB60
+// RECOVERY_LITERAL: v1 0x00687488 0x0068748B $SG59393 0x004AFB60
                 strcat(StringTemp, "% ");
                 strcat(StringTemp, label_get(60));
                 say_comma();
             }
             _itoa(-range(shift * imbalance, 0, 0x28), number, 10);
             strcat(StringTemp, number);
-// RECOVERY_LITERAL: v1 0x0068748C 0x0068748F $SG59406 0x004AFB60
+// RECOVERY_LITERAL: v1 0x0068748C 0x0068748F $SG59394 0x004AFB60
             strcat(StringTemp, "% ");
             strcat(StringTemp, label_get(169));
         }
@@ -1630,7 +1630,7 @@ void SocialWin::draw_info() {
         StringTemp[0] = 0;
         strcat(StringTemp, label_get(350));
         say_colon();
-// RECOVERY_LITERAL: v1 0x00687490 0x00687492 $SG59408 0x004AFB60
+// RECOVERY_LITERAL: v1 0x00687490 0x00687492 $SG59396 0x004AFB60
         strcat(StringTemp, "+");
         _itoa(-upheaval, number, 10);
         strcat(StringTemp, number);
@@ -1712,7 +1712,7 @@ void SocialWin::draw_overview() {
         }
 
         StringTemp[0] = 0;
-// RECOVERY_LITERAL: v1 0x0068749C 0x006874A0 $SG59433 0x004B0410
+// RECOVERY_LITERAL: v1 0x0068749C 0x006874A0 $SG59421 0x004B0410
         strcat(StringTemp, "SOC");
         strcat(StringTemp, SocialEffects[effect].set1);
         if (text_open(0, StringTemp) != 0) {
@@ -1759,7 +1759,7 @@ void SocialWin::draw_overview() {
 
         StringTemp[0] = 0;
         if (socEffect_.values_[effect] > 0) {
-// RECOVERY_LITERAL: v1 0x006874A0 0x006874A2 $SG59453 0x004B0410
+// RECOVERY_LITERAL: v1 0x006874A0 0x006874A2 $SG59441 0x004B0410
             strcat(StringTemp, "+");
         }
         char number[80];
@@ -2013,11 +2013,11 @@ void SocialWin::draw_mouseover() {
 
                 StringTemp[0] = 0;
                 if (value < 0) {
-// RECOVERY_LITERAL: v1 0x006874A4 0x006874A6 $SG59548 0x004B1080
+// RECOVERY_LITERAL: v1 0x006874A4 0x006874A6 $SG59536 0x004B1080
                     strcat(StringTemp, "-");
                     MainInterfaceGlobal.Buffer::set_text_color(0x67, -1, 1, 1);
                 } else {
-// RECOVERY_LITERAL: v1 0x006874A8 0x006874AA $SG59550 0x004B1080
+// RECOVERY_LITERAL: v1 0x006874A8 0x006874AA $SG59538 0x004B1080
                     strcat(StringTemp, "+");
                     MainInterfaceGlobal.Buffer::set_text_color(0x98, -1, 1, 1);
                 }
@@ -2117,7 +2117,7 @@ int SocialWin::on_button_text_draw(GraphicWin *window, char *text, int button_id
 
     StringTemp[0] = 0;
     if (socEffect_.values_[effect] > 0) {
-// RECOVERY_LITERAL: v1 0x006874AC 0x006874AE $SG59580 0x004B17A0
+// RECOVERY_LITERAL: v1 0x006874AC 0x006874AE $SG59568 0x004B17A0
         strcat(StringTemp, "+");
     }
     char number[80];
@@ -2360,7 +2360,7 @@ void SocialWin::init(int faction_id) {
     font9_.init(DefaultLargeFontFace, 0xe, 1);
 
     if (!effectIcons_[0].has_pixel_pointer()) {
-// RECOVERY_LITERAL: v1 0x006874B0 0x006874BB $SG59614 0x004B2740
+// RECOVERY_LITERAL: v1 0x006874B0 0x006874BB $SG59602 0x004B2740
         sheet.load_pcx("socwin.pcx", 0, 10, 0xec);
         // Ten rows of three triplets; x restarts in the row clause.
         Sprite *icon = effectIcons_;
@@ -2661,7 +2661,7 @@ void SocialWin::init(int faction_id) {
             // 0x4B3C0B: test; jne to the vbase adjustment, null arm first.
             GraphicWin *graphics = window == 0
                 ? 0 : static_cast<GraphicWin *>(window);
-// RECOVERY_LITERAL: v1 0x006874BC 0x006874C3 $SG59722 0x004B2740
+// RECOVERY_LITERAL: v1 0x006874BC 0x006874C3 $SG59710 0x004B2740
             TutorialWindow.tut_win(graphics, "SOCWIN", out_a, out_b,
                 0, 1, -1, -1);
         }
