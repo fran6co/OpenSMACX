@@ -1291,12 +1291,14 @@ void StatusWin::draw(int tile_x, int tile_y, int city_index, int unit_index,
     MainInterfaceGlobal.soft_update(&localRect);
 }
 
-// WORKAROUND(decl): one inline level around the percentage; with the three
-// expansions written directly in draw_active VC6 has budget to expand the
-// outer range too. The original helper's name and owner are unknown.
-static inline int status_damage_percent(int veh_id) {
-    return (proto_power(veh_id) - veh_health(veh_id)) * 100
-        / proto_power(veh_id);
+// WORKAROUND(decl): one inline level around the damage taken. The image
+// expands both proto_power reactor ranges and calls veh_health's two ranges
+// (0x4B5A1A, 0x4B5A39); written directly all four expand, and with the
+// whole percentage behind one helper all four are called (since the
+// separators became header inlines, 38ed1c55a8). Only this level gives the
+// image's split (fe 418 -> 60 rows). Name and owner are unknown.
+static inline int status_damage_taken(int veh_id) {
+    return proto_power(veh_id) - veh_health(veh_id);
 }
 
 // ORIGINAL: 0x004B4CF0 ?draw_active@StatusWin@@QAEXHHH@Z 0x004B4CF0-0x004B652B
@@ -1497,7 +1499,7 @@ void StatusWin::draw_active(int vehicle_id, int base_id, int add_spot) {
                 MainInterfaceGlobal.set_text_color(0xf9, -1, 1, 1);
             }
             StringTemp[0] = '\0';
-            say_num(status_damage_percent(vehicle_id));
+            say_num(status_damage_taken(vehicle_id) * 100 / proto_power(vehicle_id));
             strcat(StringTemp, "%");
             MainInterfaceGlobal.write_l(StringTemp, next_x, line_y);
             MainInterfaceGlobal.set_text_color(MessageWinTextColor, MessageWinTextBackground, 1, 1);
