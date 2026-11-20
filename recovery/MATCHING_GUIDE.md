@@ -5357,6 +5357,23 @@ result over 64 symbol-counter pads, so none of these is a counter canary.
   energy arrays (37 -> 88 rows). As separate `int[2]` + `int`, VC6 orders
   transparent_color/regenerate by reference count: one extra surviving
   `regenerate` read flips them (folded reads do not count).
+  2026-11-20 par-2, current source (37 rows, only these two slots and the
+  RGB_to_HSV argument order differ): none of these flip it, and all compile
+  to the same 37 rows: `++regenerate`, `regenerate++` or `regenerate |= 1`
+  at the armorgrads fallback or at make_explosions (both: the known-value
+  load folds), `regenerate &= 1` after the zero store, and regenerate as the
+  colorvals match flag (`regenerate = 1` on a mismatch then `if
+  (regenerate)`, or `if (!matched) regenerate = 1;`: VC6 threads the flag
+  away, as it does `matched`). Starting at `regenerate = 1` and clearing it
+  on a full match does flip the order (the clearing store and test survive)
+  but restructures the cache path (183 rows). So the missing reference is
+  one that survives into code; the form that leaves the code unchanged is
+  still unknown. A screen of every non-exact function for address-taken
+  blocks of >= 0x40 bytes at different offsets (scratch `bufscan.py`,
+  framescan slots) found no other `_itoa`/say_num buffer host: battle_fight's
+  NERVEGAS name and say_num homes differ only by its 4-byte frame shortfall;
+  queue_click, base_editor_proj, select_special and call_council differ in
+  PopMenu/dialog object blocks, not number buffers.
 - **A local the image never stores** was uninitialized in the original.
 - **A RECT in memory whose constant edges are stored through a register**
   (`mov ebx,0x15; mov [ebp-0x10],ebx; mov ebx,4; mov [ebp-0xc],ebx`) and
