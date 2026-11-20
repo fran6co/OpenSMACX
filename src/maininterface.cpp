@@ -134,8 +134,11 @@ int MainInterfaceEndTurnAnimation = 1;
 SubInterface *InterfaceRegistry[12];
 
 // The image appends the shared ": " (0x00682E94) and " " (0x00682820) strings
-// at every use in draw_edit_pane; this unit's own literals stay separate
-// per use, so these are the named socialwin.cpp/buffer.cpp objects.
+// at every use in draw_edit_pane: the COMDAT literals of strings.h's
+// strcat_colon/strcat_space, which LINK keeps from basewin.cpp/popup.cpp.
+// This unit's own literals stay separate per use.
+// RECOVERY_LITERAL: v2 merged 0x00682E94 0x00682E97 ??_C@_02HFBK@?3?5?$AA@ 0x0045B550
+// RECOVERY_LITERAL: v2 merged 0x00682820 0x00682822 ??_C@_01FCOA@?5?$AA@ 0x0045B550
 // RECOVERY_LITERAL: v1 0x00685364 0x00685366 $SG58156 0x0045B550
 // RECOVERY_LITERAL: v1 0x00685368 0x0068536A $SG58157 0x0045B550
 // RECOVERY_LITERAL: v1 0x0068536C 0x0068536E $SG58186 0x0045B550
