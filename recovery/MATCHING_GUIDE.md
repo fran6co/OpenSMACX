@@ -9254,6 +9254,11 @@ Counters and tie arms (par-5 2026-11-20, councwin)
   `-= n` (DiploWin::exec 227 -> 121 rows, NewTechWin::exec); an image
   `add -K` where ours has `sub` means the expression was a helper argument
   or written twice. Count both forms per function before respelling a rect.
+  A plain `x + -K` and a static inline `sign(x - K)` both keep `sub`
+  (tech_trade's sign test needed `x - 100` written at both tests); the
+  CSE form is the first to try outside rect helpers (ProdPicker::calculate:
+  one `avail = w - 0x51` local gives the image's `sub`, two reads gave
+  `add -0x51`; draw_labs: `width - 6` after `frame.left + width - 6`).
 - **A pointer local to an array element costs a spill slot.** `RECT *rect =
   &boxes[i];` used across a call kept one edge in an extra frame slot (ours
   0x78, image 0x74); indexing `boxes[i]` at every use dropped it
