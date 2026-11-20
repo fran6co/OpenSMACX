@@ -144,8 +144,8 @@ void __cdecl danger(LPCSTR msg1, LPCSTR msg2, int num1, int num2, int num3) {
     log_say(msg1, msg2, num1, num2, num3);
     // The original immediates at 0x00538F90 and 0x00538F97 point to the
     // independently bounded DANGER and hasty_sm.pcx literals below.
-// RECOVERY_LITERAL: v1 0x0068D428 0x0068D42F $SG62707 0x00538F30
-// RECOVERY_LITERAL: v1 0x0068D418 0x0068D425 $SG62706 0x00538F30
+// RECOVERY_LITERAL: v1 0x0068D428 0x0068D42F $SG62716 0x00538F30
+// RECOVERY_LITERAL: v1 0x0068D418 0x0068D425 $SG62715 0x00538F30
     popp(ScriptPopupFile, "DANGER", 0, "hasty_sm.pcx", 0);
 }
 
@@ -164,7 +164,7 @@ Status: Complete
 */
 // Pinned arguments identify these NUL-terminated keys in the original;
 // the literal spans cover their text and terminators, not surrounding storage.
-// RECOVERY_LITERAL: v1 0x0068D430 0x0068D43A $SG62711 0x00538FB0
+// RECOVERY_LITERAL: v1 0x0068D430 0x0068D43A $SG62720 0x00538FB0
 void __cdecl my_srand(int reseed) {
     // ONE `srand`, not two. The image's `add esp, 0x14` accounts for exactly
     // log_say's four arguments and one seed; ours was `add esp, 0x18`, four
