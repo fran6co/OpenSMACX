@@ -1160,7 +1160,7 @@ static int council_budget_stand_in(int x) {
 }
 
 // RECOVERY_ASSOCIATED: v1 switch_targets 0x00424870 0x00425030 0x00425050 0x004248B6
-// ORIGINAL: 0x00424870 ?on_button_clicked@CouncWin@@QAEXH@Z 0x00424870-0x0042502F;0x00652D40-0x00652EC7 FILE
+// ORIGINAL: 0x00424870 ?on_button_clicked@CouncWin@@QAEXH@Z 0x00424870-0x0042502F;0x00652D40-0x00652EC7 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["git:276d612614085e5d57743cf8cc92903d9468e346:src/unrecovered/00424870.cpp", "image:terranx_original.exe:0x00424870", "Council interface/window declarations identify embedded fonts/buttons, voting arrays and existing MainInterface/Console owners; original instructions determine call and state order."], "reason": "Recover the original in its genuine UI owner using typed members, real globals and declared operations. Retain seed spans and evidence; no current matching or runtime claim."}
 // TRIED: jump table (8 entries at 0x425030) transcribed as a real switch on `a1+2`, matching case targets exactly; the two vtable calls ([this]+0x64 and [this]+0xe8) use original_slot/ORIGINAL rather than a raw __thiscall function-pointer cast (C4234). The ~20-stage widget-teardown cascade (Scroll/2xFlatButton/BasePop/Spot/Dialogs/ Dialog/Sprite closes, twice-inlined in the original for the early-close vs. fallthrough paths) is approximated by a single `popup.close()`; the substantive vote/call-vote/close-decision logic (set_vote, council_get_vote, message_data/NetMsg::pop gating, the eligible-faction Dialogs::item loop, BasePop::exec) is transcribed with real field offsets. Compiles; diverges #10.
 // symbol    ?on_button_clicked@CouncWin@@UAEXH@Z
