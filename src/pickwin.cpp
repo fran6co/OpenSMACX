@@ -296,11 +296,11 @@ void PickWin::init(void (__cdecl *callback)(int), int mode, int faction) {
   set_rectangle_dimensions(&frame_rect_, 0, 0, field_A1C_, field_A20_);
   header_panel_rect_ = frame_rect_;
   expand_rect(&header_panel_rect_, -4, -4);
-  field_A14_ = header_panel_rect_.left + 1;
   header_panel_rect_.bottom = header_panel_rect_.top + 0x1E;
+  field_A14_ = header_panel_rect_.left + 1;
   field_A18_ = header_panel_rect_.bottom + 4;
-  field_A1C_ = (header_panel_rect_.right - header_panel_rect_.left - 6) / 3;
   field_A20_ = 0x16;
+  field_A1C_ = (header_panel_rect_.right - header_panel_rect_.left - 6) / 3;
   set_rectangle_dimensions(&field_625C_rect_, field_A14_, field_A18_, 0x102, 0x5A);
   set_rectangle_dimensions(&field_626C_rect_, field_625C_rect_.right + 2, field_A18_, 0x102, 0x5A);
   set_rectangle_dimensions(&field_627C_rect_, field_626C_rect_.right + 2, field_A18_, 0x102, 0x5A);
