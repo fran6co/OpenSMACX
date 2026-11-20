@@ -8220,9 +8220,11 @@ L_57717f:
         if (!i) {
             score -= 12;
         } else {
-            int turn = Vehs[veh_id].facing - i + 1;
-            if (turn < 0)
+            int turn;
+            if (Vehs[veh_id].facing - i + 1 < 0)
                 turn = i - Vehs[veh_id].facing - 1;
+            else
+                turn = Vehs[veh_id].facing - i + 1;
             if (turn > 4)
                 turn = 8 - turn;
             score -= turn * 4;
