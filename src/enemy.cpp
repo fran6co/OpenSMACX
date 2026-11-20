@@ -3620,7 +3620,7 @@ int __cdecl air_power(int veh_id, int a2, int a3, int *a4, int *a5) {
                 && PlayersData[faction_id].unk_105 < PlayersData[faction_id].unk_67 * 2
                 && whose_territory(faction_id, Vehs[i].x, Vehs[i].y, 0, 0) != faction_id) {
                 int near_id = base_find(Vehs[i].x, Vehs[i].y);
-                if (near_id >= 0 && Bases[near_id].faction_id_current != faction_id) {
+                if ((near_id >= 0 && Bases[near_id].faction_id_current != faction_id) != 0) {
                     continue;
                 }
             }
