@@ -1472,7 +1472,7 @@ void BaseWin::draw_flash(int redraw_mode) {
         if (has_abil(Vehs[vehicle_id].proto_id, 1 << ability)
             && strlen(StringTable.get(Ability[ability].abbreviation))) {
             say_comma();
-            strcat(StringTemp, StringTable.get(Ability[ability].abbreviation));
+            strcat(StringTemp, table_text(Ability[ability].abbreviation));
         }
     }
     say_close_paren();
