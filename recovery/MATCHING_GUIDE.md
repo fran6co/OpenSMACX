@@ -1785,9 +1785,20 @@ not see, and those are the levers:
     in the faction_rankings_ store loop because both are fields of
     GameDataStateStorage; the image hoists `mov dl, byte ptr [mask]` before
     the loop. A probe with the store into a separate extern array hoists
-    the mask and gives the image's esi counter / edx `humans` (22 -> 17):
-    in the original the rankings table and the lock masks are separate
-    objects (header question, not taken).
+    the mask and gives the image's esi counter / edx `humans` (22 -> 17).
+    Resolved 2026-11-20 (par-2, 93e53d619a, rankings exact, no header
+    change): the culprit was the named `int humans = human_mask;` local, not
+    aliasing. **A global byte read once before a loop and kept in a register
+    can be VC6's hoist of an in-place read, not a named local.** The image's
+    `mov reg,dword [mask]; and reg,0xff` before the ranked-human scans is the
+    hoisted widening of `if (human_mask & (1 << id))` written in the loop;
+    naming it made it a function-level web that VC6 fused with the alive
+    scan's read of the same dword (one dword load, `test ah,dl`), and the
+    alive mask stopped being a per-iteration byte reload. Signs: the image
+    loads the byte with its own `and 0xff` in each loop's preheader (here
+    twice, once more at the climactic override), while ours loads one dword
+    and tests sub-registers of it. Fix: drop the local, read the field at
+    each use (fe 24 -> 0).
   - Console::editor_natural 0x004E14D0: the probe loop's wrap through
     xrange_inline hoists MapLongitudeBounds into ebx as the image does
     (wrap_map_x's ternary put it in scratch ecx; 116 -> 105).
