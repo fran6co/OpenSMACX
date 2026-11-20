@@ -4899,9 +4899,9 @@ L_56d372:
         if (BaseFindDist <= 2)
             continue;
         for (other_id = 0; other_id < GameDataStateStorage.fields_.vehicle_current_count_; other_id++) {
-            if (Vehs[other_id].faction_id == faction_id
+            if ((Vehs[other_id].faction_id == faction_id
                 && VehPrototypes[Vehs[other_id].proto_id].plan == 10
-                && other_id != veh_id) {
+                && other_id != veh_id) != 0) {
                 if (Vehs[other_id].x == tx && Vehs[other_id].y == ty && Vehs[other_id].order == 3)
                     goto L_56d72d;
                 // BUG(original): compares this unit's own waypoint, not other_id's.
