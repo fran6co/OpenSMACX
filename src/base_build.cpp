@@ -1001,7 +1001,7 @@ L_4fa03d:
             && (l_2c == 7 || Continents[coast].tile_count < 48)) {
             goto L_4fd8f6;
         }
-        l_18 = a_2ec[l_2c * 3 + 1] + a_3c4[l_2c * 3 + 1] * 2;
+        l_18 = a_2ec[l_20 + l_2c * 3] + a_3c4[l_20 + l_2c * 3] * 2;
         if (l_c != 7 && !l_38) {
             if (l_c == 2) l_18++;
             if (PlayersData[l_8].unk_77[l_10] & 0x400) l_18++;
@@ -1071,8 +1071,11 @@ L_4fa03d:
                    < PlayersData[l_8].region_total_bases[l_10] * 2 + 2) {
             goto L_4fd8f6;
         }
-        l_48 = a_3c4[l_2c * 3 + 2];
-        l_b8 = a_2ec[l_2c * 3 + 2];
+        // l_20 is the case value: VC6 propagates it after the row CSE, so
+        // the image scales l_2c*3 in each operand ([ebp+eax*4-0x3BC],
+        // 0x4FA13E); a literal 2 would share a byte offset (shl eax,2).
+        l_48 = a_3c4[l_20 + l_2c * 3];
+        l_b8 = a_2ec[l_20 + l_2c * 3];
         int n = (l_48 + l_b8 != 0) + 1;
         if (l_c != 7 && l_2c != 5 && !l_38) {
             if (PlayersData[l_8].x_target >= 0) n++;
@@ -1131,12 +1134,12 @@ L_4fa03d:
         if (l_20 == 2 && l_c != 2) {
             if ((PlayersData[l_8].unk_66 > PlayersData[l_8].unk_67
                      ? PlayersData[l_8].unk_66 : PlayersData[l_8].unk_67)
-                > a_3c4[l_2c * 3 + 2] + a_2ec[l_2c * 3 + 2]) {
+                > a_3c4[l_20 + l_2c * 3] + a_2ec[l_20 + l_2c * 3]) {
                 w /= 2;
             }
             if ((PlayersData[l_8].unk_66 > PlayersData[l_8].unk_67
                      ? PlayersData[l_8].unk_66 : PlayersData[l_8].unk_67) * 2
-                > a_3c4[l_2c * 3 + 2] + a_2ec[l_2c * 3 + 2]) {
+                > a_3c4[l_20 + l_2c * 3] + a_2ec[l_20 + l_2c * 3]) {
                 w /= 2;
             }
         }
@@ -1263,7 +1266,7 @@ L_4fa03d:
             if (l_38) {
                 w /= 2;
             }
-            if (a_3c4[l_2c * 3 + 1] + a_2ec[l_2c * 3 + 1] >= a_2ec[22]) {
+            if (a_2ec[l_2c * 3 + 1] + a_3c4[l_2c * 3 + 1] >= a_2ec[22]) {
                 w *= 2;
             }
             if (a_2ec[22] > (a_3c4[l_2c * 3 + 1] + a_2ec[l_2c * 3 + 1]) * 3 / 2) {
