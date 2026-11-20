@@ -23,7 +23,6 @@
 // WORKAROUND(decl): basepop.h's guarded friend; image 0x004AE225..0x004AE22E
 // reaches pos_to_id through the popup's dialogs_ member, not dialogs().
 #define BASEPOP_FRIEND_SETUPWIN
-#define STRINGSTRUCT_CURRENT_ENTRY_INLINE
 #include "stdafx.h"
 #include "interface_fonts.h"
 #include "setupwin.h"

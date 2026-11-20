@@ -15,8 +15,6 @@
  * You should have received a copy of the GNU General Public License
  * along with OpenSMACX. If not, see <http://www.gnu.org/licenses/>.
  */
-// WORKAROUND(decl): same declaration context as src/jackal/stringbox.cpp.
-#define STRINGSTRUCT_NEXT_ENTRY_OUT_OF_LINE
 #include "stdafx.h"
 #include "graphicwin.h"
 #include "scroll.h"
