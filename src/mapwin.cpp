@@ -6499,6 +6499,12 @@ void MapWin::init_dummy() {
 }
 
 // The zoom-dependent altitude scale every get_alt adjustment multiplies by.
+// WORKAROUND(inline): mapwin.h's zoom_scale(count, zoom_offset_) breaks
+// calculate_dimensions (4 rows: its ternary shifts after the move). Measured
+// 2026-11-20: zoom_scale respelled as this if/else with a local retires the
+// twin but costs tech_wizard_unk2 0x005BE2A0 an edi/ebx swap (17 rows, five
+// local respellings unchanged) and flips action_airdrop/on_iface_button_clicked
+// (counter canaries). Possibly a separate MapWin member in the original.
 static inline int get_alt_scale(MapWin *w, int count) {
     int scale;
     if (MapWinCaptionScale > 0) {
@@ -7329,6 +7335,9 @@ void MapWin::calculate_dimensions() {
 // WORKAROUND(inline): the last wrap of pixel_to_tile (0x463182) updates its
 // operand in place under the cached flat bit; wrap_map_x's ternary keeps a
 // separate result there and moves the whole corner computation.
+// Measured 2026-11-20: pixel_to_tile is 112 rows with this twin, 113 with
+// wrap_map_x or xrange_inline; xrange_inline respelled in this in-place form
+// loses xrange 0x0048BEE0, Path::continents, Path::sensors and value_of_base.
 static inline int wrap_map_x_in_place(int x) {
     if (!(MapIsFlat & 1)) {
         if (x < 0) x += MapLongitudeBounds;
