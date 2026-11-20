@@ -4463,9 +4463,12 @@ L_56bf5f:
         }
         for (base_id = 0; base_id < GameDataStateStorage.fields_.base_current_count_; base_id++) {
             if (Bases[base_id].faction_id_current == faction_id
+                // Two guarded tests, not a ?: value: the image tests
+                // base_on_sea's result and the region compare each with its
+                // own jump (0x0056C085, 0x0056C0B8), no sete join.
+                && (triad != TRIAD_SEA || base_on_sea(base_id, region))
                 && (triad == TRIAD_SEA
-                    ? base_on_sea(base_id, region)
-                    : region_at(Bases[base_id].x, Bases[base_id].y) == region)) {
+                    || region_at(Bases[base_id].x, Bases[base_id].y) == region)) {
                 for (int r = (ring == 2 ? 1 : RadiusRange[ring - 1]);
                      r < RadiusRange[ring]; r++) {
                     tx = wrap_map_x(Bases[base_id].x + RadiusOffsetX[r]);
@@ -5421,8 +5424,10 @@ L_56ef2f:
             ty = y + RadiusOffsetY[i];
             if (on_map(tx, ty)
                 && is_ocean(tx, ty)
-                && (!home_dist ? base_on_sea(home_base, map_loc(tx, ty)->region)
-                               : map_loc(tx, ty)->region == region)
+                // Two guarded tests, not a ?: value (no sete join; see the
+                // fungus scan above).
+                && (home_dist || base_on_sea(home_base, map_loc(tx, ty)->region))
+                && (!home_dist || map_loc(tx, ty)->region == region)
                 && base_who(tx, ty) < 0) {
                 for (other_id = stack_fix(veh_at(tx, ty)); other_id >= 0;
                      other_id = veh_next_stack_id(other_id)) {
