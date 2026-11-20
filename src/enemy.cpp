@@ -3541,59 +3541,62 @@ int __cdecl air_power(int veh_id, int a2, int a3, int *a4, int *a5) {
         best = 9999;
         val2 = 9999;
         val = -1;
-        for (i = 0; i < GameDataStateStorage.fields_.vehicle_current_count_; i++) {
-            if (faction_id == Vehs[i].faction_id) {
+        // The vehicle scan counts on target_x (dead here, reassigned at the
+        // base scan): with a separate counter every frame home sits one
+        // slot off the image's (loopreuse).
+        for (target_x = 0; target_x < GameDataStateStorage.fields_.vehicle_current_count_; target_x++) {
+            if (faction_id == Vehs[target_x].faction_id) {
                 if (VehPrototypes[Vehs[veh_id].proto_id].plan == PLAN_AIR_SUPERIORITY
                     && Chassis[VehPrototypes[Vehs[veh_id].proto_id].chassis_id].range != 1
-                    && base_who(Vehs[i].x, Vehs[i].y) < 0
-                    && !(map_loc(Vehs[i].x, Vehs[i].y)->bit & 0x40000)
-                    && !stack_check(i, 6, 0x80, -1, -1)
-                    && !veh_moves(i)
-                    && !stack_check(i, 2, PLAN_AIR_SUPERIORITY, -1, -1)
-                    && ((Chassis[VehPrototypes[Vehs[i].proto_id].chassis_id].triad == TRIAD_AIR
-                         && VehPrototypes[Vehs[i].proto_id].plan != PLAN_AIR_SUPERIORITY)
-                        || VehPrototypes[Vehs[i].proto_id].plan == 7)) {
-                    int dist = map_range(*a4, *a5, Vehs[i].x, Vehs[i].y);
+                    && base_who(Vehs[target_x].x, Vehs[target_x].y) < 0
+                    && !(map_loc(Vehs[target_x].x, Vehs[target_x].y)->bit & 0x40000)
+                    && !stack_check(target_x, 6, 0x80, -1, -1)
+                    && !veh_moves(target_x)
+                    && !stack_check(target_x, 2, PLAN_AIR_SUPERIORITY, -1, -1)
+                    && ((Chassis[VehPrototypes[Vehs[target_x].proto_id].chassis_id].triad == TRIAD_AIR
+                         && VehPrototypes[Vehs[target_x].proto_id].plan != PLAN_AIR_SUPERIORITY)
+                        || VehPrototypes[Vehs[target_x].proto_id].plan == 7)) {
+                    int dist = map_range(*a4, *a5, Vehs[target_x].x, Vehs[target_x].y);
                     int cost = dist * 2 + 1;
                     if (speed(veh_id, 0) / Rules.move_rate_roads < dist) {
                         cost <<= 2;
                     }
-                    cost /= stack_check(i, 1, -1, -1, -1) + 1;
+                    cost /= stack_check(target_x, 1, -1, -1, -1) + 1;
                     if (cost <= val2) {
                         val2 = cost;
                         best = dist;
-                        val = i;
+                        val = target_x;
                     }
                 }
                 continue;
             }
             flag = 0;
             int near_base;
-            if (Vehs[i].order == 0x15 && is_ocean(Vehs[i].x, Vehs[i].y)
-                && (near_base = base_find(Vehs[i].x, Vehs[i].y, faction_id)) >= 0
-                && map_range(Vehs[i].x, Vehs[i].y, Bases[near_base].x, Bases[near_base].y) <= 2) {
+            if (Vehs[target_x].order == 0x15 && is_ocean(Vehs[target_x].x, Vehs[target_x].y)
+                && (near_base = base_find(Vehs[target_x].x, Vehs[target_x].y, faction_id)) >= 0
+                && map_range(Vehs[target_x].x, Vehs[target_x].y, Bases[near_base].x, Bases[near_base].y) <= 2) {
                 flag = 1;
-            } else if ((Vehs[i].faction_id != faction_id || (Vehs[i].flags & 0x440) == 0x440)
-                       && !(Vehs[i].visibility & (1 << faction_id))) {
+            } else if ((Vehs[target_x].faction_id != faction_id || (Vehs[target_x].flags & 0x440) == 0x440)
+                       && !(Vehs[target_x].visibility & (1 << faction_id))) {
                 continue;
             }
-            if (PlayersData[faction_id].diplo_treaties[Vehs[i].faction_id] & 7) {
+            if (PlayersData[faction_id].diplo_treaties[Vehs[target_x].faction_id] & 7) {
                 continue;
             }
-            if (Chassis[VehPrototypes[Vehs[i].proto_id].chassis_id].triad != TRIAD_AIR) {
+            if (Chassis[VehPrototypes[Vehs[target_x].proto_id].chassis_id].triad != TRIAD_AIR) {
                 if (VehPrototypes[Vehs[veh_id].proto_id].plan == PLAN_AIR_SUPERIORITY
                     && (Vehs[veh_id].state & 0x200)
                     && Vehs[veh_id].order_auto_type == ORDERA_ON_ALERT) {
                     continue;
                 }
-                odds = battle_fight(veh_id, 0, Vehs[i].x, Vehs[i].y, 0, 0, 0);
-                odds = compute_odds(odds, faction_id, veh_id, i, -2);
-                if (base_who(Vehs[i].x, Vehs[i].y) >= 0) {
+                odds = battle_fight(veh_id, 0, Vehs[target_x].x, Vehs[target_x].y, 0, 0, 0);
+                odds = compute_odds(odds, faction_id, veh_id, target_x, -2);
+                if (base_who(Vehs[target_x].x, Vehs[target_x].y) >= 0) {
                     if (!VehPrototypes[Vehs[veh_id].proto_id].plan) {
                         continue;
                     }
-                    int artifacts = stack_check(i, 0x13, -1, -1, -1);
-                    if (stack_check(i, 1, -1, -1, -1) - artifacts != 1) {
+                    int artifacts = stack_check(target_x, 0x13, -1, -1, -1);
+                    if (stack_check(target_x, 1, -1, -1, -1) - artifacts != 1) {
                         odds /= 2;
                     }
                 }
@@ -3611,34 +3614,34 @@ int __cdecl air_power(int veh_id, int a2, int a3, int *a4, int *a5) {
                 }
             } else {
                 if (VehPrototypes[Vehs[veh_id].proto_id].plan != PLAN_AIR_SUPERIORITY
-                    || base_who(Vehs[i].x, Vehs[i].y) >= 0
-                    || (map_loc(Vehs[i].x, Vehs[i].y)->bit & 0x40000)) {
+                    || base_who(Vehs[target_x].x, Vehs[target_x].y) >= 0
+                    || (map_loc(Vehs[target_x].x, Vehs[target_x].y)->bit & 0x40000)) {
                     continue;
                 }
             }
             if (PlayersData[faction_id].unk_67
                 && PlayersData[faction_id].unk_105 < PlayersData[faction_id].unk_67 * 2
-                && whose_territory(faction_id, Vehs[i].x, Vehs[i].y, 0, 0) != faction_id) {
-                int near_id = base_find(Vehs[i].x, Vehs[i].y);
+                && whose_territory(faction_id, Vehs[target_x].x, Vehs[target_x].y, 0, 0) != faction_id) {
+                int near_id = base_find(Vehs[target_x].x, Vehs[target_x].y);
                 if ((near_id >= 0 && Bases[near_id].faction_id_current != faction_id) != 0) {
                     continue;
                 }
             }
             if ((Vehs[veh_id].state & 0x200)
                 && Vehs[veh_id].order_auto_type == ORDERA_AUTOMATE_AIR_DEFENSE) {
-                if (is_ocean(Vehs[i].x, Vehs[i].y)) {
-                    base_find(Vehs[i].x, Vehs[i].y, faction_id);
+                if (is_ocean(Vehs[target_x].x, Vehs[target_x].y)) {
+                    base_find(Vehs[target_x].x, Vehs[target_x].y, faction_id);
                     if (BaseFindDist > 2) {
                         continue;
                     }
-                } else if (whose_territory(faction_id, Vehs[i].x, Vehs[i].y, 0, 0) != faction_id) {
+                } else if (whose_territory(faction_id, Vehs[target_x].x, Vehs[target_x].y, 0, 0) != faction_id) {
                     continue;
                 }
             }
-            int dist = map_range(*a4, *a5, Vehs[i].x, Vehs[i].y);
+            int dist = map_range(*a4, *a5, Vehs[target_x].x, Vehs[target_x].y);
             int cost = dist;
             if (strike_range / 2 >= dist) {
-                int region = region_at(Vehs[i].x, Vehs[i].y);
+                int region = region_at(Vehs[target_x].x, Vehs[target_x].y);
                 if (PlayersData[faction_id].region_base_plan[region] == 2) {
                     cost /= 2;
                 } else if (!PlayersData[faction_id].region_total_bases[region]) {
@@ -3654,7 +3657,7 @@ int __cdecl air_power(int veh_id, int a2, int a3, int *a4, int *a5) {
             if (cost <= val2) {
                 val2 = cost;
                 best = dist;
-                val = i;
+                val = target_x;
             }
         }
         if (val >= 0) {
