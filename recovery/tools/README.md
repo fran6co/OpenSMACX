@@ -65,6 +65,15 @@ an explicit `--pfx` is only needed to pick another lane.
   is over 15 bytes and the copy is not, with the copy as the joining block's tail. 70 s over the non-exact set.
   2026-11-20: 16 functions, 3 SIZE rows (menu_proc, pulldown_update, communicate), all known or register noise; the
   image's prefix copies (editor, enemy_planet_buster, MATCHING_GUIDE 3.7) read `tail differs`.
+- `analysis/armsplit.py splitvar|armcopy [unit ..] [--addr A] [--src ALT.cpp] [--show] [--json F]` the two config_game
+  rules (MATCHING_GUIDE 3.7, round 54) as screens, one compile per unit (35-50 s tree-wide). `splitvar`: copy stores of
+  ebx/esi/edi into a frame slot the function also reads (`mov [ebp-N], ebx`), per fe row; `SIG` = the image has more
+  unpaired copies than ours (the source had two variables, `b = pick`, where ours keeps one web). Unpaired rows in a
+  big diff are alignment noise; read the sites. `armcopy`: blocks entered by falling in and by a backward `jmp` that
+  is not a loop edge (the jumping block is not forward-reachable from the target), matched across sides by
+  register/slot-normalized first instructions; `MISSING` = ours reaches its copy by forward jumps only (write the
+  block in every arm, VC6 cross-jumps them with the image's fall-in arm kept), `FALLIN` = ours cross-jumps too but
+  another arm falls in. Validated on config_game before b9e49b888b (MISSING at 0x58B4BD/0x58B4C3, gone after).
 - `analysis/latchscan.py [unit ..] [--addr A] [--src ALT.cpp] [--show] [--json F]` preheader/latch clear screen
   (MATCHING_GUIDE 3.7 "A loop-local zeroed in the preheader AND in the latch"): per loop, destinations zeroed in
   the preheader and the latch (PL) against those zeroed only at the body top (TOP), image against ours; `SIG` =
