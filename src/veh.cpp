@@ -1414,9 +1414,9 @@ reroll:
                             spawned++;
                             Vehs[worm_id].visibility |= map_loc(tx, ty)->visibility;
                             draw_tile(tx, ty, 2);
-                            if (kind > (GameDataStateStorage.fields_.game_state_ & 0x100000 ? 13 : 12)
+                            if ((kind > (GameDataStateStorage.fields_.game_state_ & 0x100000 ? 13 : 12)
                                 || GameDataStateStorage.fields_.turn_current_num_ < 15
-                                || BaseFindDist <= 3) {
+                                || BaseFindDist <= 3) != 0) {
                                 break;
                             }
                         }
