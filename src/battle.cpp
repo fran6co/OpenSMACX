@@ -1436,7 +1436,7 @@ static inline int best_defender_power(int proto_id) {
     if (VehPrototypes[proto_id].plan == PLAN_ALIEN_ARTIFACT) {
         return 1;
     }
-    return range(VehPrototypes[proto_id].reactor_id, 1, 100) * 10;
+    return reactor_power(VehPrototypes[proto_id].reactor_id);
 }
 
 /*
