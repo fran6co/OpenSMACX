@@ -1338,9 +1338,11 @@ int __cdecl stack_veh(int veh_id, int mode) {
                     } else {
                         board = FALSE;
                     }
-                } else if (Vehs[i].order == ORDER_HOLD
-                           || VehPrototypes[Vehs[i].proto_id].plan == PLAN_ALIEN_ARTIFACT
-                           || VehPrototypes[Vehs[i].proto_id].plan == PLAN_TERRAFORMING) {
+                } else if ((Vehs[i].order == ORDER_HOLD
+                            || VehPrototypes[Vehs[i].proto_id].plan == PLAN_ALIEN_ARTIFACT
+                            || VehPrototypes[Vehs[i].proto_id].plan == PLAN_TERRAFORMING) != 0) {
+                    // The || is a value: the image lays this arm in place after
+                    // the last test (jne past it, 0x5B93D8), as for a bool local.
                     board = open_ocean;
                 } else {
                     board = open_ocean
