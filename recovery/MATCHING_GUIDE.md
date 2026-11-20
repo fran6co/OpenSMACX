@@ -6399,6 +6399,15 @@ result over 64 symbol-counter pads, so none of these is a counter canary.
 - **Ternary setcc forms.** `c ? K : 0` gives `set!c; dec; and K`;
   `!c ? 0 : K` gives `setc; dec; and -K; add K` (probe's `setle; dec; and 4`
   is `pop > 3 ? 4 : 0`).
+  Reading the image back (par-6 2026-11-20): `c ? A : B` compiles to
+  `set(!c); dec; and A-B; add B`, so the image's setcc is the NEGATED source
+  condition, its `and` constant is A-B and its `add` constant is B. VC6 does
+  not normalise the comparison: `t >= w ? 25 : 50` gives `setl; dec; and
+  al,0xe7; add 0x32` where the image's `setge; dec; and 0x19; add 0x19` is
+  `t < w ? 50 : 25` (base_terraform 0x4EED7A). A compare against a constant
+  with a zero arm has a second form: `x != K ? 0 : -5` lowers through
+  `sub K; neg; sbb; and 5; add -5`, while the image's `cmp K; setne; dec;
+  and -5` is `x == K ? -5 : 0` (BattleWin::battle_report 0x422153).
 - **Bool-to-flag forms differ.** `x ? 1 : 2` gives `neg/sbb/add 2`, while
   `2 - (x != 0)` gives `setne/sub`. `(c ? 1 : 0) + K` avoids `and ecx,0xff`.
 - **`g -= c + 1` with a bool `c` folds to `or reg,-1; sub`** (par-5
@@ -6914,7 +6923,17 @@ Layout
   copies load `focusedBaseID_` into eax and the host into ecx. The nearest
   earlier difference is the specialist loop, where ours forms
   `lea edx,[edx*4+0x84]` and addresses `[edx+esi]` while the image
-  addresses `[esi+edx*4+0x84]` three times. So when the image shows several
+  addresses `[esi+edx*4+0x84]` three times. Resolved (par-6 round 30):
+  `spec[i >> 3] &= ..; spec[i >> 3] |= ..` lets VC6 CSE the scaled offset
+  plus displacement of the repeated subscript EXPRESSION; with the word in a
+  local (`int word = i >> 3; spec[word] &= ..; spec[word] |= ..`, as base.cpp's
+  specialist setter) every access keeps `[base+idx*4+disp]` and the second
+  site's RMW `and [m],r` becomes the image's load/and/store. With that, the
+  written-out middle exits (subset 01110) merge whole: calls, jmp count and
+  `this` (esi, [ebp-0x10]) equal the image, rows 269 -> 19. So an image that
+  repeats `[b+i*4+K]` where ours forms `lea r,[i*4+K]` once wants the index
+  in a named local, not the subscript expression repeated (pop_click, which
+  writes `spec[position >> 3]` twice, shows the image's own lea CSE). So when the image shows several
   `jmp`s into one tail holding the call and ours writes that tail at each
   site, replace the copies with `goto` to one label. In the reverse case
   (ours merges what the image keeps) look for a missing source jump or for
@@ -6947,7 +6966,17 @@ Layout
     (the image copies `DiploScratchF7B8 = DiploScratchF7E8;
     diplomacy_caption(); goto` into both arms of the expanded net_treaty_off
     and schedules each arm's pending pop, `add esp,0x28` or `0xc`, inside it;
-    ours flushes the pops and joins once), MapWin::editor 0x46B510 L831 (the
+    ours flushes the pops and joins once. Probe (par-6 round 30, an inline
+    `if (G) { f4(..); f6(..); } else f3(..);` followed by a tail and a
+    `goto`/`continue`/return): VC6 copies the join into both arms, pending
+    pop scheduled inside, only for a ONE-statement tail (`cap(a,b)`, `H = K`,
+    or two global copies `H = K; M = K`); `H = K; cap(a,b)` and `H = K;
+    cap(0,0)` stay joined at every jump distance, loop or forward target,
+    with the tail in an inline helper, or after two expansions. The copies
+    are made after cross-jumping (the image's two copies are identical from
+    `push esi` and still not merged). Both image copies store F7B8 after
+    the treaty call, so the store is not hoisted; what makes the original's
+    two-statement tail cheap enough to copy is still open), MapWin::editor 0x46B510 L831 (the
     image keeps range's `2` arm with its own `rocky_set` call and `jmp`; the
     same arm of the erase branch's range merges; neither a spelling of the
     `changed` tests without `goto` nor the operand order changes it),
