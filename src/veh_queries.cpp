@@ -433,9 +433,15 @@ int __cdecl veh_init(int prototype, int faction, int x, int y) {
         return vehicle_id;
     }
     if (weapon_value < armor_value) {
-        if (PlayersData[faction].unk_72 & 1
-            || PlayersData[faction].region_base_plan[region] == 7) {
-            return vehicle_id;
+        // 5C07F9/5C080A: two separate tests that branch to the final
+        // return (`jne RET; je RET; jmp JOIN`). A `||`, or `return` in place
+        // of the gotos, gives this exit its own epilogue copy
+        // (MATCHING_GUIDE 3.7 "Epilogue copy or branch").
+        if (PlayersData[faction].unk_72 & 1) {
+            goto done;
+        }
+        if (PlayersData[faction].region_base_plan[region] == 7) {
+            goto done;
         }
     } else if (PlayersData[faction].region_base_plan[region] != 7
             && !rnd(
@@ -448,6 +454,7 @@ int __cdecl veh_init(int prototype, int faction, int x, int y) {
     if (weapon_value < armor_value) {
         PlayersData[faction].unk_72 |= 1;
     }
+done:
     return vehicle_id;
 }
 
