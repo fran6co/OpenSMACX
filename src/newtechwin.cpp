@@ -352,7 +352,6 @@ void NewTechWin::on_group_clicked(int, int group) {
 void NewTechWin::exec(int technology_id, int other_faction_id) {
     field_B28_ = static_cast<uint32_t>(other_faction_id);
     field_B24_ = static_cast<uint32_t>(technology_id);
-    char number[16];
     RECT boxes[4];
     RECT strip;
     RECT rect;
@@ -460,8 +459,7 @@ void NewTechWin::exec(int technology_id, int other_faction_id) {
     stringBox2_.Buffer::set_text_color(0x98, -1, 1, 1);
     StringTemp[0] = '\0';
     strcat(StringTemp, "TECH");
-    _itoa(static_cast<int>(field_B24_), number, 10);
-    strcat(StringTemp, number);
+    say_num(static_cast<int>(field_B24_));
     stringBox2_.strings().load(DatalinkBlurbFile, StringTemp, 1, 0);
     stringBox2_.add_fixup();
     stringBox2_.show(0);
@@ -500,8 +498,7 @@ void NewTechWin::exec(int technology_id, int other_faction_id) {
 
     StringTemp[0] = '\0';
     strcat(StringTemp, "voices\\tech");
-    _itoa(static_cast<int>(field_B24_), number, 10);
-    strcat(StringTemp, number);
+    say_num(static_cast<int>(field_B24_));
     strcat(StringTemp, ".mp3");
     if ((GameDataStateStorage.fields_.game_more_preferences_ & MPREF_AV_VOICEOVER_TECH_FAC) != 0 &&
         is_human(ConsoleGlobal.faction_id_)) {
