@@ -2636,6 +2636,46 @@ Member-address temporaries that live across calls (2026-11-19 par-6, round 11)
     counter `if ((bit2 & 0x80001000) == 0x1000) n++;` reproduces it (not yet
     applied: the extra local moves counter-sensitive ties later in the
     function).
+  - **Index or address CSE: which form a repeated subscript keeps** (high,
+    par-1 2026-11-20, `analysis/probes/idxcse/run.py`, 70 variants). For
+    repeated `t[E].f` / `t[E*k+c]` with no store to E between the uses, VC6
+    CSEs one of three values:
+    - the uses read DIFFERENT addresses (two fields of one row, two arrays
+      with the same subscript, `x[r*3+2]` and `y[r*3+2]`, a load and a
+      store of different members): one byte offset, `lea`s then `shl r,2`,
+      each use `[r+tab+disp]`. Spelling (2-D array, row struct, pointer
+      arithmetic, `2+a*3`, `3*a`, a short/char/unsigned index, an inline
+      `at(t,r,k)`, a call between the uses, a copied local `int r = a`)
+      does not change it, nor does function size (4096 filler statements).
+    - every use reads the SAME address (`t[E].f` twice, `++` / `x = x+1`
+      of one element): the row index E*k unscaled in a register and
+      `[r*4+tab]` at each use, no `shl` (make_gift 0x548516 `inc
+      [ebx*4+K]`).
+    - a reference or pointer to the element (`int &c = t[a].f[b]`,
+      `R &r = rows[a]`, `V *p = &vs[G]`): the address, `lea r,[idx*4+tab]`
+      and `[r]` / `[r+f]`. The image's `[r*4+K]` against ours `[r]` means
+      the original subscripted at every use (make_gift: the gift counter
+      and the patience byte; `+= -2 - favored` on the subscript).
+    The scaled form with DIFFERENT addresses appears only when the row
+    product is the value of a variable, not an expression in the subscript:
+    `int r = a*3; x[r+2] + y[r+2]`, `a *= 3`, or (the common case) a
+    variable VC6 knows is constant only after the CSE: `x[k + a*3]` with
+    `k = 2` assigned, inside `case 2:` of `switch (k)`, or under `if (k ==
+    2 && ...)` (but not `||`). base_build 0x4FA13E/0x4FA3F6/0x4FA894 are
+    `a_3c4[l_20 + l_2c*3]` in the triad switch's cases; a literal `+2`
+    gives `shl eax,2`. The same constant written literally where the image
+    has `shl` (0x4FADF5, outside any known-l_20 region) stays literal.
+    Two uses split across a different index expression do not CSE at all:
+    gen_terrain_poly 0x463888 computes v*13 twice (owner byte through the
+    global `Vehs[VehDrawPositionVehicle]`, then a local copy's v*13 in
+    place in esi for both proto_id reads); one local for all three gives
+    one byte offset. Reading the image: `shl r,2` before two different
+    displacements = repeated subscript expression; `[r*4+K]` at different
+    displacements = a named or case-constant row variable; one `lea
+    r,[i*4+K]` then `[r]` = a reference/pointer local. The commutative
+    operand order of a later CSE'd sum can flip when an earlier site stops
+    creating the same subscript (base_build 0x4FADF5: write the earlier
+    order, `a_2ec[..] + a_3c4[..]`).
   - A loser's single reference per loop iteration (low, c_looppiece.spec):
     with no call between two such loops, each read is a scratch load
     (`mov eax,[r]` right before its use, and the loop test loads the mask
