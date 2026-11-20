@@ -27,6 +27,8 @@ should call the orphan instead (MapWin::click 0x0046D5D0 / UNK4 0x0046C020).
       inside an expanded callee maps to the call's line). False positives are common below score 0.9:
       read `show` before editing (shared parse_says/pop sequences, show_all against hide_all).
       Census: 667 orphans of >= 8 instructions, 2026-11-19; 18 s tree-wide, 30 s with --lines.
+      --callers N adds referenced markers with at most N rel32 references (`rN` in the output): functions the
+      image calls at some sites and expands at others (ReportWin::UNK1 in draw_ops/draw_projects, 2026-11-20).
   show <orphan> <host>   aligned rows of the best window.
 Screen only: replace the block with a call, then fe/measure the host and the orphan."""
 import sys, os, re, glob, json, struct, argparse, collections, difflib
@@ -237,19 +239,21 @@ def best_window(O, Hs):
     return dict(score=sc, prec=prec, named=named_ok, ilo=ilo, ihi=ihi, matched=matched, n=n)
 
 
-def census(ms, mn):
+def census(ms, mn, max_callers=None):
+    """orphans; with max_callers, also referenced markers with at most that many rel32 references
+    (functions inlined at some sites and called at others), each tagged with its reference count."""
     out = []
-    starts = {m['addr'] for m in ms}
+    rel, _ = refs()
     for m in ms:
         if m['frag'] or m['hi'] - m['lo'] < 4:
             continue
         r = referenced(m['addr'])
-        if r:
+        if r and (max_callers is None or rel.get(m['addr'], 0) > max_callers):
             continue
         nb = len([1 for i in body(m['lo'], m['hi']) if i.mnemonic not in ('nop', 'int3')])
         if nb < mn:
             continue
-        m = dict(m, ninsn=nb)
+        m = dict(m, ninsn=nb, nrefs=rel.get(m['addr'], 0), ref=r)
         out.append(m)
     return out
 
@@ -319,7 +323,7 @@ def scan(ms, orphans, a):
             if cover > a.cover:   # a twin (overload, copy), not a host that expands the orphan
                 continue
             called = bool(short) and re.search(r'(?<![\w~])' + re.escape(short) + r'\s*\(', hbody(h)) is not None
-            hits.append(dict(called=called, orphan='%08X' % o['addr'], osym=o['sym'], ounit=o['unit'], host='%08X' % h['addr'],
+            hits.append(dict(called=called, nrefs=o.get('nrefs', 0), orphan='%08X' % o['addr'], osym=o['sym'], ounit=o['unit'], host='%08X' % h['addr'],
                              hsym=h['sym'], hunit=h['unit'], hexact=bool(ex), score=round(w['score'], 3),
                              prec=round(w['prec'], 3), named=None if w['named'] is None else round(w['named'], 3),
                              n=w['n'], cover=round(cover, 2), img_lo='%x' % Hs[w['ilo']][0], img_hi='%x' % Hs[w['ihi'] - 1][0]))
@@ -424,6 +428,8 @@ def main():
     ap.add_argument('--json')
     ap.add_argument('--lines', action='store_true')
     ap.add_argument('--open', action='store_true', help='only hits whose host does not call the orphan already')
+    ap.add_argument('--callers', type=int, help='also scan referenced markers with at most N rel32 references '
+                    '(inlined at some sites, called at others)')
     a = ap.parse_args()
     ms = markers()
     if a.cmd == 'census':
@@ -454,7 +460,7 @@ def main():
                 print('%s %-6s %-44s | %-6s %s' % ('  ' if t == 'equal' else '!!', '%x' % oa_[0] if oa_ else '',
                                                    oa_[1] if oa_ else '', '%x' % hb[0] if hb else '', hb[1] if hb else ''))
         return
-    cs = census(ms, a.min)
+    cs = census(ms, a.min, a.callers)
     if a.orphan:
         want = {int(x, 16) for x in a.orphan.split(',')}
         cs = [m for m in cs if m['addr'] in want]
@@ -472,8 +478,8 @@ def main():
             hm = next(m for m in ms if m['addr'] == int(h['host'], 16) and m['unit'] == h['hunit'])
             h['src'] = host_lines(hm, int(h['img_lo'], 16), int(h['img_hi'], 16), pfx)
     for h in hits:
-        print('%s %s %-30s -> %s %-34s %s %s img %s-%s score=%.2f prec=%.2f named=%s n=%d cover=%.2f' % (
-            'CALLS' if h['called'] else 'HIT  ', h['orphan'], h['osym'][:30], h['host'], h['hsym'][:34], 'EXACT' if h['hexact'] else 'open',
+        print('%s%s %s %-30s -> %s %-34s %s %s img %s-%s score=%.2f prec=%.2f named=%s n=%d cover=%.2f' % (
+            'CALLS' if h['called'] else 'HIT  ', ' r%d' % h['nrefs'] if h['nrefs'] else '', h['orphan'], h['osym'][:30], h['host'], h['hsym'][:34], 'EXACT' if h['hexact'] else 'open',
             os.path.basename(h['hunit']) + ('' if h['hunit'] == h['ounit'] else '(!=' + os.path.basename(h['ounit']) + ')'),
             h['img_lo'], h['img_hi'], h['score'], h['prec'], h['named'], h['n'], h['cover']))
         if h.get('src'):
