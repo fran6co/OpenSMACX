@@ -726,8 +726,8 @@ void StatusWin::draw_status(int veh, int a2, int a3, int x, int a5) {
                     for (int i = 0; i < 8; i++) {
                         int x2 = wrap_map_x(Bases[base_id].x + VehMoveDeltaX[i]);
                         int y2 = Bases[base_id].y + VehMoveDeltaY[i];
-                        if (on_map(x2, y2)
-                            && veh_who(x2, y2) == ConsoleGlobal.faction_id_) {
+                        if ((on_map(x2, y2)
+                            && veh_who(x2, y2) == ConsoleGlobal.faction_id_) != 0) {
                             a5 = 1;
                             break;
                         }
