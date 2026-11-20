@@ -359,14 +359,23 @@ static_assert(sizeof(StringStruct) == 0x24,
 // Shared by the standalone mapped entry and callers whose original
 // construction sequence contains these five stores inline. A TU that defines
 // STRINGSTRUCT_CTOR_OUT_OF_LINE sees only the declaration and calls the
-// out-of-line 0x00401000 (Datalink owns that copy).
-// WORKAROUND(decl): measured 2026-11-19, the image calls 0x00401000 from 12
-// functions (Datalink's six drawers, MonuWin/QuayleWin::on_redraw,
-// NetWin::draw_session_info, PickTech::draw_tech, ReportIf::draw_projects,
-// UV2Player 0x004BEF00), all through a StringList local; with the body
-// visible there they expand it (draw_reactor 154 rows, draw_tech 318 ->
-// 510, ...). A call at depth 2 (StringList's constructor expanded, its
-// base constructor refused) is a budget effect not yet reproduced.
+// out-of-line 0x00401000, whose body stringstruct.cpp owns.
+// WORKAROUND(decl): the image calls 0x00401000 from 12 functions, once each,
+// all through a StringList local: Datalink::draw_unit, draw_chassis,
+// draw_reactor, draw_weapon, draw_defense, draw_ability (0x0042CA13 ..
+// 0x0042EE83), MonuWin::on_redraw (0x00473733), NetWin::draw_session_info
+// (0x00480956), PickTech::draw_tech (0x00485361), QuayleWin::on_redraw
+// (0x00495723), ReportIf::draw_projects (0x004AA103) and
+// UV2Player::show_post_movie_text (0x004BEF71; image symbol ?UNK3). Their
+// seven units define the macro. In datalink, picktech and uv2player the
+// visible body is expanded instead (measured 2026-11-20 without the macro:
+// draw_reactor exact -> 154 rows, draw_tech 290 -> 389,
+// show_post_movie_text exact -> 157); a call at depth 2 (StringList's
+// constructor expanded, its base constructor refused) is a budget effect not
+// yet reproduced. MonuWin, NetWin, QuayleWin and ReportIf call it out of line
+// with the body visible too, but there the called copy of the visible inline
+// is a pick-any COMDAT that collides with stringstruct.cpp's plain
+// definition (LNK2005), so the macro stays for the link.
 #ifndef STRINGSTRUCT_CTOR_OUT_OF_LINE
 inline StringStruct::StringStruct() {
     head_ = 0;
