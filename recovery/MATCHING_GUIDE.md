@@ -2941,6 +2941,52 @@ size or the order of its decisions:
   the target mean that pass 1 is the binding limit, not pass 2. Look for a
   structural difference: which object owns the teardown, or a per-TU header
   guard (2.3).
+- **Teardown decisions move with sibling-evidenced spellings of earlier
+  statements, not with object order or scope** (2026-11-20 par-1;
+  BaseWin::base_editor_proj 0x0041BBC0, commit d696e5d5f7). Object order,
+  declaration scope, probe counts and owner screens left base_editor_proj's
+  unwind map 2 states off (37 against 35). What moved it was copying two
+  spellings from its exact sibling base_editor_copy 0x0041C240, which builds
+  the same Popup: the PICKAPLACE labels read through `label_get(...)`
+  instead of a written-out `StringTable.get(Labels.strings_ptr[...])`, and
+  the secret-project owner stored straight into the raw array
+  (`secret_project_.project_base[project] = owner_base`) instead of through
+  the header's `operator[]` inline. EH distance 2 -> 0, rows 47 -> 29, and no
+  exact function in the unit lost. Neither statement is a teardown, but each
+  changes pass-1 size and the inline decisions in front of the teardowns, so
+  the front end numbers the later states differently.
+  Workflow: for a teardown function, list the exact functions that build the
+  same objects (Popup/BasePop/Dialogs/StringList; the same `item`, `label`,
+  `start` and `exec` calls), usually in the same unit or a sibling command
+  (base_editor_*, the other NetWin or Console dialogs). Diff their spelling of
+  each statement kind the target shares with them: label through `label_get`
+  or written out, `popup.item` or `popup.dialogs().item`, accessor or raw
+  field, `exec()` or `exec(0, 0)`, array store or `operator[]`. Screen each
+  difference alone and all together with `analysis/sdeck.py` and keep moves
+  toward the image on the rung ladder. An exact sibling is evidence of the
+  original header's spelling. A probe count is not.
+  Classify a teardown residue before you pick a lever (`inlinemap.py`
+  against the image):
+  - **A, late site expanded where the image calls it** (our pass-2 room is
+    larger at the close): call_council 0x0052C880 (the last ~FlatButton),
+    Net::session_picker_dialog sub_631050 (two ??_DAlphaNetLedger sites),
+    control_turn 0x005275B0 (~RadioButton), base_editor_proj (??_DDialogs,
+    ??_DStringList). The image spent more in front: look for a cheaper
+    spelling here that is more expensive in the sibling (an inline the
+    sibling expands, `label_get`, an accessor).
+  - **B, late site called where the image expands it** (our room is
+    smaller): MapWin::click 0x0046D5D0 (~FlatButton site 42). The opposite
+    move: the sibling's cheaper spelling.
+  - **C, the unwind map differs** (EH distance > 0, a scope or teardown
+    site missing or extra): NetWin::pick_player 0x0047BBF0 (??_DStringList
+    sites 3-4), order_veh 0x005947C0 (one state), and base_editor_proj
+    before d696e5d5f7. Fix rung 1 first. As base_editor_proj shows, the
+    cause can be a non-teardown statement, so screen the sibling spellings
+    before any restructuring.
+  - **D, teardowns equal but other callees or layout differ**:
+    propose_attack 0x00545E80 (remove_all, indirect calls) and tech_trade
+    0x00541100 (the cross-jump host of its ~BasePop exits, a layout
+    question; see 3.7). A teardown lever does not apply.
 
 What the model does not predict (2026-11-19)
 - **MapWin::click 0x0046D5D0** (solved 2026-11-19 par-6). The image calls
