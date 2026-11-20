@@ -3455,10 +3455,8 @@ int __cdecl air_power(int veh_id, int a2, int a3, int *a4, int *a5) {
                         value *= val;
                         if (value >= best) {
                             best = value;
-                            if (!(map_range(*a4, *a5, Vehs[i].x, Vehs[i].y)
-                                > speed(veh_id, 0) / Rules.move_rate_roads - Rules.move_rate_roads)) {
-                                go_to(veh_id, 'm', Vehs[i].x, Vehs[i].y);
-                            } else {
+                            if (!(!(map_range(*a4, *a5, Vehs[i].x, Vehs[i].y)
+                                > speed(veh_id, 0) / Rules.move_rate_roads - Rules.move_rate_roads))) {
                                 val2 = 9999;
                                 // BUG(original): walks every base slot, not just the live bases.
                                 for (int base_slot = 0; base_slot < MaxBaseNum; base_slot++) {
@@ -3474,6 +3472,8 @@ int __cdecl air_power(int veh_id, int a2, int a3, int *a4, int *a5) {
                                         }
                                     }
                                 }
+                            } else {
+                                go_to(veh_id, 'm', Vehs[i].x, Vehs[i].y);
                             }
                         }
                     }
