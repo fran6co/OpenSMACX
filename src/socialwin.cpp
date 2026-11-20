@@ -668,23 +668,7 @@ void __stdcall main_interface_bubble_callback(char *text, int x, int y) {
 // Historical SocBaseIdProbe/Compare at 0x009A6568/0x009A6574 are
 // SecretProject.network_backbone/cloning_vats, not independent selectors.
 
-// Text writes with the image's null test on the text.
-static inline void social_write_cent(char *text, RECT *rect) {
-    if (text != 0) {
-        MainInterfaceGlobal.Buffer::write_cent_l(text, rect, strlen(text));
-    }
-}
-static inline void social_write_l(char *text, RECT *rect) {
-    if (text != 0) {
-        MainInterfaceGlobal.Buffer::write_l(text, rect, strlen(text));
-    }
-}
 
-static inline void social_write_l_at(char *text, int x, int y) {
-    if (text != 0) {
-        MainInterfaceGlobal.Buffer::write_l(text, x, y, strlen(text));
-    }
-}
 
 // Operand-twice magnitude, as the image re-derives it at each use.
 #define SOCIAL_ABS(x) ((x) < 0 ? -(x) : (x))
@@ -1514,12 +1498,6 @@ void SocialWin::on_button_passover(int a1, int a2) {
     do_all_draws();
 }
 
-// Right-aligned label write with the image's null test on the text.
-static inline void social_write_right(char *text, int x, int y) {
-    if (text != 0) {
-        MainInterfaceGlobal.Buffer::write_right_l(text, x, y, strlen(text));
-    }
-}
 
 /*
  * Purpose: Repaint the info header above the social panel: the category
@@ -1557,7 +1535,7 @@ void SocialWin::draw_info() {
     CharUpperA(StringTemp);
     MainInterfaceGlobal.Buffer::set_font(&font1_, 0, 0, 0);
     MainInterfaceGlobal.Buffer::set_text_color(0x9c, -1, 1, 1);
-    social_write_cent(StringTemp, &title);
+    MainInterfaceGlobal.Buffer::write_cent_l(StringTemp, &title);
 
     rect.top = title.bottom + 2;
     MainInterfaceGlobal.Buffer::box_sprite(&rect, &InterfaceBoxStyles[0]);
@@ -1583,7 +1561,7 @@ void SocialWin::draw_info() {
     _itoa(NetIncomeGlobal, number, 10);
     strcat(StringTemp, number);
     MainInterfaceGlobal.Buffer::set_text_color(0xa0, -1, 1, 1);
-    social_write_l_at(StringTemp, x, y);
+    MainInterfaceGlobal.Buffer::write_l(StringTemp, x, y);
 
     y += font_line_advance(font5_);
     StringTemp[0] = 0;
@@ -1593,7 +1571,7 @@ void SocialWin::draw_info() {
     strcat(StringTemp, number);
     space();
     strcat(StringTemp, label_get(49));
-    social_write_l_at(StringTemp, x, y);
+    MainInterfaceGlobal.Buffer::write_l(StringTemp, x, y);
 
     if (WinScreenWidth == 800) {
         y += font_line_advance(font5_);
@@ -1644,7 +1622,7 @@ void SocialWin::draw_info() {
             strcat(StringTemp, label_get(169));
         }
         MainInterfaceGlobal.Buffer::set_text_color(0xf9, -1, 1, 1);
-        social_write_l_at(StringTemp, x, y);
+        MainInterfaceGlobal.Buffer::write_l(StringTemp, x, y);
         y += font_line_advance(font5_);
     }
 
@@ -1659,7 +1637,7 @@ void SocialWin::draw_info() {
         space();
         strcat(StringTemp, label_get(351));
         MainInterfaceGlobal.Buffer::set_text_color(0xa0, -1, 1, 1);
-        social_write_l_at(StringTemp, x, y);
+        MainInterfaceGlobal.Buffer::write_l(StringTemp, x, y);
     } else if (upheaval > 0) {
         MainInterfaceGlobal.Buffer::set_text_color(0xf9, -1, 1, 1);
         StringTemp[0] = 0;
@@ -1669,7 +1647,7 @@ void SocialWin::draw_info() {
         strcat(StringTemp, number);
         space();
         strcat(StringTemp, label_get(351));
-        social_write_l_at(StringTemp, x, y);
+        MainInterfaceGlobal.Buffer::write_l(StringTemp, x, y);
     }
 
     MainInterfaceGlobal.soft_update(&tutRect14_);
@@ -1788,7 +1766,7 @@ void SocialWin::draw_overview() {
         _itoa(socEffect_.values_[effect], number, 10);
         strcat(StringTemp, number);
         MainInterfaceGlobal.Buffer::set_font(&font7_, 0, 0, 0);
-        social_write_right(StringTemp, number_x, panel.top);
+        MainInterfaceGlobal.Buffer::write_right_l(StringTemp, number_x, panel.top);
         socEffectOrig_.values_[effect] =
             PlayersData[factionID_].soc_effect_pending.values_[effect];
 
@@ -1947,7 +1925,7 @@ void SocialWin::draw_mouseover() {
             CharUpperA(StringTemp);
             MainInterfaceGlobal.Buffer::set_font(&font1_, 0, 0, 0);
             MainInterfaceGlobal.Buffer::set_text_color(0x9f, -1, 1, 1);
-            social_write_cent(StringTemp, &title);
+            MainInterfaceGlobal.Buffer::write_cent_l(StringTemp, &title);
         } else {
             category = hover_selection_ / 4;
             model = hover_selection_ % 4;
@@ -1957,7 +1935,7 @@ void SocialWin::draw_mouseover() {
             CharUpperA(StringTemp);
             MainInterfaceGlobal.Buffer::set_font(&font1_, 0, 0, 0);
             MainInterfaceGlobal.Buffer::set_text_color(0x9f, -1, 1, 1);
-            social_write_cent(StringTemp, &title);
+            MainInterfaceGlobal.Buffer::write_cent_l(StringTemp, &title);
         }
     }
 
@@ -2046,7 +2024,7 @@ void SocialWin::draw_mouseover() {
                 char number[80];
                 _itoa(SOCIAL_ABS(value), number, 10);
                 strcat(StringTemp, number);
-                social_write_l(StringTemp, &rect);
+                MainInterfaceGlobal.Buffer::write_l(StringTemp, &rect);
 
                 effectIcons_[(effect < 3 ? effect * 9 : (effect - 1) * 9) + 6
                                                + (value >= 0 ? 2 : 1)].draw(
@@ -2055,7 +2033,7 @@ void SocialWin::draw_mouseover() {
                 rect.left = rect.left + 0x10 + effectIcons_[0].width();
                 StringTemp[0] = 0;
                 strcat(StringTemp, SocialEffects[effect].set2);
-                social_write_l(StringTemp, &rect);
+                MainInterfaceGlobal.Buffer::write_l(StringTemp, &rect);
                 rect.left = rect.left - 0x10 - effectIcons_[0].width();
                 rect.top += line_height;
                 rect.bottom += line_height;
