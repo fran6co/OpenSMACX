@@ -10771,63 +10771,60 @@ if (IsMultiplayerNet != 0 && (GameDataStateStorage.fields_.game_state_ & 0x800) 
 }
 {
     communicate_late_contact_choice = diplomacy_menu(faction_id, faction_id_with);
-    if (static_cast<uint32_t>(communicate_late_contact_choice) <= 7u) {
-        switch (communicate_late_contact_choice) {
-        case 0:
-            goto communicate_final_cleanup; // native 0x5587C8
-        case 1:
-        case 2:
-            make_a_proposal(faction_id, faction_id_with,
-                            communicate_late_contact_choice == 1);
-            if (DiplomacyProposalMode == 6) {
-                goto communicate_late_contact_after_proposal; // 0x558701
-            }
-            goto communicate_late_contact_menu_loop; // 0x55870B
-        case 3:
-            communicate_late_contact_text_result = X_pops(
-                "REALLYBROKE", 0x00100000,
-                FactionDiplomacyPortraits[faction_id_with], pop_wait);
-            if (communicate_late_contact_text_result == 0) {
-                // Native re-enters after showing BROKEPACT and decrementing
-                // the signed patience byte.
-                parse_says(0, get_pact_hood(faction_id, faction_id_with), -1, -1);
-                X_pops("DROIDS", 0x00100000,
-                             FactionDiplomacyPortraits[faction_id_with], pop_wait);
-                --*communicate_patience_ptr;
-                goto communicate_late_contact_menu_loop; // native 0x55870B
-            }
-            diplo_lock(0);
-            PlayersData[faction_id].integrity_blemishes = (PlayersData[faction_id].integrity_blemishes + 1);
-            net_treaty_off(faction_id_with, faction_id, 1, 1);
-            diplomacy_check(faction_id, faction_id_with, 0);
-            diplomacy_caption(faction_id, faction_id_with);
-            parse_says(0, get_pact(faction_id), -1, -1);
-            parse_says(1, get_title(faction_id), -1, -1);
-            parse_says(2, get_name(faction_id), -1, -1);
-            X_pops("BROKEPACT", 0x00100000,
-                         FactionDiplomacyPortraits[faction_id_with], pop_wait);
-            net_pact_ends(faction_id, faction_id_with, 1);
-            diplo_unlock();
-            goto communicate_late_contact_menu_loop; // native 0x55870B
-        case 4:
-            demand_withdrawal(faction_id, faction_id_with);
-            goto communicate_late_contact_menu_loop;
-        case 5:
-            battle_plans(faction_id, faction_id_with);
-            goto communicate_late_contact_menu_loop;
-        case 6:
-            call_off_vendetta(faction_id, faction_id_with);
-            goto communicate_late_contact_menu_loop;
-        case 7:
-            DiploScratchFA34 = 12; // admitted start-only cell at 0x93FA34
-            DiplomacyProposalMode = 1;
-            make_a_proposal(faction_id, faction_id_with, 1);
-            goto communicate_late_contact_after_proposal;
+    switch (communicate_late_contact_choice) {
+    case 0:
+        goto communicate_final_cleanup; // native 0x5587C8
+    case 1:
+    case 2:
+        make_a_proposal(faction_id, faction_id_with,
+                        communicate_late_contact_choice == 1);
+        if (DiplomacyProposalMode == 6) {
+            DiploScratchFAD0 = 0; // cross-jumped into case 7's copy (0x558701)
         }
+        break;
+    case 3:
+        communicate_late_contact_text_result = X_pops(
+            "REALLYBROKE", 0x00100000,
+            FactionDiplomacyPortraits[faction_id_with], pop_wait);
+        if (communicate_late_contact_text_result == 0) {
+            // Native re-enters after showing BROKEPACT and decrementing
+            // the signed patience byte.
+            parse_says(0, get_pact_hood(faction_id, faction_id_with), -1, -1);
+            X_pops("DROIDS", 0x00100000,
+                         FactionDiplomacyPortraits[faction_id_with], pop_wait);
+            --*communicate_patience_ptr;
+            break;
+        }
+        diplo_lock(0);
+        PlayersData[faction_id].integrity_blemishes = (PlayersData[faction_id].integrity_blemishes + 1);
+        net_treaty_off(faction_id_with, faction_id, 1, 1);
+        diplomacy_check(faction_id, faction_id_with, 0);
+        diplomacy_caption(faction_id, faction_id_with);
+        parse_says(0, get_pact(faction_id), -1, -1);
+        parse_says(1, get_title(faction_id), -1, -1);
+        parse_says(2, get_name(faction_id), -1, -1);
+        X_pops("BROKEPACT", 0x00100000,
+                     FactionDiplomacyPortraits[faction_id_with], pop_wait);
+        net_pact_ends(faction_id, faction_id_with, 1);
+        diplo_unlock();
+        break;
+    case 4:
+        demand_withdrawal(faction_id, faction_id_with);
+        break;
+    case 5:
+        battle_plans(faction_id, faction_id_with);
+        break;
+    case 6:
+        call_off_vendetta(faction_id, faction_id_with);
+        break;
+    case 7:
+        DiploScratchFA34 = 12; // admitted start-only cell at 0x93FA34
+        DiplomacyProposalMode = 1;
+        make_a_proposal(faction_id, faction_id_with, 1);
+        DiploScratchFAD0 = 0; // native 0x558701
+        break;
     }
 }
-communicate_late_contact_after_proposal: // native 0x558701
-DiploScratchFAD0 = 0;
 communicate_late_contact_menu_loop: // native 0x55870B
 *communicate_patience_ptr = static_cast<char>(
     static_cast<uint8_t>(*communicate_patience_ptr) + 1u);
