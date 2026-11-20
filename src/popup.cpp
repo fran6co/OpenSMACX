@@ -1283,13 +1283,6 @@ int Popup::calculate_dimensions() {
 // RECOVERY_BINDING: v1 {"evidence": ["task:popup-dimensions-background-owner", "Native primary tables6695C8/6698D4 slots90..96 and pinned original body", "historical seed:src/unrecovered/00405c80.cpp"], "reason": "Recover a complete typed Popup override of the native BasePop callback hierarchy, using actual shared Dialog/GraphicWin bases and source-owned global objects. Preserve original identity, spans and seed discoveries; no new matching or acceptance claim."}
 // symbol    ?on_draw_background@Popup@@UAEHXZ
 // TRIED: structural transcription (branch-local Buffer* target, register-vs-global box_sprite receiver per branch) compiles and matches to instr #6 (prologue push/mov order for callee-saved regs); moving the `self` cast local closer to first use did not change it.
-static inline void popup_inset_rect(RECT *r, int d) {
-    r->left += d;
-    r->right -= d;
-    r->top += d;
-    r->bottom -= d;
-}
-
 int Popup::on_draw_background() {
   const int type = field_30AC_ / 10000;
   if (type == 1000) {
@@ -1322,13 +1315,13 @@ int Popup::on_draw_background() {
       title.right -= 0x3a;
       title.top += 3;
       title.bottom = title.top + 0x1a;
-      popup_inset_rect(&title, 1);
+      expand_rect(&title, -1, -1);
       window->box_sprite(&title, &InterfaceBoxStyles[3]);
 
-      popup_inset_rect(&title, 3);
+      expand_rect(&title, -3, -3);
       window->box_sprite(&title, &InterfaceBoxStyles[6]);
 
-      popup_inset_rect(&title, 3);
+      expand_rect(&title, -3, -3);
       window->set_font(MainInterfaceGlobal.primary_font(), 0, 0, 0);
       window->set_text_color(TextColourTable[180], TextColourTable[181], 1, 1);
       window->write_cent_l(owned_text_, &title);
@@ -1375,7 +1368,7 @@ int Popup::on_draw_background() {
 
     title = working_rect;
     if (type == 6 || type == 2) {
-      popup_inset_rect(&title, 9);
+      expand_rect(&title, -9, -9);
     }
     if (MainInterfaceGlobal.Win::is_visible() && (type == 0 || type == 5)) {
       title.left += 0x1a;
@@ -1386,13 +1379,13 @@ int Popup::on_draw_background() {
     }
     title.top += 3;
     title.bottom = title.top + 0x1a;
-    popup_inset_rect(&title, 1);
+    expand_rect(&title, -1, -1);
     box_sprite(&title, &InterfaceBoxStyles[3]);
 
-    popup_inset_rect(&title, 3);
+    expand_rect(&title, -3, -3);
     box_sprite(&title, &InterfaceBoxStyles[6]);
 
-    popup_inset_rect(&title, 3);
+    expand_rect(&title, -3, -3);
     set_font(MainInterfaceGlobal.primary_font(), 0, 0, 0);
     set_text_color(TextColourTable[68], TextColourTable[69], 1, 1);
     write_cent_l(owned_text_, &title);
