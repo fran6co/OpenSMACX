@@ -3648,8 +3648,8 @@ int __cdecl air_power(int veh_id, int a2, int a3, int *a4, int *a5) {
                     cost *= 2;
                 }
                 if (flag) {
-                    cost = 0;
                     dist = 0;
+                    cost = 0;
                 }
             } else {
                 cost *= 2;
