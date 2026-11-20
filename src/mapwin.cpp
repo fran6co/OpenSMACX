@@ -5787,7 +5787,9 @@ void MapWin::draw_wars() {
 // right_menu return ours keeps sites 8-20 a level deeper (125 states). Ten
 // constant calls of this folded three-test chain reproduce the image's unwind
 // map and teardown calls exactly (as did eight four-test calls); no natural
-// spelling for that spend has been found yet.
+// spelling for that spend has been found yet. 2026-11-20: seven calls give
+// the image's EH map and call multiset at the current head (nine left the
+// base-zoom return's ~FlatButton, site 42 at 0x0046EAAA, out of line).
 static inline int click_probe(int x) {
     if (x == 0) x = 7;
     if (x == 1) x = 8;
@@ -6036,8 +6038,7 @@ void MapWin::click(int pixel_x, int pixel_y, int button) {
         }
         // WORKAROUND(inline): budget probe, see click_probe.
         click_probe(1000); click_probe(1001); click_probe(1002); click_probe(1003);
-        click_probe(1004); click_probe(1005); click_probe(1006); click_probe(1007);
-        click_probe(1008);
+        click_probe(1004); click_probe(1005); click_probe(1006);
     }
 
     if (map_view_index_ == 0) {
