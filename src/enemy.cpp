@@ -6111,7 +6111,19 @@ L_570c89:
         near_base >= 0) {
         tx = xrange(x + 6);
         base_id = base_find(tx, y);
-        if (base_id >= 0 && BaseFindDist <= 2) {
+        if (base_id < 0 || BaseFindDist > 2) {
+            if (Bases[near_base].faction_id_current == faction_id && near_dist <= 2) {
+                if (remote_own) {
+                    log_say("Auto sending DESTROY message", veh_id, 0x800000, 0);
+                    message_data(0x2406, veh_id, 0x800000, 0, 0, 0);
+                    NetDaemonNet.await_exec(1);
+                    return 1;
+                }
+            destroy_road:
+                action_destroy(veh_id, 0x800000, -1, -1);
+                return 0;
+            }
+        } else {
             if (PlayersData[faction_id].diplo_treaties[Bases[base_id].faction_id_current] & 0x10) {
                 if (remote_own) {
                     log_say("Auto sending DESTROY message", veh_id, 0x800000, 0);
@@ -6121,16 +6133,6 @@ L_570c89:
                 }
                 goto destroy_road;  // the image shares this call at 0x570DDF
             }
-        } else if (Bases[near_base].faction_id_current == faction_id && near_dist <= 2) {
-            if (remote_own) {
-                log_say("Auto sending DESTROY message", veh_id, 0x800000, 0);
-                message_data(0x2406, veh_id, 0x800000, 0, 0, 0);
-                NetDaemonNet.await_exec(1);
-                return 1;
-            }
-        destroy_road:
-            action_destroy(veh_id, 0x800000, -1, -1);
-            return 0;
         }
     }
     if (speed(veh_id, 0) <= Rules.move_rate_roads &&
