@@ -2271,10 +2271,7 @@ L_4fcf70:
                                 Chassis[VehPrototypes[l_14].chassis_id].triad)
                      + PlayersData[l_8].soc_effect_pending.values_[SocialEffect::MORALE];
         if (l_2c == 2 && has_fac_built(FAC_CHILDREN_CRECHE)) {
-            int m = morale - PlayersData[l_8].soc_effect_pending.values_[SocialEffect::MORALE] + 1;
-            if (morale <= m) {
-                morale = m;
-            }
+            morale = max(morale, morale - PlayersData[l_8].soc_effect_pending.values_[SocialEffect::MORALE] + 1);
         }
         if (Weapon[VehPrototypes[l_14].weapon_id].offense_rating < 0 && l_14 < 64) {
             l_18 += 2 - range(worm_mod(BaseIDCurrentSelected, l_8), 0, 2);
