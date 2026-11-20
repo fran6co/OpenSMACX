@@ -1637,17 +1637,17 @@ void ReportWin::draw_labs() {
         // 0x498B75..0x498C55
         host = &DatalinkMain;
         DatalinkMain.set_text_color_hyper(0xFE, -1, 1, 1);
-        field_59A0_ = 0x96;
-        field_59A8_ = 0xAA;
-        field_59A4_ = 0x28;
         frame.left = DatalinkMain.entry_clip_rect().left + 3;
         frame.top = DatalinkMain.entry_clip_rect().top + 3;
-        // UNSURE: the image forms right-left once and derives both
-        // frame.right (= that + frame.left - 6) and bar.right (= that - 6).
-        frame.right = frame.left
-            + (DatalinkMain.entry_clip_rect().right
-               - DatalinkMain.entry_clip_rect().left) - 6;
         frame.bottom = frame.top + 0x14;
+        field_59A0_ = 0x96;
+        field_59A4_ = 0x28;
+        field_59A8_ = 0xAA;
+        // The width is read again after the field stores (0x00498BC2) and
+        // feeds both frame.right and bar.right (`add edi, -6`, a CSE'd - 6).
+        int width = DatalinkMain.entry_clip_rect().right
+            - DatalinkMain.entry_clip_rect().left;
+        frame.right = frame.left + width - 6;
         // Genuine original: the Datalink host never draws the research
         // header, but still clears its RECT and fills the bar RECT with
         // inset/width/height values that are never read on this path.
@@ -1657,8 +1657,7 @@ void ReportWin::draw_labs() {
         header.bottom = 0;
         bar.left = frame.left + 3;
         bar.top = frame.top + 3;
-        bar.right = DatalinkMain.entry_clip_rect().right
-            - DatalinkMain.entry_clip_rect().left - 6;
+        bar.right = width - 6;
         bar.bottom = DatalinkMain.entry_clip_rect().bottom
             - DatalinkMain.entry_clip_rect().top - 6;
         field_A2C_ = frame.bottom + 0xA;
