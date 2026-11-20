@@ -4539,10 +4539,10 @@ int __cdecl propose_pact(int myFac, int otherFac) {
     score = 0;
     int accepted_offer = 0;
     int offer_made = 0;
-    if (!strength_gap
+    if ((!strength_gap
         && ((DiploFriction > 4 && PlayersData[myFac].tech_commerce_bonus >= other_commerce)
             || DiploFriction > 10
-            || (DiploScratchFA78 && DiploScratchFA78 > other_commerce - PlayersData[myFac].tech_commerce_bonus))) {
+            || (DiploScratchFA78 && DiploScratchFA78 > other_commerce - PlayersData[myFac].tech_commerce_bonus))) != 0) {
         score = 1;
     }
     if (DiplomacyProposalMode == 4 || DiplomacyProposalMode == 5) {
