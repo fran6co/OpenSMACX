@@ -369,35 +369,13 @@ check_spotted:
     return wants_to_wake;
 }
 
-// The original keeps one tile across these checks. Use the same owner
-// operation as base_who with the cached map inputs, allowing the compiler
-// to reuse the existing tile address. This local factoring does not claim
-// an original helper name or an additional original function.
-static inline int wake_stack_base_owner(Map *tile) {
-    if (tile->bit & BIT_BASE_IN_TILE) {
-        int owner = tile->val2 & 0xF;
-        if (owner < MaxPlayerNum) {
-            return owner;
-        }
-    }
-    return -1;
-}
-
 
 /*
 Purpose: Wake up units meeting specific conditions from the stack where specified unit is located.
 // ORIGINAL: 0x005B6060 ?wake_stack@@YAXH@Z 0x005B6060-0x005B619A BYTE_EXACT
-// LEVER: veh_top() is called at only 2 real sites in the image (see its own
-//        comment on veh_top); here it is inlined, matching veh_at above. The
-//        climb's induction variable is int16_t (prev_veh_id_stack's own type),
-//        matching veh_top's own lever. is_ocean()/base_who()/bit_at() are hand-
-//        inlined sharing ONE tile pointer, and map_loc()'s two globals
-//        (map_tiles(), MapLongitude) are hoisted out of the `i` loop into locals
-//        BEFORE it - the image reads them once, kept live in registers across
-//        every iteration, rather than re-reading them on each tile lookup a
-//        plain per-iteration map_loc(x, y) call would. Together: 0.836 -> 0.955.
-// Exact: nested ifs with one Map* from the hoisted globals; the airbase
-// test respells the tile so VC6 rereads tile->bit as the image does.
+// The header inlines veh_top, is_ocean, base_who and bit_at, each expanded
+// (2026-11-20; the earlier hand-copied bodies with a hoisted tile base and
+// a TU-local base_who twin are retired).
 // size      314 bytes
 // prototype void (__cdecl ?wake_stack@@YAXH@Z)(int vehID)
 // callers   1   call targets   0
@@ -408,29 +386,20 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl wake_stack(int veh_id) {
-    if (veh_id < 0) {
-        return;
-    }
-    int top_veh_id = veh_id;
-    for (int16_t j = Vehs[top_veh_id].prev_veh_id_stack; j >= 0; j = Vehs[j].prev_veh_id_stack) {
-        top_veh_id = j;
-    }
+    int top_veh_id = veh_top(veh_id);
     if (top_veh_id < 0) {
         return;
     }
-    Map *const map_base = map_tiles();
-    const int map_width = MapLongitude;
     for (int i = top_veh_id; i >= 0; i = Vehs[i].next_veh_id_stack) {
         if (Vehs[i].order == ORDER_SENTRY_BOARD) {
             if (get_triad(i) == TRIAD_LAND) {
-                Map *tile = map_base + ((Vehs[i].x >> 1) + Vehs[i].y * map_width);
-                if ((tile->climate & ~0x1F) < ALT_BIT_SHORE_LINE) {
+                if (is_ocean(Vehs[i].x, Vehs[i].y)) {
                     continue;
                 }
                 int veh_id_way_point = Vehs[i].waypoint_x[0];
                 if (veh_id_way_point >= 0 && get_triad(veh_id_way_point) == TRIAD_AIR
-                    && wake_stack_base_owner(tile) < 0
-                    && !(map_base[(Vehs[i].x >> 1) + Vehs[i].y * map_width].bit & BIT_AIRBASE)) {
+                    && base_who(Vehs[i].x, Vehs[i].y) < 0
+                    && !(bit_at(Vehs[i].x, Vehs[i].y) & BIT_AIRBASE)) {
                     continue;
                 }
             }
