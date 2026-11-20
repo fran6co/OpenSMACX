@@ -7688,7 +7688,13 @@ Layout
     F7D4 = 0` ends of both arms of L8551/L8580 stay two identical 22-byte
     runs in ours, each `jmp` to the join, while the image cross-jumps arm 2's
     into arm 1's, which falls into the join's three stores at 0x552321: an
-    open cross-jump miss, see "Cross-jumping ground truth".) The image also
+    open cross-jump miss, see "Cross-jumping ground truth". Round 43: fixed
+    by writing `FA8C = F7D4; F7D4 = 0; F7E8 = 0;` plus the join and its
+    `goto` in both arms (the image's store order clears F7D4 first); the
+    dead budget probes in arm 2 do not block it. The image then hosts the
+    shared `F7E8 = 0; join` in arm 1 and the two BETRAYFRIEND sites jump
+    into it (0x552331); ours hosts it in the last (F7C8) site, though a
+    four-site skeleton hosts first as the image does.) The image also
     copies a PREFIX of a join, its first statement,
     and jumps to the next statement: MapWin::editor 0x46B791 copies the
     `rocky_set` call (11 bytes) into range's `2` arm and jumps to the
@@ -7708,6 +7714,19 @@ Layout
     the `if`, `if`/else swapped, a range local, both `goto`s. A one-function
     probe of editor's case 1 (`probe` in the round-42 scratch: switch in a
     loop, range inline, two rocky_set arms) copies neither arm either, as ours.
+    Round 43 (par-5): the copy is a natural VC6 output, not a source form.
+    A one-function loop `int x = wrap_map_x(B[k].x + OX[i]); y = B[k].y +
+    OY[i]; if (!on_map(x, y)) continue; ...` makes it (`lea edi,[ecx+eax];
+    jmp` past the join's `mov edi,eax`), with the ternary or the
+    multi-return wrap alike. In enemy_planet_buster itself it comes and
+    goes with deletions far from the site: removing the base_id_hit
+    scoring after the HQ test gives the image's shape (x in esi), removing
+    the two counting loops at the top or the defense block copies the
+    store into all three arms (the flat test inverted to `je`), while
+    removing the whole base_id_hit block, the vehicle block, the treaty
+    filter, or declaring y in the loop gives none. Not a size threshold
+    (the base_id_hit deletion is a superset of the one that copies); a
+    function-wide condition, still unknown. Do not respell the site.
 - **Cross-jumping ground truth** (par-2 2026-11-19,
   `analysis/probes/crossjump/run.py`, one-function probes with `use(K)`
   markers; names below are its variants).
