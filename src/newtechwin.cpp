@@ -442,7 +442,11 @@ void NewTechWin::exec(int technology_id, int other_faction_id) {
         box.show(0);
     }
 
-    inset_rect(&rect, text_rect, 3, 3);
+    rect = *text_rect;
+    rect.left += 3;
+    rect.top += 3;
+    rect.right -= 3;
+    rect.bottom -= 3;
     stringBox2_.init(rect.left, rect.top, rect.right - rect.left,
                      rect.bottom - rect.top, this, 0, -1);
     stringBox2_.Buffer::set_font(find_font(0xc, 0), find_font(0xc, 1),
