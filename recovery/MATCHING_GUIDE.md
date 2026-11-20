@@ -2567,7 +2567,9 @@ we cannot see, so the numbers are fitted within about 0.3 unit.
    - **Dead code inside the callee counts in full.** `if (k == 12345) {4 ifs}`
      costs more than the 4 ifs.
    - **`__forceinline` sites expand and charge nothing**, even with 8 ifs
-     (`force_if4`, `force_big`).
+     (`force_if4`, `force_big`). Probes only: in DesignWin::select_special
+     `__forceinline` and `inline` helpers measure identically (2026-11-20,
+     see "`__forceinline` spends the same budget" below).
 4. **Pass-2 room** (high on the synthetic families; fitted by `fam1.py` and
    `fitftb.py`, with a single solution for the destructor family
    `dtor_nested.py`). At nested site i:
@@ -3100,6 +3102,36 @@ What the model does not predict (2026-11-19)
   too; `--shared` also lists other texts referenced from two units, where
   a data read that happens to point at a string (`mov eax, [0x0068FB58]`)
   is the usual false hit.
+- **A shared-COMDAT separator that costs what the raw literal costs is a
+  text-RETURNING inline in the caller's own strcat** (high in one real
+  function; 2026-11-20 par-4, DesignWin::select_special 0x0043AC70,
+  f6fcf7075b). The rule above says a push of the shared address is an
+  inline; it does not say which inline. select_special pushes the shared
+  " " ": " "(" ")" at all 28 separator sites, yet every destination-taking
+  form (`strcat_X(StringTemp)` from strings.h, a unit-local copy, a
+  returning-strcat variant, the no-argument `say_X()`) overspends its
+  budget: three ~StringList teardowns stop expanding (sdeck EH 3, named
+  calls 11, tokens 3, hunks 2, 63 rows). `strcat(StringTemp, f())` with
+  `inline const char *f() { return ": "; }` (free function or static
+  member) gives (0, 2, 0, 0, 5): the raw-literal structure with the shared
+  address, only the unrelated five-argument Popup::start site left. So
+  when a host's separator change to `strcat_X`/`say_X` moves EH or
+  teardown calls away from the image, try the text-returning spelling
+  before concluding the site is written out. The original helper names are
+  unknown: the image holds NO out-of-line literal-returning copy
+  (`mov eax, offset; ret` after padding occurs 12 times in .text, none
+  returning a string; 2026-11-20 scan), which neither confirms nor rules
+  out such header helpers (only space() of the strcat forms has a copy
+  either). Mark them WORKAROUND(inline).
+- **`__forceinline` spends the same budget as `inline` in a real caller**
+  (2026-11-20 par-4, same deck). Rule 3's "`__forceinline` sites expand and
+  charge nothing" holds for the synthetic probes only: in select_special,
+  `__forceinline` strcat_X copies give exactly the plain inline's
+  (3, 11, 3, 2, 63) and `__forceinline` text-returning copies exactly the
+  plain (0, 2, 0, 0, 5). Together with `label_get` (identical over all
+  5,574 markers) and the 2026-11-19 census (4.1), do not use the keyword
+  to save budget; COMPILER_EVIDENCE's "does not spend the /Ob2 budget"
+  (and the AGENTS.md summary of it) is not borne out in real functions.
 - **Frame-slot order follows the expansion counts: judge a spelling by its
   decisions, not its rows** (high; 2026-11-19 par-4, PickTech::pick
   64a5fb2ca3). Every expanded destructor or helper brings its own locals and
