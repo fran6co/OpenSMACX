@@ -26,6 +26,7 @@
 // Re-tuned 2026-11-19 against the sprite.h/popup.h headers (declpad padfree): exact at 10, 22-28, 38-39, 42-47 and
 // 51-62, so 56.
 // After veh_stack_top (veh.h, 2026-11-20): exact at 3, 15-17, 31-40 and 44-55, so 50.
+// After vehdraw_construct_chassis's split cases (2026-11-20): exact at 3, 16-17, 32, 45 and 49, so 16.
 // HEADER-PADS: function VehicleRenderHeaderPad
 void VehicleRenderHeaderPad0();
 void VehicleRenderHeaderPad1();
@@ -43,40 +44,6 @@ void VehicleRenderHeaderPad12();
 void VehicleRenderHeaderPad13();
 void VehicleRenderHeaderPad14();
 void VehicleRenderHeaderPad15();
-void VehicleRenderHeaderPad16();
-void VehicleRenderHeaderPad17();
-void VehicleRenderHeaderPad18();
-void VehicleRenderHeaderPad19();
-void VehicleRenderHeaderPad20();
-void VehicleRenderHeaderPad21();
-void VehicleRenderHeaderPad22();
-void VehicleRenderHeaderPad23();
-void VehicleRenderHeaderPad24();
-void VehicleRenderHeaderPad25();
-void VehicleRenderHeaderPad26();
-void VehicleRenderHeaderPad27();
-void VehicleRenderHeaderPad28();
-void VehicleRenderHeaderPad29();
-void VehicleRenderHeaderPad30();
-void VehicleRenderHeaderPad31();
-void VehicleRenderHeaderPad32();
-void VehicleRenderHeaderPad33();
-void VehicleRenderHeaderPad34();
-void VehicleRenderHeaderPad35();
-void VehicleRenderHeaderPad36();
-void VehicleRenderHeaderPad37();
-void VehicleRenderHeaderPad38();
-void VehicleRenderHeaderPad39();
-void VehicleRenderHeaderPad40();
-void VehicleRenderHeaderPad41();
-void VehicleRenderHeaderPad42();
-void VehicleRenderHeaderPad43();
-void VehicleRenderHeaderPad44();
-void VehicleRenderHeaderPad45();
-void VehicleRenderHeaderPad46();
-void VehicleRenderHeaderPad47();
-void VehicleRenderHeaderPad48();
-void VehicleRenderHeaderPad49();
 
 #include "general.h"  // range is used by veh.h inline members.
 #include "veh.h"
@@ -977,19 +944,26 @@ static void vehdraw_add_reactor(int faction_id, int reactor,
 // symbol    ?vehdraw_construct_chassis@@YAXHHHHHPAVCaviar@@@Z
 void __cdecl vehdraw_construct_chassis(int faction_id, int chassis, int weapon,
                                       int armor, int reactor, Caviar *renderer) {
+    // armor_colors is cleared first (image `xor edi,edi` before the clamp).
+    // Cases 0/9 and 4/8 are written apart: the image keeps a separate,
+    // jump-threaded block for case 0 against the default and its own
+    // `xor edi,edi` for case 4 (a shared label merges them into the
+    // default / case 1 tails, and armor_grade then loses ebx to faction_id).
+    unsigned char *armor_colors = 0;
     if (faction_id < 0 || faction_id > 7) faction_id = 0;
     unsigned char *body_colors = &BodyTintColorTables[faction_id][0][0];
-    unsigned char *armor_colors = 0;
     int armor_grade;
     switch (armor) {
-    case 0: case 9: armor_grade = 0; armor_colors = 0; break;
+    case 0: armor_grade = 0; armor_colors = 0; break;
+    case 9: armor_grade = 0; armor_colors = 0; break;
     case 1: armor_grade = 1; armor_colors = 0; break;
     case 2: armor_grade = 1; armor_colors = &ArmorTintColorTables[0][0][0]; break;
     case 3: armor_grade = 1; armor_colors = &ArmorTintColorTables[1][0][0]; break;
     case 5: armor_grade = 1; break;
     case 6: armor_grade = 1; armor_colors = &ArmorTintColorTables[2][0][0]; break;
     case 7: armor_grade = 1; armor_colors = &ArmorTintColorTables[3][0][0]; break;
-    case 4: case 8: armor_grade = 2; armor_colors = 0; break;
+    case 4: armor_grade = 2; armor_colors = 0; break;
+    case 8: armor_grade = 2; armor_colors = 0; break;
     case 10: armor_grade = 1; armor_colors = &ArmorTintColorTables[0][0][0]; break;
     case 11: armor_grade = 1; armor_colors = &ArmorTintColorTables[0][0][0]; break;
     case 12: armor_grade = 1; armor_colors = &ArmorTintColorTables[2][0][0]; break;
