@@ -28,15 +28,10 @@ int __cdecl X_pop(char *caption, const char *label,
 Interlude::Interlude() {}
 
 
-// Rectangle helpers exec() expands inline. The image keeps both the +50
-// shift and the centring offset in a register added to top and bottom (an
-// inlined parameter), and their inline cost is what leaves the first close()
-// in exec() calling remove_all out of line while the last one expands it.
-static inline void rect_shift_y(RECT *rect, int dy) {
-    rect->top += dy;
-    rect->bottom += dy;
-}
-
+// exec() expands offset_rect inline. The image keeps both the +50 shift and
+// the centring offset in a register added to top and bottom (an inlined
+// parameter), and its inline cost is what leaves the first close() in exec()
+// calling remove_all out of line while the last one expands it.
 // ORIGINAL: 0x0045F2E0 ?exec@Interlude@@QAEXPAD@Z 0x0045F2E0-0x0045F5C0 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["git:276d612614085e5d57743cf8cc92903d9468e346:src/unrecovered/0045f2e0.cpp: original identity, complete spans and retained seed history", "source:src/interlude.h: genuine GraphicWin base and embedded member lifetime", "source:recovery/tasks/interlude-lifetime-owner-closure.json: bounded coordinator authorization"], "reason": "Original45F2E0 configures Interlude art, captions, clip rectangle and modal lifecycle on actual embedded Buffer/StringList members; source-owned borrowed fonts preserve shared producer relationships."}
 // TRIED: many named C locals (rect, w, qv, qh, str_height, half, i, ...) push the compiler to `sub esp,N` for the frame; original reserves one dword via `push ecx` for the single Buffer* local that survives calls. Structure/order matches Ghidra.
@@ -63,11 +58,11 @@ void Interlude::exec(char *section) {
     text_rect_.right += (rect->right - rect->left) / -3;
     rect->left = min(rect->left, 25);
     if (!strcmp(section, "INTERLUDE21") || !strcmp(section, "INTERLUDE22")) {
-        rect_shift_y(rect, 50);
+        offset_rect(rect, 0, 50);
     }
     const int height = write_strings_height(&captions_, rect->right - rect->left, 0);
     const int offset = (rect->bottom - rect->top - height) / 2;
-    rect_shift_y(&text_rect_, offset);
+    offset_rect(&text_rect_, 0, offset);
     set_modal(0, nullptr, nullptr);
     close();
     do_all_draws();
