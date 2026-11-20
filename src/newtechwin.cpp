@@ -224,19 +224,6 @@ void NewTechWin::on_redraw() {
     this->box_sprite(&bottom_rect_, &InterfaceBoxStyles[0]);
 }
 
-// WORKAROUND(type): 0x00483FA7..483FC9 stores the four bounds constants
-// through a pointer copy and 0x00483FD0.. reads them back through another
-// instead of folding the constants: the original store and the RECT read use
-// different types (a RECT-typed setter folds them). This word-typed setter
-// reproduces the unfolded store/reload.
-static inline void newtechwin_set_words(uint32_t *rect, int left, int top, int right,
-                                        int bottom) {
-    rect[0] = left;
-    rect[1] = top;
-    rect[2] = right;
-    rect[3] = bottom;
-}
-
 // WORKAROUND(inline): 0x00484783..4847A7 is a non-rotated loop whose head
 // runs the modal pass, hide and redraw before the -1 test, the shape of a
 // break test on an inline helper (VC6 rotates every other loop form).
@@ -357,7 +344,7 @@ void NewTechWin::exec(int technology_id, int other_faction_id) {
     RECT rect;
     uint32_t category_id;
     RECT *const bounds = &field_A14_rect_;
-    newtechwin_set_words(reinterpret_cast<uint32_t *>(&field_A14_rect_), 0, 0, 0x226, 0x258);
+    set_rect(&field_A14_rect_, 0, 0, 0x226, 0x258);
     inset_rect(&rect, bounds, 12, 12);
     strip = rect;
     strip.right -= 3;
