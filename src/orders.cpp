@@ -1528,8 +1528,8 @@ L_597350:
         stack_veh(veh_id, 1);
         if (stealth) {
             if (faction == ConsoleGlobal.faction_id_) {
-                g_FX.engine_pitch((map_loc(src_x, src_y)->climate & ~0x1F)
-                                  < (map_loc(dest_x, dest_y)->climate & ~0x1F) ? 300 : 200);
+                g_FX.engine_pitch((map_loc(dest_x, dest_y)->climate & ~0x1F)
+                                  > (map_loc(src_x, src_y)->climate & ~0x1F) ? 300 : 200);
             }
             veh_scoot(veh_id, src_x, src_y, direction, 0);
             if (faction == ConsoleGlobal.faction_id_) {
