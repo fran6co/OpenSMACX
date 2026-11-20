@@ -349,14 +349,23 @@ static inline DWORD probe_time() { return timeGetTime(); }
 // RECOVERY_ASSOCIATED: v1 switch_selector 0x0059F120 0x005A5850 0x005A5860 0x005A178F
 // RECOVERY_ASSOCIATED: v1 switch_targets 0x0059F120 0x005A5860 0x005A5878 0x005A23A7
 // The image tests the human/alive mask bytes in place at every site.
-// WORKAROUND(inline): the first human test spells faction.h's is_human (same
-// bytes); its expansion is the /Ob2 spend that leaves the FRAME list's
-// parse_set/get_name calls (0x005A302B, 0x005A3047) as in the image. Since
-// the 2026-11-19 header batch, two or more is_human sites over-spend: the
-// FRAME popup's start(label) and first item (0x005A2F2B, 0x005A2FBE) are
-// refused where the image expands them.
 #define HUMAN_BIT(f) (GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & (1 << (f)))
 #define ALIVE_BIT(f) (GameDataStateStorage.fields_.lock_masks_.bytes_.alive_mask_ & (1 << (f)))
+// WORKAROUND(inline): dead /Ob2 budget probe (constant arguments fold it to
+// no code). The image expands the FRAME popup's start and first item
+// (0x005A2F2B, 0x005A2FBE) and then calls parse_set, get_name,
+// BasePop::item and BasePop::exec in the accomplice loop (0x005A302B..
+// 0x005A30A4) and NetMsg::pop(label, pcx) at six later sites (L1506-1551);
+// ours expanded all of them. Three branchy expansions right after the first
+// item spend what the original spent there (named calls 59 -> 52); the
+// original's spend is not identified. With them the first amphibious test's
+// is_human stand-in measured identical to HUMAN_BIT and was retired.
+static inline int probe_frame_budget_probe(int x) {
+    if (x == 0) x = 1;
+    else if (x == 1) x = 3;
+    else if (x == 2) x = 7;
+    return x;
+}
 
 
 // ORIGINAL: 0x0059F120 ?probe@@YAHHHHH@Z 0x0059F120-0x005A5837;0x006613D0-0x00661B3D
@@ -391,7 +400,7 @@ int __cdecl probe(int veh_id, int base_id, int veh_id_tgt, int mode) {
                          : !is_ocean(Vehs[veh_id_tgt].x, Vehs[veh_id_tgt].y))
         && get_triad(veh_id) != TRIAD_SEA
         && !has_abil(Vehs[veh_id].proto_id, ABL_AMPHIBIOUS)) {
-        if (faction == ConsoleGlobal.faction_id_ && mode && is_human(faction)
+        if (faction == ConsoleGlobal.faction_id_ && mode && HUMAN_BIT(faction)
             && (NetDaemonNet.action_mode_ & 1)) {
             int ability = abil_index(ABL_AMPHIBIOUS);
             parse_say(0, Ability[ability].name, -1, -1);
@@ -1318,6 +1327,9 @@ L_5a2dcd:
                     text_get();
                     parse_string(TextBufferGetPtr, StringTemp);
                     popup.item(StringTemp, 0);
+                    probe_frame_budget_probe(0);  // WORKAROUND(inline)
+                    probe_frame_budget_probe(1);  // WORKAROUND(inline)
+                    probe_frame_budget_probe(2);  // WORKAROUND(inline)
                     text_get();
                     mode = 0;
                     for (int i = 1; i < MaxPlayerNum; i++) {
