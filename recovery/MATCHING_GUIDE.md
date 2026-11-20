@@ -7419,6 +7419,11 @@ Frame and slots
   `i = 25;` written before `for (int j = 1; j < 25; j++)` is
   `for (i = 1; i < 25; i++)` (two sites, 858 -> 854; the store moves after
   the `xor`).
+  The same store beside a separate down-counter slot names the counter's
+  variable even when ours has none: load_vehicles 0x00454270 stores 8 to
+  variant's home ahead of the XF column loop (its own down-counter in
+  another slot), so the column loops ran on variant, not a dead `column`
+  (82 -> 10 rows). Screen: `analysis/loopexitscan.py`.
 
 Rectangles
 - Stores through one register from single loads are

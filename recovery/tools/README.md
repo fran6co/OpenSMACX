@@ -714,6 +714,15 @@ an explicit `--pfx` is only needed to pick another lane.
   follows within 8 instructions), with our source line of the store and at the image's position. Read the flag with
   equal register values (`img_ins`/`our_ins` value equal); mismatched values are mostly slot or register permutations.
   2026-11-20: load_vehicles (source_y after the skip test).
+- `analysis/loopexitscan.py <unit> <addr[,..]> [--src ALT] | --tree [unit ..] [--from FEALL.json] [--json F] | --src-pass`
+  loop-exit counter store screen (MATCHING_GUIDE 3.7 Frame and slots, Path::find; 40 s tree-wide with FE_JOBS=5): per
+  non-exact function the `mov [ebp-N], K` stores of small immediates (2..4096), image slots mapped to ours by aligned-row
+  votes; `IMG`/`OURS` = one side stores K to the slot more often (a variable the original used as a loop counter, whose
+  exit value VC6 stores, or the reverse), `MOVE` = equal counts but an image store has no same-K store on its row, `*` = K
+  is a loop bound (`cmp x, K` + backward jcc) on either side. IMG/OURS pairs of one K and excess are cancelled as slot
+  permutations. `--src-pass` lists `v = K;` within 6 lines of a `for` over another variable bounded by K (no compile).
+  Noisy where slot votes fail (big functions); read each flag with `fe.py --all`. 2026-11-20: load_vehicles (OURS* 8,
+  82 -> 3 with two follow-ups); the remaining 21 flags read as slot/register permutations.
 - `analysis/storesched.py [unit ...] [--addr A,..] [--src ALT] [--max N] [--json F]` moved-store screen (MATCHING_GUIDE 3.6
   "A member setter's parameter schedules the store early"; 60 s tree-wide): the `mov [reg + K], v` stores both sides emit at
   different places of one differing stretch, rows earlier/later, base register `this` or another object; `SETTER?` = moved
