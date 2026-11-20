@@ -467,11 +467,12 @@ make_explosions:
                 ExplosionColorTables[i][j], 10, 236, 100 - explosion_weights[i][j],
                 explosion_weights[i][j]);
         }
-        char name[80];
+        // The function-scope number buffer (image [ebp-0x188], its own 80
+        // bytes beside the say_num expansions' shared [ebp-0x138]).
         StringTemp[0] = '\0';
         strcat(StringTemp, "explosions");
-        _itoa(i, name, 10);
-        strcat(StringTemp, name);
+        _itoa(i, number, 10);
+        strcat(StringTemp, number);
         strcat(StringTemp, ".tmp");
         cache = file.create(StringTemp, sizeof(ExplosionColorTables[i]), 1);
         memcpy(cache, ExplosionColorTables[i], sizeof(ExplosionColorTables[i]));
