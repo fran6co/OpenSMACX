@@ -1941,7 +1941,14 @@ void ReportWin::draw_labs() {
 
         // 0x49970D: prerequisites. The one-prerequisite arm is laid out
         // first and its final box_sprite tail-merges with the two-arm's.
-        if ((ids[1] < 0 || ids[2] < 0) && ids[1] + 1 != 0) {
+        // The image tests ids[1] >= 0 && ids[2] >= 0 once (0x49971C jge to
+        // the two-arm) and never re-tests it after the one-arm: the two-arm
+        // is a goto target written after the one-arm (an if/else-if chain
+        // re-tests both ids, a nested if/else lays the two-arm first).
+        if (ids[1] >= 0 && ids[2] >= 0) {
+            goto two_prereqs;
+        }
+        if (ids[1] + 1 != 0) {
             // 0x49972B..0x499862
             labs_line(field_A28_, lab_center_y_, lab_prerequisite_x_,
                       lab_center_y_, field_59A0_, field_59A4_, 0);
@@ -1964,7 +1971,9 @@ void ReportWin::draw_labs() {
                                      lab_center_y_ - 3, field_59A0_ + 6,
                                      field_59A4_ + 6);
             host->Buffer::box_sprite(&box, &InterfaceBoxStyles[3]);
-        } else if (ids[1] >= 0 && ids[2] >= 0) {
+        }
+        if (0) {
+        two_prereqs:
             // 0x499867..0x499ADD
             labs_line(field_A28_, lab_center_y_, lab_prerequisite_x_,
                       lab_upper_inner_y_, field_59A0_, field_59A4_, 0);
