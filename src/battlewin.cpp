@@ -412,8 +412,12 @@ again:
     space();
     space();
     row_y = MainInterfaceGlobal.wrap(StringTemp, column_x, row_y, half_width);
+    // The modifier rows clear StringTemp before the loop and at the end of
+    // each row: the image's clears sit between the guard test and its jle
+    // (0x00422884) and between the back-edge compare and jl (0x00422950),
+    // with no clear at the top of the body (0x004228B1).
+    StringTemp[0] = '\0';
     for (int i = 0; i < (int)VehBattleModCount[side]; i++) {
-        StringTemp[0] = '\0';
         strcat(StringTemp, VehBattleDisplay[side * 4 + i]);
         space();
         if (VehBattleModifier[side * 4 + i] >= 0) {
@@ -422,6 +426,7 @@ again:
         say_num(VehBattleModifier[side * 4 + i]);
         strcat(StringTemp, "%");
         row_y = MainInterfaceGlobal.wrap(StringTemp, column_x, row_y, half_width);
+        StringTemp[0] = '\0';
     }
 
     StringTemp[0] = '\0';
