@@ -634,24 +634,27 @@ void CouncWin::init(int proposal, int faction_id) {
     RECT *bottom_row;
     {
         int wide = WinScreenWidth != 800;
-        set_rect(&field_BC4_rect_, 0x1e, 7, 0x2ee, 0x1b);
-        set_rect(&leader_rects_[2], 0x1e, 0x35, 0x80, 0x14f);
-        set_rect(&leader_rects_[4], 0x82, 0x2d, 0xe4, 0x147);
-        set_rect(&leader_rects_[6], 0xe6, 0x25, 0x148, 0x13f);
-        set_rect(&leader_rects_[8], 0x14a, 0x1d, 0x1c2, 0x160);
-        set_rect(&leader_rects_[10], 0x1c4, 0x25, 0x226, 0x13f);
-        set_rect(&leader_rects_[12], 0x228, 0x2d, 0x28a, 0x147);
-        set_rect(&leader_rects_[14], 0x28c, 0x35, 0x2ee, 0x14f);
-        set_rect(&leader_rects_[3], 0x20, 0x1d, 0x82, 0x137);
-        set_rect(&leader_rects_[5], 0x87, 0x1d, 0xe9, 0x137);
-        set_rect(&leader_rects_[7], 0xee, 0x1d, 0x150, 0x137);
-        set_rect(&leader_rects_[9], 0x155, 0x1d, 0x1b7, 0x137);
-        set_rect(&leader_rects_[11], 0x1bc, 0x1d, 0x21e, 0x137);
-        set_rect(&leader_rects_[13], 0x223, 0x1d, 0x285, 0x137);
-        set_rect(&leader_rects_[15], 0x28a, 0x1d, 0x2ec, 0x137);
-        set_rect(&field_BA4_rect_, 0xf5, 0x163, 0x21a, 0x17a);
-        RECT *panel = &panel_rect_;
+        // Both arms repeat the common rects; VC6 hoists the identical prefix
+        // between the `wide` test and its branch.
+        RECT *panel;
         if (!wide) {
+            set_rect(&field_BC4_rect_, 0x1e, 7, 0x2ee, 0x1b);
+            set_rect(&leader_rects_[2], 0x1e, 0x35, 0x80, 0x14f);
+            set_rect(&leader_rects_[4], 0x82, 0x2d, 0xe4, 0x147);
+            set_rect(&leader_rects_[6], 0xe6, 0x25, 0x148, 0x13f);
+            set_rect(&leader_rects_[8], 0x14a, 0x1d, 0x1c2, 0x160);
+            set_rect(&leader_rects_[10], 0x1c4, 0x25, 0x226, 0x13f);
+            set_rect(&leader_rects_[12], 0x228, 0x2d, 0x28a, 0x147);
+            set_rect(&leader_rects_[14], 0x28c, 0x35, 0x2ee, 0x14f);
+            set_rect(&leader_rects_[3], 0x20, 0x1d, 0x82, 0x137);
+            set_rect(&leader_rects_[5], 0x87, 0x1d, 0xe9, 0x137);
+            set_rect(&leader_rects_[7], 0xee, 0x1d, 0x150, 0x137);
+            set_rect(&leader_rects_[9], 0x155, 0x1d, 0x1b7, 0x137);
+            set_rect(&leader_rects_[11], 0x1bc, 0x1d, 0x21e, 0x137);
+            set_rect(&leader_rects_[13], 0x223, 0x1d, 0x285, 0x137);
+            set_rect(&leader_rects_[15], 0x28a, 0x1d, 0x2ec, 0x137);
+            set_rect(&field_BA4_rect_, 0xf5, 0x163, 0x21a, 0x17a);
+            panel = &panel_rect_;
             set_rect(panel, 0x105, 0x55, 0x235, 0x8c);
             first = &leader_rects_[16];
             set_rect(first, 0x105, 0x8e, 0x169, 0xa2);
@@ -660,6 +663,23 @@ void CouncWin::init(int proposal, int faction_id) {
             bottom_row = &leader_rects_[19];
             set_rect(bottom_row, 0x105, 0x8e, 0x235, 0xa2);
         } else {
+            set_rect(&field_BC4_rect_, 0x1e, 7, 0x2ee, 0x1b);
+            set_rect(&leader_rects_[2], 0x1e, 0x35, 0x80, 0x14f);
+            set_rect(&leader_rects_[4], 0x82, 0x2d, 0xe4, 0x147);
+            set_rect(&leader_rects_[6], 0xe6, 0x25, 0x148, 0x13f);
+            set_rect(&leader_rects_[8], 0x14a, 0x1d, 0x1c2, 0x160);
+            set_rect(&leader_rects_[10], 0x1c4, 0x25, 0x226, 0x13f);
+            set_rect(&leader_rects_[12], 0x228, 0x2d, 0x28a, 0x147);
+            set_rect(&leader_rects_[14], 0x28c, 0x35, 0x2ee, 0x14f);
+            set_rect(&leader_rects_[3], 0x20, 0x1d, 0x82, 0x137);
+            set_rect(&leader_rects_[5], 0x87, 0x1d, 0xe9, 0x137);
+            set_rect(&leader_rects_[7], 0xee, 0x1d, 0x150, 0x137);
+            set_rect(&leader_rects_[9], 0x155, 0x1d, 0x1b7, 0x137);
+            set_rect(&leader_rects_[11], 0x1bc, 0x1d, 0x21e, 0x137);
+            set_rect(&leader_rects_[13], 0x223, 0x1d, 0x285, 0x137);
+            set_rect(&leader_rects_[15], 0x28a, 0x1d, 0x2ec, 0x137);
+            set_rect(&field_BA4_rect_, 0xf5, 0x163, 0x21a, 0x17a);
+            panel = &panel_rect_;
             set_rect(panel, 0x120, 0x58, 0x30b, 0x91);
             first = &leader_rects_[16];
             set_rect(first, 0x120, 0x93, 0x1c2, 0xa7);
@@ -691,21 +711,27 @@ void CouncWin::init(int proposal, int faction_id) {
         rect.right += step;
         leader_rects_[18] = rect;
 
-        // The image tests `wide` before the face load with no branch after
-        // it (0x0042777C): a conditional with identical arms. A ternary on
-        // either argument folds away; this if/else keeps the test (ours still
-        // branches on the face load) and brings the frame code closer.
+        // The image tests `wide` before the face loads with no branch after
+        // it (0x0042777C): both arms are identical and VC6 hoists them whole,
+        // leaving the dead test, as it hoists the common rect prefix above
+        // the panel branch (test 0x00427306, jne 0x00427531).
         if (wide) {
             font6_.init(DefaultLargeFontFace, 0x14, 1);
+            font2_.init(DefaultLargeFontFace, 0xe, 1);
+            font1_.init(DefaultLargeFontFace, 0xe, 1);
+            font3_.init(DefaultLargeFontFace, 0xc, 1);
+            font3_.unk_1_ = 5;
+            font4_.init(DefaultLargeFontFace, 0xc, 1);
+            font5_.init(DefaultLargeFontFace, 0xe, 1);
         } else {
             font6_.init(DefaultLargeFontFace, 0x14, 1);
+            font2_.init(DefaultLargeFontFace, 0xe, 1);
+            font1_.init(DefaultLargeFontFace, 0xe, 1);
+            font3_.init(DefaultLargeFontFace, 0xc, 1);
+            font3_.unk_1_ = 5;
+            font4_.init(DefaultLargeFontFace, 0xc, 1);
+            font5_.init(DefaultLargeFontFace, 0xe, 1);
         }
-        font2_.init(DefaultLargeFontFace, 0xe, 1);
-        font1_.init(DefaultLargeFontFace, 0xe, 1);
-        font3_.init(DefaultLargeFontFace, 0xc, 1);
-        font3_.unk_1_ = 5;
-        font4_.init(DefaultLargeFontFace, 0xc, 1);
-        font5_.init(DefaultLargeFontFace, 0xe, 1);
     }
 
     field_A1C_ = proposal;
@@ -730,12 +756,9 @@ void CouncWin::init(int proposal, int faction_id) {
         }
         for (int round = 0; round < 3; round++) {
             for (proposal = 0; proposal < MaxPlayerNum; proposal++) {
-                if (!is_human(proposal)
-                    || (proposal != ConsoleGlobal.faction_id_ && !IsMultiplayerNet && !IsMultiplayerPBEM)) {
-                    leader_label_kind_[proposal] = council_get_vote(proposal, field_A1C_, faction_id);
-                } else {
-                    leader_label_kind_[proposal] = 0;
-                }
+                leader_label_kind_[proposal] = (!is_human(proposal)
+                    || (proposal != ConsoleGlobal.faction_id_ && !IsMultiplayerNet && !IsMultiplayerPBEM))
+                    ? council_get_vote(proposal, field_A1C_, faction_id) : 0;
                 if (!is_alive(proposal)) {
                     leader_label_kind_[proposal] = static_cast<uint32_t>(-5);
                 }
@@ -755,13 +778,15 @@ void CouncWin::init(int proposal, int faction_id) {
     }
 
     const int height = WinScreenHeight - MainInterfaceGlobal.field_D7C_;
-    int window_height = 0x18b;
-    if (height <= window_height) {
-        window_height = height;
+    // The window height lives in faction_id's dead slot ([ebp+0xC]).
+    faction_id = 0x18b;
+    if (height <= faction_id) {
+        faction_id = height;
     }
     int left = (WinScreenWidth - 0x30c) / 2;
-    GraphicWin::init(left, height - window_height, 0x32c,
-                     window_height, 0x1000000, &ConsoleGlobal);
+    int top = height - faction_id;
+    GraphicWin::init(left, top, 0x32c,
+                     faction_id, 0x1000000, &ConsoleGlobal);
     fill(9);
 
     StringTemp[0] = 0;
