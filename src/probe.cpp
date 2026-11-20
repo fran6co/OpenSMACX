@@ -1481,33 +1481,28 @@ L_5a2dcd:
                 NetMsgPrimary.pop(StringTemp, is_alien ? "al_infil_sm.pcx" : "infil_sm.pcx");
             }
         } else if (sabotage_id == 0x62) {
-            int veh_id_hit = veh_at(Bases[base_id].x, Bases[base_id].y);
-            if (veh_id_hit < 0) {
+            veh_id_tgt = veh_at(Bases[base_id].x, Bases[base_id].y);
+            if (veh_id_tgt < 0) {
                 return 1;
             }
-            do {
-                if (VehPrototypes[Vehs[veh_id_hit].proto_id].plan == 5) {
+            for (; veh_id_tgt >= 0; veh_id_tgt = veh_next_stack_id(veh_id_tgt)) {
+                if (VehPrototypes[Vehs[veh_id_tgt].proto_id].plan == 5) {
+                    if (Vehs[veh_id_tgt].faction_id == ConsoleGlobal.faction_id_) {
+                        parse_says(0, VehPrototypes[Vehs[veh_id_tgt].proto_id].veh_name, -1, -1);
+                        parse_says(1, get_adjective(faction), -1, -1);
+                        NetMsgPrimary.pop("BUSTMYPLANET",
+                                          is_alien ? "al_infil_sm.pcx" : "infil_sm.pcx");
+                    } else if (faction == ConsoleGlobal.faction_id_) {
+                        parse_says(0, VehPrototypes[Vehs[veh_id_tgt].proto_id].veh_name, -1, -1);
+                        parse_says(2, get_adjective(Vehs[veh_id_tgt].faction_id), -1, -1);
+                        NetMsgPrimary.pop("BUSTYOURPLANET",
+                                          is_alien ? "al_infil_sm.pcx" : "infil_sm.pcx");
+                    }
+                    kill(veh_id_tgt);
+                    if (veh_id > veh_id_tgt) {
+                        veh_id--;
+                    }
                     break;
-                }
-                veh_id_hit = veh_next_stack_id(veh_id_hit);
-            } while (veh_id_hit >= 0);
-            // exhausted loop jumps straight to 5a36c9 (5a350e); break path
-            // straight to the body at 5a3513
-            if (veh_id_hit >= 0) {
-                if (Vehs[veh_id_hit].faction_id == ConsoleGlobal.faction_id_) {
-                    parse_says(0, VehPrototypes[Vehs[veh_id_hit].proto_id].veh_name, -1, -1);
-                    parse_says(1, get_adjective(faction), -1, -1);
-                    NetMsgPrimary.pop("BUSTMYPLANET",
-                                      is_alien ? "al_infil_sm.pcx" : "infil_sm.pcx");
-                } else if (faction == ConsoleGlobal.faction_id_) {
-                    parse_says(0, VehPrototypes[Vehs[veh_id_hit].proto_id].veh_name, -1, -1);
-                    parse_says(2, get_adjective(Vehs[veh_id_hit].faction_id), -1, -1);
-                    NetMsgPrimary.pop("BUSTYOURPLANET",
-                                      is_alien ? "al_infil_sm.pcx" : "infil_sm.pcx");
-                }
-                kill(veh_id_hit);
-                if (veh_id > veh_id_hit) {
-                    veh_id--;
                 }
             }
         } else {
