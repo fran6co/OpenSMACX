@@ -3592,7 +3592,16 @@ What the model does not predict (2026-11-19)
   Dialogs stage instead. This is 2.3's two-stage behaviour, which the
   additive model cannot express.
 - **config_game 0x00589D30.** Ours expands ~StringList at its two sites;
-  the image calls both. Not attempted beyond the inlinemap reading.
+  the image calls both. These are the two early `return 1` teardowns
+  (0x589F1C, 0x58A09E), inside the expanded ~SetupWin, and the expansion
+  costs ours two extra EH states (runs [8,11,11,7,18] against the image's
+  [7,10,11,7,18]). Unmovable by dead spend (par-5 2026-11-20): 1-, 4-, 8-
+  and 16-if constant probes, 1 to 32 copies, at the function top, after
+  each early return, at `custom_rules`, `select_faction` and before the
+  closing `prefs_save` leave the EH runs AND the rows (244) unchanged; so
+  do label_get at the difficulty, CUSTOMNAMES and gender sites (+70..260
+  rows). Not a budget question at this caller; look at the
+  SetupWin/StringList declarations (`??_DStringList` vbase destructor) next.
 - **PickTech::pick 0x00486510.** The image calls ~Scroll at the four Popup
   teardowns of the first `return tech_ai(...)`; ours expands it at all 16
   sites. Up to 24 dead 4-if probes after that return all expand. Each one
@@ -8413,6 +8422,16 @@ Constant registers (measured with standalone probes, 2026-11-18)
   `PL img 2 ours 0 | TOP img 1 ours 3 SIG`; after the fix only base_build
   0x004F81A0 (loop 0x4FF0FC..0x4FF27C, eax) and config_game 0x00589D30
   (loop 0x58B4BD..0x58B5AB, eax) carry the signature, so the form is rare.
+  config_game's hit is a false positive (par-5 2026-11-20): 0x58B4BB is
+  the `if (!a || !b) a = b = 0;` reset block, which the count==1 and
+  non-random paths reach by threading, and the "latch" is the random-pair
+  block's tail-duplicated `||` test jumping back to it (0x58B5A1..0x58B5B9).
+  That block is held back past the next `jmp` (0x58B51D, inside the pair
+  loop); ours lays it in source order and falls into one shared test.
+  Neither goto/else forms of the reset (six), nor the attempt-loop forms
+  (k-counter, two induction variables, `attempt - start + 1`) reproduce it;
+  the image also keeps special_b in ebx through the random loop and hoists
+  `1 - start` into [ebp-0x2c], ours keeps `start` in ebx.
 
 - **A store through a pointer is a scheduling barrier for an address-taken
   local; a store into a global array is not** (par-5 2026-11-20, game_data
