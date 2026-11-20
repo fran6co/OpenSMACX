@@ -3917,12 +3917,12 @@ L_50b203:
 
     // 0x50B2FA: on-screen aftermath
     if (display != 0) {
-        if (!(atk_left != 0)) {
-            draw_tile_fixup(src_x, src_y, 2, 1);
-            draw_tile(target_x, target_y, 1);
-        } else {
+        if (!(!(atk_left != 0))) {
             draw_tile(src_x, src_y, 1);
             draw_tile_fixup(target_x, target_y, 2, 1);
+        } else {
+            draw_tile_fixup(src_x, src_y, 2, 1);
+            draw_tile(target_x, target_y, 1);
         }
         do_all_draws();
         // 0x50B354 (the local faction is loaded once into ECX for 0x50B370/0x50B424/0x50B428)
