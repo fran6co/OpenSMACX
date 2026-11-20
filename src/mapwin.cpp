@@ -649,10 +649,10 @@ void MapWin::init(int mode, int update) {
             } else {
                 field_1DD70_ |= 0x60000000;
             }
+        } else if (map_view_index_ == 1) {
+            field_1DD70_ |= 0x40000000;
+            standard_caption();
         } else {
-            if (map_view_index_ == 1) {
-                field_1DD70_ |= 0x40000000;
-            }
             standard_caption();
         }
         if (update == 0) {
