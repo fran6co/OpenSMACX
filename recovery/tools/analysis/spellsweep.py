@@ -36,6 +36,9 @@ RULES=collections.OrderedDict([
  ('sayl_fn',(r'(?<![\w.>])strcat\(StringTemp, label_get\('+ARG+r'\)\)', lambda m:'say_label(%s)'%m.group(1))),
  ('clear_fn',(r"(?<![\w.>])StringTemp\[0\] = (?:'\\0'|0);", lambda m:'::clear();')),
  ('table_fn',(r'(?<![\w.>])StringTable\.get\(', lambda m:'table_text(')),
+ # the reverse: a table_text stand-in written as the direct call (probe 0x0059F120: the image hoists the shared
+ # x*3 of both arms only with the direct call)
+ ('table_raw',(r'(?<![\w.>])table_text\(', lambda m:'StringTable.get(')),
  ('treaty_fn',(r'(?<![\w.>])PlayersData\[([^\[\]]+)\]\.diplo_treaties\[([^\[\]]+)\] & (\w+)\b(?!\s*[\[(])', lambda m:'has_treaty(%s, %s, %s)'%(m.group(1),m.group(2),m.group(3)))),
  ('rw_raw',(r'\brect_width\(&('+OBJ+r')\)', lambda m:'(%s.right - %s.left)'%(m.group(1),m.group(1)))),
  ('rh_raw',(r'\brect_height\(&('+OBJ+r')\)', lambda m:'(%s.bottom - %s.top)'%(m.group(1),m.group(1)))),
