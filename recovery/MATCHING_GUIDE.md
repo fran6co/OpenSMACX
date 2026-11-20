@@ -8634,6 +8634,26 @@ Counters and tie arms (par-5 2026-11-20, councwin)
   order fix); a `goto map_done` from the other cases instead of the flag
   compiles like the label form. Same mechanism as 2.6's council_action
   rule, inside a jump-table switch.
+- **A switch whose out-of-range `ja` lands past a case's last store
+  ends that case with the store and `break`s into the code after it**
+  (par-4 2026-11-20, communicate 0x0054FFD0, `analysis/switchtail.py`
+  HOST). Ours had `if ((unsigned)c <= 7u) switch (c) {...}` with gotos to
+  two labels after it (`after: FAD0 = 0; loop: ...`), so the default
+  reached the store. The image's default goes to `loop` and the store
+  is case 7's tail (cases 1/2 `if (mode == 6)` jump into that copy):
+  plain `switch` with `break` arms and the store written in both cases.
+  Same family: MainInterface::init 0x00459680's ten label cases share
+  one `push eax; mov ecx,StringTable; call get` tail only when every
+  case passes its offset through an inline (`label_get`, `table_text`);
+  a `StringTable.get(expr)` case pushes from its own register and keeps
+  the push.
+- **`if (A || B) { ...; return; } C;` lays the arm after C; the image's
+  arm in place (second test `jne` to C) is the test computed as a value**
+  (par-4 2026-11-20, Console::on_key_click 0x00517C74, 239 -> 217, jseq
+  0 hunks). Else-if, else-C, negated tests and gotos either way all keep
+  the arm last (the layout is local: truncating the function keeps it);
+  `int go = A || B; if (go)`, the same `||` returned by an inline helper,
+  or `A ? 1 : B` give the image's layout.
 - **Host orientation: the last-copy rule flips to first-copy with
   constructs elsewhere in the function** (probe
   `analysis/probes/xjhost/orient.py`, 2026-11-20 par-5). Three copies of
