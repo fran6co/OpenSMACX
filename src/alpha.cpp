@@ -3211,10 +3211,12 @@ parse_factions:
             int special_count;  // edi
             int special_a;      // [ebp-0x18]
             int special_b;      // [ebp-0x20]
+            int pick;
             custom_count = 14;
             special_count = 0;
             special_a = 0;
             special_b = 0;
+            pick = 0;
             first_special[0] = 0;
             if (!text_open(AlphaxFileID, "CUSTOMFACTIONS")) {
                 text_get();
@@ -3232,38 +3234,43 @@ parse_factions:
                 }
             }
             if (special_count == 1) {
-                // The last random slot is kept in special_b itself (ebx,
-                // 0x0058B40B), not in a local of its own; the pair test
-                // below clears it again.
                 {
                     for (int i = 1; i < 8; ++i) {
-                        if (!strcmp(Players[i].filename, "JENN282")) special_b = i;
+                        if (!strcmp(Players[i].filename, "JENN282")) pick = i;
                     }
                 }
-                if (special_b) {
+                if (pick) {
                     if (text_open(AlphaxFileID, "NEWFACTIONS")) goto select_faction;
                     text_get();
                     for (int skip = 0; skip < 5; ++skip) text_get();
-                    strcpy(Players[special_b].filename, text_item());
-                    if (!strcmp(Players[special_b].filename, first_special)) {
+                    strcpy(Players[pick].filename, text_item());
+                    if (!strcmp(Players[pick].filename, first_special)) {
                         text_get();
-                        strcpy(Players[special_b].filename, text_item());
+                        strcpy(Players[pick].filename, text_item());
                     }
-                    strcpy(Players[special_b].search_key, Players[special_b].filename);
-                    read_faction(&Players[special_b], 0);
-                    load_faction_art(special_b);
+                    strcpy(Players[pick].search_key, Players[pick].filename);
+                    read_faction(&Players[pick], 0);
+                    load_faction_art(pick);
                 }
+                special_a = 0;
+                special_b = 0;
             } else if (!special_count && rand() % 2) {
                 int start = rand() % 7;
-                for (int attempt = start; 1 - start + attempt < 8; ++attempt) {
+                int attempt = start;
+                do {
                     int i = attempt % 7;
                     if (!strcmp(Players[i + 1].filename, "JENN282")) {
                         if (!special_a) special_a = i + 1;
-                        else if (!special_b) special_b = i + 1;
+                        else if (!pick) pick = i + 1;
                     }
+                    ++attempt;
+                } while (1 - start + attempt < 8);
+                special_b = pick;
+                if (!special_a || !special_b) {
+                    special_a = 0;
+                    special_b = 0;
                 }
-            }
-            if (!special_a || !special_b) {
+            } else {
                 special_a = 0;
                 special_b = 0;
             }
