@@ -409,11 +409,12 @@ static inline void order_veh_synch(int veh_id) {
 // block order; the single Popup is the function's only automatic object.
 // WORKAROUND(inline): caller-size stand-in for order_veh (never stored; the
 // dead blocks below fold to no code). order_veh is over VC6's /Ob2 total-size
-// ceiling (MATCHING_GUIDE 2.8 rule 7): with three supply_options probes and 22
-// to 24 of these blocks before the final return, the unwind map and the named
+// ceiling (MATCHING_GUIDE 2.8 rule 7): with three supply_options probes and 24
+// to 26 of these blocks before the final return, the unwind map and the named
 // call multiset equal the image's (the closing teardown calls ??1StringList
-// 0x0059A0xx, the vehicle-count return expands its ??_DStringList). 21 or fewer
-// leave the closing StringList expanded, 25 or more refuse ??_DStringList.
+// 0x0059A0xx, the vehicle-count return expands its ??_DStringList). 23 or fewer
+// leave the closing StringList expanded, 28 or more refuse ??_DStringList
+// (window 22-24 before the lock-mask header batch shortened the member paths).
 // The statements the original had beyond ours are not identified.
 static int order_veh_size_pad;
 // ORIGINAL: 0x005947C0 ?order_veh@@YAHHHH@Z 0x005947C0-0x0059A1AB;0x00660F47-0x00661200
@@ -2073,7 +2074,8 @@ L_599b2a:
     if (0) { order_veh_size_pad = 8; } if (0) { order_veh_size_pad = 9; } if (0) { order_veh_size_pad = 10; } if (0) { order_veh_size_pad = 11; }
     if (0) { order_veh_size_pad = 12; } if (0) { order_veh_size_pad = 13; } if (0) { order_veh_size_pad = 14; } if (0) { order_veh_size_pad = 15; }
     if (0) { order_veh_size_pad = 16; } if (0) { order_veh_size_pad = 17; } if (0) { order_veh_size_pad = 18; } if (0) { order_veh_size_pad = 19; }
-    if (0) { order_veh_size_pad = 20; } if (0) { order_veh_size_pad = 21; } if (0) { order_veh_size_pad = 22; }
+    if (0) { order_veh_size_pad = 20; } if (0) { order_veh_size_pad = 21; } if (0) { order_veh_size_pad = 22; } if (0) { order_veh_size_pad = 23; }
+    if (0) { order_veh_size_pad = 24; }
     return selector;
 }
 
