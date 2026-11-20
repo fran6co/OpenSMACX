@@ -2800,6 +2800,18 @@ Using it
   supplies spend an older stand-in was tuned to supply. probe's
   amphibious-test is_human stand-in measured identical to the raw
   HUMAN_BIT with the probe in place, every rung and row, and was retired.
+  Second case (2026-11-20 par-4, base_build 0x004F81A0, ceiling-bound):
+  the image calls range from the military arm's l_18 line (0x004FA280)
+  and has_fac_built from 0x004FA9E0 on, ours expanded four of those sites.
+  Four probe calls right before the l_18 line give the image's call
+  multiset (distance 5 -> 0, rung 2 -> 4, rows 4099 -> 3641); 1-3 leave
+  sites expanded, 5-8 refuse one too many; the same size as pointer-local
+  pads at the top or right before the line moves nothing, so it is the
+  expansions' charge at that point, not caller size. Re-check: the six
+  size-pad pointer locals tuned earlier were all dead and were retired.
+  Screens where it did NOT apply (the refused sites were not budget):
+  spot_all's on_map (depth-3 sites; probes before the first refused
+  spot_base site refuse veh_top instead).
 - **A callee is called at an early pass-1 site and expanded at a later one.**
   Pass 1 cannot do that with equal costs, so the called site was a pass-2
   site in the original, inside an inline helper.
