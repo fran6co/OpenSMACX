@@ -64,6 +64,10 @@ an explicit `--pfx` is only needed to pick another lane.
   is over 15 bytes and the copy is not, with the copy as the joining block's tail. 70 s over the non-exact set.
   2026-11-20: 16 functions, 3 SIZE rows (menu_proc, pulldown_update, communicate), all known or register noise; the
   image's prefix copies (editor, enemy_planet_buster, MATCHING_GUIDE 3.7) read `tail differs`.
+- `analysis/latchscan.py [unit ..] [--addr A] [--src ALT.cpp] [--show] [--json F]` preheader/latch clear screen
+  (MATCHING_GUIDE 3.7 "A loop-local zeroed in the preheader AND in the latch"): per loop, destinations zeroed in
+  the preheader and the latch (PL) against those zeroed only at the body top (TOP), image against ours; `SIG` =
+  image PL > ours PL. 31 s tree-wide; 2026-11-20: base_build and config_game only.
 - `objdis.py <unit> <src> <addr>` raw listing of our function with real jump targets.
 - `objdis.py <unit> <src> <addr>` raw listing of our function with real jump targets (unit as `picktech`, `picktech.cpp`,
   `src/picktech.cpp`, or a basename found in a subdirectory; lane FE_PFX_BASE).

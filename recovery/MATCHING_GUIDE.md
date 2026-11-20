@@ -8348,6 +8348,27 @@ Constant registers (measured with standalone probes, 2026-11-18)
   `do { ... } while (++k < N);` gives the image's preheader/latch layout
   (3660 -> 3624 rows).
 
+- **A loop-local zeroed in the preheader AND in the latch, never at the
+  body top, is "clear before the loop, re-clear at the end of each
+  iteration"** (par-5 2026-11-20, Sprite::extract 0x005E39A0: `xor ecx,ecx`
+  at 0x5E3BE5 and 0x5E3C1E, `xor edi,edi` at 0x5E3C52 and 0x5E3C98). VC6
+  does not move a body-top `x = 0` (or an inner `for (x = 0; ...)` init)
+  into the outer latch; the image's two clears are two source statements:
+  `x = 0; for (...) { for (; x < n; x++) ...; ...; x = 0; }`. The edit
+  changes block weights and with them the whole register assignment
+  (Sprite::extract's prologue: buffer no longer enregistered at entry,
+  width in ebx, the zero register ebp; 200 -> 20 rows). Body-top, for-header
+  and while spellings all stay at 190-200. Reading the image: an outer loop
+  whose back edge carries `xor r,r` / `mov [slot],0` next to the pointer
+  step, with the same clear just before the loop entry and none at the
+  inner loop's head. Screen: `analysis/latchscan.py` (PL = cleared in the
+  preheader, past a rotated loop's entry guard, and in the latch; TOP =
+  cleared in the body's first block only; `xor r,r; mov rl,..` zero-extends
+  are ignored). Tree-wide 2026-11-20 (31 s): the old Sprite::extract reads
+  `PL img 2 ours 0 | TOP img 1 ours 3 SIG`; after the fix only base_build
+  0x004F81A0 (loop 0x4FF0FC..0x4FF27C, eax) and config_game 0x00589D30
+  (loop 0x58B4BD..0x58B5AB, eax) carry the signature, so the form is rare.
+
 Arm layout and operand sources (par-3, 2026-11-19)
 - **Flat `if (A && B) X else if (!A) Y` is not the nested form.**
   `if (A) { if (B) X } else Y` hosts the join after the inner then-arm and
