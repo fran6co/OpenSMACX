@@ -211,7 +211,7 @@ int Sprite::extract(Buffer *buffer, int transparent, int left, int top,
     // ecx load that then serves as the call's receiver, and both tests share
     // the `return 3` tail with the four guards further down. NESTED, not `||`:
     // the nesting is what ends `buffer`'s live range at the test.
-    if (buffer != 0 && buffer->get_data() != 0) {
+    if ((buffer != 0 && buffer->get_data() != 0) != 0) {
         // Free the previous contents exactly as Sprite::close opens: the pixel
         // block is only owned, accounted, and released while the borrowed flag is
         // clear, and the image re-tests `pcBits_` before the free.
