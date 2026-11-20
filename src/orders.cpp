@@ -1829,7 +1829,7 @@ L_598cb9:
                         Vehs[veh_id].terraforming_turns = 0;
                         draw_tile(Vehs[veh_id].x, Vehs[veh_id].y, 2);
                         if (spotted && faction == ConsoleGlobal.faction_id_)
-                            NetMsgPrimary.pop("CHOPPERFUEL", 5000, 0, NULL);
+                            veh_battle_msg("CHOPPERFUEL", NULL);
                     } else {
                         // 5993c2: half range, head home.
                         if (Vehs[veh_id].terraforming_turns + 1
