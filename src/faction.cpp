@@ -3952,7 +3952,13 @@ void __cdecl pledge_truce(int faction_id, int faction_id_with,
 // TRIED: literal register-machine transliteration (pseudo-regs eax..edi, a raw 0x5440-byte buffer for the Popup/BasePop/Scroll object standing in for real ebp-relative locals, goto per basic block). Popup/BasePop/Scroll/FlatButton/ Dialogs/Dialog/Spot/Sprite/Heap/StringStruct lifecycle calls (ctor, start, exec, close, item, sprite, dtors) go through original_method<> on that buffer instead of real typed C++ locals, so no SEH frame or manual vtable re-stamp before each close()/dtor call is modeled - those writes are compiler-generated partial-construction unwind bookkeeping with no observable effect once the real ctor already ran. cdq/sub/sar divide-by- 2/3/4/6/10 idioms folded to `/N`; the negative-magic-constant /5 idiom (0x99999999) folded to `-(x/5)`. Covers the full control-flow graph and every external/method call in original order (4899 rebuilt vs 4536 original bytes); divergence is from the object-model/frame shape, not from missing branches or wrong call order.
 void __cdecl make_gift(int giver, int receiver) {
     Popup popup;
+    // One key buffer for the tech and base arms (image -0x74 in both;
+    // the energy arm's amount_text is alone at -0xC4), and one value for the
+    // tech gift, the energy selection and the friction divisor: the image
+    // homes all three in giver's dead slot [ebp+8] and favored in receiver's.
+    char key_buf[80];
     int favored;
+    int value;
     const int mode = DiplomacyProposalMode;
     PopupDialogFactionID = receiver;
     if (mode == 4 || mode == 7) {
@@ -3964,12 +3970,11 @@ void __cdecl make_gift(int giver, int receiver) {
             return;
         }
 
-        int gift_value;
         if (DiplomacyProposalMode == 7) {
-            gift_value = 0;
+            value = 0;
             for (int tech = 0; tech < 0x59; ++tech) {
                 if (has_tech(tech, giver) && !has_tech(tech, receiver)) {
-                    gift_value += tech_val(tech, receiver, 1);
+                    value += tech_val(tech, receiver, 1);
                     net_tech(receiver, tech, giver, 1);
                 }
             }
@@ -3994,37 +3999,36 @@ void __cdecl make_gift(int giver, int receiver) {
 
             const int selected = (response == 1) ? DiploScratchFAA8
                                                   : DiploScratchFA18;
-            gift_value = tech_val(selected, receiver, 1);
+            value = tech_val(selected, receiver, 1);
             net_tech(receiver, selected, giver, 1);
         }
 
         const char *recipient_key = Players[receiver].search_key;
         if (strcmp(recipient_key, "UNIV") == 0 ||
-            strcmp(recipient_key, "SPARTANS") == 0) gift_value *= 2;
-        if (strcmp(recipient_key, "BELIEVE") == 0) gift_value /= 2;
+            strcmp(recipient_key, "SPARTANS") == 0) value *= 2;
+        if (strcmp(recipient_key, "BELIEVE") == 0) value /= 2;
 
-        cause_friction(receiver, giver, -gift_value);
+        cause_friction(receiver, giver, -value);
 
-        char popup_label[80];
-        popup_label[0] = 0;
-        strcat(popup_label, "GAVETECH");
-        if (gift_value >= 0x10) {
+        key_buf[0] = 0;
+        strcat(key_buf, "GAVETECH");
+        if (value >= 0x10) {
             // The image's mask is 0x60 at 0x0054804F, 0x00548426 and 0x00548C1D.
             if (has_treaty(receiver, giver, DTREATY_WANT_REVENGE | DTREATY_UNK_40) &&
                 DiploFriction != 0)
-                strcat(popup_label, "2");
+                strcat(key_buf, "2");
             else
-                strcat(popup_label, "1");
+                strcat(key_buf, "1");
 
             net_treaty_off(receiver, giver, 0x60, 1);
         }
 
-        if (gift_value >= 0x10) {
+        if (value >= 0x10) {
             if (PlayersData[giver].diplo_unk1[receiver] < PlayersData[giver].integrity_blemishes) {
                 PlayersData[giver].diplo_unk1[receiver]++;
             }
         }
-        if (gift_value >= 0x10 || !PlayersData[giver].diplo_unk1[receiver]) {
+        if (value >= 0x10 || !PlayersData[giver].diplo_unk1[receiver]) {
             if (PlayersData[giver].diplo_unk1[receiver] < PlayersData[giver].integrity_blemishes
                 || great_satan(giver, 0) || IsMultiplayerNet) {
                 PlayersData[giver].diplo_unk1[receiver]++;
@@ -4032,7 +4036,7 @@ void __cdecl make_gift(int giver, int receiver) {
         }
 
         diplomacy_caption(giver, receiver);
-        X_pops(popup_label, 0x100000,
+        X_pops(key_buf, 0x100000,
                      FactionDiplomacyPortraits[receiver], pop_wait);
         PlayersData[receiver].diplo_patience[giver] -= 2;
         return;
@@ -4058,13 +4062,13 @@ void __cdecl make_gift(int giver, int receiver) {
             popup.item(StringTemp, offered_energy);
         } while (offered_energy != 0);
 
-        int selection = popup.exec(pop_wait); // callback is 0x5398E0
-        if (!selection) return;
+        value = popup.exec(pop_wait); // callback is 0x5398E0
+        if (!value) return;
 
-        int amount = selection;
+        int amount = value;
         char *search_key = Players[giver].search_key;
         if (!strcmp(search_key, "MORGAN") || !strcmp(search_key, "SPARTANS")) {
-            amount = selection * 2;
+            amount = value * 2;
         }
         if (!strcmp(search_key, "SPARTANS")) amount /= 2;
 
@@ -4076,25 +4080,25 @@ void __cdecl make_gift(int giver, int receiver) {
             && amount >= PlayersData[giver].energy_reserves / 6
             && amount >= GameDataStateStorage.fields_.turn_current_num_;
 
-        net_energy(giver, -selection, receiver, selection, 1);
+        net_energy(giver, -value, receiver, value, 1);
 
         ConsoleInfoWin.set_redraw_phase(0);
         ConsoleGlobal.update_data(0);
 
         int accumulated;
         int remaining;
-        int divisor;
         accumulated = 0;
-        divisor = 2;
+        value = 2;
         remaining = amount / 5;
         int bucket = 10;
         while (remaining > 0) {
-            accumulated += range(remaining, 0, bucket) / divisor;
+            accumulated += range(remaining, 0, bucket) / value;
             remaining -= bucket;
             bucket = 20;
-            divisor++;
+            value++;
         }
-        cause_friction(receiver, giver, (accumulated + 4) / -5 * 3 / 2);
+        int friction = (accumulated + 4) / -5 * 3 / 2;
+        cause_friction(receiver, giver, friction);
 
         StringTemp[0] = 0;
         strcat(StringTemp, "GAVEENERGY");
@@ -4152,15 +4156,14 @@ void __cdecl make_gift(int giver, int receiver) {
         diplomacy_caption(giver, receiver);
         // The image builds a suffixed local key, but the final popup uses
         // the unsuffixed BASEGIFT literal rather than this local buffer.
-        char gift_result_key[80];
-        gift_result_key[0] = 0;
-        strcat(gift_result_key, "BASEGIFT");
+        key_buf[0] = 0;
+        strcat(key_buf, "BASEGIFT");
         if (favored) {
             if (has_treaty(receiver, giver, DTREATY_WANT_REVENGE | DTREATY_UNK_40)
                 || great_satan(giver, 0)) {
-                strcat(gift_result_key, "2");
+                strcat(key_buf, "2");
             } else {
-                strcat(gift_result_key, "1");
+                strcat(key_buf, "1");
             }
 
             net_treaty_off(giver, receiver, 0x60, 0);
@@ -5042,13 +5045,13 @@ void __cdecl propose_trade_maps(int faction_id, int faction_id_with) {
         parse_says(0, Players[faction_id_with].adj_name_faction, -1, -1);
 // Map-trade refusal and proposal use separate script topics.
 // Bounds cover the literal payload, not surrounding allocation or lifetime.
-// RECOVERY_LITERAL: v1 0x0068DA60 0x0068DA68 $SG64437 0x00545D60
+// RECOVERY_LITERAL: v1 0x0068DA60 0x0068DA68 $SG64435 0x00545D60
         X_pops("REJMAPS", 0x100000,
                      FactionDiplomacyPortraits[faction_id_with], pop_wait);
         return;
     }
 
-// RECOVERY_LITERAL: v1 0x0068DA68 0x0068DA72 $SG64438 0x00545D60
+// RECOVERY_LITERAL: v1 0x0068DA68 0x0068DA72 $SG64436 0x00545D60
     X_pops("TRADEMAPS", 0x100000,
                  FactionDiplomacyPortraits[faction_id_with], pop_wait);
 
@@ -5083,17 +5086,17 @@ void __cdecl demands_withdrawal(int faction_id, int faction_id_with) {
 
     switch (response) {
     case 0:
-// RECOVERY_LITERAL: v1 0x0068D68C 0x0068D697 $SG64452 0x0053E4C0
+// RECOVERY_LITERAL: v1 0x0068D68C 0x0068D697 $SG64450 0x0053E4C0
         NetMsgPrimary.pop("WITHSUNYES", 5000, 0, 0);
         break;
     case 1:
-// RECOVERY_LITERAL: v1 0x0068D680 0x0068D68A $SG64454 0x0053E4C0
+// RECOVERY_LITERAL: v1 0x0068D680 0x0068D68A $SG64452 0x0053E4C0
         NetMsgPrimary.pop("WITHSUNNO", 5000, 0, 0);
         break;
     case 2:
 // The withdrawal response selects the war, refusal or acceptance script topic.
 // Bounds cover the literal payload, not surrounding allocation or lifetime.
-// RECOVERY_LITERAL: v1 0x0068D674 0x0068D67F $SG64456 0x0053E4C0
+// RECOVERY_LITERAL: v1 0x0068D674 0x0068D67F $SG64454 0x0053E4C0
         NetMsgPrimary.pop("WITHSUNWAR", 5000, 0, 0);
         break;
     default:
@@ -7782,11 +7785,11 @@ static int communicate_budget_probe4(int x) {
 }
 // make_a_proposal's string operands, each read from the image's push operand
 // and checked against the literal text in the body (unpooled, one copy each).
-// RECOVERY_LITERAL: v1 0x0068DF20 0x0068DF2B $SG65546 0x0054F420
-// RECOVERY_LITERAL: v1 0x0068DF2C 0x0068DF3A $SG65548 0x0054F420
-// RECOVERY_LITERAL: v1 0x0068DF3C 0x0068DF3E $SG65577 0x0054F420
-// RECOVERY_LITERAL: v1 0x0068DF40 0x0068DF4C $SG65582 0x0054F420
-// RECOVERY_LITERAL: v1 0x0068DF4C 0x0068DF5B $SG65586 0x0054F420
+// RECOVERY_LITERAL: v1 0x0068DF20 0x0068DF2B $SG65544 0x0054F420
+// RECOVERY_LITERAL: v1 0x0068DF2C 0x0068DF3A $SG65546 0x0054F420
+// RECOVERY_LITERAL: v1 0x0068DF3C 0x0068DF3E $SG65575 0x0054F420
+// RECOVERY_LITERAL: v1 0x0068DF40 0x0068DF4C $SG65580 0x0054F420
+// RECOVERY_LITERAL: v1 0x0068DF4C 0x0068DF5B $SG65584 0x0054F420
 // RECOVERY_ASSOCIATED: v1 switch_targets 0x0054F420 0x0054FFAC 0x0054FFD0 0x0054FA67
 // RECOVERY_LITERAL: v2 merged 0x00682820 0x00682822 ??_C@_01FCOA@?5?$AA@ 0x0054F420
 // ORIGINAL: 0x0054F420 ?make_a_proposal@@YAXHHH@Z 0x0054F420-0x0054FFAB;0x0065FD5F-0x0065FF4F BYTE_EXACT
