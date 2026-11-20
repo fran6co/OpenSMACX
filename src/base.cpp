@@ -4909,7 +4909,7 @@ void __cdecl base_terraform(int force_improve) {
             && (!sensor || sensors > (worked ? 1 : 2))
             && (!mine_or_bore || (!mineral_need && height >= 2))) {
             int high = (energy_need > 1 && height > 1) ? 1 : 0;
-            if (food >= (farm != 0) + 1 - high && height) {
+            if (food >= (farm ? 2 : 1) - high && height) {
                 int value = height * 3;
                 if (bonus == 2 || rocky == 1) {
                     value += 2;
@@ -5101,7 +5101,7 @@ void __cdecl base_terraform(int force_improve) {
 
         // Farm.
         if (!farm && rocky < 2 && !forest
-            && (food_need > 1 || !((rocky && food) ? unworked_rich : unworked_good) || worked)
+            && (food_need > 1 || (rocky ? (food ? !unworked_rich : !unworked_good) : !unworked_good) || worked)
             && (food_need || (mineral_need && rocky && food)
                 || (food_want && (rocky == 1 || food_want == 2 || mine_or_bore || solar_or_bore)))) {
             int value = food * 3 + 3;
