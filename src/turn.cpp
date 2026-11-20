@@ -3285,8 +3285,13 @@ int __cdecl end_of_game(int check_victory) {
     return 0;
 }
 
-// stand-in: proto_power with its range() called through a pointer, which
-// forces the image's out-of-line range call (the original's inline budget).
+// WORKAROUND(noinline): proto_power with its range() called through a
+// pointer, which forces the image's out-of-line range call (the original's
+// inline budget). Measured 2026-11-20: veh_health(vehicle_id) at both sites
+// (37 rows), proto_power at both (37), one site each (10-27) all expand
+// reactor_power's range where the image calls it at both (0x525A36,
+// 0x525A92); has_treaty spellings of the caretaker tests move nothing. The
+// missing pass-2 room is not found yet.
 typedef int (__cdecl *TurnRangeFnT)(int, int, int);
 static inline int turn_proto_power(int veh_id) {
     TurnRangeFnT range_fn = &range;
