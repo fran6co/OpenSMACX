@@ -2635,7 +2635,15 @@ Member-address temporaries that live across calls (2026-11-19 par-6, round 11)
     is a second `(v & K) == C` test whose consumer was dropped: a dead
     counter `if ((bit2 & 0x80001000) == 0x1000) n++;` reproduces it (not yet
     applied: the extra local moves counter-sensitive ties later in the
-    function).
+    function). Correction (par-1 2026-11-20, `analysis/probes/deadand/run.py`,
+    18 spellings): VC6 deletes a dead counter's test whole, `and` included
+    (a dead `d++`, an empty arm, identical arms, a `continue`/`return`/
+    `goto` to the fall-through, a case- or `k = 2`-folded guard); every live
+    consumer keeps a `cmp`. In real spot_all the dead counter (`else if`
+    or sequential, local or not) removes the `and` too and moves the
+    callee-saved allocation of the whole function (1701 -> 1981 rows). No
+    measured source leaves the image's lone `and edx,0x80001000`; it is
+    open.
   - **Index or address CSE: which form a repeated subscript keeps** (high,
     par-1 2026-11-20, `analysis/probes/idxcse/run.py`, 70 variants). For
     repeated `t[E].f` / `t[E*k+c]` with no store to E between the uses, VC6
