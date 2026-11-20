@@ -123,6 +123,18 @@ an explicit `--pfx` is only needed to pick another lane.
   1 min over the non-exact set. 2026-11-20: on the pre-fix PickWin::init it lists the three cursor reloads; tree-wide
   the block screen lists only labs_line and draw_projects (register noise), `--stores` adds ReportIf::draw_ops (the
   top store, an all-member spelling flips a register tie, 105 rows) and otherwise CSE/scheduling differences.
+- `analysis/rectscan.py <unit> <addr[,..]> | --from FEALL.json [--json F] [--sites]` rect-helper argument-order screen
+  (PickWin::init's set_rect): per straight-line block, groups of four dword stores to K, K+4, K+8, K+0xC (any order,
+  within 40 instructions, frame slots included), each with its shape (`C` consecutive / `I` interleaved, plus the field
+  store order) and the memory loads of its window in code order; image and our groups are paired by (member K | frame)
+  in code order and flagged `ORDER` (same loads, other order), `LOADS` (other loads) or `SHAPE`. 55 s over the non-exact
+  set. 2026-11-20: 45 functions flagged, most rows scheduling or constant-register noise; read with `fe.py --all`.
+  It led to draw_score (body rect reads the panel edges), draw_ops/draw_projects (an inlined same-unit setter written
+  out) and draw_map (|dy| form).
+- `analysis/addnegscan.py <unit> <addr[,..]> | --from FEALL.json [--json F]` `add r, -K` against `sub r, K` census: VC6
+  writes `x - K` as `sub`, but as `add r, -K` when the same `x - K` is CSE'd from two uses (draw_score's
+  `right - 3` in two rects) or reaches the code through an inline parameter (expand_rect). Lists functions whose counts
+  move between the two forms. 2026-11-20: 5 functions, NewTechWin::exec and DiploWin::exec the only rect cascades.
 - `analysis/aliasscan.py <unit> <addr[,..]> | --from FEALL.json [--json F]` "scalar that was an array element"
   screen (MATCHING_GUIDE 3.3, colortables_init): per natural loop, `imul r,[ebp-N]` and reads of ebp slots the
   loop never writes or address-takes, on both sides, plus the aligned rows where the image reads such a slot and
