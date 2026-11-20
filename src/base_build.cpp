@@ -377,8 +377,8 @@ int __cdecl base_build(int base_id, int *out_secondary, int *out_tertiary, int *
         l_9c = base_id & 0x10;
         if (l_9c || (is_human(i) && (base_id & 8) && !(base_id & 1))) {
             for (j = 0; j < GameDataStateStorage.fields_.base_current_count_; j++) {
-                if (Bases[j].faction_id_current == l_8
-                    && (Bases[j].faction_id_current == i || (Bases[j].visibility & (1 << i)))) {
+                if ((Bases[j].faction_id_current == l_8
+                    && (Bases[j].faction_id_current == i || (Bases[j].visibility & (1 << i)))) != 0) {
                     l_f4 = 1;
                     break;
                 }
@@ -2034,7 +2034,7 @@ L_4fc68f:
             if (PlayersData[l_8].unk_28 - 1 < lim) {
                 lim = PlayersData[l_8].unk_28 - 1;
             }
-            if (l_e0 >= lim && BaseCurrent->queue_production_id[0] > -70 && !l_124) {
+            if ((l_e0 >= lim && BaseCurrent->queue_production_id[0] > -70 && !l_124) != 0) {
                 if (l_ec < 2) {
                     w /= 2;
                 }
@@ -2764,8 +2764,8 @@ L_4fd912:
             value = (mor - 1) / 2 + value / 2;
             l_14 = l_70;
         }
-        if (l_3c
-            || (l_30 && mor < 0 && l_c != 2 && !(PlayersData[l_8].unk_77[l_10] & 0x4000))) {
+        if ((l_3c
+            || (l_30 && mor < 0 && l_c != 2 && !(PlayersData[l_8].unk_77[l_10] & 0x4000))) != 0) {
             goto L_4fef0c;  // shared `bonus = 1` (chunk 4)
         }
     }
@@ -3232,7 +3232,7 @@ L_4ff11f:
         if (l_3c) {
             l_108 = 2;
         }
-        if (base_id == SP_PLANETARY_TRANS_SYS || base_id == SP_HUMAN_GENOME_PROJ) {
+        if ((base_id == SP_PLANETARY_TRANS_SYS || base_id == SP_HUMAN_GENOME_PROJ) != 0) {
             if (l_c == 8) {
                 weight = 0xAA;
             }
