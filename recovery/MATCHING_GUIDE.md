@@ -7352,6 +7352,18 @@ result over 64 symbol-counter pads, so none of these is a counter canary.
     spend (base_build 0.9511 -> 0.9523); measure each function.
 - **`cmp reg,v; jle; mov reg,other`, or `f()` called twice** is the windows.h
   `max`/`min` macro.
+- **A candidate computed before its guard and re-formed with `lea` from
+  slots is a `max()`/`min()` macro, not a named temporary** (par-5
+  2026-11-20, set_time_controls 0x00523C60, fe 24 -> 3). The macro writes its
+  expression twice (`((a) > (b) ? (a) : (b))`): VC6 evaluates the parts
+  common to both copies (here the event bonus) once, early, before the
+  enclosing `if`, then forms the sum once for the compare and again for the
+  result, both times with `lea` from the spilled slots. A named
+  `const int candidate = ...; if (v <= candidate) v = candidate;` evaluates
+  it once and sinks the shared part into the arm. Read the image for an
+  expression rebuilt from memory on both sides of a `cmp/jle`; the reverse
+  (one evaluation feeding both the test and the result) is a temporary or an
+  inline function such as `range()`.
 - **Float types.** A float temporary kept in x87 is `float`; `double` makes the
   constants qword. Check `.rdata` operand widths.
 - **`lea r,[r+r*2+K]; shl r,4; [r+Array]` is a named index variable in an EH
