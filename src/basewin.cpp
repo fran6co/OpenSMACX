@@ -3600,8 +3600,8 @@ void BaseWin::draw_pop(int update_mode) {
     RECT panel;
     panel.left = population_rect_.left + 3;
     panel.top = population_rect_.top + 3;
-    panel.bottom = population_rect_.bottom - 3;
     panel.right = population_rect_.right - 3;
+    panel.bottom = population_rect_.bottom - 3;
     MainInterfaceGlobal.set_clip(&panel);
 
     int height = panel.bottom - panel.top;
@@ -3626,10 +3626,12 @@ void BaseWin::draw_pop(int update_mode) {
     cell.bottom = cell.top + height;
     cell.right = cell.left + height;
     int i;
+    int mood;
+    int specialist;
     if (ExpansionEnabled && (Players[BaseCurrent->faction_id_current].rule_flags & 0x80)) {
         for (i = 0; i < BaseCurrent->population_size; i++) {
             if (i < BaseCurrent->population_size - BaseCurrent->specialist_total) {
-                int mood = 0;
+                mood = 0;
                 if (i >= BaseCurrent->talent_total) mood = 1;
                 if (i >= BaseCurrent->population_size - BaseCurrent->drone_total
                         - BaseCurrent->specialist_total) mood = 2;
@@ -3639,7 +3641,7 @@ void BaseWin::draw_pop(int update_mode) {
                 g_AL_CITIZEN_LG_CURSOR_SPRITES[mood].draw(&MainInterfaceGlobal, cell.left, y, 1, 1);
                 spot1_.add(-1, 1, cell.left, cell.top, cell.right - cell.left, cell.bottom - cell.top);
             } else {
-                const int specialist = i - (BaseCurrent->population_size - BaseCurrent->specialist_total);
+                specialist = i - (BaseCurrent->population_size - BaseCurrent->specialist_total);
                 const int type = specialist >= 16 ? best_specialist()
                     : (BaseCurrent->spec[specialist >> 3] >> ((specialist & 7) * 4)) & 15;
                 specialist_counts[type]++;
@@ -3653,7 +3655,7 @@ void BaseWin::draw_pop(int update_mode) {
     } else {
         for (i = 0; i < BaseCurrent->population_size; i++) {
             if (i < BaseCurrent->population_size - BaseCurrent->specialist_total) {
-                int mood = 0;
+                mood = 0;
                 if (i >= BaseCurrent->talent_total) mood = 1;
                 if (i >= BaseCurrent->population_size - BaseCurrent->drone_total
                         - BaseCurrent->specialist_total) mood = 2;
@@ -3666,12 +3668,12 @@ void BaseWin::draw_pop(int update_mode) {
                     cell.left, y);
                 spot1_.add(-1, 1, cell.left, cell.top, cell.right - cell.left, cell.bottom - cell.top);
             } else {
-                const int specialist = i - (BaseCurrent->population_size - BaseCurrent->specialist_total);
+                specialist = i - (BaseCurrent->population_size - BaseCurrent->specialist_total);
                 const int type = specialist >= 16 ? best_specialist()
                     : (BaseCurrent->spec[specialist >> 3] >> ((specialist & 7) * 4)) & 15;
                 specialist_counts[type]++;
-                g_SPECIALIST_LG_CURSOR_SPRITES[type].draw(&MainInterfaceGlobal,
-                    cell.left, cell.top + (cell.bottom - cell.top - 48) / 2, 1, 1);
+                const int y = cell.top + (cell.bottom - cell.top - 48) / 2;
+                g_SPECIALIST_LG_CURSOR_SPRITES[type].draw(&MainInterfaceGlobal, cell.left, y, 1, 1);
                 spot1_.add(specialist, 1, cell.left, cell.top, cell.right - cell.left, cell.bottom - cell.top);
             }
             cell.right += spacing;
