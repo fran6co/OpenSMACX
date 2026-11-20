@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 """rules.py <rule> <unit> <pfx> [--write] : greedy single-site rewrites inside non-exact functions.
 A site is kept when no fe-exact function of the unit is lost and the unit's total diff drops.
-Rules: ifswap (swap if/else arms, negating the condition), ternary (T v = c ? a : b; <-> if/else),
-       incdec, cmpzero ...  Run under `uv run python`."""
+Rules: see RULES (ifswap, elifswap, ternary, cmpswap, earlyret, declswap, stmtswap, declsplit, unname, labelget,
+       labelraw, expand, contract, ternret, iftern, armdup, freshctr). analysis/fnsweep.py runs them on one function
+       ranked by the sdeck key.  Run under `uv run python`."""
 import sys,re,os,json
 S=os.path.dirname(os.path.abspath(__file__)); sys.path.insert(0,S); import fe
 R=fe.R
@@ -422,6 +423,42 @@ def rule_freshctr(t,mt,pos):
         body=re.sub(r'(?<![\w\.>])'+x+r'\b',nn,t[b0:b1+1])
         yield (m.start(),b1+1,'for '+hdr+' '+body,'freshctr')
 RULES['freshctr']=rule_freshctr
+def _stmt_full_end(mt,i):
+    """end (exclusive) of the statement at i: a block, an if/else chain, or a simple `x;`"""
+    i=skipws(mt,i)
+    if mt[i]=='{':
+        e=match(mt,i,'{','}'); return e+1 if e>=0 else -1
+    m=re.match(r'if\s*\(',mt[i:])
+    if m:
+        p0=i+m.end()-1; p1=match(mt,p0,'(',')')
+        if p1<0: return -1
+        e=_stmt_full_end(mt,p1+1)
+        if e<0: return -1
+        k=skipws(mt,e)
+        if mt[k:k+4]=='else' and not (mt[k+4].isalnum() or mt[k+4]=='_'):
+            return _stmt_full_end(mt,k+4)
+        return e
+    j=mt.find(';',i); return j+1 if j>=0 else -1
+def rule_elifswap(t,mt,pos):
+    # if (C) {A} else if (D) ...   ->   if (!(C)) { if (D) ... } else {A}   (ifswap for an else-if chain head)
+    for m in re.finditer(r'\bif\s*\(',mt[pos:]):
+        s=pos+m.start(); p0=pos+m.end()-1
+        if re.search(r'else\s*$',mt[max(0,s-12):s]): continue
+        p1=match(mt,p0,'(',')')
+        if p1<0: continue
+        b0=skipws(mt,p1+1)
+        if mt[b0]!='{': continue
+        b1=match(mt,b0,'{','}')
+        if b1<0: continue
+        e=skipws(mt,b1+1)
+        if mt[e:e+4]!='else' or (mt[e+4].isalnum() or mt[e+4]=='_'): continue
+        c0=skipws(mt,e+4)
+        if not re.match(r'if\s*\(',mt[c0:]): continue
+        c1=_stmt_full_end(mt,c0)
+        if c1<0: continue
+        cond=t[p0+1:p1]
+        yield (s,c1,'if (!('+cond+')) {\n'+t[c0:c1]+'\n} else '+t[b0:b1+1],'elifswap')
+RULES['elifswap']=rule_elifswap
 def main():
     rule=RULES[sys.argv[1]]; unit=sys.argv[2]; unit=unit if unit.startswith('src/') else 'src/'+unit; pfx=sys.argv[3]
     path=R+'/'+unit; text=open(path,encoding='latin-1').read()

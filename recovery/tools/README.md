@@ -95,6 +95,11 @@ an explicit `--pfx` is only needed to pick another lane.
   address decides inline against written out"): per function, the separator literals the image pushes (shared header-inline
   COMDAT `S` or unit-local copy `L`, in code order) against ours (`??_C@` S, `$SG` L, named stand-in N). `--shared` adds
   every other text the image references from two units. 20 s tree-wide on `feall.py --all --out`.
+- `analysis/fnsweep.py <unit> <addr> [--rules r1,..] [--steps N] [--write] [--json OUT]` greedy single-site rewrite sweep of
+  one function: every site of the rules.py rules (default ifswap, elifswap, stmtswap, ternary, earlyret, declswap, cmpswap;
+  any RULES name works) in the function's source span alone, ranked by the sdeck key, best site taken, re-swept up to N
+  rounds until flat (`--steps 1 --write` per commit). Branch/call counts within 1 of each other let the control-flow hunks
+  decide first. 70 sites in 25 s (spot_all); rules.py is the per-unit, rows-based greedy form of the same rules.
 - `analysis/sdeck.py` (`sdeck.run(unit, addr, lo, hi, [(key, text), ...])`) structural deck runner: ranks whole-file
   variants by (EH unwind-depth edit distance, named call multiset distance, jcc/jmp/call/ret count distance,
   control-flow hunks, fe rows), so a
