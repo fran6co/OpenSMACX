@@ -34,7 +34,7 @@ logically, while world_site() inlines this with `sar` on x - and its centre
 tile, unlike the twenty-eight and twenty-one radius tiles, is never bounds
 checked, so a negative x reaches the shift.
 */
-__forceinline static Map *site_tile(int x, int y) {
+static inline Map *site_tile(int x, int y) {
     return &MapTiles[(x >> 1) + y * (int)MapLongitude];
 }
 
