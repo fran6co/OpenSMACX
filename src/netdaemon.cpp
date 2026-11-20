@@ -5284,8 +5284,8 @@ move_veh_ack:
         if (packet->payload_14_ == ConsoleGlobal.faction_id_) {
             break;
         }
-        if (!spying(packet->payload_10_) && !spying(packet->payload_14_)
-            && !(GameDataStateStorage.fields_.game_state_ & 0x80)) {
+        if ((!spying(packet->payload_10_) && !spying(packet->payload_14_)
+            && !(GameDataStateStorage.fields_.game_state_ & 0x80)) != 0) {
             break;
         }
         parse_says(0, get_noun(packet->payload_10_), -1, -1);
