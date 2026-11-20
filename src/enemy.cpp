@@ -6066,7 +6066,7 @@ L_570ac2:
     ty++;
     if (ty < MapLatitudeBounds) goto L_570456;
 L_570ad4:
-    if (plan != 3 && !i) {
+    if ((plan != 3 && !i) != 0) {
         int count; // ebx; j itself is not written back
         count = j;
         if (Vehs[veh_id].order == 24) {
