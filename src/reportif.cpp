@@ -4710,6 +4710,9 @@ void ReportWin::draw_intel() {
     rect1_.top += field_E268_;
     report_intel_label(0x5C0 / 4);
     int shown = 0;
+    // A one-trip loop over the ideology entry: the image keeps shown at the
+    // join (xor ecx,ecx; mov ecx,1; test ecx,ecx; je), which VC6 threads away
+    // without a loop between the stores and the test.
     for (int ideology = 0; ideology < 1; ++ideology) {
         const int category = Players[subject].soc_ideology_category[ideology];
         if (category >= 0) {
