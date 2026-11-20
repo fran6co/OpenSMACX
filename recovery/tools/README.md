@@ -37,9 +37,10 @@ an explicit `--pfx` is only needed to pick another lane.
   declarations and bisects to the ones the tie follows (`DECLPAD_STEP=2` halves the compiles); `who OUT.jsonl WHO.jsonl` runs
   it for every moving function. `padfree PF.jsonl [unit ...]` is the top sweep with the unit's CANARY-PADS / HEADER-PADS blocks
   emptied and `common OUT.jsonl PF.jsonl` asks whether one shift serves every unit (2026-11-19: no).
-- `analysis/spellsweep.py <unit> <addr> [--write] [--rules ...]` raw-vs-helper screen of one function for the
-  invented budget-only helpers (is_human, is_alive, is_alien_faction, map_tiles(), MapAbstract()): every site
-  alone, all sites, then greedy; key = (named call multiset distance to the image, rows), no ratchet on rows
+- `analysis/spellsweep.py <unit> <addr> [--write] [--rules ...] [--pairs]` raw-vs-helper screen of one function for the
+  invented budget-only helpers (is_human, is_alive, is_alien_faction, map_tiles(), MapAbstract(); `table_fn`/`table_raw`
+  for table_text against StringTable.get): every site alone, all sites, then greedy (`--pairs`: then opposite toggles
+  within SS_PAIR_LINES=15 lines); key = (named call multiset distance to the image, rows), no ratchet on rows
   when the call distance drops.
 - `analysis/accspell.py list|deck|census` raw field tests against header accessors (has_treaty, has_agenda,
   is_human/is_alive incl. local `1 << f` bits, get_triad, get_proto_triad, is_missile, offense/defense ratings,
@@ -431,6 +432,10 @@ an explicit `--pfx` is only needed to pick another lane.
   more instructions. Read with the probe/save_game notes in MATCHING_GUIDE 3.7: the image's choice of the join's
   fallthrough predecessor decides which copy survives. `jj=N` (and `JJ` lines) counts our jumper-into-jumper merges,
   the strongest single sign of a merge the image does not make (33/110 non-exact vs 15/626 exact functions sampled). `HOST` lines: each join whose host (the predecessor it is laid after) differs between the image and ours, both sides' predecessors as `line[last instruction]` in our source order (`H:` host, `x:` cross-jumped into it, `/T` inner then-arm tail), whether rules 1-2 of MATCHING_GUIDE 3.7 predict our host, and the source change they predict gives the image's (pop size: move a call across a branch; image host not first partnered: its tail was an inner then-arm; ours promoted by a then-arm: make it a lone if / else-arm; or reorder arms). `--tree --hosts` prints them all.
+- `analysis/armfirst.py FEALL.json [unit ...]` arm-first screen (MATCHING_GUIDE 3.7 round 43; `AF_SLOTS=1` abstracts frame
+  slots, `AF_OUT=F` writes JSON): image `test`/`cmp` separated from its jcc by flag-neutral moves that ours computes only
+  after its jcc, at the head of the fall-through (`F`), the taken target (`T`) or both arms (`B`, a common prefix ours does
+  not hoist). 25 s tree-wide on 5 lanes; 2026-11-20: 33 sites, mostly register/slot noise; read the `B` rows first.
 - `analysis/xjhostscan.py [unit ...] [--from TAILSCAN.json] [--json F]` cross-jump host screen (MATCHING_GUIDE 3.7
   "Cross-jump host", "Host orientation"): reads tailscan's HOST joins and classifies each by where the image's and our
   host copies sit among the predecessors in our source order: `ORDER` (a middle copy hosts on one side: by the last-copy

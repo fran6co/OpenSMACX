@@ -9779,6 +9779,49 @@ Finish-the-unit round (par-1 2026-11-20, round 40):
   needs an invented WORKAROUND(inline) helper and a second budget probe
   for a rows-only gain, and stand-ins must buy a rung, not rows.
 
+Arm-first round (par-1 2026-11-20, round 43):
+- **Arm-first screen** (`analysis/armfirst.py`): image `test`/`cmp`
+  separated from its jcc by flag-neutral moves whose instructions ours
+  computes only after its jcc, at the head of one arm (`F`/`T`) or of both
+  (`B`). Over the 314 non-exact functions: 33 sites, almost all register or
+  slot noise (a scheduled home store, a loop pointer copy, a clamp whose
+  constant arm is preloaded because the other arm falls into the join). The
+  `B` rows are the useful ones: a common arm prefix the image hoists and ours
+  does not, because one arm picks another scratch register. probe
+  0x0059F120 (800 -> 787, hoist still open): the image hoists x*3 of the
+  production-name if/else into edx (0x5A0540) and its facility arm loads ecx
+  before the subtraction; ours computes x*3 in ecx in that arm. The direct
+  `StringTable.get(...)` there fixed the then-arm's strcat argument order
+  and later rows, not the hoist.
+- **The table_text / direct-get choice is per site and pairs matter**:
+  `spellsweep.py --rules table_raw,table_fn --pairs` (new: `table_raw`, and
+  `--pairs` tries opposite toggles within 15 lines on top of the greedy
+  set) over the non-exact functions with get/table_text sites:
+  StatusWin::draw_active 0x004B4CF0 exact (101 rows: one table_text site,
+  then a swapped pair: `strlen(StringTable.get(x))` beside
+  `strcat(StringTemp, table_text(x))` of the same name, each alone worse),
+  Datalink::draw_unit 30 -> 2, help_tech_info 126 -> 59, ReportWin::
+  draw_intel 249 -> 134, draw_ops 141 -> 111, draw_labs 689 -> 661,
+  NetDaemon::process_message 298 -> 220, PickTech::draw_tech and
+  StatusWin::draw_status a few rows. schedscan --try's tableraw/tableget
+  probes are single sites only.
+- **A sum computed before the constant arguments are pushed is a named
+  local** (Datalink::draw_unit 0x0042C9C0, 2 -> 0): the image does `add
+  esi, 140000` before `push 0xa` of `_itoa(tech + 140000, number, 10)`;
+  `int link_id = tech + 140000;` before the call gives that order (the
+  nvarg rule of 3.2 S7).
+- NetWin::pick_pass 0x0047C970 (4 rows, unresolved): the image stores
+  `faction_mode = 0` only on the not-mode-2/3 path (0x47CA00, after both
+  mode compares, interleaved with the payload load), so the original wrote
+  it in that arm, not as the declaration's initialiser. Written there, VC6
+  forms a payload piece in edx from the mode block to the second test
+  (0x47CB6A; no call on either path) and moves slot to eax: 44 rows. The
+  image keeps slot in edx, payload in memory, and loads payload into eax
+  only for the first test. payload is not address-taken in the image (no
+  `lea [ebp+8]`); a local copy, a `row` pointer, declaration orders, an
+  if/else or ternary for the mode and `!payload` all keep the piece. The
+  candidate order between the slot copy and the payload piece is open.
+
 ### 3.8 VC5 (Caviar/VOX) x87 rules (2026-11-19 par-5)
 
 The Caviar/VOX units compile with VC5 /O2 /Ob1 (COMPILER_EVIDENCE.md,
