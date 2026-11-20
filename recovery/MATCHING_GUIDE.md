@@ -5354,6 +5354,47 @@ result over 64 symbol-counter pads, so none of these is a counter canary.
   missing source chains (draw_labs' `field_A34_ = field_A2C_ + 0xAE` is
   already chained in the source; ours reloads A2C). Read each listed chain
   against the source before rewriting.
+- **Address-taken local arrays: smaller size nearer ebp, then descending
+  reference count, ties by first reference; declaration order, names, loop
+  depth and dead code do not count** (par-2 2026-11-20, probe
+  `analysis/probes/tempslot/g16.py`). Three `int[8]` arrays: reordering the
+  declarations or renaming leaves the frame unchanged; taking C's address
+  first puts C nearest ebp; counts 1/3/2 order them B, C, A. The count is
+  taken after CSE (`A[1] + A[1] + A[1]` is one reference; three distinct
+  elements are three) and before strength reduction does not add a loop's
+  subscripts (a loop store `B[i] = ...` adds nothing, a reference inside a
+  loop weighs like one outside). Constant-index element stores do not count
+  where an aggregate initialiser counts one. Size wins over count: `int
+  S[4]` (1 reference) sits above `int L[8]` (3), `int E[3]` above `int
+  L[8]`; but colortables_init's uninitialised `int[3]` energy arrays sit
+  below its 32-byte ones in both image and ours (not yet explained).
+  colortables_init 0x00423570: the image's 32-byte order is
+  territory_weights, body, territory_colors; ours is body, territory_colors,
+  territory_weights with every final-listing count equal to the image's
+  (body 5 named, the other two 4). One extra read of territory_weights
+  anywhere moves it to the top (an inserted dummy read: 129 -> 115 rows), so
+  the original has one more counted territory_weights reference that the
+  final code does not show. Tried without effect: declaration order, names,
+  a named weight temporary in the territory loop, `&territory_weights[0]`,
+  a named value in the boundarypercents loop, eight element stores instead
+  of the initialiser, and duplicating the make_territory body (213 rows).
+  The scalars there (regenerate, transparent_second) are not address-taken
+  and follow the last-fit packing rule, not this one.
+- **An expanded has_fac's offset/mask/is_built slots are the host's packing,
+  not the inline's spelling** (par-2 2026-11-20, draw_supported 0x0040C850
+  175 rows, draw_production 0x0040E360 137). Image vs ours: draw_supported
+  offset -0x74/-0x88 (mask -0x78 both); draw_production offset -0x50/-0x6c,
+  and the image's dead is_built store joins offset's slot (cell_width +
+  offset + is_built at -0x50) where ours puts it in row's slot (-0x2c).
+  Eight body spellings tested in place of the header body (mask declared
+  first, `int offset, mask;`, is_built declared before bitmask, the
+  offset/mask pair in an inner block, `& (uint8_t)mask`, `if (is_built)
+  return` split from `!queue_count`) give identical code in both hosts;
+  `if (built & mask) return true` (no is_built), `bool is_built`, offset
+  reused as is_built and a named `Base *` are worse in both. No has_fac
+  header hypothesis; the slot differences are host-level reference-count
+  questions (packrev.py on draw_production: is_built's slot is the only
+  has_fac unit off).
 - **Two same-type locals in disjoint block scopes share one slot**
   (on_scrolled's two shifted rectangles in a 0x10 frame).
 - **Slot sharing follows the source's variable structure: read the image's
