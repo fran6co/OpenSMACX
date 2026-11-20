@@ -125,9 +125,23 @@ def scan(unit, addr, text, c, cod):
     ssites = ['st    %-7s img %d ours %d  %s' % (hx(d), len(si[d]), len(so.get(d, ())),
                                                   ' '.join('%08X' % (lo + iins[i][0]) for i in si[d][:6]))
               for d in sorted(st)]
+    li, lo_ = leas(iins), leas(oins)
+    lea_img = {d: n - lo_.get(d, 0) for d, n in li.items() if n > lo_.get(d, 0)}
+    lea_our = {d: n - li.get(d, 0) for d, n in lo_.items() if n > li.get(d, 0)}
     return dict(addr=addr, unit=unit, sym=r['sym'], diff=r['diff'], exact=r['exact'],
+                lea_img=sorted(lea_img.items()), lea_our=sorted(lea_our.items()),
                 extra=sum(extra.values()), less=sum(less.values()), st=sum(st.values()),
                 img_sites=isites + ssites, our_sites=osites)
+
+
+def leas(ins):
+    """member addresses formed (`lea r, [R + K]`, R not ebp/esp), by K"""
+    out = collections.Counter()
+    for off, t, tg in ins:
+        m = re.fullmatch(r'lea (e[abcd]x|esi|edi), \[(e[abcd]x|esi|edi) \+ (0x[0-9a-f]+)\]', t)
+        if m and int(m.group(3), 0) >= 0x10:
+            out[int(m.group(3), 0)] += 1
+    return out
 
 
 def stores_by_disp(ins):
