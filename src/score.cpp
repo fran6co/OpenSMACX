@@ -451,7 +451,7 @@ static inline BOOL rankings_has_project(int project_id, int faction_id) {
 /*
 Purpose: Rescore every faction's power, and optionally publish the ranking order that scoring
          implies plus the betrayals the new order provokes.
-// ORIGINAL: 0x005AC690 ?rankings@@YAXH@Z 0x005AC690-0x005ACBD6
+// ORIGINAL: 0x005AC690 ?rankings@@YAXH@Z 0x005AC690-0x005ACBD6 BYTE_EXACT
 // TRIED: `call_diff` already agrees (0 disagree) across all seven
 // callees. MISMATCH is 10/425 at this pass; first divergence is in the
 // prologue's register/constant scheduling (image pushes ebx/esi/edi as
