@@ -295,7 +295,7 @@ again:
         half_width = width / 2;
         veh_draw(&MainInterfaceGlobal, first_vehicle_id,
                  text_x + (half_width - panel_height) / 2, text_y,
-                 WinScreenWidth != 800 ? 0 : -5, 0, 0);
+                 WinScreenWidth == 800 ? -5 : 0, 0, 0);
         // WORKAROUND(noinline): the image expands proto_power here but calls
         // both range() copies out of line (0x00422F00); the later written-out
         // sum expands them. The original spent more /Ob2 budget before this.
