@@ -150,15 +150,7 @@ HRESULT CALLBACK sub_62cd10(LPDDSURFACEDESC description, LPVOID context) {
 // TRIED: nullary/int-arg per the contract/IDA guess - no stack param reads exist, so kept nullary; DirectDraw init sequence with slots {0,2,4,5,6,8,11,12,20,21,31} matches the real IDirectDraw2/IDirectDrawSurface vtable orders exactly (QueryInterface/Release/CreateClipper/CreatePalette/ CreateSurface/EnumDisplayModes/GetCaps/GetDisplayMode/ SetCooperativeLevel/SetDisplayMode/SetPalette), confirming the derived arg counts per push-site. One value ([esp+0x90], Ghidra's unaff_EDI) reads stack memory past this function's own frame in the original and is not reproducible in C; replaced with a zero-initialized local. Frame layout differs from instruction #0 given the size/local count; not pursued further.
 // kind game
 int __cdecl sub_62cd50(int bit_depth) {
-    if (BufferDirectDraw != 0) {
-        BufferDirectDraw->Release();
-        BufferDirectDraw = 0;
-    }
-    Win::screen_buffer_.surface_ = 0;
-    Win::screen_buffer_.clipper_ = 0;
-    DirectDrawSurface = 0;
-    DirectDrawBackBuffer = 0;
-    DDActive = 0;
+    sub_62d100();
     DirectDrawSelectionCancelled = 0;
     GUID *selected = select_direct_draw_device();
     if (DirectDrawSelectionCancelled != 0) {
