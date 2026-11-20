@@ -9385,6 +9385,38 @@ Counters and tie arms (par-5 2026-11-20, councwin)
   with `mov ecx, esi` (BYTE_EXACT). Check `cls` for virtual bases before
   reaching for the member-pointer form (2.1, "Out-of-line at one site").
 
+Finish-the-unit round (par-1 2026-11-20, round 40):
+- **A test far from its branch means both arms repeat a common prefix**
+  (high; CouncWin::init 0x00427230, 225 -> 94 rows). VC6 hoists the
+  identical leading statements of an if/else between the test and the
+  branch: the image computes and tests `wide` at 0x427306, stores sixteen
+  common rects, and only branches at 0x427531. When the arms are identical
+  in full the branch disappears and a dead `test` stays (0x42777C, the six
+  font inits). Write the shared statements inside both arms.
+- **One store of a value chosen by a condition is a ternary** (same
+  function, 94 -> 19): `kind[p] = cond ? council_get_vote(...) : 0;` gives
+  the image's value in ecx and a single store through the strength-reduced
+  pointer; the if/else stores in each arm.
+- **A loop counter in its own frame slot is a new variable** (world_borehole
+  0x005C7020, 8 -> exact). The last of four ring loops kept its counter in
+  a fresh slot and read the loop-invariant `RadiusOffsetY[val3]` from
+  memory; reusing the function-scope `i` (VC6's leaked for-scope) loaded it
+  into ebx. A second `for (int i` would not compile under VC6, so the
+  original used another name.
+- Unresolved, tried this round: CouncWin::set_vote `lea ecx` against `add
+  ebx` (reference before the loop, `this` copy, reversed loop, split PBEM
+  test); CouncWin::on_left_click y in esi against the hoisted local-faction
+  web (voter local, raw alive test, arm swap, `if (is_alive)` wrap, local
+  `choice` packed into y's slot: no packing, +128 rows); load_palette's
+  `lea ecx` before the ~Scroll state store (`this->close()`,
+  `Scroll::close()` in ~Scroll); ReplayWin::init label register (label
+  local at every position, table_text, StringTable.get; permute 187
+  compiles); council_get_vote lea rotation; encrypt_read split `inc esi`
+  (24 orders of the two `*src++` and key updates: two separate `*src++`
+  reproduce the split but not the order); SpriteBox::calculate_dimensions
+  min operand order (six ternary/min spellings, three count placements);
+  Video::decode_frame ebp parameter copies (two-level Buffer::copy inline).
+
 ### 3.8 VC5 (Caviar/VOX) x87 rules (2026-11-19 par-5)
 
 The Caviar/VOX units compile with VC5 /O2 /Ob1 (COMPILER_EVIDENCE.md,
