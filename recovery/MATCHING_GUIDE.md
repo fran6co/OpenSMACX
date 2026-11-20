@@ -265,6 +265,11 @@ without `/Oy-`).
   kept in the union). The codegen changes too: at_climax's
   `test byte ptr [human_mask], al` becomes a load into a register. The
   struct spelling is image-supported; do not retry it as a budget lever.
+  Decisive evidence (2026-11-20 par-6): setup_game 0x005B3A7A clears two
+  arrays with ONE induction pointer (`mov eax, 0x9A6644; mov [eax-0x2C], esi;
+  mov [eax], -9999; add eax, 4`), which VC6 can only form when both arrays
+  are members of one object at a known distance; separate globals cannot
+  give it. GameDataStateStorage stays a struct.
 - **Depth before position.** Depth-1 sites expand before depth-2 sites. Every
   invented forwarding layer in a recovered helper (`write_cent` →
   `write_cent_text`) pushes the real body one level deeper and moves the
@@ -6683,6 +6688,58 @@ Layout
   not changed one: the cause is elsewhere in the function ("Tail
   cross-jumping depends on the whole function", 3.2); menu_proc stays merged
   with its three written-out inline stand-ins replaced by calls.
+- **Toggle-tail JJ merge ground truth** (2026-11-20 par-6,
+  `analysis/tailmerge/menutail/`, a switch of three inline toggles
+  `f ^= bit; if (f & bit) m.check(..) else m.uncheck(..); ip = gp;
+  psave(0); dmap(1);`, base_names' chain and toggle_dest; `psave-calls 1` =
+  merged as ours, 4 = the image's menu_proc). Each probe is one factor:
+  - Not blockers (always merged): (a) the tail written in the case or
+    inside an inline (explicit `static inline`, /Ob2 auto-inline, an explicit
+    `return;` at the inline's end); (b) the copies ending in different inline
+    scopes (toggles inline with base_names written in the case and the
+    reverse; `psave` or `dmap` or both moved into a further inline helper);
+    (c) `break`, `return`, `goto END` with `END:` after the switch, the tail
+    case last in the switch (falling into the join), no code after the
+    switch; (d) a label before, inside or after the tail, block scopes,
+    `do {} while (0)`, `int z = 0; psave(z)`; also 300 extra cases before or
+    after, 3,000 filler blocks, 300 live locals.
+  - Blockers: a third pushing call in the tail (`add esp,12`; JJ needs the
+    two-pushing-call `add esp,8` shape, tm3), a branch between the calls,
+    and a switch-end predecessor laid out as the join's fall-through host
+    whose tail ends in the same `add esp,8` (one `case 1000: h2(100, 1);`
+    reached through the compare tree, or `psave(K); dmap(K)` in another
+    case): then every toggle cross-jumps only `add esp,8` into that host and
+    no JJ merge happens (p10-p12). That shape (shared `add esp,8`) is not the
+    image's either: the image keeps four complete
+    `push edi; call prefs_save; push 1; call draw_map; add esp,8; jmp 51C23B`
+    tails, and its fall-through host of 0x51C23B is case 0x106's
+    `add esp,4; mov ebx,[ebp+8]` in ours too.
+  - Real code: the original's toggles ARE mergeable. on_key_click's image
+    (same TU, same toggles) JJ-merges them: base_names' three arms and
+    flatten's two arms jump into base_grid's tail at `push ebx` (0x51B046),
+    and grid cross-jumps whole into base_grid's (0x51B026). So menu_proc's
+    unmerged tails come from something outside the toggles. In ours,
+    deleting case 0x106, base_names or the second switch, `default: break;`,
+    a label or `goto` after the first switch, or `if (state & 0x40) {switch}`
+    for the early return all keep the merge. Still open; the scratch
+    rotation is separate (next item).
+  - menu_proc's toggle scratch registers (image ecx/edx/eax, ours edx/eax/ecx)
+    follow the case 0x106 readback: dropping one of its four `(char)S`
+    reloads aligns them (not faithful); the CSE'd spellings (char local,
+    `int v` local, direct `PlayersData[f].x =` stores) load once but add
+    register copies and stay one phase off (71 rows against 60).
+  - That readback idiom is open in set_ai 0x00514F50 (11 rows) and
+    editor_personality 0x004DBEBD alike: the image loads PopupWriteCheckState
+    once (set_ai `mov cl, byte`; editor_personality `mov eax, dword`) and
+    re-does `movsx` per use with `and K; shr k` in source order. Every
+    spelling that loads once also lets VC6 CSE the `movsx` and canonicalise
+    to `shr k; and 1` (20 rows); pointer stores reload per use (ours, 11).
+    Measured on set_ai, none closer than ours: `char`/`signed char`/
+    `unsigned char`/`int` locals, `char &` / `char *` aliases, an inline
+    getter or `bit(c, k)` helper, direct or `PlayerData &`/`*` stores,
+    signed masks, `!= 0`, `volatile char` (15), `#pragma optimize` a/w/p/g.
+    editor_personality's own `const char low` spelling is one of these, so
+    there is no sibling spelling to transfer.
 - **Cross-jump direction is not a source-order choice for if/else.** VC6
   gives identical code for `if (c) A else B`, the inverted test, a ternary
   statement, a two-arm switch and goto blocks written after the final

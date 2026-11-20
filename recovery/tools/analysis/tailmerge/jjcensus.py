@@ -46,7 +46,7 @@ if __name__=='__main__':
     fe.compile_cmd(units[0])
     def lane(k): 
         r=[]
-        for u in units[k::5]: r+=scan_unit(u,21+k)
+        for u in units[k::5]: r+=scan_unit(u,int(os.environ.get("FE_PFX_BASE","21"))+k)
         return r
     res=[]
     with ThreadPoolExecutor(5) as ex:
