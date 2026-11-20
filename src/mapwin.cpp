@@ -4870,7 +4870,9 @@ LAB_wireframe:
                     // The corner id is read in place at both uses (no
                     // home in the image); the cache byte is signed (movsx).
                     int delta;
-                    if (a8 >= MapLatitudeBounds || a7 >= MapLongitudeBounds) {
+                    // Both tests are values (!= 0, MATCHING_GUIDE 3.7): the image
+                    // lays their arms in place.
+                    if ((a8 >= MapLatitudeBounds || a7 >= MapLongitudeBounds) != 0) {
                         delta = 0;
                     } else {
                         window->get_alt(a7, a8, LandCornerId[step]);
@@ -4889,10 +4891,10 @@ LAB_wireframe:
                          MapCornerScratch[(edge + 1) & 3].x,
                          MapCornerScratch[(edge + 1) & 3].y, 0xc2);
         }
-        if (ConsoleGlobal.cursor_history_x_
+        if ((ConsoleGlobal.cursor_history_x_
                     [ConsoleGlobal.cursor_history_index_] == a7 &&
             ConsoleGlobal.cursor_history_y_
-                    [ConsoleGlobal.cursor_history_index_] == a8) {
+                    [ConsoleGlobal.cursor_history_index_] == a8) != 0) {
             // 0x466C21: `mov ecx, 8; rep movsd`.
             for (int corner = 0; corner < 4; corner++) {
                 MapCornerCopy[corner] = MapCornerScratch[corner];
