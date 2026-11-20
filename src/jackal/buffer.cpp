@@ -4267,56 +4267,13 @@ int Buffer::get_pixel(int x, int y) {
         return 0;
     }
 
-    // THE BITS TO READ FROM, whichever of the two storages is live. The
-    // no-surface arm stores `locked_bits_` whether or not the bits exist -
-    // the image emits that store before its `je` - exactly as `get_data` does.
-    LPVOID bits;
-    if (surface_ == nullptr) {
-        locked_bits_ = dib_bits_;
-        bits = dib_bits_;
-        if (dib_bits_ != nullptr) {
-            ++surface_lock_count_;
-        }
-    } else if (locked_bits_ != nullptr) {
-        ++surface_lock_count_;
-        bits = locked_bits_;
-    } else {
-        // UNINITIALISED APART FROM ITS SIZE, as `get_data`: `Lock` fills it.
-        DDSURFACEDESC description;
-        description.dwSize = sizeof(description);
-        if (surface_->Lock(nullptr, &description, DDLOCK_WAIT, nullptr) != 0) {
-            bits = nullptr;
-        } else {
-            stride_ = description.lPitch;
-            ++surface_lock_count_;
-            locked_bits_ = description.lpSurface;
-            bits = description.lpSurface;
-        }
-    }
-
     unsigned char *pixel;
-    if (bits == nullptr) {
+    if (get_data() == nullptr) {
         pixel = nullptr;
     } else {
-        // Re-read from the member, as the image does: `stride_ * y` first,
-        // then the locked base, then x.
         pixel = reinterpret_cast<unsigned char *>(locked_bits_) + stride_ * y + x;
     }
-
-    if (surface_ == nullptr) {
-        const int count = --surface_lock_count_;
-        if (count <= 0) {
-            locked_bits_ = nullptr;
-            surface_lock_count_ = 0;
-        }
-    } else {
-        const int count = --surface_lock_count_;
-        if (locked_bits_ != nullptr && count <= 0) {
-            surface_->Unlock(locked_bits_);
-            locked_bits_ = nullptr;
-            surface_lock_count_ = 0;
-        }
-    }
+    free_data(1);
 
     if (pixel == nullptr) {
         return 0;
@@ -5115,11 +5072,11 @@ int __stdcall Buffer::load_tga(const char * a1, Palette * a2, int a3, int a4) {
         goto has_ext;
     }
     switch (Language) {
-// RECOVERY_LITERAL: v1 0x00696C58 0x00696C5D $SG44381 0x005D7B40
+// RECOVERY_LITERAL: v1 0x00696C58 0x00696C5D $SG44366 0x005D7B40
         case 1: strcat(path, ".tgf"); break;
-// RECOVERY_LITERAL: v1 0x00696C60 0x00696C65 $SG44383 0x005D7B40
+// RECOVERY_LITERAL: v1 0x00696C60 0x00696C65 $SG44368 0x005D7B40
         case 2: strcat(path, ".tgg"); break;
-// RECOVERY_LITERAL: v1 0x00696C68 0x00696C6D $SG44385 0x005D7B40
+// RECOVERY_LITERAL: v1 0x00696C68 0x00696C6D $SG44370 0x005D7B40
         default: strcat(path, ".tga"); break;
     }
   has_ext:
@@ -6714,51 +6671,14 @@ int Buffer::put_pixel(int a1, int a2, int a3) {
         return 0;
     }
 
-    LPVOID bits;
-    if (surface_ == nullptr) {
-        locked_bits_ = dib_bits_;
-        bits = dib_bits_;
-        if (dib_bits_ != nullptr) {
-            ++surface_lock_count_;
-        }
-    } else if (locked_bits_ != nullptr) {
-        ++surface_lock_count_;
-        bits = locked_bits_;
-    } else {
-        DDSURFACEDESC description;
-        description.dwSize = sizeof(description);
-        if (surface_->Lock(nullptr, &description, DDLOCK_WAIT, nullptr) != 0) {
-            bits = nullptr;
-        } else {
-            stride_ = description.lPitch;
-            ++surface_lock_count_;
-            locked_bits_ = description.lpSurface;
-            bits = description.lpSurface;
-        }
-    }
-
-    if (bits != nullptr) {
+    if (get_data() != nullptr) {
         unsigned char *pixel = reinterpret_cast<unsigned char *>(locked_bits_)
             + stride_ * a2 + a1;
         if (pixel != nullptr) {
             *pixel = static_cast<unsigned char>(a3);
         }
     }
-
-    if (surface_ == nullptr) {
-        const int count = --surface_lock_count_;
-        if (count <= 0) {
-            locked_bits_ = nullptr;
-            surface_lock_count_ = 0;
-        }
-    } else {
-        const int count = --surface_lock_count_;
-        if (locked_bits_ != nullptr && count <= 0) {
-            surface_->Unlock(locked_bits_);
-            locked_bits_ = nullptr;
-            surface_lock_count_ = 0;
-        }
-    }
+    free_data(1);
     return 0;
 }
 
@@ -7510,11 +7430,11 @@ int __stdcall Buffer::load_bmp(const char * a1, Palette * a2, int a3, int a4) {
         goto has_ext;
     }
     switch (Language) {
-// RECOVERY_LITERAL: v1 0x00696C70 0x00696C75 $SG45234 0x005D7CA0
+// RECOVERY_LITERAL: v1 0x00696C70 0x00696C75 $SG45204 0x005D7CA0
         case 1: strcat(path, ".bmf"); break;
-// RECOVERY_LITERAL: v1 0x00696C78 0x00696C7D $SG45236 0x005D7CA0
+// RECOVERY_LITERAL: v1 0x00696C78 0x00696C7D $SG45206 0x005D7CA0
         case 2: strcat(path, ".bmg"); break;
-// RECOVERY_LITERAL: v1 0x00696C80 0x00696C85 $SG45238 0x005D7CA0
+// RECOVERY_LITERAL: v1 0x00696C80 0x00696C85 $SG45208 0x005D7CA0
         default: strcat(path, ".bmp"); break;
     }
   has_ext:
