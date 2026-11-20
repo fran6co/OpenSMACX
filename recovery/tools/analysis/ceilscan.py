@@ -144,8 +144,35 @@ def main():
             continue
         if a.all or not r.get('exact'):
             want[r['unit']].append(int(r['addr'], 16))
+    # rungs.json is a cache that may cover only some units (a scoped rungs.py run): read the markers of any
+    # named unit, or of the unit that holds a requested --addr, from the source instead
+    def norm(u):
+        u = u if u.endswith('.cpp') else u + '.cpp'
+        if os.path.exists(R + '/' + u):
+            return u
+        for d, _, fs in os.walk(R + '/src'):
+            if os.path.basename(u) in fs:
+                return os.path.relpath(os.path.join(d, os.path.basename(u)), R)
+        return u
+
+    def markers(u):
+        t = open(R + '/' + u, encoding='latin-1').read()
+        return [(int(m.group(1), 16), bool(m.group(2))) for m in
+                re.finditer(r'// ORIGINAL: 0x([0-9A-Fa-f]{8}) \S+ \S+( BYTE_EXACT)?', t)]
+    for u in [norm(x) for x in a.units]:
+        if u not in want and os.path.exists(R + '/' + u):
+            want[u] = [x for x, ex in markers(u) if a.all or not ex]
     if a.addr:
         aa = {int(x, 16) for x in a.addr.split(',')}
+        miss = aa - {x for v in want.values() for x in v}
+        if miss:
+            for d, _, fs in os.walk(R + '/src'):
+                for f in fs:
+                    if f.endswith('.cpp'):
+                        u = os.path.relpath(os.path.join(d, f), R)
+                        for x, ex in markers(u):
+                            if x in miss and x not in want[u]:
+                                want[u].append(x)
         want = {u: [x for x in v if x in aa] for u, v in want.items() if any(x in aa for x in v)}
     units = sorted(want)
     res = []
