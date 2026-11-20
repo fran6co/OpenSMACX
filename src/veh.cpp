@@ -2359,12 +2359,6 @@ int __cdecl is_bunged(int faction_id, int chassis_id, int weapon_id,
     return false;
 }
 #pragma auto_inline(on)
-// Compose a readable prototype name from the already-loaded design rules.
-// Rule-string fields retain pointer-bit values validated by the loaded rules.
-static const char *prototype_rule_name(LPSTR string_id) {
-    return StringTable.get(string_id);
-}
-
 // ORIGINAL: 0x0057E040 ?name_proto@@YAXPADHHHHHHH@Z 0x0057E040-0x0057EF95
 // RECOVERY_BINDING: v1 {"evidence": ["git:ac10bd60dec2a76c1be67a8532d76f2d7dda30e0:src/unrecovered/0057e040.cpp;image:0x0057E040-0x0057EF95", "pinned image:0x0057EE10 or esi,-1;0x0057EE13 test edi,edi;0x0057EE1B..0x0057EE35 builds VehPrototypes[-1].veh_name and calls strcmp", "pinned image:0x0057EF67..0x0057EF71 resets ESI after a matched alternate suffix and increments/restarts at zero", "Owned accidental storage:Ability base0x009AB538,stride0x1C,abbreviation+8 =>0x009AB834 = VehPrototypes base0x009AB868-0x34;source:src/veh.h RulesAbility;source:src/alpha.cpp ability loader", "git:ac10bd60dec2a76c1be67a8532d76f2d7dda30e0:src/unrecovered/0057e040.cpp"], "reason": "Complete the original duplicate-name candidate loop, including its unconditional primary-collision restart before the differing-form alternate compare and its alternate-collision restart. The -1 candidate name view points to the source-owned object representation of Ability[27].abbreviation, preserving the native pointer-field-byte comparison instead of resolving the pointed-to rule string. The original unbounded strcmp read extent beyond that member remains unresolved; preserve its unsafe read/overflow behavior as an obligation. Full span and prior source/history remain intact; no byte-exact or runtime acceptance is claimed."}
 
@@ -2950,7 +2944,7 @@ static inline void parse_prototype_report(int parse_id, int design_id) {
         for (int ability_id = 0; ability_id < MaxAbilityNum; ++ability_id) {
             if ((VehPrototypes[design_id].ability_flags
                  & (1u << ability_id)) == 0) continue;
-            ::strcat(StringTemp, prototype_rule_name(
+            ::strcat(StringTemp, table_text(
                 Ability[ability_id].abbreviation));
         }
     }
