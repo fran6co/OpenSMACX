@@ -407,13 +407,13 @@ void __cdecl vehdraw_scoot_start(int veh_id, int direction, int steps, int flags
     // Re-read terrain/prototype after the normalizer calls. The midpoint is
     // the shared edge (even directions) or the eight meeting facets (odd).
     // Every case is written out; the even cases are four identical bodies.
-    // The flat midpoint is the then-arm: the image's switch is the source's
-    // last arm, so case 7 falls into the join and case 3 cross-jumps into it.
-    if (!vehdraw_uses_terrain(veh_id, x, y)) {
-        midpoint.values[0] = 0.0f;
-        midpoint.values[1] = 0.0f;
-        midpoint.values[2] = 1.0f;
-    } else {
+    // The flat midpoint is the else-arm: the image branches `jb` to it, lays
+    // it out after the switch and lets it fall into the join (0x4C0E50);
+    // case 7 ends with its own `jmp` over it, and the switch's `ja` goes to
+    // the join. Open: the image cross-jumps case 3's tail forward into case
+    // 7's (0x4C0840) and keeps case 6 apart from case 4 (scratch rotation);
+    // ours merges 7 into 3 and 6 into 4.
+    if (vehdraw_uses_terrain(veh_id, x, y)) {
         switch (direction) {
         case 0:
             a = VehDrawFacetNormals[3][vehdraw_facet_index(h1, h2, h3, h4, direction) - 400];
@@ -504,6 +504,10 @@ void __cdecl vehdraw_scoot_start(int veh_id, int direction, int steps, int flags
             vector_add(midpoint.values, h.values, midpoint.values);
             break;
         }
+    } else {
+        midpoint.values[0] = 0.0f;
+        midpoint.values[1] = 0.0f;
+        midpoint.values[2] = 1.0f;
     }
     vox_normalise_vector(midpoint.values, midpoint.values);
     vec3_subtract(midpoint.values, start.values, VehDrawScootFirstIncrement.values);
