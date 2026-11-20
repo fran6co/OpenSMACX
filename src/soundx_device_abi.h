@@ -37,30 +37,30 @@ Slot &slot_reference(void *object, unsigned long offset) {
 
 typedef int (__fastcall *QueryMethod)(void *);
 
-__forceinline int query(void *device, unsigned long offset) {
+inline int query(void *device, unsigned long offset) {
     return slot_reference<QueryMethod>(device, offset)(device);
 }
 
 }  // namespace Detail
 
-__forceinline int init_device(void *device, void *window,
+inline int init_device(void *device, void *window,
                               unsigned long backends) {
     return static_cast<Detail::InitProviderCallView *>(device)->init(window, backends);
 }
 
-__forceinline void release_device(void *device) {
+inline void release_device(void *device) {
     // Preserve the existing receiver-first fastcall-shaped no-argument call.
     typedef void (__fastcall *ReleaseMethod)(void *);
     Detail::slot_reference<ReleaseMethod>(device, 0x10)(device);
 }
 
-__forceinline int set_codec(void *device, unsigned long codec) {
+inline int set_codec(void *device, unsigned long codec) {
     typedef int (Detail::CallReceiver::*CodecMethod)(unsigned long);
     return (reinterpret_cast<Detail::CallReceiver *>(device)->*
             Detail::slot_reference<CodecMethod>(device, 0x60))(codec);
 }
 
-__forceinline int set_vxw_key(void *device, signed char *key) {
+inline int set_vxw_key(void *device, signed char *key) {
     typedef int (Detail::CallReceiver::*KeyMethod)(signed char *);
     return (reinterpret_cast<Detail::CallReceiver *>(device)->*
             Detail::slot_reference<KeyMethod>(device, 0x64))(key);
@@ -68,23 +68,23 @@ __forceinline int set_vxw_key(void *device, signed char *key) {
 
 // Names describe only the game wrapper operations. Provider semantics and
 // any signature facts beyond these observed call ABIs remain unverified.
-__forceinline void enable_device(void *device) {
+inline void enable_device(void *device) {
     (void)Detail::query(device, 0x54);
 }
 
-__forceinline void disable_device(void *device) {
+inline void disable_device(void *device) {
     (void)Detail::query(device, 0x58);
 }
 
-__forceinline int is_disabled(void *device) {
+inline int is_disabled(void *device) {
     return Detail::query(device, 0x5C);
 }
 
-__forceinline void start_recording(void *device) {
+inline void start_recording(void *device) {
     (void)Detail::query(device, 0x58);
 }
 
-__forceinline void stop_recording(void *device) {
+inline void stop_recording(void *device) {
     (void)Detail::query(device, 0x5C);
 }
 
