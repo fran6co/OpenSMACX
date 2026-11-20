@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""spellsweep.py <unit> <0xADDR> [--write] [--rules a,b] [--json F]: per-function raw-vs-helper spelling screen for
+"""spellsweep.py <unit> <0xADDR> [--write] [--rules a,b] [--json F] [--pairs]: per-function raw-vs-helper spelling screen for
 the invented budget-only helpers (MATCHING_GUIDE 3.1 "Auditing a header helper"): is_human / is_alive /
 is_alien_faction / map_tiles() / MapAbstract().  Every site inside the function is a toggle (helper -> raw and
 raw -> helper).  Screens BASE, each site alone, all helper sites raw, all raw sites helper, then a greedy pass that
@@ -115,6 +115,20 @@ def main():
             v=evaluate(unit,addr,[('g',apply(src,sel+[x]))])['g']
             if better(v,cur): sel.append(x); cur=v; print('  greedy[%s] + %s -> calls=%d rows=%d'%(nm,lab(x),v[0],v[1])); sys.stdout.flush()
         if better(cur,best[1]): best=('greedy:'+nm,cur,sel)
+    if '--pairs' in sys.argv:
+        # pairs of opposite toggles (one site to the helper, one written out) within SS_PAIR_LINES lines, on top of
+        # the best selection: a swap where each alone is worse
+        # (StatusWin::draw_active 0x004B4CF0: the strlen test direct, the strcat beside it through table_text)
+        while True:
+            sel=list(best[2]); rest=[x for x in S if x not in sel]
+            near=int(os.environ.get('SS_PAIR_LINES','15'))
+            ok=lambda x,y: x[3]!=y[3] and abs(src.count('\n',0,x[0])-src.count('\n',0,y[0]))<=near
+            pd=[('%d,%d'%(i,j),apply(src,sel+[rest[i],rest[j]])) for i in range(len(rest)) for j in range(i+1,len(rest)) if ok(rest[i],rest[j])]
+            if not pd: break
+            pr=evaluate(unit,addr,pd); k=min((k for k in pr if pr[k] is not None),key=lambda k:pr[k][:2],default=None)
+            if k is None or not better(pr[k],best[1]): break
+            i,j=map(int,k.split(',')); best=('pair:'+best[0],pr[k],sel+[rest[i],rest[j]])
+            print('  pair + %s %s -> calls=%d rows=%d'%(lab(rest[i]),lab(rest[j]),pr[k][0],pr[k][1])); sys.stdout.flush()
     print('BEST %s calls=%d rows=%d (base calls=%d rows=%d) sites=%s'%(best[0],best[1][0],best[1][1],b[0],b[1],[lab(x) for x in best[2]]))
     out=dict(unit=unit,addr='%08X'%addr,base=b[:2],best=best[1][:2],sites=[lab(x) for x in best[2]],calls=best[1][2],nsites=len(S))
     if '--write' in sys.argv and best[2]: open(R+'/'+unit,'w',encoding='latin-1').write(apply(src,best[2])); print('wrote')
