@@ -4365,10 +4365,8 @@ void Console::chat(int target_faction) {
 
     // Literal order (ALL(2) at 0x68A91C before "Sent CHAT" at 0x68A930) puts
     // the broadcast arm first in the source; VC6 lays it out last.
-    unsigned int enabled;
     if (network.primary_state_.session_phase_ < 2
-        || ((enabled = GameDataStateStorage.fields_.lock_masks_.human_mask_)
-            & network.field_1BD0_) == enabled) {
+        || (GameDataStateStorage.fields_.lock_masks_.human_mask_ & network.field_1BD0_) == GameDataStateStorage.fields_.lock_masks_.human_mask_) {
         message_chat(0x4e00, 0, message);
         log_say("Sent CHAT ALL(2)", message, 0, 0, 0);
     } else {
