@@ -3572,7 +3572,7 @@ void ReportWin::draw_ops() {
                 for (int drone = 0; drone < BaseCurrent->drone_total; ++drone) {
                     rect1_.left -= spacing;
                     spot_.add(list_index, 0, rect1_.left, rect1_.top, spacing, pitch);
-                    g_AL_CITIZEN_SM_CURSOR_SPRITES[(drone < BaseCurrent->super_drone_total) + 2].draw(this, rect1_.left, rect1_.top);
+                    g_AL_CITIZEN_SM_CURSOR_SPRITES[drone < BaseCurrent->super_drone_total ? 3 : 2].draw(this, rect1_.left, rect1_.top);
                 }
                 // Head-tested loop; bound re-read each pass.
                 // UNSURE: max(drone_total, 0) is setl/dec/and: `< 0 ? 0 : x`.
@@ -3606,7 +3606,7 @@ void ReportWin::draw_ops() {
                     rect1_.left -= spacing;
                     spot_.add(list_index, 0, rect1_.left, rect1_.top, spacing, pitch);
                     g_CITIZEN_SM_CURSOR_SPRITES[
-                        (drone < BaseCurrent->super_drone_total) + 2 + rng.get(0, 2) * 4].draw(this, rect1_.left, rect1_.top);
+                        (drone < BaseCurrent->super_drone_total ? 3 : 2) + rng.get(0, 2) * 4].draw(this, rect1_.left, rect1_.top);
                 }
                 for (v_10 = 0; v_10 < BaseCurrent->population_size
                         - BaseCurrent->talent_total - BaseCurrent->specialist_total
