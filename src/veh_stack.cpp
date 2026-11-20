@@ -1328,8 +1328,10 @@ int __cdecl stack_veh(int veh_id, int mode) {
                                 && (Vehs[i].state & VSTATE_UNK_200))) {
                     if (Vehs[i].order == ORDER_SENTRY_BOARD) {
                         board = Vehs[i].waypoint_x[0] < 0;
+                    } else if (!open_ocean) {
+                        board = FALSE;
                     } else {
-                        board = open_ocean;
+                        board = TRUE;
                     }
                 } else if (Vehs[i].state & VSTATE_UNK_40000) {
                     if (Vehs[i].state & VSTATE_UNK_20000) {
@@ -1344,7 +1346,13 @@ int __cdecl stack_veh(int veh_id, int mode) {
                             || VehPrototypes[Vehs[i].proto_id].plan == PLAN_TERRAFORMING) != 0) {
                     // The || is a value: the image lays this arm in place after
                     // the last test (jne past it, 0x5B93D8), as for a bool local.
-                    board = open_ocean;
+                    // The image tests open_ocean here and in the human arm
+                    // (je/jmp at 0x5B93DF, shared by both): an if/else store.
+                    if (!open_ocean) {
+                        board = FALSE;
+                    } else {
+                        board = TRUE;
+                    }
                 } else {
                     board = open_ocean
                         || !(on_map(Vehs[i].x, Vehs[i].y)
