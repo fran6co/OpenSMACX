@@ -321,7 +321,8 @@ without `/Oy-`).
   the sequence as a fingerprint: decisions are not monotone across nested sites.
 - **Out-of-line at one site.** Call through a local const member-function
   pointer, or for a member, `(this->*&C::f)(...)`. A pointer to a member of a
-  class with virtual bases is fat and does not work; use a per-TU
+  class with virtual bases is fat and adds a vbtable adjustment (use a dead
+  budget probe, 3.7, MapWin::gen_radius) or a per-TU
   `#ifndef X_OUT_OF_LINE` guard around the header body. `#pragma inline_depth(0)`
   disables every expansion in the function, and `auto_inline(off)` on the callee
   affects every caller.
@@ -7135,6 +7136,15 @@ result over 64 symbol-counter pads, so none of these is a counter canary.
   CouncWin::draw_leader 0x00425DB0 (2 leas, councwin.cpp). tech_achieved
   0x005BB000 (`[edi+edx]` of two register locals) is NOT this counter:
   global self-assignment stand-ins at its entry do not move it.
+- **A reversed loop test moves the pointer-reference counter** (par-1
+  2026-11-20; corrects "spelling-level changes do NOT move it" above for
+  loop tests). FameWin::on_redraw 0x00448D90 became exact when the
+  button-hide loop's test was written `6 > i` instead of `i < 6`
+  (`recover permute`, 1 minute; 2 rows -> 0). The emitted loop is the
+  same; only the counter sampled at the later field reference moves. When
+  a commutative load order or lea base/index order is the only residue,
+  try `K > i` (and `i < K`) on each earlier loop test before inventing
+  self-assignment stand-ins.
 - **The vtordisp store order of an inlined ~RadioButton is NOT the
   pointer-reference counter either; it follows the size of the whole
   function, in irregular plateaus** (par-6 2026-11-20,
@@ -9352,6 +9362,28 @@ Counters and tie arms (par-5 2026-11-20, councwin)
   count - 1, rows - 1), 168 -> 141 rows). Search the host's span for the
   exact bodies of the unit's small functions before respelling a block, and
   call the function; /Ob2 inlines it again.
+
+- **A single-use local assigned in a condition from a field or global
+  changes the callee-saved choice; inline the read** (par-1 2026-11-20).
+  Console::chat 0x00515770: `if ((enabled = field_1BD0_) ...)` with the
+  local used once moved the mask into the callee-saved register; the image
+  keeps the byte in esi only for its one `and`. Writing the read at the use,
+  `(human_mask_ & field_1BD0_) == human_mask_`, lets VC6 CSE the load itself
+  (10 rows -> 0; same shape as rankings 0x005AC690). CouncWin::
+  on_button_clicked 0x00424870: a `seated` local made VC6 combine two lock
+  bytes before the and; passing `field_A44_` straight to
+  council_humans_present gives the image's order (8 rows -> 0). Screen:
+  locals assigned inside an `if`/`while` condition (or right before it)
+  from a member/global and read once.
+- **On a class with virtual bases, a `(this->*&Cls::f)(...)` out-of-line
+  stand-in adds a vbtable adjustment; use a dead budget probe instead**
+  (par-1 2026-11-20). MapWin::gen_radius 0x00469190: the member-pointer
+  call kept tile_in_view out of line but read the vbtable to adjust the
+  receiver (3 extra instructions, 5 rows). A dead constant-folded probe
+  (`WORKAROUND(inline)`, 44..54 links, placed before the scan loop) spends
+  the /Ob2 budget so the plain `tile_in_view(...)` call stays out of line
+  with `mov ecx, esi` (BYTE_EXACT). Check `cls` for virtual bases before
+  reaching for the member-pointer form (2.1, "Out-of-line at one site").
 
 ### 3.8 VC5 (Caviar/VOX) x87 rules (2026-11-19 par-5)
 
