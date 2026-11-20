@@ -1301,7 +1301,7 @@ static inline int status_damage_taken(int veh_id) {
     return proto_power(veh_id) - veh_health(veh_id);
 }
 
-// ORIGINAL: 0x004B4CF0 ?draw_active@StatusWin@@QAEXHHH@Z 0x004B4CF0-0x004B652B
+// ORIGINAL: 0x004B4CF0 ?draw_active@StatusWin@@QAEXHHH@Z 0x004B4CF0-0x004B652B BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["git:276d612614085e5d57743cf8cc92903d9468e346:src/unrecovered/004b4cf0.cpp retained full transcription and original span", "MainInterfaceGlobal Buffer and status_left_rect_ layout", "Veh and Base records, destination state and box styles in source"], "reason": "Home the active-status panel's frame, unit/base identity display, selection spots and destination lifecycle in their real owners; retain omitted detail branches as restoration obligations."}
 // TRIED: full-function transcription (~1843 instructions, sim 0.46 vs original at /O2 /Oy-); diverges at instr #3. Both the vehicle- display and base-display halves are transcribed from Ghidra with the Buffer receiver confirmed as the fixed global g_007aec64 (checked against raw disasm at two call sites); the repeated chassis-speed/range mini-blocks were copied by pattern from the first verified instance rather than each re-checked individually against the disassembly.
 // The retained seed is the restoration reference for the colour palette,
