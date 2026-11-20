@@ -2209,10 +2209,7 @@ void SocialWin::init(int faction_id) {
     tutRect14_ = MainInterfaceGlobal.info_panel_frame();
     expand_rect(&tutRect14_, -4, -4);
 
-    tutRect1_.left = 0x271;
-    tutRect1_.top = 4;
-    tutRect1_.right = 0x306;
-    tutRect1_.bottom = 0xfa;
+    set_rect(&tutRect1_, 0x271, 4, 0x306, 0xfa);
 
     {
         int v = 0x1d;
@@ -2225,37 +2222,38 @@ void SocialWin::init(int faction_id) {
         }
     }
 
-    // 0x4B28C0: pointer-register stores = an inline RECT* helper.
-    set_rectangle_dimensions(&tutRect13_, 0x9a, 0x13a, 0xa2, 0x14);
-    set_rectangle_dimensions(&tutRect12_, 0x13f, 0x13a, 0xa2, 0x14);
-    set_rectangle_dimensions(&tutRect11_, 0x1e4, 0x13a, 0xa2, 0x14);
-    categoryHeaders_[0].left = 0x1a;
-    categoryHeaders_[0].top = 4;
-    categoryHeaders_[0].right = 0x26e;
-    categoryHeaders_[0].bottom = 0x4a;
-    categoryHeaders_[1].left = 0x1a; categoryHeaders_[1].top = 0x4d; categoryHeaders_[1].right = 0x26e; categoryHeaders_[1].bottom = 0x93;
-    categoryHeaders_[2].left = 0x1a; categoryHeaders_[2].top = 0x96; categoryHeaders_[2].right = 0x26e; categoryHeaders_[2].bottom = 0xdc;
-    categoryHeaders_[3].left = 0x1a; categoryHeaders_[3].top = 0xdf; categoryHeaders_[3].right = 0x26e; categoryHeaders_[3].bottom = 0x125;
-    modelRects_[0].left = 0x1d; modelRects_[0].top = 0x1d; modelRects_[0].right = 0xaf; modelRects_[0].bottom = 0x31;
-    modelRects_[1].left = 0xb1; modelRects_[1].top = 0x1d; modelRects_[1].right = 0x143; modelRects_[1].bottom = 0x31;
-    modelRects_[2].left = 0x145; modelRects_[2].top = 0x1d; modelRects_[2].right = 0x1d7; modelRects_[2].bottom = 0x31;
-    modelRects_[3].left = 0x1d9; modelRects_[3].top = 0x1d; modelRects_[3].right = 0x26b; modelRects_[3].bottom = 0x31;
-    modelRects_[4].left = 0x1d; modelRects_[4].top = 0x66; modelRects_[4].right = 0xaf; modelRects_[4].bottom = 0x7a;
-    modelRects_[5].left = 0xb1; modelRects_[5].top = 0x66; modelRects_[5].right = 0x143; modelRects_[5].bottom = 0x7a;
-    modelRects_[6].left = 0x145; modelRects_[6].top = 0x66; modelRects_[6].right = 0x1d7; modelRects_[6].bottom = 0x7a;
-    modelRects_[7].left = 0x1d9; modelRects_[7].top = 0x66; modelRects_[7].right = 0x26b; modelRects_[7].bottom = 0x7a;
-    modelRects_[8].left = 0x1d; modelRects_[8].top = 0xaf; modelRects_[8].right = 0xaf; modelRects_[8].bottom = 0xc3;
-    modelRects_[9].left = 0xb1; modelRects_[9].top = 0xaf; modelRects_[9].right = 0x143; modelRects_[9].bottom = 0xc3;
-    modelRects_[10].left = 0x145; modelRects_[10].top = 0xaf; modelRects_[10].right = 0x1d7; modelRects_[10].bottom = 0xc3;
-    modelRects_[11].left = 0x1d9; modelRects_[11].top = 0xaf; modelRects_[11].right = 0x26b; modelRects_[11].bottom = 0xc3;
-    modelRects_[12].left = 0x1d; modelRects_[12].top = 0xf8; modelRects_[12].right = 0xaf; modelRects_[12].bottom = 0x10c;
-    modelRects_[13].left = 0xb1; modelRects_[13].top = 0xf8; modelRects_[13].right = 0x143; modelRects_[13].bottom = 0x10c;
-    modelRects_[14].left = 0x145; modelRects_[14].top = 0xf8; modelRects_[14].right = 0x1d7; modelRects_[14].bottom = 0x10c;
-    modelRects_[15].left = 0x1d9; modelRects_[15].top = 0xf8; modelRects_[15].right = 0x26b; modelRects_[15].bottom = 0x10c;
-    tooltipFactionPower_.left = 0x271;
-    tooltipFactionPower_.top = 0xfd;
-    tooltipFactionPower_.right = 0x306;
-    tooltipFactionPower_.bottom = 0x12d;
+    // 0x4B28C0: every value in a register and the stores through a copied
+    // member pointer = a RECT built in the scratch local and copied whole
+    // (with the helper writing the members directly every edge folds to an
+    // immediate store; 2026-11-20 par-1: 257 -> 225 rows, loop counters
+    // back in ebx/edi).
+    set_rectangle_dimensions(&rect, 0x9a, 0x13a, 0xa2, 0x14);
+    tutRect13_ = rect;
+    set_rectangle_dimensions(&rect, 0x13f, 0x13a, 0xa2, 0x14);
+    tutRect12_ = rect;
+    set_rectangle_dimensions(&rect, 0x1e4, 0x13a, 0xa2, 0x14);
+    tutRect11_ = rect;
+    set_rect(&categoryHeaders_[0], 0x1a, 4, 0x26e, 0x4a);
+    set_rect(&categoryHeaders_[1], 0x1a, 0x4d, 0x26e, 0x93);
+    set_rect(&categoryHeaders_[2], 0x1a, 0x96, 0x26e, 0xdc);
+    set_rect(&categoryHeaders_[3], 0x1a, 0xdf, 0x26e, 0x125);
+    set_rect(&modelRects_[0], 0x1d, 0x1d, 0xaf, 0x31);
+    set_rect(&modelRects_[1], 0xb1, 0x1d, 0x143, 0x31);
+    set_rect(&modelRects_[2], 0x145, 0x1d, 0x1d7, 0x31);
+    set_rect(&modelRects_[3], 0x1d9, 0x1d, 0x26b, 0x31);
+    set_rect(&modelRects_[4], 0x1d, 0x66, 0xaf, 0x7a);
+    set_rect(&modelRects_[5], 0xb1, 0x66, 0x143, 0x7a);
+    set_rect(&modelRects_[6], 0x145, 0x66, 0x1d7, 0x7a);
+    set_rect(&modelRects_[7], 0x1d9, 0x66, 0x26b, 0x7a);
+    set_rect(&modelRects_[8], 0x1d, 0xaf, 0xaf, 0xc3);
+    set_rect(&modelRects_[9], 0xb1, 0xaf, 0x143, 0xc3);
+    set_rect(&modelRects_[10], 0x145, 0xaf, 0x1d7, 0xc3);
+    set_rect(&modelRects_[11], 0x1d9, 0xaf, 0x26b, 0xc3);
+    set_rect(&modelRects_[12], 0x1d, 0xf8, 0xaf, 0x10c);
+    set_rect(&modelRects_[13], 0xb1, 0xf8, 0x143, 0x10c);
+    set_rect(&modelRects_[14], 0x145, 0xf8, 0x1d7, 0x10c);
+    set_rect(&modelRects_[15], 0x1d9, 0xf8, 0x26b, 0x10c);
+    set_rect(&tooltipFactionPower_, 0x271, 0xfd, 0x306, 0x12d);
 
     // The three lower panels: the lower frame, widened to the main frame's
     // left edge, inset by 4 then by 3 (0x4B2BDF: two unfolded adds), split
