@@ -2623,7 +2623,7 @@ void __cdecl name_proto(char *output, int prototype_id, int faction_id,
         {
             char *found = 0;
             do {
-                found = strstr(found ? found + 1 : alternate, StringTable.get(Labels.strings_ptr[0xE5C / 4]));
+                found = strstr(found ? found + 1 : alternate, table_text(Labels.strings_ptr[0xE5C / 4]));
             } while (found && strstr(found + 1, StringTable.get(Labels.strings_ptr[0xE5C / 4])));
             if (found && strlen(found) <= strlen(StringTable.get(Labels.strings_ptr[0xE5C / 4])) + 1) {
                 char *last = &alternate[strlen(alternate) - 1];
