@@ -3345,10 +3345,8 @@ int __cdecl air_power(int veh_id, int a2, int a3, int *a4, int *a5) {
                 if (target_x < 0) {
                     goto stockpile;
                 }
-                if (!(map_range(*a4, *a5, target_x, target_y)
-                    > speed(veh_id, 0) / Rules.move_rate_roads - Rules.move_rate_roads)) {
-                    go_to(veh_id, 'm', target_x, target_y);
-                } else {
+                if (!(!(map_range(*a4, *a5, target_x, target_y)
+                    > speed(veh_id, 0) / Rules.move_rate_roads - Rules.move_rate_roads))) {
                     val2 = 9999;
                     // BUG(original): walks every base slot, not just the live bases.
                     for (i = 0; i < MaxBaseNum; i++) {
@@ -3362,6 +3360,8 @@ int __cdecl air_power(int veh_id, int a2, int a3, int *a4, int *a5) {
                             }
                         }
                     }
+                } else {
+                    go_to(veh_id, 'm', target_x, target_y);
                 }
             } else {
                 int pods = 0;
