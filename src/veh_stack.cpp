@@ -608,7 +608,11 @@ void __cdecl spot_all(int veh_id, int toggle) {
         if ((tile->bit2 & 0x80002000) == 0x2000) {
             count++;
         }
-        if (9 <= i && triad != TRIAD_AIR && is_ocean(x, y) != (triad == TRIAD_SEA)) {
+        // `i >= 9`, not `9 <= i`: the image compares i itself (0x005B6A0D
+        // `cmp [ebp-0x18], 9`) and indexes RadiusOffsetX/Y by `[i*4+table]`;
+        // the constant-left compare let VC6 build a byte-offset IV in ebx and
+        // compare it with 0x24 (MATCHING_GUIDE 2.7, SR blocking).
+        if (i >= 9 && triad != TRIAD_AIR && is_ocean(x, y) != (triad == TRIAD_SEA)) {
             continue;
         }
         if (faction_id == ConsoleGlobal.faction_id_
