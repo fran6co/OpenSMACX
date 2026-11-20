@@ -1130,6 +1130,14 @@ static inline void council_recent_prop(int faction_id, int last_turn) {
 // TRIED: literal register/goto transcription of all ~85 branches and the 10-entry switch resolved from the image; Popup+embedded Scroll+ 2 embedded FlatButton locals (BasePop+0x3230=Scroll start, Scroll+0xAAC/0x15F8=flat_button_left_/right_, matching the SEH thunks at 0x65DB99/0x65DBA7); vtable-reassert writes before every close() and the per-site EH state bytes are compiler artifacts, not transcribed. #18 first divergence still open.
 void __cdecl call_council(int faction_id) {
     Popup popup;
+    // WORKAROUND(inline): one caller-size statement (folds to no code). The
+    // lock-mask header batch removed a member level at every human_mask_
+    // test; without this statement pass 2 refuses ~Scroll at the SIMULNO
+    // return (0x0052CCEB expands it) and the closing ~FlatButton pair
+    // expands. Any one statement works (`if (0) {}`, a dead store or call),
+    // two give three ~FlatButton expansions. The closing copy still expands
+    // its second ~FlatButton (image 0x0052DA61 calls it).
+    if (0) { }
 
     if (is_alien_faction(faction_id)) {
         return;
