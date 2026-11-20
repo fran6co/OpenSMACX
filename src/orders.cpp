@@ -472,7 +472,7 @@ int __cdecl order_veh(int veh_id, int direction, int mode) {
         region = region_at(dest_x, dest_y);
         target_veh = stack_fix(veh_at(dest_x, dest_y));
         base_id = base_at(dest_x, dest_y);
-        if (0 <= base_id)
+        if (base_id >= 0)
             owner = Bases[base_id].faction_id_current;
         else if (target_veh >= 0)
             owner = Vehs[target_veh].faction_id;
