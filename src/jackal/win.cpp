@@ -2126,24 +2126,19 @@ Purpose: The window procedure the class registers - route every input
 #define WM_MOUSEWHEEL 0x020A
 #endif
 
-// The wheel handler. File-local and fully expanded, so the image has no
-// out-of-line copy; WINDOWSX.H in this SDK has no WM_MOUSEWHEEL cracker.
-static void win_mouse_wheel(HWND hwnd, int x, int y, WPARAM keys) {
-    Win *const over = Win::get_mouse_window(&x, &y);
-    if (over != nullptr) {
-        over->send_wheel_delta(keys, HIWORD(keys), x, y, WinMouseDirect);
-    }
-}
+// The wheel handler is dispatch_mouse_wheel (0x005F2250, no image
+// references: /Ob2 expands it here); WINDOWSX.H in this SDK has no
+// WM_MOUSEWHEEL cracker.
+void __cdecl dispatch_mouse_wheel(int unused, int keys, int delta, int x, int y);
 
 // WORKAROUND(inline): dead /Ob2 budget probe. Called with 0 it folds to no
 // code. The image refuses get_hdc/release_hdc inside the expanded WM_ACTIVATE
 // and WM_PALETTECHANGED handlers (0x005F073D/0x005F0D48) while still
 // expanding OnQueryNewPalette and, at pass 2, OnSysCommand's
 // publish_callback_window; that copy's own play_if_idle (0x005F0946) is a
-// third-level call, never expanded. Five calls plus one dead statement after
-// the switch give the image's decisions (four or fewer expand get_hdc, six
-// or more refuse publish_callback_window). The original spending is not
-// identified.
+// third-level call, never expanded. Five calls after the switch give the
+// image's decisions (four or fewer expand get_hdc, six or more refuse
+// publish_callback_window). The original spending is not identified.
 static int window_proc_budget_probe(int x) {
     if (x == 1) x = 2;
     return x;
@@ -2165,8 +2160,10 @@ LRESULT __stdcall Win::window_proc(HWND window, UINT message, WPARAM wParam,
         HANDLE_MSG(window, WM_LBUTTONDBLCLK, OnLButtonDown);
         HANDLE_MSG(window, WM_LBUTTONUP, OnLButtonUp);
     case WM_MOUSEWHEEL:
-        win_mouse_wheel(window, static_cast<short>(LOWORD(lParam)),
-                        static_cast<short>(HIWORD(lParam)), wParam);
+        dispatch_mouse_wheel(reinterpret_cast<int>(window), wParam,
+                             HIWORD(wParam),
+                             static_cast<short>(LOWORD(lParam)),
+                             static_cast<short>(HIWORD(lParam)));
         return 0;
         HANDLE_MSG(window, WM_PALETTECHANGED, OnPaletteChanged);
         HANDLE_MSG(window, WM_QUERYNEWPALETTE, OnQueryNewPalette);
@@ -2207,7 +2204,6 @@ LRESULT __stdcall Win::window_proc(HWND window, UINT message, WPARAM wParam,
     window_proc_budget_probe(0);
     window_proc_budget_probe(0);
     window_proc_budget_probe(0);
-    if (0) message = 0;
     return DefWindowProcA(window, message, wParam, lParam);
 }
 
