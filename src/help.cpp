@@ -548,11 +548,11 @@ void __cdecl help_tech_info(void (__cdecl *a1)(char *), int a2, int a3,
             DatalinkMain.construct_id(idbuf,
                                                                   category,
                                                                   ctr);
-            char *link = StringTable.get(record.name);
+            char *link = table_text(record.name);
             help_create_link(buf, link, idbuf);
             if (record.free_tech == a2) {
                 strcat_space(buf);
-                char *s2 = label_get(0x4DC / 4);
+                char *s2 = StringTable.get(Labels.strings_ptr[0x4DC / 4]);
                 strcat(buf, s2);
                 strcat_close_paren(buf);
             }
@@ -607,7 +607,7 @@ void __cdecl help_tech_info(void (__cdecl *a1)(char *), int a2, int a3,
             if (a4 < 0) {
                 if (*buf == 0) {
                     strcat(buf, "^");
-                    char *s = label_get(0x4CC / 4);
+                    char *s = StringTable.get(Labels.strings_ptr[0x4CC / 4]);
                     strcat(buf, s);
                     strcat_colon(buf);
                 } else {
@@ -616,7 +616,7 @@ void __cdecl help_tech_info(void (__cdecl *a1)(char *), int a2, int a3,
             } else {
                 strcat(buf, "^");
             }
-            char *link = StringTable.get(record.singular_name);
+            char *link = table_text(record.singular_name);
             strcat(buf, link);
             if (*buf != 0) {
                 a1(buf);
