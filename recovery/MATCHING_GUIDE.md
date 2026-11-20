@@ -6962,6 +6962,45 @@ result over 64 symbol-counter pads, so none of these is a counter canary.
   CouncWin::draw_leader 0x00425DB0 (2 leas, councwin.cpp). tech_achieved
   0x005BB000 (`[edi+edx]` of two register locals) is NOT this counter:
   global self-assignment stand-ins at its entry do not move it.
+- **The vtordisp store order of an inlined ~RadioButton is NOT the
+  pointer-reference counter either; it follows the size of the whole
+  function, in irregular plateaus** (par-6 2026-11-20,
+  `analysis/probes/vtordisp/run.py`, medium). An expanded ~RadioButton
+  (inside ~Dialogs inside a final ~Popup teardown) writes two vtordisp slots,
+  `lea edx,[eax-0x18]; mov [X+Y-4],edx` and `lea edx,[eax-0xa30]; mov
+  [X+Y-4],edx`; per store `T` = `[esi+eax-4]` (this first), `i` =
+  `[eax+esi-4]`. Census of the 11 image expansions (`run.py census`): ii in
+  DesignWin/DiploWin::on_button_clicked, process_message, tech_achieved; TT
+  in go_to, base_production, tech_trade, propose_attack, config_game,
+  order_veh; iT only in proposal_menu 0x0054DCF0. Ours agree in 9; tech_trade
+  0x00541100 (ours ii) and proposal_menu (ours TT, its only differing row)
+  do not.
+  Measured: (1) it is function-local: preceding or following functions,
+  `$SG` literals, externs and identifier lengths do not move it; (2) in a
+  one-Popup probe it follows the function's total size, not the position of
+  the code (N lines before or after the Popup give the same result), as
+  plateaus of irregular length (N get_title lines: 74-75 ii, 76 iT, 77-119
+  TT, 120-121 Ti, 122 ii, 123 TT, 124-130 ii, 131-154 TT, 155-185 ii,
+  186-201 TT, ...), with the teardown's own expansions unchanged throughout;
+  so it is not periodic like the lea counter (mod 4) or frame symbols (mod
+  8); (3) a mixed pair appears only on a plateau edge, the second store
+  switching first (iT on an ii -> TT edge, Ti on TT -> ii); (4) at an edge,
+  code-neutral nodes count: a dead `{ int t = k; }`, `pp->f = pp->f`,
+  `PlayersData[k].f = PlayersData[k].f`; global self-assignments, `if (k)
+  {}` and `(void)k` do not. In proposal_menu nothing body-level moves it: 0
+  to 117 dead block locals, 0 to 58 member self-assignments, 0 to 39 calls at
+  the top, one call before each of its 170 statements, the 24 single
+  has_treaty/getter swaps, local declaration orders, the
+  STRINGSTRUCT_REMOVE_ALL_OUT_OF_LINE guard, and ~RadioButton or ~BasePop
+  header self-assignments all keep TT. Only a different set of earlier
+  expanded teardowns moves it: the ATTACK exit losing its ~Scroll expansion
+  (has_treaty at the commlink loop or the counter tests, get_noun at the
+  commlink refusal; 44 rows) gives ii, and a ~Scroll body with an extra
+  statement gives ii. No variant gave iT (one ii -> TT edge away), so the
+  original's spelling is still unknown; no model of the plateau positions
+  exists. Do not retry body-level stand-ins on proposal_menu; tech_trade's
+  pair is structural (358 rows) and should be read again once its
+  teardowns match.
 - **Runtime constant arithmetic is almost absent** (par-6 2026-11-19,
   `analysis/constfold.py`: every straight-line `op r,K2` whose register input
   is a known constant from `mov r,K`/`xor r,r`, both sides, all 5,600
