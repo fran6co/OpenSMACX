@@ -5339,6 +5339,24 @@ result over 64 symbol-counter pads, so none of these is a counter canary.
   [ebp-0x14]/[ebp-0x10], width higher) are `int size[2]` read as
   `(&size[1], &size[0])`; named scalars move into dead parameter slots.
 - **Buffer sizes.** Read them from the frame gap to the next local.
+- **An `_itoa` buffer's frame home tells its scope** (par-2 2026-11-20). A
+  say_num expansion's `text[0x50]` is a block-local that VC6 places at the
+  frame bottom; two expansions share one home. A function-scope `char
+  number[N]` is packed with other address-taken locals whose lifetimes do not
+  overlap it. colortables_init 0x00423570: the explosions create loop's
+  `_itoa(i, buf, 10)` has its own 80 bytes at [ebp-0x188] beside the shared
+  say_num home [ebp-0x138] -- the function-scope `number[80]` (a block-scoped
+  `name[80]` overlapped the say_num home: frame 0x50 short, 101 -> 37 rows).
+  NewTechWin::exec 0x00483F90: the image's lowest object at [ebp-0x74] is the
+  say_num home; ours wrote `_itoa` into a function-scope `number[16]` packed
+  with two RECTs. Screen: `framescan.py --addr` rows `<-` with `&- x2/x4`
+  at the frame bottom or a frame short by 0x50/0x4C.
+- **colortables_init's transparent block** (open): a 12-byte `int[3]`
+  {weights[0], weights[1], color} reproduces [ebp-0x48..-0x40] and the
+  image's `regenerate` above it at [ebp-0x3c], but reorders the 32-byte and
+  energy arrays (37 -> 88 rows). As separate `int[2]` + `int`, VC6 orders
+  transparent_color/regenerate by reference count: one extra surviving
+  `regenerate` read flips them (folded reads do not count).
 - **A local the image never stores** was uninitialized in the original.
 - **A RECT in memory whose constant edges are stored through a register**
   (`mov ebx,0x15; mov [ebp-0x10],ebx; mov ebx,4; mov [ebp-0xc],ebx`) and
