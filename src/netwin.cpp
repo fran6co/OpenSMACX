@@ -3033,9 +3033,12 @@ int NetWin::exec() {
     ::UnionRect(&rect, &setup_rects_[46], &setup_rects_[48]);
     ::UnionRect(&setup_rects_[47], &rect, &setup_rects_[49]);
     expand_rect(&setup_rects_[47], 3, 3);
+    // 0x4829CE..0x4829FA: width and height read through the pointer register
+    // that pushed &setup_rects_[43] (esi), top as a member offset: the
+    // rect_width/rect_height helpers.
     stringBox_.init(setup_rects_[43].left + 3, setup_rects_[43].top + 3,
-                    setup_rects_[43].right - setup_rects_[43].left - 6,
-                    setup_rects_[43].bottom - setup_rects_[43].top - 6, this, nullptr, -1);
+                    rect_width(&setup_rects_[43]) - 6,
+                    rect_height(&setup_rects_[43]) - 6, this, nullptr, -1);
     // init closes the prior list and clears its callback; install afterward.
     stringBox_.set_write_strings_callback(&NetWin::string_callback);
     stringBox_.Buffer::set_text_color(0xFF, -1, 1, 1);
