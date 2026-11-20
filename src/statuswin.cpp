@@ -1825,10 +1825,6 @@ void say_orders(int veh_id) {
     say_orders(StringTemp, veh_id);
 }
 
-static const char *vehicle_order_rule_text(LPSTR encoded_id) {
-    return StringTable.get(encoded_id);
-}
-
 // has_fac_built_call() (real bitmask() call, general.h bitmask_call) is now
 // declared in base.h, which this file already includes - no local
 // redeclaration needed.
@@ -2017,7 +2013,7 @@ void __cdecl say_orders(char *text, int veh_id) {
 
     const uint32_t state_after_prefix = Vehs[veh_id].state;
     if ((state_after_prefix & 0x00004000u) != 0) {
-        ::strcat(text, vehicle_order_rule_text(Order[26].order[0]));
+        ::strcat(text, table_text(Order[26].order[0]));
         return;
     }
 
@@ -2040,7 +2036,7 @@ void __cdecl say_orders(char *text, int veh_id) {
     const int tile_index = Vehs[veh_id].y * MapLongitude
                         + (Vehs[veh_id].x >> 1);
     const int sea = (MapTiles[tile_index].climate & ~0x1F) < 0x60;
-    ::strcat(text, vehicle_order_rule_text(Order[Vehs[veh_id].order & 0x3F].order[sea]));
+    ::strcat(text, table_text(Order[Vehs[veh_id].order & 0x3F].order[sea]));
 
     if (Vehs[veh_id].order == ORDER_CONVOY) {
         strcat_space(text);
