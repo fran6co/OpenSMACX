@@ -676,11 +676,11 @@ int Path::find(int x_src, int y_src, int x_dst, int y_dst, int proto_id, int fac
                             && (map_loc(x_next, y_next)->climate >> 5) < ALT_SHORE_LINE
                             && base_who(x_next, y_next) < 0) {
                             // open water without a base: stand off enemy artillery
-                            i = 25; // the image's counter store: the last direction,
-                                    // and the reverse-direction test no longer matches
-                            for (int j = 1; j < 25; j++) {
-                                int x_arty = wrap_map_x(x_next + RadiusOffsetX[j]);
-                                int y_arty = y_next + RadiusOffsetY[j];
+                            // the direction counter doubles as the artillery radius index: it leaves
+                            // the loop at 25, past the last direction
+                            for (i = 1; i < 25; i++) {
+                                int x_arty = wrap_map_x(x_next + RadiusOffsetX[i]);
+                                int y_arty = y_next + RadiusOffsetY[i];
                                 if (on_map(x_arty, y_arty)) {
                                     for (int veh_arty = veh_at(x_arty, y_arty);
                                         veh_arty >= 0;
@@ -867,11 +867,11 @@ reconstruct:
                         && (map_loc(x_next, y_next)->climate >> 5) < ALT_SHORE_LINE
                         && base_who(x_next, y_next) < 0) {
                         // open water without a base: stand off enemy artillery
-                        i = 25; // the image's counter store: the last direction,
-                                // and the reverse-direction test no longer matches
-                        for (int j = 1; j < 25; j++) {
-                            int x_arty = wrap_map_x(x_next + RadiusOffsetX[j]);
-                            int y_arty = y_next + RadiusOffsetY[j];
+                        // the direction counter doubles as the artillery radius index: it leaves
+                        // the loop at 25, past the last direction
+                        for (i = 1; i < 25; i++) {
+                            int x_arty = wrap_map_x(x_next + RadiusOffsetX[i]);
+                            int y_arty = y_next + RadiusOffsetY[i];
                             if (on_map(x_arty, y_arty)) {
                                 for (int veh_arty = veh_at(x_arty, y_arty); veh_arty >= 0;
                                     veh_arty = Vehs[veh_arty].next_veh_id_stack) {

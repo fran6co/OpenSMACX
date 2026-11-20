@@ -7378,6 +7378,13 @@ Frame and slots
   NetWin::draw_session_info 0x00480900: `bottom = next;` at each section's
   end -> after the next section's `avail = ...`, just before
   Buffer::text_width (11 -> 3 rows). Screen: `analysis/stmovescan.py`.
+- A store of a loop's bound (`mov [home], 0x19`) to a homed variable right
+  after the strength-reduced counter's `xor ebx,ebx`, before the loop body,
+  is that variable used as the loop counter: VC6 runs the loop on the
+  register and stores the exit value up front. Path::find 0x0059A530: an
+  `i = 25;` written before `for (int j = 1; j < 25; j++)` is
+  `for (i = 1; i < 25; i++)` (two sites, 858 -> 854; the store moves after
+  the `xor`).
 
 Rectangles
 - Stores through one register from single loads are
