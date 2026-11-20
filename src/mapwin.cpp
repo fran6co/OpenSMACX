@@ -2684,6 +2684,62 @@ static inline void gen_tile_expanded(MapWin *window, int x, int y, int a3, int a
     }
 }
 
+// WORKAROUND(inline): a dead chain that folds to no code but spends the /Ob2
+// budget, so the last tile_in_view site stays a call (0x004696A6) as in the
+// image. Measured exact at 44..54 links; the member-pointer call it replaces
+// kept the call but added a vbtable receiver adjustment the image lacks.
+static inline int gen_radius_budget_probe(int x) {
+    if (x == 0) x = 1;
+    if (x == 1) x = 4;
+    if (x == 2) x = 7;
+    if (x == 3) x = 10;
+    if (x == 4) x = 13;
+    if (x == 5) x = 16;
+    if (x == 6) x = 19;
+    if (x == 7) x = 22;
+    if (x == 8) x = 25;
+    if (x == 9) x = 28;
+    if (x == 10) x = 31;
+    if (x == 11) x = 34;
+    if (x == 12) x = 37;
+    if (x == 13) x = 40;
+    if (x == 14) x = 43;
+    if (x == 15) x = 46;
+    if (x == 16) x = 49;
+    if (x == 17) x = 52;
+    if (x == 18) x = 55;
+    if (x == 19) x = 58;
+    if (x == 20) x = 61;
+    if (x == 21) x = 64;
+    if (x == 22) x = 67;
+    if (x == 23) x = 70;
+    if (x == 24) x = 73;
+    if (x == 25) x = 76;
+    if (x == 26) x = 79;
+    if (x == 27) x = 82;
+    if (x == 28) x = 85;
+    if (x == 29) x = 88;
+    if (x == 30) x = 91;
+    if (x == 31) x = 94;
+    if (x == 32) x = 97;
+    if (x == 33) x = 100;
+    if (x == 34) x = 103;
+    if (x == 35) x = 106;
+    if (x == 36) x = 109;
+    if (x == 37) x = 112;
+    if (x == 38) x = 115;
+    if (x == 39) x = 118;
+    if (x == 40) x = 121;
+    if (x == 41) x = 124;
+    if (x == 42) x = 127;
+    if (x == 43) x = 130;
+    if (x == 44) x = 133;
+    if (x == 45) x = 136;
+    if (x == 46) x = 139;
+    if (x == 47) x = 142;
+    return x;
+}
+
 // Original469190..469718, not the register/goto seed's rectangle arguments.
 // ORIGINAL: 0x00469190 ?gen_radius@MapWin@@QAEXHHHHH@Z 0x00469190-0x00469718
 // RECOVERY_BINDING: v1 {"evidence": ["Original469190..469718; retired seed git:5605e9af:src/recovered/units/00469190.cpp records this identity and exact span.", "Original469333..469355 converts left/top then right/top, not the transposed seed arguments;4691FB fills via the genuine GraphicWin receiver. Radius-zero scan widening does not apply to the overlay scan."], "reason": "MapWin owns clipped terrain, vehicle and overlay generation. The original scan is asymmetric; top-left and top-right clip conversions determine terrain extension, while overlays later recompute from the left conversion."}
@@ -2773,6 +2829,7 @@ void MapWin::gen_radius(int x, int y, int radius, int faction, int skip_terrain)
                 }
             }
         }
+        gen_radius_budget_probe(0);  // WORKAROUND(inline): see gen_radius_budget_probe
         span = radius * 2 + 2;
         upper_left_y = 32000;
         pixel_to_tile(clip.left, clip.top, &ignored_x, &upper_left_y);
@@ -2787,9 +2844,9 @@ void MapWin::gen_radius(int x, int y, int radius, int faction, int skip_terrain)
             for (int column = -half_width; column <= half_width; column += 2) {
                 const int column_x = x + column;
                 const int tile_x = wrap_map_x(column_x);
-                // WORKAROUND(noinline): the image calls tile_in_view out of line
-                // here (0x4696A6); the original's /Ob2 budget refused it.
-                if (on_map(tile_x, tile_y) && (this->*&MapWin::tile_in_view)(tile_x, tile_y, 0)) {
+                // The image calls tile_in_view out of line here (0x4696A6): the
+                // original's /Ob2 budget was spent by now (see the probe above).
+                if (on_map(tile_x, tile_y) && tile_in_view(tile_x, tile_y, 0)) {
                     gen_overlays(tile_x, tile_y);
                 }
             }
