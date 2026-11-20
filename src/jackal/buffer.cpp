@@ -7998,8 +7998,8 @@ int Buffer::write_pcx(char *filename) {
             while (col < stride_) {
                 const uint8_t value = bits[col];
                 uint8_t count = 1;
-                while (value == bits[col + count] && col + count < stride_ &&
-                       count < 0x3f) {
+                while ((value == bits[col + count] && col + count < stride_ &&
+                       count < 0x3f) != 0) {
                     count++;
                 }
                 if (count > 1 || value >= 0x40) {
