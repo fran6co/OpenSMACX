@@ -2199,7 +2199,7 @@ void Datalink::draw_unit() {
         if (Weapon[VehPrototypes[id].weapon_id].mode >= 7
             && Weapon[VehPrototypes[id].weapon_id].mode <= 12) {
             strcat(StringTemp, "{");
-            strcat(StringTemp, StringTable.get(Weapon[VehPrototypes[id].weapon_id].name));
+            strcat(StringTemp, table_text(Weapon[VehPrototypes[id].weapon_id].name));
             strcat(StringTemp, "}");
         } else {
             strcat(StringTemp, label_get(0x204 / 4));
@@ -2238,7 +2238,7 @@ void Datalink::draw_unit() {
     say_colon();
     space();
     strcat(StringTemp, "{");
-    strcat(StringTemp, StringTable.get(Triad[Chassis[VehPrototypes[id].chassis_id].triad]));
+    strcat(StringTemp, table_text(Triad[Chassis[VehPrototypes[id].chassis_id].triad]));
     space();
     say_num(Chassis[VehPrototypes[id].chassis_id].speed);
     strcat(StringTemp, "}");
@@ -2248,7 +2248,7 @@ void Datalink::draw_unit() {
     description.add(0);
     if (VehPrototypes[id].carry_capacity) {
         StringTemp[0] = 0;
-        strcat(StringTemp, StringTable.get(Labels.strings_ptr[0x360 / 4]));
+        strcat(StringTemp, table_text(Labels.strings_ptr[0x360 / 4]));
         say_colon();
         space();
         strcat(StringTemp, "{");
@@ -2262,7 +2262,7 @@ void Datalink::draw_unit() {
     if (Chassis[VehPrototypes[id].chassis_id].triad == 2
         && Chassis[VehPrototypes[id].chassis_id].range) {
         StringTemp[0] = 0;
-        strcat(StringTemp, StringTable.get(Labels.strings_ptr[0x30C / 4]));
+        strcat(StringTemp, table_text(Labels.strings_ptr[0x30C / 4]));
         say_colon();
         space();
         strcat(StringTemp, "{");
@@ -2304,7 +2304,8 @@ void Datalink::draw_unit() {
         char link[256];
         char number[80];
         link[0] = 0;
-        _itoa(tech + 140000, number, 10);
+        int link_id = tech + 140000;
+        _itoa(link_id, number, 10);
         strcat(link, number);
         help_create_link(StringTemp, name, link);
     } else {
