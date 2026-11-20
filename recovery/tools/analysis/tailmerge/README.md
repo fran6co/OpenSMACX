@@ -21,3 +21,4 @@ the `/FAs` listing. Run from this directory with `uv run python <script>`.
 | tm7i.py / tm7j.py / tm7l.py / tm7m.py / tm7n.py | first-arm complexity, sibling pops in one arm, invisible differences, labels and other persistent blocks |
 | tm7k.py | cap on merges per function (none up to 400 pairs) |
 | menutail/p*.py | menu_proc's toggle tails (`cj.py` shared generator, prints `psave-calls`): inline vs case body, inline scopes, break/return/goto, labels, size, and the `add esp,8` fall-through host that stops JJ merging (p10-p12) |
+| menutail/p20..p30.py, pflags.py | r53 blocker screens: whole-function properties (p20), jump targets (p21, p22, p24), predecessor count (p23), join layout (p25), physical registers (p26), value-returning/member inlines (p27), the 15-byte shared-tail limit (p28, p30), tail count (p29), compiler switches (pflags) |

@@ -7929,7 +7929,8 @@ Layout
   (`push 0; call f; push 1; call g; add esp,8`, tm3.py T1/T3/T14); then the
   instructions before the merged point are copied into each predecessor arm,
   so a store after an inline's if/else appears in both arms. One pushing call
-  (`push; call f; add esp,4; call g`, T2/T4/T9/T15) stays unmerged.
+  (`push; call f; add esp,4; call g`, T2/T4/T9/T15) stays unmerged (r53: that is the 15-byte limit, not the pop
+  shape; see "What stops a jumper-into-jumper cross-jump").
 - **Switch tail-merge direction (measured, `analysis/probes/switchtail/const.py`,
   par-3 2026-11-19).** With register-free tails (`use(1)..use(7)`), VC6 lays
   case blocks out in source order whatever the case values, and when two
@@ -8030,6 +8031,60 @@ Layout
     signed masks, `!= 0`, `volatile char` (15), `#pragma optimize` a/w/p/g.
     editor_personality's own `const char low` spelling is one of these, so
     there is no sibling spelling to transfer.
+- **What stops a jumper-into-jumper cross-jump** (2026-11-20 par-6 r53,
+  `analysis/tailmerge/menutail/p20..p30.py`, the menutail toggles: three
+  inline toggles plus base_names jumping to one join; `psave-calls` 1 =
+  merged as ours, 4 = kept as the image's menu_proc).
+  - No whole-function property stops it (p20, each alone): a volatile read,
+    write or parameter store; an EH object at the top or in another case; a
+    trivial-dtor scope; `__try/__except`; x87 values live across the switch;
+    a noreturn, `exit`, `__stdcall`, `__fastcall` or function-pointer call;
+    `_setjmp`; an `__asm` block; `_alloca`; recursion; `/Zi`, `/Zd`, `/Z7`,
+    `/O1`, `/Oa`, `/Ow`, `/GF`, `/Gf`, `/Gr`, `/G5`, `/G6` (`pflags.py`).
+    Nor the join's predecessor count (p23: 300 distinct-callee cases that
+    stay `jmp join`, before or after the toggles; menu_proc's image join has
+    119), nested switches, an if-chain, `do {} while (0)`, a loop around the
+    switch with break or continue, `return` tails, braces, trivial-dtor
+    scopes, labels at the case end, early returns inside the inlines, a
+    shared inner inline for the tail, inlines returning a value, member
+    inlines on `this` (p21, p22, p24, p27).
+  - It compares PHYSICAL registers: four tails `psave(vK); dmap(1)` with a
+    different local per case, all in esi, merge (p26).
+  - Blockers found: (1) distinct jump targets. Tails ending `goto L0..L3`
+    with four consecutive empty labels after the switch keep all four copies
+    (p21 `labels`; two labels give two copies, p24 `goto2`). A first label
+    right after the switch is the switch's own end (`goto LA` mixed with
+    `break` merges). That reproduces the image's toggle shape exactly
+    (`push edi` scheduled before the `ip` store, the then-arm `jmp` to the
+    toggle's own join); applied to menu_proc (`goto J0..J3`) the four tails
+    equal the image's except the known ecx/edx/eax scratch phase, but the
+    labels also add `xor edi,edi` at the join and turn the second switch's
+    `push 0` into `push edi` (1610 rows, not the original). (2) A shared tail
+    of at most 15 bytes stays in every predecessor (p28/p30: `push esi;
+    call; push esi; call; add esp,8` = 15 keeps four copies, the same with
+    `push 1` = 16 merges; `push esi; call; call; add esp,4` = 14 keeps,
+    `push 0x100; call; call; add esp,4` = 18 merges). tm3's "one pushing call
+    stays unmerged" is this limit, not the pop shape. (3) An earlier merge
+    that splits the host: a `case 1: f0();` that cross-jumps into the last
+    `call f0` of base_names' tail leaves the toggles' 20-byte `f0()` x4 tails
+    unmerged (p30 calls20; same for an immediate store before two calls),
+    as p10-p12's `add esp,8` host does.
+  - Applied to the three image functions: none is a whole-function
+    property. menu_proc's toggle tails (`push edi; call prefs_save; push 1;
+    call draw_map; add esp,8`) are 16 bytes and on_key_click's (`push ebx`,
+    same calls) are 16 bytes too, merged in the image, so the image's
+    menu_proc had either distinct targets or an earlier split of the host;
+    the source construct is still open. use_ability's two lock-return
+    teardowns (0x4D8420, 0x4D863C) differ in the state byte (0x15, 0x1A) and
+    share `lea ecx,[ebp-0x2164]; call; mov [ebp-4],edi` (14 bytes) before
+    the jump to 0x4D8A44; ours merges those 14 bytes (the image's
+    fall-through host there ends `mov [ebp-4],-1`, no split), so the
+    teardown's EH state stores and `-1` constant count differently from
+    plain code in the limit; open. vehdraw_scoot_start's cases 4 and 6
+    differ in registers in the image (no refusal). Next probe: menu_proc's
+    other join predecessors whose suffix is shared with the toggles' tail
+    (`add esp,8; jmp`, `call draw_map; add esp,8`) in source order, for
+    blocker (3).
 - **Cross-jump direction is not a source-order choice for if/else.** VC6
   gives identical code for `if (c) A else B`, the inverted test, a ternary
   statement, a two-arm switch and goto blocks written after the final
