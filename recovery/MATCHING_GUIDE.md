@@ -8644,6 +8644,9 @@ skeleton keeps only branches, `ret` and numbered `use(K)` markers)
   negated or nested, the block after the `break`, `for (;;)` with a break
   test, the arm with its own call and `break`) compile to our bytes or
   worse: VC6 normalizes them. The cause is not in the arm structure.
+  Update (par-5 2026-11-20): the latch half was the first test's `&&`:
+  `if ((sat3 && sat3 >= planet_busters) != 0)` gives the image's `jge OUT |
+  jmp HEAD` (8 -> 6 rows, orsweep --and); the block behind the `ret` stays.
 - **Rung 4 class c, worked (par-6 2026-11-19; probes `gt_*`, `thr_*`,
   `abs_*`, `ob_*` in `analysis/probes/blockorder/run.py`).** Read the first
   `!!` conditional jump whose sense is inverted against ours, or the first
