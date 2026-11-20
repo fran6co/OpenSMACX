@@ -2652,10 +2652,10 @@ Purpose: Sum one base's terrain yields into the selected Base's intake_2
 Return Value: the four-pass yield sum
 Status: Coverage transcription - unclaimed body
 */
-// stand-in: base_yield expands this body inline while the image still emits
-// it standalone (callers 0); VC6 will not auto-inline the extern function
-// there, so the body lives in an inline helper both use.
-static inline int radius_yield_add(int radius_index) {
+// base_yield expands this body inline while the image still emits it
+// standalone (callers 0): a same-unit inline that keeps its out-of-line copy
+// (MATCHING_GUIDE "MEASURED inline on the definition").
+MEASURED inline int __cdecl sub_4e7e50(int radius_index) {
     Base *base = BaseCurrent;
     int x = wrap_map_x(base->x + RadiusOffsetX[radius_index]);
     int y = base->y + RadiusOffsetY[radius_index];
@@ -2672,10 +2672,6 @@ static inline int radius_yield_add(int radius_index) {
         sum += value;
     }
     return sum;
-}
-
-int __cdecl sub_4e7e50(int radius_index) {
-    return radius_yield_add(radius_index);
 }
 
 // RECOVERY_ASSOCIATED: v1 switch_targets 0x004E7F80 0x004E8094 0x004E80A4 0x004E8027
@@ -2697,10 +2693,10 @@ Purpose: The sibling pass of sub_4e7e50: identical walk and tile gating,
 Return Value: the negated-form four-pass yield sum
 Status: Coverage transcription - unclaimed body
 */
-// stand-in: base_yield expands this body inline while the image still emits
-// it standalone (callers 0); VC6 will not auto-inline the extern function
-// there, so the body lives in an inline helper both use.
-static inline int radius_yield_sub(int radius_index) {
+// base_yield expands this body inline while the image still emits it
+// standalone (callers 0): a same-unit inline that keeps its out-of-line copy
+// (MATCHING_GUIDE "MEASURED inline on the definition").
+MEASURED inline int __cdecl sub_4e7f80(int radius_index) {
     Base *base = BaseCurrent;
     int x = wrap_map_x(base->x + RadiusOffsetX[radius_index]);
     int y = base->y + RadiusOffsetY[radius_index];
@@ -2717,10 +2713,6 @@ static inline int radius_yield_sub(int radius_index) {
         sum += value;
     }
     return sum;
-}
-
-int __cdecl sub_4e7f80(int radius_index) {
-    return radius_yield_sub(radius_index);
 }
 
 // Recovery names (original names unknown): the packed specialist nibbles of
@@ -2743,7 +2735,7 @@ static inline void base_specialist_set(int index, int type) {
 }
 // WORKAROUND(inline): dead /Ob2 budget probe, not recovered code; a constant
 // argument folds it away. base_yield spends this much more budget in the image:
-// without it the radius_yield_add for best_position in the reassignment loop expands
+// without it the sub_4e7e50 for best_position in the reassignment loop expands
 // resource_yield, where the image keeps all seven resource_yield calls out of
 // line (0x004E7DC0 has exactly seven callers, all in base_yield). The
 // original's spend is not identified.
@@ -2818,7 +2810,7 @@ void __cdecl base_yield() {
             for (i_c = 0; i_c < 21; i_c++) {
                 if (!i_c || (BaseCurrent->resource_sqr_radius & (1 << i_c))) {
                     worked |= 1 << i_c;
-                    radius_yield_add(i_c);
+                    sub_4e7e50(i_c);
                     if (!--BasePopulationUnassigned) {
                         break;
                     }
@@ -2848,7 +2840,7 @@ void __cdecl base_yield() {
         }
     }
     if (!(worked & 1)) {
-        radius_yield_add(0);
+        sub_4e7e50(0);
         worked |= 1;
         BasePopulationUnassigned--;
     }
@@ -2982,7 +2974,7 @@ void __cdecl base_yield() {
                 BaseCurrent->specialist_unk_1++;
             } else if (i_c > 0) {
                 worked |= 1 << i_c;
-                radius_yield_add(i_c);
+                sub_4e7e50(i_c);
                 BasePopulationUnassigned--;
             } else {
                 break;
@@ -2998,13 +2990,13 @@ void __cdecl base_yield() {
                 uint32_t worst_bit = 1 << worst_position;
                 uint32_t best_bit = 1 << i_c;
                 worked = (worked & ~worst_bit) | best_bit;
-                radius_yield_sub(worst_position);
-                radius_yield_add(i_c);
+                sub_4e7f80(worst_position);
+                sub_4e7e50(i_c);
                 if (BaseCurrent->intake_2[0]
                     < (BaseCurrent->population_size + 1) * Rules.nutrient_req_citizen) {
                     worked = (worked & ~best_bit) | worst_bit;
-                    radius_yield_sub(i_c);
-                    radius_yield_add(worst_position);
+                    sub_4e7f80(i_c);
+                    sub_4e7e50(worst_position);
                 }
             }
             break;
