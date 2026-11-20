@@ -208,7 +208,7 @@ Status: Complete
 */
 
 
-void *AlphaNetLedgerEntry::operator new(size_t size, Heap *owner) throw() {
+inline void *AlphaNetLedgerEntry::operator new(size_t size, Heap *owner) throw() {
     void *memory = owner->get(size);
     if (memory != 0) {
         StringAllocationHeap = owner;
@@ -218,7 +218,7 @@ void *AlphaNetLedgerEntry::operator new(size_t size, Heap *owner) throw() {
     exit(3);
     return 0;
 }
-void *AlphaNetLedgerEntry::operator new(size_t size, AlphaNetStringStruct *list) throw() {
+inline void *AlphaNetLedgerEntry::operator new(size_t size, AlphaNetStringStruct *list) throw() {
     void *memory;
     Heap *owner = list->allocation_owner_;
     if (owner != 0) {
