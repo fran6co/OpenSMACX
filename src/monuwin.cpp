@@ -1055,6 +1055,17 @@ void __cdecl clear_monuments() {
 // owner instead of reusing the register copy every other use shares. A
 // volatile read of the parameter reproduces that single memory load (and the
 // register assignment it leaves); a plain read lets VC6 coalesce it.
+// WORKAROUND(volatile) evidence (2026-11-20 probe study, about 45 standalone
+// spellings on top of the ~30 of cbbe231402): every plain source form of the
+// copy is propagated to a register move (`mov ebx,esi`) and also moves the
+// parameter from esi to edx: the copy before/after the `word_14_ = 0` store,
+// in both arms or hoisted, declared at the top/after game_year/before the if,
+// a local copy of the parameter (int, unsigned, long, enum, const int&) with
+// the parameter read in the arm, `const` parameter, `f = f` web splits, a
+// pointer to the parameter, a by-value or const-reference inline helper for
+// the peer scan, a for-init/do-while/inverted if, a ternary. Taking the
+// parameter's address for real (`if (0) take(&f)`, `gp = &f`) makes every use
+// a memory read. No non-volatile form gives the single reload.
 // Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x00476B70 ?mon_colony_founded@@YAXHPAD@Z 0x00476B70-0x00476C84 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["image:terranx_original.exe:0x00476B70-0x00476C84", "source:src/recovered/units/00476b70.cpp", "Original faction stride4F4, record0 flag/first-owner words and name copy to4AC determine existing type ownership; preserve24byte strncpy behavior."], "reason": "Recover first colony founding in the shared genuine FactionMonuments owner, including first-achiever selection, the bounded faction-owned base-name field and live local notification."}
@@ -1077,6 +1088,7 @@ void __cdecl mon_colony_founded(int faction_id, char *base_name) {
     int owner_faction;
     if (record.word_14_ != 0) {
         record.word_14_ = 0;
+        // WORKAROUND(volatile): image reloads faction_id from [ebp+8] at 0x00476BFB (family note above mon_colony_founded).
         owner_faction = *(volatile int *)&faction_id;
         for (int other = 0; other < 8; ++other) {
             const MonumentRecord &other_record =
@@ -1126,6 +1138,7 @@ void __cdecl mon_tech_discovered(int faction_id, int tech_id) {
     int owner_faction;
     if (record.word_14_ != 0) {
         record.word_14_ = 0;
+        // WORKAROUND(volatile): image reloads faction_id from [ebp+8] at 0x00476D21 (family note above mon_colony_founded).
         owner_faction = *(volatile int *)&faction_id;
         for (int other = 0; other < 8; ++other) {
             const MonumentRecord &other_record =
@@ -1241,6 +1254,7 @@ void __cdecl mon_prototype_built(int faction_id) {
     int owner_faction;
     if (record.word_14_ != 0) {
         record.word_14_ = 0;
+        // WORKAROUND(volatile): image reloads faction_id from [ebp+8] at 0x00476F71 (family note above mon_colony_founded).
         owner_faction = *(volatile int *)&faction_id;
         for (int other = 0; other < 8; ++other) {
             const MonumentRecord &other_record =
@@ -1285,6 +1299,7 @@ void __cdecl mon_facility_built(int faction_id, char *base_name) {
     int owner_faction;
     if (record.word_14_ != 0) {
         record.word_14_ = 0;
+        // WORKAROUND(volatile): image reloads faction_id from [ebp+8] at 0x00477069 (family note above mon_colony_founded).
         owner_faction = *(volatile int *)&faction_id;
         for (int other = 0; other < 8; ++other) {
             const MonumentRecord &other_record =
@@ -1335,6 +1350,7 @@ void __cdecl mon_secret_project(int faction_id, int project_id) {
     int owner_faction;
     if (record.word_14_ != 0) {
         record.word_14_ = 0;
+        // WORKAROUND(volatile): image reloads faction_id from [ebp+8] at 0x00477191 (family note above mon_colony_founded).
         owner_faction = *(volatile int *)&faction_id;
         for (int other = 0; other < 8; ++other) {
             const MonumentRecord &other_record =
@@ -1428,6 +1444,7 @@ void __cdecl mon_conquer_base(int faction_id, char *base_name) {
     int owner_faction;
     if (record.word_14_ != 0) {
         record.word_14_ = 0;
+        // WORKAROUND(volatile): image reloads faction_id from [ebp+8] at 0x004773AB (family note above mon_colony_founded).
         owner_faction = *(volatile int *)&faction_id;
         for (int other = 0; other < 8; ++other) {
             const MonumentRecord &other_record =
@@ -1483,6 +1500,7 @@ void __cdecl mon_naval_unit_built(int faction_id) {
     int owner_faction;
     if (record.word_14_ != 0) {
         record.word_14_ = 0;
+        // WORKAROUND(volatile): image reloads faction_id from [ebp+8] at 0x004774D1 (family note above mon_colony_founded).
         owner_faction = *(volatile int *)&faction_id;
         for (int other = 0; other < 8; ++other) {
             const MonumentRecord &other_record =
@@ -1535,6 +1553,7 @@ void __cdecl mon_air_unit_built(int faction_id) {
     int owner_faction;
     if (record.word_14_ != 0) {
         record.word_14_ = 0;
+        // WORKAROUND(volatile): image reloads faction_id from [ebp+8] at 0x004775D1 (family note above mon_colony_founded).
         owner_faction = *(volatile int *)&faction_id;
         for (int other = 0; other < 8; ++other) {
             const MonumentRecord &other_record =
@@ -1587,6 +1606,7 @@ void __cdecl mon_native_life_bred(int faction_id) {
     int owner_faction;
     if (record.word_14_ != 0) {
         record.word_14_ = 0;
+        // WORKAROUND(volatile): image reloads faction_id from [ebp+8] at 0x004776D1 (family note above mon_colony_founded).
         owner_faction = *(volatile int *)&faction_id;
         for (int other = 0; other < 8; ++other) {
             const MonumentRecord &other_record =
@@ -1639,6 +1659,7 @@ void __cdecl mon_first_in_space(int faction_id) {
     int owner_faction;
     if (record.word_14_ != 0) {
         record.word_14_ = 0;
+        // WORKAROUND(volatile): image reloads faction_id from [ebp+8] at 0x004777D1 (family note above mon_colony_founded).
         owner_faction = *(volatile int *)&faction_id;
         for (int other = 0; other < 8; ++other) {
             const MonumentRecord &other_record =
@@ -1684,6 +1705,7 @@ void __cdecl mon_built_preserve(int faction_id) {
     int owner_faction;
     if (record.word_14_ != 0) {
         record.word_14_ = 0;
+        // WORKAROUND(volatile): image reloads faction_id from [ebp+8] at 0x004778D1 (family note above mon_colony_founded).
         owner_faction = *(volatile int *)&faction_id;
         for (int other = 0; other < 8; ++other) {
             const MonumentRecord &other_record =
