@@ -6149,7 +6149,7 @@ L_570c89:
         action_destroy(veh_id, 0x400000, -1, -1);
         return 0;
     }
-    if (speed(veh_id, 0) <= Rules.move_rate_roads && near_base >= 0 &&
+    if ((speed(veh_id, 0) <= Rules.move_rate_roads && near_base >= 0 &&
         (GameDataStateStorage.fields_.lock_masks_.human_mask_ &
          (1 << Bases[near_base].faction_id_current)) &&
         (PlayersData[faction_id].diplo_treaties[Bases[near_base].faction_id_current] & 0x10) &&
@@ -6159,7 +6159,7 @@ L_570c89:
         !near_hostile &&
         whose_territory(faction_id, x, y, NULL, 0) == Bases[near_base].faction_id_current &&
         ((map_loc(x, y)->bit & 0x81208850) ||
-         ((map_loc(x, y)->bit & 4) && !PlayersData[faction_id].region_total_bases[region]))) {
+         ((map_loc(x, y)->bit & 4) && !PlayersData[faction_id].region_total_bases[region]))) != 0) {
         if (remote_own) {
             log_say("Auto sending DESTROY message", veh_id, 0, 0);
             message_data(0x2406, veh_id, 0, 0, 0, 0);
