@@ -418,8 +418,8 @@ int Path::find(int x_src, int y_src, int x_dst, int y_dst, int proto_id, int fac
             for (int i = 0; i < 9; i++) {
                 int x_threat = xrange_inline(x_dst + RadiusOffsetX[i]);
                 int y_threat = y_dst + RadiusOffsetY[i];
-                if (on_map(x_threat, y_threat) && (!i || i & 1)
-                    && (mask_vendetta & (1 << map_loc(x_threat, y_threat)->territory))) {
+                if ((on_map(x_threat, y_threat) && (!i || i & 1)
+                    && (mask_vendetta & (1 << map_loc(x_threat, y_threat)->territory))) != 0) {
                     dst_threat_mode = (i != 0) + 1;
                     break;
                 }
@@ -484,8 +484,8 @@ int Path::find(int x_src, int y_src, int x_dst, int y_dst, int proto_id, int fac
             for (int j = 0; j < 9; j++) {
                 int x_threat = wrap_map_x(x_cur + RadiusOffsetX[j]);
                 int y_threat = y_cur + RadiusOffsetY[j];
-                if (on_map(x_threat, y_threat) && (!j || j & 1)
-                    && (mask_vendetta & (1 << map_loc(x_threat, y_threat)->territory))) {
+                if ((on_map(x_threat, y_threat) && (!j || j & 1)
+                    && (mask_vendetta & (1 << map_loc(x_threat, y_threat)->territory))) != 0) {
                     cur_threat_mode = (j != 0) + 1;
                     break;
                 }
@@ -711,7 +711,7 @@ int Path::find(int x_src, int y_src, int x_dst, int y_dst, int proto_id, int fac
                         || y_table_[j] != y_next)) {
                     j++;
                 }
-                if (j == index1_ && index1_ < MapArea) {
+                if ((j == index1_ && index1_ < MapArea) != 0) {
                     x_table_[index1_] = (int16_t)x_next;
                     y_table_[index1_] = (int16_t)y_next;
                     index1_++;
