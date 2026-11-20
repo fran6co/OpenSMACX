@@ -4592,7 +4592,6 @@ void __cdecl load_vehicles() {
     sheet.load_pcx("XI.PCX", 0, 0, 18);
     sheet.change_color(253, 255);
     int row;
-    int column;
     int chassis;
     int variant;
     int count;
@@ -4600,36 +4599,38 @@ void __cdecl load_vehicles() {
     int y;
     int marker_x;
     int marker_y;
-    int y_offset;
     int source_y;
     int border_y;
     int faction;
     // The image keeps each sheet coordinate as its own induction variable
     // (x += 45, x += 102, ...) beside a separate down-counted loop index.
+    // The column loops run on variant: the image stores its exit value
+    // (8) to variant's home ahead of the XF loop (loopexitscan).
     for (x = 2, y = 2, row = 0; row < 9; y += 49, ++row, x = 2) {
-        for (column = 0; column < 16; x += 45, ++column) {
-            g_XI_BOOM_VEH_SPRITES[row * 16 + column].extract(
+        for (variant = 0; variant < 16; x += 45, ++variant) {
+            g_XI_BOOM_VEH_SPRITES[row * 16 + variant].extract(
                 &sheet, 255, x, y, 43, 47, 0);
         }
     }
     sheet.load_pcx("XF.PCX", 0, 0, 18);
     sheet.change_color(253, 255);
     for (x = 2, y = 2, row = 0; row < 4; y += 304, ++row, x = 2) {
-        for (column = 0; column < 8; x += 102, ++column) {
-            g_XF_BOOM_VEH_SPRITES[row * 16 + column].extract(
+        for (variant = 0; variant < 8; x += 102, ++variant) {
+            g_XF_BOOM_VEH_SPRITES[row * 16 + variant].extract(
                 &sheet, 255, x, y, 100, 150, 0);
-            g_XF_BOOM_VEH_SPRITES[row * 16 + column + 8].extract(
+            g_XF_BOOM_VEH_SPRITES[row * 16 + variant + 8].extract(
                 &sheet, 255, x, y + 152, 100, 150, 0);
         }
     }
     sheet.load_pcx("PALETTE.PCX", 0, 10, 236);
     // The original's eight-iteration loop performs work only for faction 0.
-    for (x = 580, faction = 0; faction < 8; ++faction, x += 8) {
+    for (x = 580, faction = 0; faction < 8; ++faction) {
         if (faction == 0) {
             InfoFactionTextColors[faction] = sheet.get_pixel(x, 23);
             InfoFactionShadowColors[faction] = sheet.get_pixel(x, 31);
             ChatItemIdTable[faction] = sheet.get_pixel(x, 39);
             ChatShadowColors[faction] = sheet.get_pixel(x, 47);
+            x += 8; // 454401 jumps past the advance
         }
     }
     sheet.load_pcx(VehicleUnitSheet, 0, 10, 236);
@@ -4700,13 +4701,13 @@ void __cdecl load_vehicles() {
                     Chassis[row].sprite_flag_x_off[0] = static_cast<unsigned char>(x);
             }
         }
-        for (y_offset = 0; y_offset < 75; ++y_offset) {
+        for (y = 0; y < 75; ++y) {
             for (marker_x = 916; marker_x <= 917; ++marker_x) {
-                if (sheet.get_pixel(marker_x, border_y + 1 + y_offset) == 5) {
+                if (sheet.get_pixel(marker_x, border_y + 1 + y) == 5) {
                     // 4546CC indexes with the variant left over from the
                     // chassis loop (1 after chassis 18's single variant).
                     // Preserve this original asymmetry; do not normalize to 0.
-                    Chassis[row].sprite_flag_y_off[variant] = static_cast<unsigned char>(y_offset);
+                    Chassis[row].sprite_flag_y_off[variant] = static_cast<unsigned char>(y);
                 }
             }
         }
