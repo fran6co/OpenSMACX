@@ -4272,8 +4272,8 @@ skip_empath4:
             for (int step = 1; step < 4 && new_armor == armor; step++) {
                 new_armor = armor_budget(faction_id, Armor[armor].defense_rating + step);
             }
-            if (new_armor != armor
-                && Armor[new_armor].defense_rating > Armor[armor].defense_rating) {
+            if ((new_armor != armor
+                && Armor[new_armor].defense_rating > Armor[armor].defense_rating) != 0) {
                 int margin = 5;
                 if (reactor * 2 - reactor / 2 >= 5) {
                     margin = reactor * 2 - reactor / 2;
