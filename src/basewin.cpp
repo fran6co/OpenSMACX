@@ -510,7 +510,7 @@ void BaseWin::queue_click(int row, int x, int y, int right) {
             if (!empty) {
                 const int entry = BaseCurrent->queue_production_id[position];
                 if (entry >= 0) parse_says(0, VehPrototypes[entry].veh_name, -1, -1);
-                else parse_say(0, Facility[-entry].name, -1, -1);
+                else { const int f = -entry; parse_say(0, Facility[f].name, -1, -1); }
             }
             MainInterfaceGlobal.client_to_screen(&x, &y);
             clear();
