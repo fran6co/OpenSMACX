@@ -4422,6 +4422,8 @@ int __cdecl base_connect(int priority) {
     }
     x = BaseCurrent->x;
     y = BaseCurrent->y;
+    int goal_x;
+    int goal_y;
     if (on_map(best_x, best_y)) {
         if (!found
             || (is_human(BaseCurrent->faction_id_current)
@@ -4431,21 +4433,26 @@ int __cdecl base_connect(int priority) {
             || vector_dist(BaseCurrent->x, BaseCurrent->y, x, y)
                 >= vector_dist(BaseCurrent->x, BaseCurrent->y, best_x, best_y)) {
             // The image has one add_goal call (0x004ECB67): this arm pushes
-            // best_x/best_y and jumps into the shared call. Routing it through
-            // x/y gives the single call and the shared tail (0.985 -> 0.994).
-            x = best_x;
-            y = best_y;
+            // best_x/best_y and jumps into the shared call. Routing both
+            // paths through goal_x/goal_y keeps the single call without
+            // storing best_x/best_y back into x/y (the image has no such
+            // stores); the per-path argument pushes are not reproduced yet.
+            goal_x = best_x;
+            goal_y = best_y;
+        } else {
+            goal_x = x;
+            goal_y = y;
         }
     } else if ((!is_human(BaseCurrent->faction_id_current)
                 || (GameDataStateStorage.fields_.game_more_preferences_
                     & MPREF_AUTO_FORMER_BUILD_SENSORS))
                && !Paths.sensors(BaseCurrent->faction_id_current, &x, &y)) {
-        // Empty arm: the image falls into the shared add_goal and keeps the
-        // failure return last, behind the one it shares with the ocean test.
+        goal_x = x;
+        goal_y = y;
     } else {
         return 0;
     }
-    add_goal(BaseCurrent->faction_id_current, AI_GOAL_TERRAFORM_LAND, priority, x, y,
+    add_goal(BaseCurrent->faction_id_current, AI_GOAL_TERRAFORM_LAND, priority, goal_x, goal_y,
              BaseIDCurrentSelected);
     return 1;
 }
