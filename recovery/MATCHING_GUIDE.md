@@ -7363,7 +7363,14 @@ result over 64 symbol-counter pads, so none of these is a counter canary.
   it once and sinks the shared part into the arm. Read the image for an
   expression rebuilt from memory on both sides of a `cmp/jle`; the reverse
   (one evaluation feeding both the test and the result) is a temporary or an
-  inline function such as `range()`.
+  inline function such as `range()`. Tree screen (2026-11-20, 317 non-exact
+  functions: every `if (v < e) v = e` and named-temporary guard as
+  `max`/`min`, every `max`/`min` as a once-evaluating inline, every `range()`
+  as a macro): one real site, base_build's creche morale floor
+  (0x004FD374). The other row gains were ties elsewhere or doubled a call
+  (enemy_move's `range(stack_check(...), 0, def)`: rows 5194 -> 4833 but the
+  named call multiset 0 -> 3 away); judge such rewrites by the call
+  multiset first.
 - **Float types.** A float temporary kept in x87 is `float`; `double` makes the
   constants qword. Check `.rdata` operand widths.
 - **`lea r,[r+r*2+K]; shl r,4; [r+Array]` is a named index variable in an EH
