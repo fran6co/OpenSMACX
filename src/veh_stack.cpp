@@ -936,8 +936,9 @@ void __cdecl spot_all(int veh_id, int toggle) {
                         radius_tier = max(radius_tier, 2);  // 5B825C
                     }
                     spot_stack(stack_id, faction_id); // 5B826B..5B8394 inlined
-                    if (is_ocean(x, y) && occupant
-                        && !(PlayersData[faction_id].diplo_treaties[occupant] & DTREATY_TREATY)) {
+                    // A value test (!= 0, MATCHING_GUIDE 3.7): the arm is laid in place.
+                    if ((is_ocean(x, y) && occupant
+                        && !(PlayersData[faction_id].diplo_treaties[occupant] & DTREATY_TREATY)) != 0) {
                         add_goal(faction_id, AI_GOAL_UNK_1, 2, x, y, -1);   // 5B83F5
                     }
                 }
