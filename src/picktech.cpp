@@ -282,14 +282,6 @@ int PickTech::on_key_click(int character, int key) {
     return 1;
 }
 
-static const char *picktech_name(LPSTR address) {
-    return StringTable.get(address);
-}
-
-static void picktech_add_label(int index) {
-    strcat(StringTemp, label_get(index));
-}
-
 // ORIGINAL: 0x00484C60 ?draw_tech@PickTech@@QAEHHPAURECT@@H@Z 0x00484C60-0x00485FBD;0x0065766C-0x006576A0
 // RECOVERY_BINDING: v1 {"evidence": ["image:0x00484C60; retired seed git:288b790f:src/unrecovered/00484c60.cpp; constructor484AC0/destructor488690 establish native C5C ownership.", "image:66CFCC callbackslots17/19/22/25; native rule-bank and UI call sites retain owner and evaluation order.", "source:src/stringstruct.cpp historical484B80 transcription; the canonical caption owns Font line-advance and Buffer wrap semantics."], "reason": "Genuine GraphicWin-derived PickTech owner with four automatic Font members, source-owned rule/global references, real callback dispatch and lexical popup/list lifetimes."}
 // symbol    ?draw_tech@PickTech@@QAEHHPAUtagRECT@@H@Z
@@ -428,7 +420,7 @@ int PickTech::draw_tech(int tech, RECT *rect, int) {
         if (Technology[i].preq_tech_1 == tech || Technology[i].preq_tech_2 == tech) {
             StringTemp[0] = '\0';
             strcat(StringTemp, "[");
-            strcat(StringTemp, picktech_name(Technology[i].name));
+            strcat(StringTemp, table_text(Technology[i].name));
             strcat(StringTemp, "]");
             UNK1(StringTemp);
         }
@@ -440,9 +432,9 @@ int PickTech::draw_tech(int tech, RECT *rect, int) {
         if (Facility[i].free_tech == tech && i < FacilitySPStart) {
             StringTemp[0] = '\0';
             if (page_state_ == 0) strcat(StringTemp, "{");
-            strcat(StringTemp, picktech_name(Facility[i].name));
+            strcat(StringTemp, table_text(Facility[i].name));
             strcat_space(StringTemp);
-            picktech_add_label(0x4dc / 4);
+            say_label(0x4dc / 4);
             if (page_state_ == 0) strcat(StringTemp, "}");
             UNK1(StringTemp);
         }
@@ -455,7 +447,7 @@ int PickTech::draw_tech(int tech, RECT *rect, int) {
         if (Citizen[i].preq_tech == tech) {
             StringTemp[0] = '\0';
             if (page_state_ == 0) strcat(StringTemp, "{");
-            strcat(StringTemp, picktech_name(Citizen[i].singular_name));
+            strcat(StringTemp, table_text(Citizen[i].singular_name));
             if (page_state_ == 0) strcat(StringTemp, "}");
             UNK1(StringTemp);
         }
@@ -465,7 +457,7 @@ int PickTech::draw_tech(int tech, RECT *rect, int) {
         if (Ability[i].preq_tech == tech) {
             StringTemp[0] = '\0';
             if (page_state_ == 0) strcat(StringTemp, "{");
-            strcat(StringTemp, picktech_name(Ability[i].name));
+            strcat(StringTemp, table_text(Ability[i].name));
             if (page_state_ == 0) strcat(StringTemp, "}");
             UNK1(StringTemp);
         }
@@ -481,7 +473,7 @@ int PickTech::draw_tech(int tech, RECT *rect, int) {
                                Terraforming[row].prerequisite_tech[1])) {
                 StringTemp[0] = '\0';
                 if (page_state_ == 0) strcat(StringTemp, "{");
-                strcat(StringTemp, picktech_name(Order[row + 4].order[model]));
+                strcat(StringTemp, table_text(Order[row + 4].order[model]));
                 if (page_state_ == 0) strcat(StringTemp, "}");
                 UNK1(StringTemp);
             }
@@ -491,21 +483,21 @@ int PickTech::draw_tech(int tech, RECT *rect, int) {
     if (tech == Rules.tech_three_energy_sqr) {
         StringTemp[0] = '\0';
         strcat(StringTemp, "{");
-        picktech_add_label(0x460 / 4);
+        say_label(0x460 / 4);
         strcat(StringTemp, "}");
         UNK1(StringTemp);
     }
     if (tech == Rules.tech_three_minerals_sqr) {
         StringTemp[0] = '\0';
         strcat(StringTemp, "{");
-        picktech_add_label(0x45c / 4);
+        say_label(0x45c / 4);
         strcat(StringTemp, "}");
         UNK1(StringTemp);
     }
     if (tech == Rules.tech_three_nutrients_sqr) {
         StringTemp[0] = '\0';
         strcat(StringTemp, "{");
-        picktech_add_label(0x458 / 4);
+        say_label(0x458 / 4);
         strcat(StringTemp, "}");
         UNK1(StringTemp);
     }
@@ -516,11 +508,11 @@ int PickTech::draw_tech(int tech, RECT *rect, int) {
         if (Facility[i].preq_tech == tech) {
             StringTemp[0] = '\0';
             if (i < FacilitySPStart || page_state_ == 0) strcat(StringTemp, "{");
-            strcat(StringTemp, picktech_name(Facility[i].name));
+            strcat(StringTemp, table_text(Facility[i].name));
             if (i < FacilitySPStart) {
                 strcat_space(StringTemp);
                 strcat_open_paren(StringTemp);
-                strcat(StringTemp, picktech_name(Facility[i].effect));
+                strcat(StringTemp, table_text(Facility[i].effect));
                 strcat_close_paren(StringTemp);
             }
             if (i < FacilitySPStart || page_state_ == 0) strcat(StringTemp, "}");
@@ -535,7 +527,7 @@ int PickTech::draw_tech(int tech, RECT *rect, int) {
             if (SocialCategories[category_id].preq_tech[model] == tech) {
                 StringTemp[0] = '\0';
                 strcat(StringTemp, "{");
-                strcat(StringTemp, picktech_name(SocialCategories[category_id].name[model]));
+                strcat(StringTemp, table_text(SocialCategories[category_id].name[model]));
                 strcat(StringTemp, "}");
                 UNK1(StringTemp);
             }
@@ -546,7 +538,7 @@ int PickTech::draw_tech(int tech, RECT *rect, int) {
         if (Chassis[chassis_id].preq_tech == tech) {
             StringTemp[0] = '\0';
             strcat(StringTemp, "{");
-            strcat(StringTemp, picktech_name(Chassis[chassis_id].offsv_1_name));
+            strcat(StringTemp, table_text(Chassis[chassis_id].offsv_1_name));
             strcat_space(StringTemp);
             strcat_open_paren(StringTemp);
             strcat(StringTemp, StringTable.get(Triad[Chassis[chassis_id].triad]));
@@ -564,11 +556,11 @@ int PickTech::draw_tech(int tech, RECT *rect, int) {
         if (tech == Armor[armor_id].preq_tech) {
             StringTemp[0] = '\0';
             strcat(StringTemp, "{");
-            strcat(StringTemp, picktech_name(Armor[armor_id].name));
+            strcat(StringTemp, table_text(Armor[armor_id].name));
             strcat_space(StringTemp);
             strcat_open_paren(StringTemp);
             if (Armor[armor_id].defense_rating < 0) {
-                picktech_add_label(0x310 / 4);
+                say_label(0x310 / 4);
             } else {
                 _itoa(static_cast<int>(Armor[armor_id].defense_rating), number_buffer, 10);
                 strcat(StringTemp, number_buffer);
@@ -583,12 +575,12 @@ int PickTech::draw_tech(int tech, RECT *rect, int) {
         if (Weapon[weapon_id].preq_tech == tech) {
             StringTemp[0] = '\0';
             strcat(StringTemp, "{");
-            strcat(StringTemp, picktech_name(Weapon[weapon_id].name));
+            strcat(StringTemp, table_text(Weapon[weapon_id].name));
             strcat_space(StringTemp);
             strcat_open_paren(StringTemp);
             if (Weapon[weapon_id].offense_rating != 0) {
                 if (Weapon[weapon_id].offense_rating < 0) {
-                    picktech_add_label(0x310 / 4);
+                    say_label(0x310 / 4);
                 } else {
                     _itoa(static_cast<int>(Weapon[weapon_id].offense_rating), number_buffer, 10);
                     strcat(StringTemp, number_buffer);
@@ -613,7 +605,7 @@ int PickTech::draw_tech(int tech, RECT *rect, int) {
     for (int reactor_id = 0; reactor_id < MaxReactorNum; ++reactor_id) {
         if (Reactor[reactor_id].preq_tech == tech) {
             StringTemp[0] = '\0';
-            strcat(StringTemp, picktech_name(Reactor[reactor_id].name));
+            strcat(StringTemp, table_text(Reactor[reactor_id].name));
             strcat_space(StringTemp);
             strcat_open_paren(StringTemp);
             // Native485D8B truncates this label to one byte too.
@@ -633,7 +625,7 @@ int PickTech::draw_tech(int tech, RECT *rect, int) {
         if ((VehPrototypes[proto_id].flags & 1u) != 0 && VehPrototypes[proto_id].preq_tech == tech) {
             StringTemp[0] = '\0';
             strcat(StringTemp, "{");
-            picktech_add_label(0x314 / 4);
+            say_label(0x314 / 4);
             strcat_colon(StringTemp);
             strcat(StringTemp, VehPrototypes[proto_id].veh_name);
             strcat(StringTemp, "}");
