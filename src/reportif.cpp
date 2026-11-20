@@ -2658,8 +2658,11 @@ void ReportWin::labs_line(int first_id, int second_id, int, int branch_id,
                 static_cast<int>(lab_prerequisite_x_) + x_offset - 4,
                 static_cast<int>(lab_upper_inner_y_) + half, first_id,
                 static_cast<int>(lab_lower_inner_y_) + half);
-            host->Buffer::box_sprite(&report_work_rect_,
-                style_select ? &InterfaceBoxStyles[5] : &InterfaceBoxStyles[3]);
+            if (style_select) {
+                host->Buffer::box_sprite(&report_work_rect_, &InterfaceBoxStyles[5]);
+            } else {
+                host->Buffer::box_sprite(&report_work_rect_, &InterfaceBoxStyles[3]);
+            }
             host->Buffer::restore_clip();
         }
         // 0x49B62F
@@ -2671,8 +2674,11 @@ void ReportWin::labs_line(int first_id, int second_id, int, int branch_id,
         host->Buffer::set_clip(&report_work_rect_);
         expand_rect(&report_work_rect_, 7, 0);
         report_work_rect_.bottom += 7;
-        host->Buffer::box_sprite(&report_work_rect_,
-            style_select ? &InterfaceBoxStyles[5] : &InterfaceBoxStyles[3]);
+        if (style_select) {
+            host->Buffer::box_sprite(&report_work_rect_, &InterfaceBoxStyles[5]);
+        } else {
+            host->Buffer::box_sprite(&report_work_rect_, &InterfaceBoxStyles[3]);
+        }
         host->Buffer::restore_clip();
         // 0x49B6C1
         g_IFACE_TECH_TREE_ARROW_SPRITES[style_select ? 2 : 0].draw(host,
@@ -2774,11 +2780,10 @@ void ReportWin::labs_line(int first_id, int second_id, int, int branch_id,
     // 0x49BBA9
     if (style_select) {
         host->Buffer::box_sprite(&report_work_rect_, &InterfaceBoxStyles[5]);
-        host->Buffer::restore_clip();
     } else {
         host->Buffer::box_sprite(&report_work_rect_, &InterfaceBoxStyles[3]);
-        host->Buffer::restore_clip();
     }
+    host->Buffer::restore_clip();
     // 0x49BBCF
     report_work_rect_.left = field_59A8_ + static_cast<int>(lab_center_x_) - 4;
     report_work_rect_.top = line_height;
