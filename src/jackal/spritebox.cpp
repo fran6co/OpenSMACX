@@ -365,8 +365,8 @@ int SpriteBox::attach(GraphicWin *parent, int x, int y, int flags) {
     const int cell_height = Dialog::field_68_;
     const int right = field_54_;
     const int top = abs(cell_height - field_58_) >> 1;
-    rect.top = top;
     rect.left = 0;
+    rect.top = top;
     rect.right = right;
     rect.bottom = cell_height + top;
     // Park the cursor on the last entry; each item below advances first.
