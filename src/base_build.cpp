@@ -105,6 +105,22 @@ int __cdecl base_claimed(int x, int y, int site1_free, int site2_free,
     return 0;
 }
 
+// WORKAROUND(inline): dead /Ob2 budget probe (constant arguments fold it to
+// no code). base_build is bound by VC6's per-function size ceiling
+// (MATCHING_GUIDE 2.8 rule 7); the image calls range from the military
+// arm's l_18 line (0x004FA280, 0x004FA2D9, 0x004FA2EC) and has_fac_built
+// from 0x004FA9E0 on, where ours expanded them. Four branchy expansions
+// right before that first refused site give the image's call multiset;
+// they replace six unreferenced range/has_project pointer locals that were
+// tuned as size pads (all six are dead with the probe in place). The
+// original's spend there is not identified.
+static inline int base_build_budget_probe(int x) {
+    if (x == 0) x = 1;
+    else if (x == 1) x = 3;
+    else if (x == 2) x = 7;
+    return x;
+}
+
 // Complete base_build was moved here from its retired seed:
 // src/unrecovered/004f81a0.cpp. Its original findings remain below.
 // The independent base_change seed remains retained at
@@ -113,16 +129,6 @@ int __cdecl base_claimed(int x, int y, int site1_free, int site2_free,
 // RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/004f81a0.cpp", "source:src/base.cpp:base_reset", "source:src/unrecovered/004f81a0.cpp: complete original identity/span and historical seed findings preserved", "Pinned image 01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf; original32280-byte span and68-selector/36-target facility dispatcher", "build/recovery/base-build-owner-resume-oct6/review-receipt-oct6.md: bounded independent review, not exhaustive or native acceptance", "recovery/tests/test_base_build_owner.py: actual-source bounded host/damage controls", "BaseSecretProject true64-word storage; historical scalar-member bindings remain unresolved primitive-array accessor interpretations"], "reason": "Recover complete build selection through real Base, faction, map, prototype, facility and project owners, preserving original unchecked indexes, arithmetic, lifecycle and output contracts. Prior source decision retained as history: Explicitly unfinished Base-owned dependency required to link the recovered base_reset caller; full 72-arm build-selection behavior remains in its seed"}
 // TRIED: mismatch #3 (call vs test) - this is the largest function in the batch (32280 bytes, a 72-entry switch reached via the jump table at 0x4FA56E documented in the brief, one arm per buildable unit/facility/project id) preceded by ~0x360 bytes of reactor/rules-bit eligibility computation and several 0x200/0x36-int array-zeroing blocks. Only the entry parameter normalization (a1<0 fold) plus set_base()/base_compute(1) are transcribed; the switch and its scoring tables are not modelled - the body returns the same -1/"no candidate" sentinel the original's accumulator starts in, rather than fabricate any of the 72 per-item eligibility rules.
 int __cdecl base_build(int base_id, int *out_secondary, int *out_tertiary, int *out_score) {
-    // WORKAROUND(inline): size pads, not call stand-ins. base_build is bound by
-    // VC6's per-function /Ob2 size ceiling (MATCHING_GUIDE 2.8 rule 7): its
-    // range (0x00422F00) and has_project (0x004F80D0) sites are out of line in
-    // the image because they lie past the stop, and plain calls reproduce that.
-    // These six unreferenced pointer declarations (here and in four cases
-    // below) only add caller size: dropping any one of them lets one range
-    // site expand that the image calls, so the original body is larger than
-    // ours by about their size; the statements that make it up are not found.
-    int (__cdecl *const range_call)(int, int, int) = range;
-    BOOL (__cdecl *const project_call)(int, int) = has_project;
     int sat_type;  // WORKAROUND(decl): base_build 0x004FED4D forms faction*0x833 + (type - 0x41) before scaling; only a local subscript keeps the -0x41 out of the displacement.
     int a_1f6c[512];
     int a_176c[512];
@@ -1058,8 +1064,6 @@ L_4fa03d:
         }
         break;
     case 2: {
-        // WORKAROUND(inline): size pad, see the top of base_build.
-        int (__cdecl *const range_call)(int, int, int) = range;
         if (l_c != 7 && !l_38
             && PlayersData[l_8].region_total_combat_vehs[l_10]
                    < PlayersData[l_8].region_total_bases[l_10] * 2 + 2) {
@@ -1082,6 +1086,10 @@ L_4fa03d:
             && (PlayersData[l_8].flags & 0x10000000)) {
             w /= 2;
         }
+        base_build_budget_probe(0);  // WORKAROUND(inline)
+        base_build_budget_probe(1);  // WORKAROUND(inline)
+        base_build_budget_probe(2);  // WORKAROUND(inline)
+        base_build_budget_probe(0);  // WORKAROUND(inline)
         l_18 = ((l_2c != 4) + 1) * l_48 + range(n - 2, 0, 99) + l_b8;
         int s = range(8 - l_fc, 4, 8) * w / 8;
         w = range(veh_cost(l_14, BaseIDCurrentSelected, NULL) * cost_factor(l_8, 1, -1) * s
@@ -1192,8 +1200,6 @@ L_4fa03d:
         }
         goto L_4fc68f;
     case 3: {  // reconnaissance
-        // WORKAROUND(inline): size pad, see the top of base_build.
-        int (__cdecl *const range_call)(int, int, int) = range;
         l_48 = has_abil(l_14, 0x40000);
         if (!l_28 && (l_e4 || !l_48)) {
             int lim;
@@ -1243,8 +1249,6 @@ L_4fa03d:
         goto L_4fc68f;
     }
     case 6: {  // naval superiority (laid between reconnaissance and air superiority, 0x4fad54)
-        // WORKAROUND(inline): size pad, see the top of base_build.
-        int (__cdecl *const range_call)(int, int, int) = range;
         if (!naval_base(BaseIDCurrentSelected)) goto L_4fd8f6;
         w = (l_70 != 1 ? 128 : 256) * w * 56 / MapAreaSqRoot;
         if (l_c == 7) {
@@ -2259,8 +2263,6 @@ L_4fcf70:
         }
     }
     if (Weapon[VehPrototypes[l_14].weapon_id].offense_rating) {
-        // WORKAROUND(inline): size pad, see the top of base_build.
-        int (__cdecl *const range_call)(int, int, int) = range;
         int worm = worm_mod(BaseIDCurrentSelected, l_8);
         int morale = morale_mod(BaseIDCurrentSelected, l_8,
                                 Chassis[VehPrototypes[l_14].chassis_id].triad)
