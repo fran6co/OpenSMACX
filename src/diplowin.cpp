@@ -1102,6 +1102,11 @@ int DiploOffersDirty;
 // DiploKnownTechColor (0x0068A5C4) is IfaceColorTable[9]; its identity moved
 // to interface_assets.cpp.
 
+// draw_offers' space() calls (strings.h) push the shared " " COMDAT that the
+// linker kept from popup.cpp, its first holder in link order: every space()
+// site here (0x004432F0, 0x00443349, 0x00443539, 0x004435BC) pushes
+// 0x00682820, the folded copy of this unit's ??_C literal.
+// RECOVERY_LITERAL: v2 merged 0x00682820 0x00682822 ??_C@_01FCOA@?5?$AA@ 0x00443170
 // RECOVERY_ASSOCIATED: v1 switch_targets 0x00443170 0x004436A0 0x004436B8 0x00443480
 // ORIGINAL: 0x00443170 ?draw_offers@DiploWin@@QAEXXZ 0x00443170-0x0044369F BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["git:def4db5d8cde1ddd00c5735adc0e3cd230ec02b8:src/recovered/units/00443170.cpp"], "reason": "Typed offer-panel rendering, technology/energy/treaty/faction labels and Spot ownership, replacing seed raw offsets."}
@@ -1159,8 +1164,14 @@ void DiploWin::draw_offers() {
                 if (side == 1 && offer_value_[1][i] < 89
                     && has_tech(offer_value_[1][i], faction_id_)) {
                     set_text_color(DiploKnownTechColor, 0, side, side);
+                    // A technology the partner already knows is bracketed:
+                    // the image pushes this unit's own "(" (0x004434BF,
+                    // .data 0x006839F4) and ")" (0x004434DF, 0x006839F8),
+                    // which follow "VENDETTA" in diplowin's unpooled data.
+                    // RECOVERY_LITERAL: v1 0x006839F4 0x006839F6 $SG57614 0x00443170
                     strcat(StringTemp, "(");
                     say_tech(StringTemp, offer_value_[1][i], side);
+                    // RECOVERY_LITERAL: v1 0x006839F8 0x006839FA $SG57615 0x00443170
                     strcat(StringTemp, ")");
                 } else {
                     say_tech(StringTemp, offer_value_[side][i], 1);
