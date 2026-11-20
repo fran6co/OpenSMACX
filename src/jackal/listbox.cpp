@@ -1028,8 +1028,8 @@ void ListBox::draw_item(int index) {
         const int along = (static_cast<int>(Dialog::field_64_)
                            + Dialog::field_44_)
             * (relative / Dialog::row_count_);
-        row.right += along;
         row.left += along;
+        row.right += along;
         const int across = (static_cast<int>(Dialog::field_68_)
                             + Dialog::field_44_)
             * (relative % Dialog::row_count_);
