@@ -4413,37 +4413,35 @@ int __cdecl enemy_move(int veh_id) {
     if (Vehs[veh_id].order_auto_type == 1 || Vehs[veh_id].order_auto_type == 2) {
         goto L_56c2f0;
     }
-    if (Vehs[veh_id].order_auto_type == 6
-        || (has_abil(Vehs[veh_id].proto_id, 0x2000) && !Vehs[veh_id].order_auto_type
-            && (GameDataStateStorage.fields_.game_more_preferences_ & 8))) {
-        goto L_56bf5f;
-    }
-    if (Vehs[veh_id].order_auto_type != 7) {
-        goto L_56c9e1;
-    }
-    if (good_sensor(faction_id, x, y)) {
-        Vehs[veh_id].order = ORDER_SENSOR_ARRAY;
-        goto L_578f46;
-    } else {
-        tx = x;
-        ty = y;
-        if (Paths.sensors(faction_id, &tx, &ty)) {
-            goto L_56c2d1;
+    if (Vehs[veh_id].order_auto_type != 6
+        && !(has_abil(Vehs[veh_id].proto_id, 0x2000) && !Vehs[veh_id].order_auto_type
+             && (GameDataStateStorage.fields_.game_more_preferences_ & 8))) {
+        if (Vehs[veh_id].order_auto_type != 7) {
+            goto L_56c9e1;
         }
-        if (tx == x && ty == y) {
+        if (good_sensor(faction_id, x, y)) {
             Vehs[veh_id].order = ORDER_SENSOR_ARRAY;
             goto L_578f46;
+        } else {
+            tx = x;
+            ty = y;
+            if (Paths.sensors(faction_id, &tx, &ty)) {
+                goto L_56c2d1;
+            }
+            if (tx == x && ty == y) {
+                Vehs[veh_id].order = ORDER_SENSOR_ARRAY;
+                goto L_578f46;
+            }
+            {
+                // WORKAROUND(noinline): the image calls go_to (0x56BF4E) at every
+                // one of its 41 sites here; ours had budget left for this first one.
+                void (__cdecl *const go_to_call)(int, char, int, int) = go_to;
+                go_to_call(veh_id, 0x73, tx, ty);
+            }
+            return 0;
         }
-        {
-            // WORKAROUND(noinline): the image calls go_to (0x56BF4E) at every
-            // one of its 41 sites here; ours had budget left for this first one.
-            void (__cdecl *const go_to_call)(int, char, int, int) = go_to;
-            go_to_call(veh_id, 0x73, tx, ty);
-        }
-        return 0;
     }
-
-L_56bf5f:
+    // 0x56bf5f: the order_auto_type 6 / ability 0x2000 path.
     if (!has_tech(Terraforming[TERRA_REMOVE_FUNGUS].prerequisite_tech[triad == TRIAD_SEA], faction_id)
         && !has_abil(Vehs[veh_id].proto_id, 0x2000)
         && Vehs[veh_id].order_auto_type == 6) {
