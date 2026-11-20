@@ -2063,7 +2063,7 @@ void __cdecl world_volcano(int x, int y, BOOL is_not_landmark) {
 
 /*
 Purpose: Setup the 'Borehole Cluster' landmark. Added to SMAC in 3.0 patch.
-// ORIGINAL: 0x005C7020 ?world_borehole@@YAXHH@Z 0x005C7020-0x005C753B
+// ORIGINAL: 0x005C7020 ?world_borehole@@YAXHH@Z 0x005C7020-0x005C753B BYTE_EXACT
 // size      1307 bytes
 // prototype void (__cdecl ?world_borehole@@YAXHH@Z)(int xCoord, int yCoord)
 // callers   3   call targets   8
