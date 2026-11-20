@@ -349,6 +349,15 @@ static inline DWORD probe_time() { return timeGetTime(); }
 // RECOVERY_ASSOCIATED: v1 switch_selector 0x0059F120 0x005A5850 0x005A5860 0x005A178F
 // RECOVERY_ASSOCIATED: v1 switch_targets 0x0059F120 0x005A5860 0x005A5878 0x005A23A7
 // The image tests the human/alive mask bytes in place at every site.
+// WORKAROUND(inline): from the action dispatch (after the ninth ~Popup
+// teardown, the `action < 0` return) through the FRAME block's human test,
+// the 52 human/alive/treaty tests are spelled is_human/is_alive/has_treaty
+// (free inlines expanding to the same code). Their pass-2 reservations
+// refuse ~Scroll inside the first nine ~Popup teardowns, which the image
+// calls (0x59F34D..0x59FB1E), and leave the later 29 expanded (MATCHING_GUIDE
+// 2.8 "late free helpers"). Dead spend anywhere, or size, never refused those
+// sites; the raw macro before site 9, or helpers before it, cost ~Scroll
+// expansions. Which free inlines the original had there is not identified.
 #define HUMAN_BIT(f) (GameDataStateStorage.fields_.lock_masks_.human_mask_ & (1 << (f)))
 #define ALIVE_BIT(f) (GameDataStateStorage.fields_.lock_masks_.alive_mask_ & (1 << (f)))
 // WORKAROUND(inline): dead /Ob2 budget probe (constant arguments fold it to
@@ -369,12 +378,13 @@ static inline int probe_frame_budget_probe(int x) {
 
 
 // WORKAROUND(inline): caller-size stand-in for probe (never stored; the dead
-// blocks after the declarations fold to no code). The lock-mask header batch
-// removed a member level at the 44 HUMAN_BIT/ALIVE_BIT tests; with the three
-// FRAME probes the image's get_name multiset came back only with 6-9 of these
-// blocks (6 kept: fewest rows; 1, 3, 5, 10 and 11 leave get_name 14/15 or
-// lengthen the jump tokens). The statements the original had beyond ours are
-// not identified.
+// blocks after the declarations fold to no code). probe is ceiling-bound
+// (MATCHING_GUIDE 2.8 rule 7): the image refuses ~Popup from the
+// `!(action_mode & 2)` return 1 after the FRAME block on (it joins the
+// closing teardown at 0x5A5509). The free-inline spellings above shrink the
+// caller and move that stop later; 36-48 blocks put it back (40 kept: fewest
+// rows; with 6-17 the return-1 site keeps an expanded ~Popup). The statements the
+// original had beyond ours are not identified.
 static int probe_size_pad;
 // ORIGINAL: 0x0059F120 ?probe@@YAHHHHH@Z 0x0059F120-0x005A5837;0x006613D0-0x00661B3D
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned original instructions establish distinct actor, target-base and fallback-vehicle roles, genuine PlayerData/Map/Base/Veh owners and one automatic Popup with class-owned teardown.", "The actor lock/state edge skips strategy scoring and energy checks before its shared mode/selector tail. Action-six raw UI results and normalized remote bit tests have distinct threshold stores; false edges retain the original path-local value, with no eager initialization.", "Bounded actual-source controls and native compilation are not full CFG, VC6 unwind-state, linked-preservation or game-runtime proof. Ordered comparison/reload fidelity and historical matching remain restoration obligations.", "Pinned5A292F..5A2961 operands96CD3C equal PlayersData96C9E0+35C, the signed tech_ranking word; trade_source actually begins36C, so its former+8 alias selected the wrong374 word. Preserve target rank/2 > actor rank/2+4 with truncation toward zero and the existing facility/action/pact short-circuit guards."], "reason": "Complete typed Probe action/UI owner in its existing translation unit, retaining the four-argument ABI and both original main/unwind spans."}
@@ -429,8 +439,16 @@ int __cdecl probe(int veh_id, int base_id, int veh_id_tgt, int mode) {
         return 0;
     }
     // WORKAROUND(inline): see probe_size_pad.
-    if (0) { probe_size_pad = 0; } if (0) { probe_size_pad = 1; } if (0) { probe_size_pad = 2; }
-    if (0) { probe_size_pad = 3; } if (0) { probe_size_pad = 4; } if (0) { probe_size_pad = 5; }
+    if (0) { probe_size_pad = 0; } if (0) { probe_size_pad = 1; } if (0) { probe_size_pad = 2; } if (0) { probe_size_pad = 3; }
+    if (0) { probe_size_pad = 4; } if (0) { probe_size_pad = 5; } if (0) { probe_size_pad = 6; } if (0) { probe_size_pad = 7; }
+    if (0) { probe_size_pad = 8; } if (0) { probe_size_pad = 9; } if (0) { probe_size_pad = 10; } if (0) { probe_size_pad = 11; }
+    if (0) { probe_size_pad = 12; } if (0) { probe_size_pad = 13; } if (0) { probe_size_pad = 14; } if (0) { probe_size_pad = 15; }
+    if (0) { probe_size_pad = 16; } if (0) { probe_size_pad = 17; } if (0) { probe_size_pad = 18; } if (0) { probe_size_pad = 19; }
+    if (0) { probe_size_pad = 20; } if (0) { probe_size_pad = 21; } if (0) { probe_size_pad = 22; } if (0) { probe_size_pad = 23; }
+    if (0) { probe_size_pad = 24; } if (0) { probe_size_pad = 25; } if (0) { probe_size_pad = 26; } if (0) { probe_size_pad = 27; }
+    if (0) { probe_size_pad = 28; } if (0) { probe_size_pad = 29; } if (0) { probe_size_pad = 30; } if (0) { probe_size_pad = 31; }
+    if (0) { probe_size_pad = 32; } if (0) { probe_size_pad = 33; } if (0) { probe_size_pad = 34; } if (0) { probe_size_pad = 35; }
+    if (0) { probe_size_pad = 36; } if (0) { probe_size_pad = 37; } if (0) { probe_size_pad = 38; } if (0) { probe_size_pad = 39; }
 
     ProbeTargetHasHSA = 0;
     ProbeHasAlgoEnhancement = 0;
@@ -544,7 +562,7 @@ int __cdecl probe(int veh_id, int base_id, int veh_id_tgt, int mode) {
             }
             Vehs[veh_id].probe_action = (uint8_t)action;
         } else {
-            if (!HUMAN_BIT(faction)) {
+            if (!is_human(faction)) {
                 goto L_5a2571;
             }
             action = Vehs[veh_id].probe_action & 7;
@@ -555,7 +573,7 @@ int __cdecl probe(int veh_id, int base_id, int veh_id_tgt, int mode) {
 
 L_59fb64:
     if (!action && (NetDaemonNet.action_mode_ & 2)) {
-        if (!(PlayersData[faction].diplo_treaties[faction_tgt] & 0x1000)) {
+        if (!(has_treaty(faction, faction_tgt, 0x1000))) {
             set_treaty(faction, faction_tgt, 0x1000, 1);
             if (faction == ConsoleGlobal.faction_id_) {
                 report_intel(faction_tgt);
@@ -569,11 +587,11 @@ L_59fb64:
                               is_alien ? "al_infil_sm.pcx" : "infil_sm.pcx");
         }
     }
-    if (faction == ConsoleGlobal.faction_id_ && HUMAN_BIT(faction)
+    if (faction == ConsoleGlobal.faction_id_ && is_human(faction)
         && (NetDaemonNet.action_mode_ & 1)
-        && (PlayersData[faction].diplo_treaties[faction_tgt] & 7)
-        && (!(PlayersData[faction_tgt].diplo_treaties[faction] & 1)
-            || !(PlayersData[faction_tgt].diplo_treaties[faction] & 0x2000000))
+        && (has_treaty(faction, faction_tgt, 7))
+        && (!(has_treaty(faction_tgt, faction, 1))
+            || !(has_treaty(faction_tgt, faction, 0x2000000)))
         && action > 0) {
         parse_says(0, get_title(faction_tgt), -1, -1);
         parse_says(1, get_name(faction_tgt), -1, -1);
@@ -587,7 +605,7 @@ L_59fb64:
     if (action == 1) {
         if (Bases[base_id].state & 0x40) {
             diff_modifier = 1;
-            if (faction == ConsoleGlobal.faction_id_ && HUMAN_BIT(faction)
+            if (faction == ConsoleGlobal.faction_id_ && is_human(faction)
                 && (NetDaemonNet.action_mode_ & 1)) {
                 parse_says(0, Bases[base_id].name_string, -1, -1);
                 success_rates(1, morale_veh(veh_id, 1, 0), -1, base_id);
@@ -602,7 +620,7 @@ L_59fb64:
             }
         }
         int tech_start;
-        if (IsMultiplayerNet && HUMAN_BIT(faction)) {
+        if (IsMultiplayerNet && is_human(faction)) {
             random_reseed(MapRandSeed
                           + GameDataStateStorage.fields_.turn_current_num_
                           + faction);
@@ -621,7 +639,7 @@ L_59fb64:
         if (i >= MaxTechnologyNum) {
             tech_id = 9999;
         }
-        if (faction == ConsoleGlobal.faction_id_ && HUMAN_BIT(faction)) {
+        if (faction == ConsoleGlobal.faction_id_ && is_human(faction)) {
             success_rates(1, morale_veh(veh_id, 1, 0), diff_modifier, base_id);
             if (success_rates(2, morale_veh(veh_id, 1, 0), diff_modifier + 1,
                               base_id)) {
@@ -645,8 +663,8 @@ L_59fb64:
             }
         }
         if (tech_id == 9999 && (PlayersData[faction].flags & 0x200)) {
-            if (!HUMAN_BIT(faction)) {
-                action = (PlayersData[faction].diplo_treaties[faction_tgt] & 0x30)
+            if (!is_human(faction)) {
+                action = (has_treaty(faction, faction_tgt, 0x30))
                     ? 2 : 0;
                 goto L_59fb64;
             }
@@ -660,7 +678,7 @@ L_59fb64:
     } else if (action == 3) {
         if (Bases[base_id].state & 0x400000) {
             diff_modifier = 1;
-            if (faction == ConsoleGlobal.faction_id_ && HUMAN_BIT(faction)
+            if (faction == ConsoleGlobal.faction_id_ && is_human(faction)
                 && (NetDaemonNet.action_mode_ & 1)) {
                 parse_says(0, Bases[base_id].name_string, -1, -1);
                 success_rates(1, morale_veh(veh_id, 1, 0), -1, base_id);
@@ -692,7 +710,7 @@ L_59fb64:
             cost = Facility[-Bases[base_id].queue_production_id[0]].cost;
         }
         int rnd_amount;
-        if (IsMultiplayerNet && HUMAN_BIT(faction)) {
+        if (IsMultiplayerNet && is_human(faction)) {
             random_reseed(MapRandSeed
                           + GameDataStateStorage.fields_.turn_current_num_
                           + faction);
@@ -720,7 +738,7 @@ L_59fb64:
                     break;
                 }
             }
-            if (!sabotage_id && !HUMAN_BIT(faction)) {
+            if (!sabotage_id && !is_human(faction)) {
                 action = Bases[base_id].population_size > 3 ? 4 : 0;
                 goto L_59fb64;
             }
@@ -728,11 +746,11 @@ L_59fb64:
     }
 
     // L_5a074b
-    if (HUMAN_BIT(faction)) {
+    if (is_human(faction)) {
     success_rates(1, morale_veh(veh_id, 1, 0), 0, base_id);
     {
         int choice;
-        if (faction == ConsoleGlobal.faction_id_ && HUMAN_BIT(faction)
+        if (faction == ConsoleGlobal.faction_id_ && is_human(faction)
             && (NetDaemonNet.action_mode_ & 1)) {
             if (success_rates(2, morale_veh(veh_id, 1, 0), 1, base_id)) {
                 choice = popp(ScriptPopupFile, "ADVVIRUS", 0,
@@ -749,7 +767,7 @@ L_59fb64:
         }
     }
     diff_modifier = 1;
-    if (faction == ConsoleGlobal.faction_id_ && HUMAN_BIT(faction)
+    if (faction == ConsoleGlobal.faction_id_ && is_human(faction)
         && (NetDaemonNet.action_mode_ & 1)) {
         popup.start("VIRUS");
         if (stack_check(veh_at(Bases[base_id].x, Bases[base_id].y),
@@ -786,7 +804,7 @@ L_59fb64:
         goto L_5a2dcd;
     }
     if (has_fac(FAC_HEADQUARTERS, base_id, 0)) {
-        if (faction == ConsoleGlobal.faction_id_ && HUMAN_BIT(faction)
+        if (faction == ConsoleGlobal.faction_id_ && is_human(faction)
             && (NetDaemonNet.action_mode_ & 1)) {
             parse_says(0, Bases[base_id].name_string, -1, -1);
             parse_says(1, Players[faction_tgt].adj_name_faction, -1, -1);
@@ -797,7 +815,7 @@ L_59fb64:
             }
         }
     } else if (sabotage_id == FAC_PERIMETER_DEFENSE || sabotage_id == FAC_TACHYON_FIELD) {
-    if (faction == ConsoleGlobal.faction_id_ && HUMAN_BIT(faction)
+    if (faction == ConsoleGlobal.faction_id_ && is_human(faction)
         && (NetDaemonNet.action_mode_ & 1)) {
         parse_says(0, Bases[base_id].name_string, -1, -1);
         parse_say(1, Facility[sabotage_id].name, -1, -1);
@@ -810,7 +828,7 @@ L_59fb64:
     } else {
         goto L_5a2dcd;
     }
-    // ---- 5a0d96: last statement of the HUMAN_BIT(faction) arm of action 2
+    // ---- 5a0d96: last statement of the is_human(faction) arm of action 2
     diff_modifier = 2;
     goto L_5a2dcd;
     } else {
@@ -838,13 +856,13 @@ L_59fb64:
     } else if (action == 5) {
         diff_modifier = 1;
         if (!success_rates(1, morale_veh(veh_id, 1, 0), 1, base_id)) {
-            if (faction == ConsoleGlobal.faction_id_ && HUMAN_BIT(faction)
+            if (faction == ConsoleGlobal.faction_id_ && is_human(faction)
                 && (NetDaemonNet.action_mode_ & 1)) {
                 NetMsgPrimary.pop("NOASSASSIN", nullptr);
             }
             return 0;
         }
-        if (faction == ConsoleGlobal.faction_id_ && HUMAN_BIT(faction)
+        if (faction == ConsoleGlobal.faction_id_ && is_human(faction)
             && (NetDaemonNet.action_mode_ & 1)
             && !popp(ScriptPopupFile, "ASSASSIN", 0,
                      is_alien ? "al_infil_sm.pcx" : "infil_sm.pcx", nullptr)) {
@@ -854,12 +872,12 @@ L_59fb64:
     } else if (action == 8) {
         diff_modifier = 1;
         if (!success_rates(1, morale_veh(veh_id, 1, 0), 1, base_id)) {
-            if (faction == ConsoleGlobal.faction_id_ && HUMAN_BIT(faction)) {
+            if (faction == ConsoleGlobal.faction_id_ && is_human(faction)) {
                 NetMsgPrimary.pop("NOFREEWILLY", nullptr);
             }
             return 0;
         }
-        if (faction == ConsoleGlobal.faction_id_ && HUMAN_BIT(faction)
+        if (faction == ConsoleGlobal.faction_id_ && is_human(faction)
             && (NetDaemonNet.action_mode_ & 1)
             && !popp(ScriptPopupFile, "FREEWILLY", 0,
                      is_alien ? "al_infil_sm.pcx" : "infil_sm.pcx", nullptr)) {
@@ -873,7 +891,7 @@ L_59fb64:
         }
         if (Chassis[VehPrototypes[Vehs[veh_id_tgt].proto_id].chassis_id].triad == TRIAD_AIR
             && !has_abil(Vehs[veh_id].proto_id, ABL_AIR_SUPERIORITY)) {
-            if (faction == ConsoleGlobal.faction_id_ && mode && HUMAN_BIT(faction)
+            if (faction == ConsoleGlobal.faction_id_ && mode && is_human(faction)
                 && (NetDaemonNet.action_mode_ & 1)) {
                 int ability = abil_index(ABL_AIR_SUPERIORITY);
                 parse_say(0, Ability[ability].name, -1, -1);
@@ -886,7 +904,7 @@ L_59fb64:
                 && (Weapon[VehPrototypes[Vehs[veh_id_tgt].proto_id].weapon_id].offense_rating < 0
                     || Vehs[veh_id_tgt].proto_id == 0x0F))) {
             // 5a201d
-            if (faction == ConsoleGlobal.faction_id_ && mode && HUMAN_BIT(faction)
+            if (faction == ConsoleGlobal.faction_id_ && mode && is_human(faction)
                 && (NetDaemonNet.action_mode_ & 1)) {
                 NetMsgPrimary.pop("ALIENPROBE", nullptr);
             }
@@ -993,13 +1011,13 @@ L_59fb64:
                 if (morale > PlayersData[faction].best_land_speed) {
                     score = score * 2 / 3;
                 }
-                if (PlayersData[faction].diplo_treaties[faction_tgt] & DTREATY_TREATY) {
+                if (has_treaty(faction, faction_tgt, DTREATY_TREATY)) {
                     score *= 2;
                 }
-                if (!(PlayersData[faction].diplo_treaties[faction_tgt] & DTREATY_WANT_REVENGE)
+                if (!(has_treaty(faction, faction_tgt, DTREATY_WANT_REVENGE))
                     && !(GameDataStateStorage.fields_.game_state_ & 0x200)
                     && !at_climax(faction)
-                    && (PlayersData[faction].diplo_treaties[faction_tgt] & DTREATY_UNK_1000000)
+                    && (has_treaty(faction, faction_tgt, DTREATY_UNK_1000000))
                     && (PlayersData[faction].diplo_treaties[faction_tgt]
                         & (DTREATY_TREATY | DTREATY_TRUCE))
                     && whose_territory(faction, Vehs[veh_id_tgt].x, Vehs[veh_id_tgt].y,
@@ -1035,7 +1053,7 @@ L_59fb64:
             if (!mode) {
                 return 1; // 5a1da9 falls into the 5a1e28 epilogue
             }
-            if (HUMAN_BIT(faction)) {
+            if (is_human(faction)) {
                 int choice;
                 if (faction == ConsoleGlobal.faction_id_
                     && (NetDaemonNet.action_mode_ & 1)) {
@@ -1075,14 +1093,14 @@ L_59fb64:
         int found_mon;
         cost = mind_control(base_id, faction, 0);
         if (cost < 0) {
-            if (!HUMAN_BIT(faction)) {
+            if (!is_human(faction)) {
                 action = 1;
                 goto L_59fb64;
             }
             return 0;
         }
         if (Players[faction_tgt].rule_flags & RFLAG_MINDCONTROL) {
-            if (!HUMAN_BIT(faction)) {
+            if (!is_human(faction)) {
                 goto L_5a2571; // image: 5a2574
             }
             if (faction == ConsoleGlobal.faction_id_
@@ -1122,7 +1140,7 @@ L_59fb64:
             cost *= 2;
             break;
         case 3:
-            if (!HUMAN_BIT(faction)) {
+            if (!is_human(faction)) {
                 action = 1;
                 goto L_59fb64;
             }
@@ -1145,9 +1163,9 @@ L_59fb64:
                            * cost * 2 / 3) {
                 // ---- 5a2571: AI action choice; also entered from chunk A (59fb46)
 L_5a2571:
-                action = (PlayersData[faction].diplo_treaties[faction_tgt] & 0x30) ? 2 : 0;
+                action = (has_treaty(faction, faction_tgt, 0x30)) ? 2 : 0;
                 region = region_at(Bases[base_id].x, Bases[base_id].y);
-                if ((PlayersData[faction].diplo_treaties[faction_tgt] & 0x30)
+                if ((has_treaty(faction, faction_tgt, 0x30))
                     && PlayersData[faction].region_base_plan[region]
                     && Bases[base_id].talent_total == Bases[base_id].drone_total
                     && !rnd(2, "PRAHOBE")
@@ -1156,7 +1174,7 @@ L_5a2571:
                 }
                 if (has_flag10_tech) {
                     if (Bases[base_id].population_size >= 6
-                        && ((PlayersData[faction].diplo_treaties[faction_tgt] & DTREATY_ATROCITY_VICTIM)
+                        && ((has_treaty(faction, faction_tgt, DTREATY_ATROCITY_VICTIM))
                             || (GameDataStateStorage.fields_.council_resolution_count_[8]
                                     > GameDataStateStorage.fields_.council_resolution_count_[9]
                                 && (PlayersData[faction].diplo_treaties[faction_tgt]
@@ -1166,14 +1184,14 @@ L_5a2571:
                     }
                     if (Bases[base_id].population_size >= 4
                         && (PlayersData[faction].flags & 0x1000000)
-                        && (!(PlayersData[faction].diplo_treaties[faction_tgt] & 7)
+                        && (!(has_treaty(faction, faction_tgt, 7))
                             || (PlayersData[faction].diplo_treaties[faction_tgt]
                                 & DTREATY_WANT_REVENGE))) {
                         action = 7;
                     }
                 }
                 found = 0;
-                if (PlayersData[faction].diplo_treaties[faction_tgt] & 0x30) {
+                if (has_treaty(faction, faction_tgt, 0x30)) {
                     for (int i = 0; i < 21; i++) {
                         int x = wrap_map_x(Bases[base_id].x + RadiusOffsetX[i]);
                         int y = Bases[base_id].y + RadiusOffsetY[i];
@@ -1206,7 +1224,7 @@ L_5a2571:
                         || (!PlayersData[faction].ai_fight
                             && (PlayersData[faction].diplo_treaties[faction_tgt]
                                 & DTREATY_WANT_REVENGE)))
-                    && (PlayersData[faction].diplo_treaties[faction_tgt] & 0xC30)) {
+                    && (has_treaty(faction, faction_tgt, 0xC30))) {
                     action = 7;
                 }
                 if (local_4c) {
@@ -1217,7 +1235,7 @@ L_5a2571:
                     if (action != 1
                         && PlayersData[faction_tgt].tech_accumulated
                             >= PlayersData[faction_tgt].tech_cost / 2
-                        && ((PlayersData[faction].diplo_treaties[faction_tgt] & 0x30)
+                        && ((has_treaty(faction, faction_tgt, 0x30))
                             || PlayersData[faction_tgt].tech_ranking / 2
                                 > PlayersData[faction].tech_ranking / 2 + 4)) {
                         action = 5;
@@ -1229,11 +1247,11 @@ L_5a2571:
                             // records_[15 + 6] runs one past the declared array (image does)
                             for (int i = 0; i < 7; i++) {
                                 if (FactionMonuments[faction_tgt].records_[i + 15].achieved_
-                                    && !(PlayersData[faction].diplo_treaties[i + 1] & DTREATY_VENDETTA)) {
+                                    && !(has_treaty(faction, i + 1, DTREATY_VENDETTA))) {
                                     found_mon = 1;
                                     if (local_64 == -1
-                                        || (PlayersData[faction].diplo_treaties[i + 1] & DTREATY_PACT)
-                                        || ((PlayersData[faction].diplo_treaties[i + 1] & DTREATY_TREATY)
+                                        || (has_treaty(faction, i + 1, DTREATY_PACT))
+                                        || ((has_treaty(faction, i + 1, DTREATY_TREATY))
                                             && !(PlayersData[faction].diplo_treaties[local_64 + 1]
                                                  & DTREATY_PACT))) {
                                         local_64 = i + 1;
@@ -1252,8 +1270,8 @@ L_5a2571:
                 // ---- chunk C continues here at 5a2a58, still inside this
                 // else-if block (which ends at 5a2aa4: local_4c = 1; goto L_59fb64)
     // ---- 5a2a58: else-arm of chunk B's `if (local_4c)` (5a28ee) ----
-    if ((PlayersData[faction].diplo_treaties[faction_tgt] & 0x30) != 0
-        && (PlayersData[faction_tgt].diff_level > 2 || !HUMAN_BIT(faction_tgt))
+    if ((has_treaty(faction, faction_tgt, 0x30)) != 0
+        && (PlayersData[faction_tgt].diff_level > 2 || !is_human(faction_tgt))
         && PlayersData[faction_tgt].soc_effect_active.values_[SocialEffect::PROBE] < 3) {
         action = 6;
     }
@@ -1264,7 +1282,7 @@ L_5a2aa4:
     }
 
     // ---- 5a2ab0: thought control ----
-    if (HUMAN_BIT(faction)) {
+    if (is_human(faction)) {
         int tc_level;
         if (faction == ConsoleGlobal.faction_id_
             && (NetDaemonNet.action_mode_ & 1)) {
@@ -1311,14 +1329,14 @@ L_5a2aa4:
 L_5a2dcd:
     mode = 0;
     if ((action < 6 && action > 0) || action == 8) {
-        if (!HUMAN_BIT(faction)) {
-            if (morale_veh(veh_id, 1, 0) >= 5 && !diff_modifier && !HUMAN_BIT(faction_tgt)) {
+        if (!is_human(faction)) {
+            if (morale_veh(veh_id, 1, 0) >= 5 && !diff_modifier && !is_human(faction_tgt)) {
                 for (mode = 1; mode < MaxPlayerNum; mode++) {
                     if ((mode != faction && mode != faction_tgt
-                        && HUMAN_BIT(mode) && ALIVE_BIT(mode)
+                        && is_human(mode) && is_alive(mode)
                         && mode == GameDataStateStorage.fields_.ranking_faction_id_unk1_
-                        && !(PlayersData[faction_tgt].diplo_treaties[mode] & 0x10)
-                        && (PlayersData[faction_tgt].diplo_treaties[mode] & 8)) != 0) {
+                        && !(has_treaty(faction_tgt, mode, 0x10))
+                        && (has_treaty(faction_tgt, mode, 8))) != 0) {
                         break;
                     }
                 }
