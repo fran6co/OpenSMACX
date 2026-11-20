@@ -5255,7 +5255,8 @@ void __cdecl base_terraform(int force_improve) {
         no_raise = TRUE;
     } else {
         no_raise = FALSE;
-        if (!bore_seen && bore_score > 0 && !BaseCurrent->eco_damage
+        // A value test (!= 0, MATCHING_GUIDE 3.7): the image lays the arm in place.
+        if ((!bore_seen && bore_score > 0 && !BaseCurrent->eco_damage
             && crappy(bore_x, bore_y) >= 1
             && (pop >= 8 || energy_need > 1
                 || has_tech(Ability[abil_index(1)].preq_tech, faction)
@@ -5264,7 +5265,7 @@ void __cdecl base_terraform(int force_improve) {
             && (!(GameDataStateStorage.fields_.lock_masks_.human_mask_ & faction_bit)
                 || (faction == ConsoleGlobal.faction_id_
                     && (GameDataStateStorage.fields_.game_preferences_
-                        & PREF_AUTO_FORMER_BUILD_ADV)))) {
+                        & PREF_AUTO_FORMER_BUILD_ADV)))) != 0) {
             add_goal(faction, AI_GOAL_THERMAL_BOREHOLE, 1, bore_x, bore_y, BaseIDCurrentSelected);
             goto relocate;
         }
