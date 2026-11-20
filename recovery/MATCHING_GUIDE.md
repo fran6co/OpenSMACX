@@ -6383,6 +6383,34 @@ result over 64 symbol-counter pads, so none of these is a counter canary.
   the inline fills; a ternary/min/max result stored to a slot and reloaded at
   once. Frame still 4 short there (packrev's blockers name the remaining
   slot).
+- **A whole-struct copy into a local keeps its store to every field that is
+  overwritten before any read of the copied value** (par-2 2026-11-20, probe
+  `analysis/probes/rectcopy/run.py`; DiploPop::init 35 -> 26, DiploWin::exec
+  121 -> 29). After `r = s;` (struct assignment, `r = f()` through a `const
+  RECT &` accessor, `RECT r = s`, intrinsic `memcpy`, all alike), VC6 drops
+  a field's copy store when the field is never overwritten (copy
+  propagated, stored only if `r` escapes later) or when the copied value is
+  read before the overwrite (directly, `r.right = r.left - 3`, or through a
+  pointer, `rect_width(&r)`), but keeps it, as a dead `mov [ebp-N],reg`, when
+  the field is overwritten with no read of the copied value in between
+  (`r.left = x;`, `r.top = r.bottom - K;`). Only the copy's stores are kept:
+  a field-by-field copy, a scalar local, or an intermediate overwrite
+  (`r.right = a; r.right = b;`) leave nothing. Whether `r` escapes earlier
+  (`box_sprite(&r)` before the copy) does not matter; a later escape stores
+  every field anyway. A copy returned by value (`R va()`) also keeps the
+  store of a field read before its overwrite. Reading the rule backwards:
+  each image store of a copied field that is dead names a field the source
+  overwrote without reading; a copied field the source reads but the image
+  does not store means the read used another expression. DiploPop: the
+  image stores rect2().left and rect2().right into `rect` (0x004407C4,
+  0x004407E0), so `rect.right = rect.left - 3` was `rect.right =
+  MainInterfaceGlobal.rect2().left - 3`. DiploWin: the image stores
+  rect_EDC_.top into row.top (0x0044414D) and no rc.top after each `rc =
+  row`, so the band's top was set once on row (`row.top = row.bottom -
+  0x14`), not on each rc copy. Screen: `analysis/inlparamscan.py` `dead`
+  rows on a local aggregate's slots (AGG_FRAME / IP_AGG). AlphaSave::init
+  (frame = layout.edit_box_bounds_) keeps both dead stores on both sides;
+  its residual there is scheduling, not this rule.
 - **Declaration order of function-scope scalars does not set frame offsets**
   (par-5 2026-11-19, setup_text: mode/pane at -0x10 against a pointer temp at
   -0x14, row_pitch/width/base among -0x88..-0x90; declaration order, block

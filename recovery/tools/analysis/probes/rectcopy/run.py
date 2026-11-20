@@ -63,6 +63,12 @@ V = {
  'ref_twice_w':  'R r; r = gg.ra(); ' + X + 'r.right = x - 3; r.right = x - 5; r.left = x; m1 = r; ',
  # the original field read from the source instead of r
  'ref_srcread':  'R r; r = gg.ra(); ' + X + 'r.right = gg.ra().left - 3; r.left = x; m1 = r; ',
+ # the local escaped to a call before the copy (AlphaSave's frame: box_sprite(&frame) first)
+ 'pre_esc':      'R r; r = gg.b; ext(&r); r = gg.ra(); ' + X + BODY,
+ 'pre_esc_nr':   'R r; r = gg.b; ext(&r); r = gg.ra(); ' + X + 'r.right = x - 3; r.left = x; m1 = r; ',
+ 'pre_esc_ab':   'R r; r = gg.b; ext(&r); r = gg.ra(); r.top = r.bottom + 4; r.bottom = r.top + 20; m1 = r; ',
+ 'ref_ab':       'R r; r = gg.ra(); r.top = r.bottom + 4; r.bottom = r.top + 20; m1 = r; ',
+ 'ref_ab_e':     'R r; r = gg.ra(); r.top = r.bottom + 4; r.bottom = r.top + 20; m1 = r; ext(&r); ',
  'ref_noread_e': 'R r; r = gg.ra(); ' + X + 'r.right = x - 3; r.left = x; m1 = r; r = gg.b; ext(&r); ',
 }
 
