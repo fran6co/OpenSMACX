@@ -925,7 +925,7 @@ void DiploPop::init() {
 
     rect = MainInterfaceGlobal.rect2();
     int x = MainInterfaceGlobal.right_frame_rect().right - MainInterfaceGlobal.rect3().right + MainInterfaceGlobal.right_frame_rect().left;
-    rect.right = rect.left - 3;
+    rect.right = MainInterfaceGlobal.rect2().left - 3;
     rect.left = x;
     right_panel_button_rect_ = rect;
 
