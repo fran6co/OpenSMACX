@@ -2379,6 +2379,9 @@ void __cdecl invasions(int base_id) {
 // MEASURED 2026-11-19 (par-1): a plain range in this helper expands (interceptor
 // 80 -> 90 rows); 1-8 dead probes refuse nothing, 16 refuse it with x_dist,
 // base_who, on_map and wrap_map_x calls first. Kept.
+// 2026-11-20: reactor_power 83, proto_power/veh_health 82-83 rows (73 with
+// this twin); one more inline level under reactor_power refuses nothing here
+// or in turn_upkeep, whose twin shows the same refused range.
 static inline int interceptor_reactor_power(int reactor) {
     int (__cdecl *const range_fn)(int, int, int) = range;
     return range_fn(reactor, 1, 100) * 10;
