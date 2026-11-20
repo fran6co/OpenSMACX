@@ -67,7 +67,6 @@
 void PrefWinDeclFnPad0();
 void PrefWinDeclFnPad1();
 void PrefWinDeclFnPad2();
-void PrefWinDeclFnPad3();
 
 
 
