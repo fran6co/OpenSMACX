@@ -8991,6 +8991,18 @@ Counters and tie arms (par-5 2026-11-20, councwin)
   0x005B93D8, 10 -> 3 rows). `analysis/orsweep.py <unit.cpp> <addr>
   [--and]` tries the `!= 0` form at every `||` (and `&&`) test of a
   function alone, ranked by sdeck's structural key.
+- **An else-less `if (A && B) {...}` that VC6 threads can move a register
+  web and the frame; computing it as a value restores them** (par-5
+  2026-11-20, repair_phase 0x00526030, frame 0x24 -> 0x28, 16 -> 1 rows).
+  With `if (base_id >= 0 && !(Bases[base_id].state & RIOTS)) {
+  repair_rate++; ... }` VC6 threads both misses past the arm and forwards
+  `repair_rate` through ebx; the image keeps it homed in `[ebp-4]` and
+  gives the freed slot to an expanded inline's local. `int in_base = A &&
+  B; if (in_base)`, `if ((A && B) != 0)` and a bool local compile alike.
+  Fingerprint: the image's frame is 4 larger, a variable live across the
+  test is a slot in the image and a callee-saved register in ours, and the
+  block layout is otherwise equal. Screen with `orsweep.py --and` on the
+  frame-differing functions (framescan / rungs.py rung 3).
 - **Host orientation: the last-copy rule flips to first-copy with
   constructs elsewhere in the function** (probe
   `analysis/probes/xjhost/orient.py`, 2026-11-20 par-5). Three copies of
