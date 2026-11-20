@@ -272,6 +272,21 @@ an explicit `--pfx` is only needed to pick another lane.
   expanded (E) or called (c), image row over ours, with the addresses that disagree. Read with
   MATCHING_GUIDE 2.8. `--sig` supplies a signature for a copy whose own calls are all expanded
   (`??1StringList=?remove_all@StringStruct,??1StringStruct`).
+- `analysis/inline/predict.py <unit> <addr[,..]> [--show] [--leads] | --tree [unit ..]` rule-8 /Ob2 predictor (MATCHING_GUIDE
+  2.8 rule 8; 2026-11-20 par-4). Site tree from a /Od /FAs compile of the unit (every call site in source order, one
+  destructor call per scope exit, no inlining or cross-jumping); each inline callee's charge measured in the unit's
+  own compile by probe callers at the B0 floor (`__cprN(1); <call>;`, binary search over N, a destructor through a
+  local object's closing teardown, since an explicit `o->T::~T()` is never expanded; cached per unit text); the
+  depth-first walk of rule 8 with S fitted to ours' named call counts, then the image target as ours' fit moved by
+  image - ours (so cross-jumped call counts cancel). `--show` prints the walk with each site's own charge, subtree
+  spend and child budget; `--leads` tries one site charge +-0.5..4 or one more/fewer later site per body and lists
+  the changes that bring the model to the image. 5 s per unit. State: fits ours exactly (distance 0) on most
+  functions without destructor teardowns (base.cpp/veh.cpp: 12 of 19 non-exact), not on teardown-heavy giants
+  (terraform 80, probe 359): the ~Popup/~BasePop teardowns are cross-jumped into shared tails whose call counts the
+  optional suffix-trie merge (`PREDICT_MERGE=1`) over-merges, and ~BasePop (a base-class destructor) expands where
+  rule 8 refuses the ~Scroll member before it (`PREDICT_BASE=k` scales the base destructor's charge; neither fixed
+  it). Over the 22 rung-2 functions it gave one lead (editor_edit_veh: ~StringList's two sites cheaper by 4) and
+  S-only shifts for battle_fight (+1..5) and base_build (-2.5, ceiling-bound, rule 7 not modelled). Screen only.
 - `analysis/inlineclass.py [--out F] [--base F] [--fe FEALL.json] [--callee NAME] [--any] [-v] [unit ...]` header-inline
   cost-class census (55 s tree-wide): per callee with a body in a header, the functions whose image call count
   differs from ours (`E+` ours expands where the image calls, `c+` the reverse), exact functions marked `x`;
