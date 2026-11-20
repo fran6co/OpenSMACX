@@ -484,11 +484,13 @@ int BaseWin::farm_get(int a1, int a2) {
 // ORIGINAL: 0x00409200 ?queue_click@BaseWin@@QAEXHHHH@Z 0x00409200-0x0040A1B9;0x0065158B-0x006518EA
 // RECOVERY_BINDING: v1 {"evidence": ["git:649230f6:src/unrecovered/00409200.cpp", "source:src/basewin.h", "image:0x409200"], "reason": "Recover the complete original operation through genuine owning C++ classes, members and natural lifetimes; preserve retained seed evidence and historical restoration obligations separately from fresh matching."}
 // WORKAROUND(inline): dead /Ob2 budget probe for queue_click (folds away).
-// Four one-test expansions give the image's EH numbering for every teardown
-// from the popup menu on (states 0xB..0x4C, and the closing teardown placed
-// after the first return); only the first two return sites still trade depth
-// (image: ~Scroll expanded at 0x409306, called at 0x4093EF). The count
-// matters, not the position; the original's spend is not identified.
+// Free later sites: three before the popup and two in the left-click arm
+// give every teardown of the image (teardowns.py) except the first two
+// return sites, which trade depth (image: ~Scroll expanded at 0x409306,
+// called at 0x4093EF); with them the closing teardown expands one
+// ??_DStringList (~StringList call) as at the image's closing site. No count
+// or position of free or charged spend separates those two returns: ours
+// always decides them together. The original's sites are not identified.
 static inline int queue_click_budget_probe(int x) { if (x == 0) x = 1; return x; }
 void BaseWin::queue_click(int row, int x, int y, int right) {
     PopMenu menu;
@@ -500,6 +502,8 @@ void BaseWin::queue_click(int row, int x, int y, int right) {
             selected_queue_slot_ = min(BaseCurrent->queue_size + 1, position);
             field_40B30_ = 0;
             draw_queue(1);
+            queue_click_budget_probe(1003);  // WORKAROUND(inline)
+            queue_click_budget_probe(1004);  // WORKAROUND(inline)
             if (!prodPicker_.is_visible() || !prodPicker_.queue_change_blocked()) {
                 if (NetDaemonNet.lock_base(BaseIDCurrentSelected, 0, -1, -1)) return;
                 production(position, 1);

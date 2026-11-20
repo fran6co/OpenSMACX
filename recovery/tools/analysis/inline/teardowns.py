@@ -68,7 +68,8 @@ def ours(unit, src, sym, first):
 
     def callee(s):
         mc = re.match(r'call\s+(\S+)', s)
-        return mc.group(1) if mc else None
+        # key like the image side, so `??_DStringList@@QAEXXZ` reads `??_DStringList` on both
+        return im.key(mc.group(1)) if mc else None
     return [walk(ins, i + 1, lambda s: s.startswith('jmp'), target, callee)
             for i, s in enumerate(ins) if callee(s) and im.key(callee(s)) == first]
 
