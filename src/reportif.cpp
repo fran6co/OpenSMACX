@@ -6171,6 +6171,17 @@ void ReportIf::on_iface_group_clicked(int group, int, int item) {
 // TRIED: MISMATCH #0, sim ~0.58 (best of /O1 framed). Full structural transcription (all branches, both list modes, all 4 category bars). Approximated: the ListBox virtual-base (GraphicWin) adjustment at self+0xa384/+0x24/+0x28 uses the flattened `virtual_base_` member instead of the runtime vtable+8 lookup the original performs, so that handful of instructions differ in shape though not in intent.
 // The 21 one-character marker literals ("|", "[", "]", "+", ".", "%") are this function's own unpooled
 // copies in the pinned image, 0x6872CC..0x68731E in source order.
+// The strings.h punctuation helpers (space, say_comma, say_colon, say_open_paren,
+// say_close_paren) push the shared ??_C COMDATs instead, which LINK kept from
+// earlier units (popup.cpp's " ", basewin.cpp's ", " ": " ")" "("): " " at
+// 0x00682820 (0x004A72F1 and 24 more), ", " 0x00682E90 (0x004A76C8), ": "
+// 0x00682E94 (0x004A77C4, 0x004A785C, 0x004A795D), ")" 0x00682E98
+// (0x004A74D1) and "(" 0x00682E9C (0x004A7400).
+// RECOVERY_LITERAL: v2 merged 0x00682820 0x00682822 ??_C@_01FCOA@?5?$AA@ 0x004A7000
+// RECOVERY_LITERAL: v2 merged 0x00682E90 0x00682E93 ??_C@_02GIEM@?0?5?$AA@ 0x004A7000
+// RECOVERY_LITERAL: v2 merged 0x00682E94 0x00682E97 ??_C@_02HFBK@?3?5?$AA@ 0x004A7000
+// RECOVERY_LITERAL: v2 merged 0x00682E98 0x00682E9A ??_C@_01KMMP@?$CJ?$AA@ 0x004A7000
+// RECOVERY_LITERAL: v2 merged 0x00682E9C 0x00682E9E ??_C@_01GFI@?$CI?$AA@ 0x004A7000
 // RECOVERY_LITERAL: v1 0x006872CC 0x006872CE $SG63668 0x004A7000
 // RECOVERY_LITERAL: v1 0x006872D0 0x006872D2 $SG63669 0x004A7000
 // RECOVERY_LITERAL: v1 0x006872D4 0x006872D6 $SG63670 0x004A7000
