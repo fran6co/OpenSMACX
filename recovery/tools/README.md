@@ -686,6 +686,12 @@ an explicit `--pfx` is only needed to pick another lane.
   (25 s tree-wide): one /FAsc compile per unit; every `return` statement is COPY (own epilogue), FOLD (no code), JMP or
   FALL against its context (last, guard, guard&&, guard||, after, case, else; `=last` when it returns the last return's
   expression). Ground truth for MATCHING_GUIDE 3.7 "Return-tail copies".
+- `analysis/retmap.py [unit ..] [--all] [--addr A,..] [--show] [--json F]` return-site map (MATCHING_GUIDE 3.7 "Epilogue
+  copy or branch"; 55 s tree-wide): per non-exact function the `ret` count image/ours and every unpaired return tail,
+  `IMG-COPY` (the image has an epilogue copy where ours branches into a shared tail) or `OURS-COPY` (the reverse), with the
+  value set, entry (F fallthrough, Jn jumps) and our source line; `--show` lists every tail on both sides. An OURS-COPY on
+  a nested `||` return is the veh_init case (separate `if (..) goto done;`). `analysis/probes/rettail/dup.py` is the probe
+  matrix behind the rule.
 - `analysis/retbrk.py <unit> <addr> [--write] | --from FEALL.json` switch-arm exit screen: for every `switch` directly
   followed by `return X;`, the arms' `return X;` as `break;` (A) or the reverse (B), per switch and every subset
   (Net::drop_player 0x00632350: both inner switches A -> exact).

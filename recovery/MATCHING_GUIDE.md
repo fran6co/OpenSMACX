@@ -8150,13 +8150,53 @@ Prologue saves and return tails (par-5 2026-11-19; `analysis/prosave.py`,
     every subset (only four non-exact functions have a switch directly
     followed by `return`, no other gain).
   - *Layout `jcc RET; jmp JOIN`* (veh_init 0x005C080A) against ours `jncc
-    JOIN; mov eax,v; pops; ret`: the then-arm ends in `if (p || q) return v;`
-    with v the last return's value. VC6 has two ways to simplify `jcc L1;
-    jmp RET; L1: jmp JOIN`; our source always gets the copy (probes vi_or,
-    vi_two, vi_goto, vi_neg, vi_else_join: all the copy; a statement after
-    the inner `if` gives `je RET` but moves the else arm out of line).
-    Twelve arm structures and every single/paired `goto out` of the ten
-    returns leave the 8 rows: not found.
+    JOIN; mov eax,v; pops; ret`: the then-arm ended in `if (p || q) return
+    v;`. Solved by par-6 (2026-11-20, next bullet): the source tests p and
+    q separately and branches with `goto done;` to a label on the final
+    `return v;` (exact). The `||` form and `return` in either form all
+    keep the copy (probes vi_* above and dup.py).
+- **Epilogue copy or branch: the statement shape decides, not the epilogue**
+  (par-6 2026-11-20; `analysis/probes/rettail/dup.py`, 40 shapes, each with
+  the value constant / register / address-taken local / expression, 0-3
+  saved registers, with and without a 64-byte frame). The returned value,
+  the number of pops and the frame never change the choice; the cells of
+  one shape agree except where noted.
+  - A nested `return V` that ends the then-arm of an if/else gets its own
+    copy (`jncc JOIN | V; pops; ret`), even when V is the final return's
+    value: `if (A) { if (B) return V; } else { X; } J; return V;` (T1, with
+    `||` T2, with an `else if` that also returns T5/T13). Without the outer
+    `else` (T3), or with any statement after the inner `if` (T6), it
+    branches to the final return's block instead.
+  - `goto out;` to a label on the final `return V` branches (`jcc RET;
+    jmp JOIN`, T9), and so do separate `if (p) goto out; if (q) goto out;`
+    tests (T19). `if (p || q) goto out;` still gets the copy (T14), as do
+    `if (p) return V; if (q) return V;` (T20) and every `&&`/negated/
+    `else { goto join; }` spelling of the arm (W_* rows). So an image
+    `jcc RET; jcc RET; jmp JOIN` where ours has `jncc JOIN; <copy>` is
+    separate gotos to the final return (veh_init 0x005C03D0, 8 -> 0).
+  - In the probe, an `else` arm that itself ends in `return` is moved
+    after the join once the then-arm ends in a plain `jmp` (T21, V_two_g_*:
+    the then-arm then falls into the join); in veh_init the larger else arm
+    stays in line, so check the real function before rejecting the goto.
+  - The arms swapped (`if (!A) { X; } else { if (B) return V; }`, T7): a
+    branch with 0-1 saved registers, a copy with 2-3; the one register
+    count dependency of the matrix.
+  - `analysis/retmap.py` lists the functions whose return tails differ
+    (2026-11-20: 13 of the non-exact set; the others are inline/EH or
+    cross-jump host questions: AlphaNetStringStruct::add, Buffer::copy,
+    monolith, shoot).
+- **An innermost two-constant if/else is setcc; explicit `mov K1; jmp | mov
+  K2; jmp` stores mean the pair was not innermost** (par-6 2026-11-20,
+  micro-probe and PickTech::draw_tech 0x00484C60). `if (c) m = K1; else m
+  = K2;`, `m = c ? K1 : K2` and an inline helper `if (c) return K1; return
+  K2;` all give `xor; cmp; setcc; dec; and; add`. A three-way chain whose
+  last two arms store the same constant, `if (c1) m = K1; else if (c2) m =
+  K2; else m = K2;`, keeps c1 as branches: its identical arms are merged
+  and the c2 compare is deleted, so the middle threshold leaves no trace.
+  In draw_tech the same spelling also hoists the shared `cell_width_` load
+  above the outer `jne` (image `mov eax,[W]; cmp eax,800; mov eax,[cw];
+  jne`); 290 -> 277. Three distinct constants keep c1 as a branch and make
+  the c2 pair setcc.
   - *A fall-off path with its own epilogue* (NetDaemon::init 0x0052E02A:
     `test eax,eax; jne L; pops; ret; L: pops; mov eax,1; ret`) against ours
     `test; je; mov eax,1` inside one epilogue: sixteen spellings (result
