@@ -8286,6 +8286,33 @@ Counters and tie arms (par-5 2026-11-20, councwin)
   if-chain (0x498402), not in the later F8 copy or the rotation switch's
   copies; ours hosts it in the switch's case 7 (22 rows, jcc/jmp counts
   equal). An F-key `switch` costs 110 rows; not resolved.
+- **Host orientation: the last-copy rule flips to first-copy with
+  constructs elsewhere in the function** (probe
+  `analysis/probes/xjhost/orient.py`, 2026-11-20 par-5). Three copies of
+  `pop(label, K, 0, pcx); gs |= 4;` before returns (monolith's shape):
+  the last copy hosts by default, but the FIRST copy hosts (the others
+  jmp into it) when the function also has one bare `if (A || B) return;`
+  (anywhere: before or after the copies, `||` of calls too), or when the
+  first two copies are the then/else arms of one if/else. Each such `||`
+  bare return toggles the orientation (two: last again, three: first);
+  separate `if (A) return; if (B) return;`, `&&`, a `||` return with a
+  statement before it, or one nested in another `if` do not toggle.
+  Without a toggle, a last copy that is not the function's fallthrough end
+  (an else-arm with a then-arm laid after it) loses to the copy before it.
+  So "the image hosts last, ours first" (`xjhostscan.py` ORIENT-LAST) is
+  not an arm-order fix: monolith 0x0057A050 hosts its first MONOLITHHEAL
+  copy and loses its StringTemp host, and only deleting the proto `||`
+  return, the order-0x18 block and the human/heal middle together (not any
+  one or two of them) restores the image's last-copy host; separate proto
+  ifs, an if/else wrapping, returns in the heal arms and an early-return
+  MONOLITHNO arm are all neutral (27 rows). The toggles in a real function
+  are therefore not all known; Buffer::copy 0x005DFF00 (arms 2-3 keep
+  their own `free_data; return 3` in the image, jump into arm 1's in
+  ours) and Net::join_session 0x0062E540 (the image hosts return 0 after
+  close() and the epilogue after the success return; every spelling that
+  lays the success block after close() moves the return-0 host to the
+  first unconditional return 0, the Open failure) look like the same
+  family. Open.
 
 ### 3.8 VC5 (Caviar/VOX) x87 rules (2026-11-19 par-5)
 
