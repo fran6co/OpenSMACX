@@ -3570,48 +3570,6 @@ What the model does not predict (2026-11-19)
   tails merge (jmp 0x4D64CE) with no special source shape. No effect in
   terraform, config_game, queue_click, pick_player, base_editor_proj,
   popb or save_game (all single-site and ALL rows equal or worse).
-- **Late free helpers reserve by count, and in a ceiling-bound caller they
-  must be paired with a size pad** (high; probe 0x0059F120, 2026-11-20
-  par-4, ce5ae6b8ee). The reservation that refuses the early level-2 sites
-  grows with the number of free expansions laid after them, not with
-  their size or kind: probe's 52 human/alive/treaty tests (each a few
-  bytes) refuse ~Scroll at the first nine ~Popup teardowns (EH 27 -> 0,
-  named calls 52 -> 16), where dead spend at the top, after site 9, mid
-  or end (2-16 charged or free probes) and 20-800 size statements moved
-  none of those sites. Second effect: a free helper in place of a raw
-  test makes the caller *smaller* (its body is not counted as caller
-  statements), so in a function that hits the /Ob2 total-size ceiling
-  (rule 7, `analysis/ceilscan.py` `Ec`) the ceiling stop moves later and
-  one more late site expands (probe: the return 1 after the FRAME block
-  kept an expanded ~Popup). Restore the stop with a caller-size pad (dead
-  `if (0) { g = k; }` blocks after the declarations, WORKAROUND(inline);
-  probe went from 6 to 40 blocks; sweep the count, 36-48 all worked).
-  So: respell the family first, then re-sweep the pad, and judge by the
-  EH map and call multiset, never by the rows of the intermediate step.
-  Open residue in probe after that (2026-11-20 par-4, all screens negative):
-  - *x_dist at level 3 (vulnerable -> vector_dist -> x_dist) is not a room
-    or size question.* It stays a call at every pad count 0..64, with whole
-    arms deleted (action 1, 3, 7 or 8: hundreds of statements), and with
-    the free helpers after it turned back into raw macros. Only lowering
-    it to level 2 (`vector_dist(x_dist(..), abs(..))` in vulnerable)
-    expands it, and that breaks vulnerable 0x0059E980's out-of-line copy
-    (the image loads both `Bases[i]` coordinates before x_dist: four-argument
-    parameters) and mind_control. Look for a level-3 ordering rule, not spend.
-  - *The six NetMsg::pop tails ours merges are a layout question.* The
-    action dispatch's join (the prb_defense ternary head, 0x5A36EE) has no
-    fall-through predecessor at its source position (the -1 arm ends in
-    `goto`), so VC6 lays it after one arm that jumps to it: the image after
-    action 2 (check_base/draw_tile), ours after action 3 (the TOOKENERGY
-    pop). Cross-jumping then merges identical `call pop; add esp,8` tails
-    into the block that falls into the join, so ours folds six pops into
-    action 3's while the image (join behind draw_tile) keeps each with its
-    own `jmp`. Fix the join's placement, not the tails; action 3 nested,
-    inverted, or an explicit `goto` join after action 2 did not move it.
-  - *veh_at < 0 return 1:* `if (v >= 0) { loop } else return 1;` makes that
-    site jump to the shared 0x5A5509 block as the image does, but moves the
-    action_mode block and shifts the early frame slots (708 -> 752 rows);
-    `<= -1`, `!(>= 0)`, if/else with the return first and a goto to a label
-    on the FRAMED return keep the copy or worsen layout.
 - **A helper with a literal inside its body is refuted by per-site
   literals** (high; 2026-11-19 par-4). An argument-free inline such as
   `say_plus() { strcat(StringTemp, "+"); }` emits ONE literal
@@ -7352,25 +7310,6 @@ result over 64 symbol-counter pads, so none of these is a counter canary.
     spend (base_build 0.9511 -> 0.9523); measure each function.
 - **`cmp reg,v; jle; mov reg,other`, or `f()` called twice** is the windows.h
   `max`/`min` macro.
-- **A candidate computed before its guard and re-formed with `lea` from
-  slots is a `max()`/`min()` macro, not a named temporary** (par-5
-  2026-11-20, set_time_controls 0x00523C60, fe 24 -> 3). The macro writes its
-  expression twice (`((a) > (b) ? (a) : (b))`): VC6 evaluates the parts
-  common to both copies (here the event bonus) once, early, before the
-  enclosing `if`, then forms the sum once for the compare and again for the
-  result, both times with `lea` from the spilled slots. A named
-  `const int candidate = ...; if (v <= candidate) v = candidate;` evaluates
-  it once and sinks the shared part into the arm. Read the image for an
-  expression rebuilt from memory on both sides of a `cmp/jle`; the reverse
-  (one evaluation feeding both the test and the result) is a temporary or an
-  inline function such as `range()`. Tree screen (2026-11-20, 317 non-exact
-  functions: every `if (v < e) v = e` and named-temporary guard as
-  `max`/`min`, every `max`/`min` as a once-evaluating inline, every `range()`
-  as a macro): one real site, base_build's creche morale floor
-  (0x004FD374). The other row gains were ties elsewhere or doubled a call
-  (enemy_move's `range(stack_check(...), 0, def)`: rows 5194 -> 4833 but the
-  named call multiset 0 -> 3 away); judge such rewrites by the call
-  multiset first.
 - **Float types.** A float temporary kept in x87 is `float`; `double` makes the
   constants qword. Check `.rdata` operand widths.
 - **`lea r,[r+r*2+K]; shl r,4; [r+Array]` is a named index variable in an EH
@@ -9477,6 +9416,25 @@ Finish-the-unit round (par-1 2026-11-20, round 40):
   reproduce the split but not the order); SpriteBox::calculate_dimensions
   min operand order (six ternary/min spellings, three count placements);
   Video::decode_frame ebp parameter copies (two-level Buffer::copy inline).
+- Screens for the three rules (par-1 2026-11-20, round 41): `rules.py`
+  gains `iftern` (`if (C) V = A; else V = B;` and `V = B; if (C) V = A;`
+  -> `V = C ? A : B;`), `armdup` (the 1-4 simple statements before an
+  if/else copied into both arms) and `freshctr` (`for (X = ...` over a
+  function-scope X not read after the loop -> its own `int X_fN`). Over
+  the 47 units with a residual of 120 rows or less (185 sites): no kept
+  change (compute_score's `unk_107` ternary drops 20 -> 10 rows but the
+  image stores twice, 0x5AD38C/0x5AD3A0: rejected). A test-to-jcc gap
+  screen (`test`/`cmp` separated from its jcc by flag-neutral moves, image
+  against ours) mostly finds register differences between the arms, which
+  stop VC6 from hoisting their identical leading instructions (ReportWin::
+  draw_projects 0x49EDE8): it is not always a source prefix. One source
+  case: Datalink::draw_social 0x00430090, whose arms clear StringTemp
+  before evaluating the name argument (the hoisted
+  `mov byte [StringTemp],0` at 0x43014D). The arm-clear form exists
+  (each arm `StringTemp[0] = 0;` then an argument-first strcat/CharUpperA
+  helper: 54 -> 52 rows, EH/calls/frame equal) but was not taken: it
+  needs an invented WORKAROUND(inline) helper and a second budget probe
+  for a rows-only gain, and stand-ins must buy a rung, not rows.
 
 ### 3.8 VC5 (Caviar/VOX) x87 rules (2026-11-19 par-5)
 

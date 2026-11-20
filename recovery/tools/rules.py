@@ -290,6 +290,138 @@ def rule_ternret(t,mt,pos):
         g=[t[pos+m.start(k):pos+m.end(k)] for k in (2,3,4)]
         yield (s0,e0,'if ('+g[0].strip()+') { return '+g[1].strip()+'; } return '+g[2].strip()+';','ternret')
 RULES['ternret']=rule_ternret
+LV_=r'[A-Za-z_][\w\.\[\]]*(?:->[\w\.\[\]]+)*'
+def _stmt_end(mt,i):
+    """i at the first char of a statement body (after optional '{'): return end of a single `x;` statement or -1"""
+    j=mt.find(';',i)
+    return j
+def rule_iftern(t,mt,pos):
+    # MATCHING_GUIDE 3.7 (round 40): one store of a value chosen by a condition is a ternary.
+    # if (C) V = A; else V = B;   (each arm optionally braced)   ->   V = C ? A : B;
+    # V = B; if (C) V = A;                                          ->   V = C ? A : B;
+    out=[]
+    arm=r'(?:\{\s*('+LV_+r') = ([^;{}]+);\s*\}|('+LV_+r') = ([^;{}]+);)'
+    rx=re.compile(r'\bif\s*\(')
+    for m in rx.finditer(mt,pos):
+        s=m.start(); p0=m.end()-1; p1=match(mt,p0,'(',')')
+        if p1<0: continue
+        cond=t[p0+1:p1]
+        a=re.compile(r'\s*'+arm).match(mt,p1+1)
+        if not a: continue
+        va=(a.group(1) or a.group(3)); ea=(a.group(2) if a.group(1) else a.group(4))
+        va_t=t[a.start(1 if a.group(1) else 3):a.end(1 if a.group(1) else 3)]
+        ea_t=t[a.start(2 if a.group(1) else 4):a.end(2 if a.group(1) else 4)]
+        el=re.compile(r'\s*else\s*'+arm).match(mt,a.end())
+        base=re.split(r'[\.\[]|->',va)[0]
+        if el:
+            vb=(el.group(1) or el.group(3))
+            if vb.replace(' ','')!=va.replace(' ',''): continue
+            eb_t=t[el.start(2 if el.group(1) else 4):el.end(2 if el.group(1) else 4)]
+            nxt=skipws(mt,el.end())
+            if mt[nxt:nxt+4]=='else': continue
+            out.append((s,el.end(),va_t+' = ('+cond.strip()+') ? '+ea_t.strip()+' : '+eb_t.strip()+';','iftern'))
+        else:
+            # previous statement `V = B;` on the line before
+            k=t.rfind('\n',0,s); k2=t.rfind('\n',0,k)
+            if k<0 or k2<0: continue
+            prev=mt[k2+1:k]
+            pm=re.match(r'([ \t]*)('+re.escape(va)+r') = ([^;{}]+);\s*$',prev)
+            if not pm: continue
+            nxt=skipws(mt,a.end())
+            if mt[nxt:nxt+4]=='else': continue
+            if re.search(r'\b'+re.escape(base)+r'\b',mt[p0:p1]): continue
+            eb_t=t[k2+1+pm.start(3):k2+1+pm.end(3)]
+            out.append((k2+1+pm.start(2),a.end(),va_t+' = ('+cond.strip()+') ? '+ea_t.strip()+' : '+eb_t.strip()+';','prevstore-tern'))
+    out.sort(key=lambda c:c[0])
+    for c in out: yield c
+RULES['iftern']=rule_iftern
+_CTRL=re.compile(r'\s*(return|break|continue|goto|case|default|if|else|for|while|do|switch|delete)\b')
+def rule_armdup(t,mt,pos):
+    # MATCHING_GUIDE 3.7 (round 40): a test far from its branch means both arms repeat a common prefix.
+    # S1; ..; Sk; if (C) {A} else {B}   ->   if (C) {S1..Sk A} else {S1..Sk B}   (k = 1..4; S simple statements
+    # that do not write anything C reads)
+    out=[]
+    for m in re.finditer(r'\bif\s*\(',mt):
+        s=m.start(); p0=m.end()-1; p1=match(mt,p0,'(',')')
+        if p1<0: continue
+        b0=skipws(mt,p1+1)
+        if b0>=len(mt) or mt[b0]!='{': continue
+        b1=match(mt,b0,'{','}')
+        if b1<0: continue
+        e=skipws(mt,b1+1)
+        if mt[e:e+4]!='else' or (mt[e+4:e+5].isalnum() or mt[e+4:e+5]=='_'): continue
+        c0=skipws(mt,e+4)
+        if c0>=len(mt) or mt[c0]!='{': continue
+        c1=match(mt,c0,'{','}')
+        if c1<0: continue
+        # the if must start its line, and not be an `else if`
+        ls=mt.rfind('\n',0,s)
+        if mt[ls+1:s].strip(): continue
+        condids=set(re.findall(r'[A-Za-z_]\w*',mt[p0:p1]))
+        stmts=[]; k=ls
+        while len(stmts)<4:
+            k2=mt.rfind('\n',0,k)
+            if k2<0: break
+            line=mt[k2+1:k]
+            if not line.strip(): k=k2; continue
+            if not re.match(r'[ \t]+[^;{}]*;\s*$',line) or _CTRL.match(line): break
+            if re.match(r'[ \t]*(?:const |unsigned |signed |static )*[A-Za-z_][\w:]*(?:[ \*&]+)\w+( = [^;]*)?;\s*$',line) and not re.match(r'\s*\w+ = ',line) and not re.match(r'\s*[\w\.\[\]\->]+\(',line): break  # declaration
+            lhs=re.match(r'\s*([A-Za-z_][\w\.\[\]]*(?:->[\w\.\[\]]+)*)\s*(?:[\+\-\*/\|&\^]|<<|>>)?=[^=]',line)
+            ids=set(re.findall(r'[A-Za-z_]\w*',lhs.group(1))) if lhs else set()
+            if re.search(r'\+\+|--',line): ids|=set(re.findall(r'[A-Za-z_]\w*',line))
+            if ids & condids: break
+            if set(re.findall(r'[A-Za-z_]\w*',line)) & condids: break
+            k3=mt.rfind('\n',0,k2)
+            pl=mt[k3+1:k2].rstrip()
+            if pl and pl[-1] not in ';{}': break
+            # a call may change anything C reads; allow only when C reads no member/global state through a call
+            stmts.insert(0,(k2+1,k))
+            k=k2
+            ss=stmts[0][0]
+            moved=''.join(t[a:b+1] for a,b in stmts)
+            ind=re.match(r'[ \t]*',t[ss:]).group(0)
+            arm_ind=re.match(r'\n([ \t]*)',t[b0+1:]) 
+            ai=arm_ind.group(1) if arm_ind else ind+'    '
+            mv=''.join('\n'+ai+t[a:b].strip() for a,b in stmts)
+            rep=t[s:b0+1]+mv+t[b0+1:c0+1]+mv+t[c0+1:c1+1]
+            out.append((ss,c1+1,rep,'armdup%d'%len(stmts)))
+    out=[c for c in out if c[0]>=pos]
+    out.sort(key=lambda c:c[0])
+    for c in out: yield c
+RULES['armdup']=rule_armdup
+def rule_freshctr(t,mt,pos):
+    # MATCHING_GUIDE 3.7 (round 40): a loop counter in its own frame slot is a new variable.
+    # for (X = I; ...X...) {..X..}  with X a function-scope int whose value is not read after the loop
+    #   ->  for (int X_fN = I; ...) {..X_fN..}
+    n=0
+    for m in re.finditer(r'\bfor\s*\(\s*([A-Za-z_]\w*) = ',mt):
+        if m.start()<pos: continue
+        x=m.group(1)
+        p0=mt.find('(',m.start()); p1=match(mt,p0,'(',')')
+        if p1<0: continue
+        b0=skipws(mt,p1+1)
+        if mt[b0]!='{': continue
+        b1=match(mt,b0,'{','}')
+        if b1<0: continue
+        # enclosing function: last column-0 line ending with '{' before
+        tops=[q for q in re.finditer(r'\n[^\s/#][^\n]*\{[ \t]*(?=\n)',mt[:m.start()])]
+        if not tops: continue
+        top=tops[-1].end()
+        fe_=mt.find('\n}',b1)
+        if fe_<0: continue
+        if not re.search(r'\b(?:int|unsigned|short|char|long)\b[^;\n(]*\b'+x+r'\b',mt[top:m.start()]): continue
+        after=mt[b1+1:fe_]
+        u=re.search(r'\b'+x+r'\b',after)
+        if u:
+            nx=after[u.end():u.end()+4]
+            if not re.match(r'\s*=[^=]',nx): continue
+        n+=1
+        nn=x+'_f%d'%n
+        hdr=re.sub(r'\b'+x+r'\b',nn,t[p0:p1+1],count=0)
+        hdr='('+'int '+hdr[1:].lstrip()
+        body=re.sub(r'(?<![\w\.>])'+x+r'\b',nn,t[b0:b1+1])
+        yield (m.start(),b1+1,'for '+hdr+' '+body,'freshctr')
+RULES['freshctr']=rule_freshctr
 def main():
     rule=RULES[sys.argv[1]]; unit=sys.argv[2]; unit=unit if unit.startswith('src/') else 'src/'+unit; pfx=sys.argv[3]
     path=R+'/'+unit; text=open(path,encoding='latin-1').read()
