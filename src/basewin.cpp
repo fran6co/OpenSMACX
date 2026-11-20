@@ -2623,8 +2623,8 @@ void BaseWin::draw_nutrients(int update_mode) {
         turns = (BaseCurrent->nutrient_surplus + remaining - 1)
                 / BaseCurrent->nutrient_surplus + 1;
     } else if (BaseCurrent->nutrient_surplus < 0) {
-        turns = (-BaseCurrent->nutrient_surplus + nutrients - 1)
-                / -BaseCurrent->nutrient_surplus + 1;
+        const int deficit = -BaseCurrent->nutrient_surplus;
+        turns = (deficit + nutrients - 1) / deficit + 1;
     } else {
         // Bug-for-bug: a stalled base reports the update-mode argument.
         turns = update_mode;
