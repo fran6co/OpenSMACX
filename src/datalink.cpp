@@ -1942,7 +1942,10 @@ Purpose: Push a topic onto the back-history ring UNK5 pops, unless the panel
 Return Value: n/a
 Status: Complete
 */
-void Datalink::push_history(int category, int index) {
+// draw_entry expands this body (0x0042BF92..0x0042BFE2) and the image still
+// emits it with no callers: `inline` here plus datalink.h's MEASURED
+// (dllexport) declaration give both, as for turn.cpp's ascent.
+inline void Datalink::push_history(int category, int index) {
     if (field_2A38_ != 0) {
         return;
     }
@@ -2060,24 +2063,7 @@ void Datalink::draw_entry() {
     int selected = listBox_.get_selected_id();
     int category = selected / 10000;
     history_[0] = selected - category * 10000;
-    if (!field_2A38_) {
-        // WORKAROUND(inline): the image expands push_history (0x0042BD80,
-        // emitted with no callers) here at 0x0042BF92..0x0042BFE2; VC6 does
-        // not auto-inline the out-of-line member in this build, and an
-        // `inline` definition would drop the emitted copy. Same body.
-        const int topic = category * 10000 + history_[0];
-        const int count = field_2A34_;
-        if (count == 0 || history_[count] != topic) {
-            if (count == 0x14) {
-                for (int i = 0; i < 0x13; ++i) {
-                    history_[1 + i] = history_[2 + i];
-                }
-                --field_2A34_;
-            }
-            history_[field_2A34_ + 1] = topic;
-            ++field_2A34_;
-        }
-    }
+    push_history(category, history_[0]);
     set_clip(&entry_clip_rect_);
     RECT frame = entry_frame_rect_;
     frame.left -= 23;
@@ -2107,25 +2093,7 @@ void Datalink::draw_entry() {
     case 12: draw_social(); break;
     case 13: draw_effect(); break;
     case 14:
-        // WORKAROUND(inline): the image expands draw_tech (0x00430B30) and its
-        // UNK7 call here (0x0042C143..0x0042C26B, same "TECH" object
-        // 0x006834D8); a draw_tech() call is not expanded in this build.
-        // draw_tech and UNK7 keep their own emitted, mapped bodies.
-        set_font(&font1_, 0, 0, 0);
-        set_text_color(0xE0, -1, 1, 1);
-        StringTemp[0] = 0;
-        append_upper_name(Technology[history_[0]].name);
-        write_cent_l(StringTemp, &title_rect_);
-        ReportWinGlobal.reset();
-        ReportWinGlobal.shared_research_focus() = history_[0];
-        ReportIfGlobal.field_8_ = 2;
-        ReportWinGlobal.draw_labs();
-        StringTemp[0] = 0;
-        append_tech_topic();
-        char number[80];
-        _itoa(history_[0], number, 10);
-        strcat(StringTemp, number);
-        UNK7(DatalinkBlurbFile, StringTemp);
+        draw_tech();
         break;
     case 15: draw_faction(); break;
     }
@@ -3019,11 +2987,13 @@ static inline void append_upper_name(LPSTR name) {
 // The unpooled TU still has one "TECH" object for draw_tech and the copy
 // draw_entry expands: both sites go through this helper's literal.
 static inline void append_tech_topic() {
-    // RECOVERY_LITERAL: v1 0x006834D8 0x006834DD $SG55633 0x00430B30
+    // RECOVERY_LITERAL: v1 0x006834D8 0x006834DD $SG55622 0x00430B30
     strcat(StringTemp, "TECH");
 }
 
-void Datalink::draw_tech() {
+// draw_entry's technology case expands this body (0x0042C143..0x0042C26B);
+// inline plus datalink.h's MEASURED declaration also keep the emitted copy.
+inline void Datalink::draw_tech() {
     set_font(&font1_, 0, 0, 0);
     set_text_color(0xE0, -1, 1, 1);
     StringTemp[0] = 0;
@@ -3208,7 +3178,7 @@ void Datalink::draw_terraform() {
     // The help topics are this unit's own literals: 0x004317E7 pushes
     // "HELPTERRAFORM", 0x0043187F "HELPTERRA", 0x0043189C/0x004318A3 the
     // "LAND"/"SEA" pair.
-    // RECOVERY_LITERAL: v1 0x00683514 0x00683522 $SG55705 0x00431180
+    // RECOVERY_LITERAL: v1 0x00683514 0x00683522 $SG55694 0x00431180
     strcat(StringTemp, "HELPTERRAFORM");
     popup.start(DatalinkHelpFile, StringTemp, -1, 0, 0, 0);
     set_font(&body_font_, 0, 0, &link_font_);
@@ -3217,10 +3187,10 @@ void Datalink::draw_terraform() {
     set_text_color_hyper(0x96, -1, 1, 1);
     write_strings(&popup.unit_ids_, rect.left, rect.top, rect.right - rect.left, 0);
     StringTemp[0] = 0;
-    // RECOVERY_LITERAL: v1 0x00683524 0x0068352E $SG55706 0x00431180
+    // RECOVERY_LITERAL: v1 0x00683524 0x0068352E $SG55695 0x00431180
     strcat(StringTemp, "HELPTERRA");
-    // RECOVERY_LITERAL: v1 0x00683530 0x00683535 $SG55707 0x00431180
-    // RECOVERY_LITERAL: v1 0x00683538 0x0068353C $SG55708 0x00431180
+    // RECOVERY_LITERAL: v1 0x00683530 0x00683535 $SG55696 0x00431180
+    // RECOVERY_LITERAL: v1 0x00683538 0x0068353C $SG55697 0x00431180
     strcat(StringTemp, land ? "LAND" : "SEA");
     char number[80];
     _itoa(action, number, 10);

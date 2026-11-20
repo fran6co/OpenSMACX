@@ -78,7 +78,7 @@ class Datalink : public GraphicWin, public SubInterface {
   // below are ours, from the measured behaviour; the catalogue names
   // are carried by `// symbol` facts under the markers in datalink.cpp.
   void show_topic(unsigned int category, int facility);
-  void push_history(int category, int facility);
+  MEASURED void push_history(int category, int facility);
   void pop_history();
   void UNK6();
   void UNK7(char *file, char *section);
@@ -143,7 +143,7 @@ class Datalink : public GraphicWin, public SubInterface {
   void draw_project();
   void draw_social();
   void draw_effect();
-  void draw_tech();
+  MEASURED void draw_tech();
   void draw_faction();
   void draw_terraform();
   // 0x00431DC0 ?on_link_clicked@Datalink@@QAEHHPAD@Z
