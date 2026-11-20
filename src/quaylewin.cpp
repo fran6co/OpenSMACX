@@ -63,20 +63,6 @@ QuayleWin::QuayleWin() {}
 // ORIGINAL: 0x004951A0 ?init@QuayleWin@@QAEHXZ 0x004951A0-0x004956C1 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned original entry 004951A0; retained seed git:276d612614085e5d57743cf8cc92903d9468e346:src/unrecovered/004951a0.cpp", "recovery/tasks/quaylewin-owner-coverage-wave.json", "QuayleWin constructor layout and virtual-slot evidence; fresh isolated build and host controls"], "reason": "Rehome the retained QuayleWin seed into its real GraphicWin owner with typed subobjects; preserve original spans and historical seed obligations."}
 // TRIED: field-by-offset access on `char *self`, per the scaffold's own hint, plus GraphicWin::init/Buffer::load_pcx/BaseButton::init argument order re-derived from the disassembly's push order (Ghidra's own decompilation independently agreed on all three). Reaches MISMATCH #1 (`push esi` vs a `mov`, one instruction into the __thiscall prologue's register-save order) - not chased further, a register-allocation detail this pass's budget does not cover.
-static inline void quayle_offset_rect(RECT *rect, int dx, int dy) {
-  rect->left += dx;
-  rect->right += dx;
-  rect->top += dy;
-  rect->bottom += dy;
-}
-
-static inline void quayle_place_rect(RECT *rect, int x, int y, int width, int height) {
-  rect->left = x;
-  rect->top = y;
-  rect->right = x + width;
-  rect->bottom = y + height;
-}
-
 int QuayleWin::init() {
   field_A1C_ = 0x320;
   field_A20_ = 0x258;
@@ -86,12 +72,12 @@ int QuayleWin::init() {
   if (monitor_mode_ == 0) {
     field_A14_ = 0;
     field_A18_ = 0;
-    quayle_place_rect(&window_rect_, 0, 0, field_A1C_, field_A20_);
+    set_rectangle_dimensions(&window_rect_, 0, 0, field_A1C_, field_A20_);
     GraphicWin::init(0, 0, 0x320, 0x258, QuayleStandardCaption, 0x1000000, 0, 0, 0);
   } else {
     field_A14_ = 0x77;
     field_A18_ = 0x50;
-    quayle_place_rect(&window_rect_, 0x77, 0x50, field_A1C_, field_A20_);
+    set_rectangle_dimensions(&window_rect_, 0x77, 0x50, field_A1C_, field_A20_);
     GraphicWin::init(0, 0, 0x400, 0x300, QuayleWideCaption, 0x1000000, 0, 0, 0);
   }
 
@@ -106,12 +92,12 @@ int QuayleWin::init() {
   set_rect(&title_rect_, 0x2A, 0x22, 0x116, 0x81);
   set_rect(&introduction_rect_, 0x1E, 0x13E, 0x11E, 0x1B0);
 
-  quayle_offset_rect(&illustration_rect_, window_rect_.left, window_rect_.top);
-  quayle_offset_rect(&chapter_list_rect_, window_rect_.left, window_rect_.top);
-  quayle_offset_rect(&navigation_button_rect_, window_rect_.left, window_rect_.top);
-  quayle_offset_rect(&rating_rect_, window_rect_.left, window_rect_.top);
-  quayle_offset_rect(&title_rect_, window_rect_.left, window_rect_.top);
-  quayle_offset_rect(&introduction_rect_, window_rect_.left, window_rect_.top);
+  offset_rect(&illustration_rect_, window_rect_.left, window_rect_.top);
+  offset_rect(&chapter_list_rect_, window_rect_.left, window_rect_.top);
+  offset_rect(&navigation_button_rect_, window_rect_.left, window_rect_.top);
+  offset_rect(&rating_rect_, window_rect_.left, window_rect_.top);
+  offset_rect(&title_rect_, window_rect_.left, window_rect_.top);
+  offset_rect(&introduction_rect_, window_rect_.left, window_rect_.top);
 
   StringTemp[0] = 0;
   strcat(StringTemp, label_get(0xA64 / 4));
@@ -263,7 +249,7 @@ void QuayleWin::on_redraw() {
     local_buffer.draw(this, 9, illustration_rect_.left, illustration_rect_.top);
     if (field_2144_ == 1) {
       set_clip(&illustration_rect_);
-      quayle_place_rect(&text_scratch_rect_, window_rect_.left + 0x15B,
+      set_rectangle_dimensions(&text_scratch_rect_, window_rect_.left + 0x15B,
                         window_rect_.top + 0x1F6, 0x187, 0x26);
       StringTemp[0] = 0;
       GenderDefault = Players[faction].is_leader_female;
@@ -277,7 +263,7 @@ void QuayleWin::on_redraw() {
       restore_clip();
     } else if (field_2144_ == 2) {
       set_clip(&illustration_rect_);
-      quayle_place_rect(&text_scratch_rect_, window_rect_.left + 0x136,
+      set_rectangle_dimensions(&text_scratch_rect_, window_rect_.left + 0x136,
                         window_rect_.top + 0x1A5, 0x1CB, 0x32);
       StringTemp[0] = 0;
       strcat(StringTemp, get_title(faction));
@@ -289,7 +275,7 @@ void QuayleWin::on_redraw() {
       restore_clip();
     } else if (field_2144_ == 8) {
       set_clip(&illustration_rect_);
-      quayle_place_rect(&text_scratch_rect_, window_rect_.left + 0x13C,
+      set_rectangle_dimensions(&text_scratch_rect_, window_rect_.left + 0x13C,
                         window_rect_.top + 0x1DF, 0x1C1, 0x54);
       StringTemp[0] = 0;
       strcat(StringTemp, get_title(faction));
@@ -336,7 +322,7 @@ void QuayleWin::on_redraw() {
         field_A18_ = text_scratch_rect_.top;
         field_A1C_ = rect_width(&chapter_list_rect_);
         field_A20_ = wrap_height(StringTemp, field_A1C_);
-        quayle_place_rect(&text_scratch_rect_, field_A14_, field_A18_ - field_A20_ - 6, field_A1C_, field_A20_);
+        set_rectangle_dimensions(&text_scratch_rect_, field_A14_, field_A18_ - field_A20_ - 6, field_A1C_, field_A20_);
         spot_.add(page, 0, &text_scratch_rect_);
         wrap(StringTemp, &text_scratch_rect_);
       }
