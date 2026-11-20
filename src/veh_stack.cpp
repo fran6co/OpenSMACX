@@ -1266,9 +1266,22 @@ int __cdecl stack_veh(int veh_id, int mode) {
             Vehs[i].state &= ~VSTATE_UNK_1; // so this call's boarding flags start clean
         }
     }
-    open_ocean = on_map(Vehs[veh_id].x, Vehs[veh_id].y)
-        && is_ocean(Vehs[veh_id].x, Vehs[veh_id].y)
-        && base_who(Vehs[veh_id].x, Vehs[veh_id].y) < 0;
+    // One FALSE store per failed test, cross-jumped into one by VC6: the
+    // image's zero register (ebx over the entry, MATCHING_GUIDE 2.7 Z9) needs
+    // these three stores, which the && chain does not write.
+    if (on_map(Vehs[veh_id].x, Vehs[veh_id].y)) {
+        if (is_ocean(Vehs[veh_id].x, Vehs[veh_id].y)) {
+            if (base_who(Vehs[veh_id].x, Vehs[veh_id].y) < 0) {
+                open_ocean = TRUE;
+            } else {
+                open_ocean = FALSE;
+            }
+        } else {
+            open_ocean = FALSE;
+        }
+    } else {
+        open_ocean = FALSE;
+    }
     faction_id = Vehs[veh_id].faction_id;
     subject_is_air = (get_triad(veh_id) == TRIAD_AIR);
     cargo_left = veh_cargo(veh_id);
