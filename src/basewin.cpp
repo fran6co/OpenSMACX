@@ -2566,11 +2566,14 @@ void BaseWin::draw_nutrients(int update_mode) {
     RECT cell;
     cell.left = (width - cell_width * columns) / 2 + rect.left;
     cell.top = (rect.bottom - rect.top - cell_height * rows) / 2 + rect.top;
-    cell.right = cell.left + cell_width - 1;
-    cell.bottom = cell.top + cell_height - 1;
-    if (cell_height >= 8) {
+    if (cell_height < 8) {
+        cell.right = cell.left + cell_width - 1;
+        cell.bottom = cell.top + cell_height - 1;
+    } else {
         cell.left++;
+        cell.right = cell.left + cell_width - 2;
         cell.top++;
+        cell.bottom = cell.top + cell_height - 2;
     }
     RECT row_rect = cell;
     int index = 0;
