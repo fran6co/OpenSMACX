@@ -3658,6 +3658,7 @@ What the model does not predict (2026-11-19)
     action 3's while the image (join behind draw_tile) keeps each with its
     own `jmp`. Fix the join's placement, not the tails; action 3 nested,
     inverted, or an explicit `goto` join after action 2 did not move it.
+    Host rule and the probe deviation: 3.7 "Join host" (2026-11-20).
   - *veh_at < 0 return 1:* `if (v >= 0) { loop } else return 1;` makes that
     site jump to the shared 0x5A5509 block as the image does, but moves the
     action_mode block and shifts the early frame slots (708 -> 752 rows);
@@ -9373,6 +9374,35 @@ Counters and tie arms (par-5 2026-11-20, councwin)
   sites tried (else-goto, `||` else, nested, returns, no_energy inline or
   before fail:) still claims or worsens the function, so the image's
   source order around no_energy is not known yet.
+- **Join host: where VC6 lays a join that nothing falls into, and why only
+  that arm's tails merge** (medium; `inline/joinhost.py`, 2026-11-20
+  par-4). An if/else-if dispatch whose last arm ends in `goto`/`return`
+  leaves its join J with no fall-through predecessor. VC6 lays J after one
+  arm (the *host*), and cross-jumping then merges identical arm tails
+  (`call f; add esp,N` before `jmp J`) only into the host's tail; identical
+  tails in the other arms keep their own `jmp J` (`sxppppxg`: J after the
+  x arm, the four `pp` tails stay separate; `ppddg`: J after arm 1 and arm
+  2's `pp` vanishes into it). Measured host choice, arms in source order:
+  - No arm has a tail that also ends a later arm: the **first** arm.
+  - Otherwise the **first arm whose tail has an identical later copy**
+    (`pdddg`, `qdddg`: J after arm 2, the first of the `use()` tails;
+    `sxppppxg`: arm 2, whose `add esp,0xc` recurs in arm 7; a one-instruction
+    common tail is enough, as in probe's arm 2/arm 7 pair at 0x5A36EB).
+  - Overridden by an arm that **ends in an if/else(-if) whose branches end
+    in identical tails** (`if (a) pp(..); else if (b) pp(..);`, or an
+    if/else of `if (..) pp(..)`): the *last* such arm is the host
+    (`sxPxg`, `sxxQxg`, `sPQPg`), whatever the cross-arm pairs before it.
+    A lone `if (..) pp(..)` arm is not such an arm (`sxRxg`: arm 2).
+  probe 0x0059F120 does not follow this yet: ours lays the dispatch join
+  (0x5A36EE) after action 3 (GOT/TOOKENERGY: an else-if pair) as the rule
+  predicts, but the image lays it after action 2 although its actions 3
+  and 4 have the same pair shapes (separate `jmp`s at 0x5A383C..0x5A3A36).
+  In ours, replacing actions 3 and 4 by single statements (or action 3 as
+  two independent ifs plus action 4 simple) gives the image's placement;
+  either alone does not (action 2 simple: J after action 8; action 3
+  simple: after action 4). So the image's host choice ignores pairs that
+  the rule says win; what the original had instead is open (not the arm
+  bodies' statement order, which the image fixes).
 - **The loop counter VC6 keeps is the variable the body's tests read.**
   load_vehicles 0x00454270 loops `chassis` 0..18 with `row = chassis - 9`;
   the image counts `row` (edx from -9, skip test `lea eax,[edx+9]; cmp
