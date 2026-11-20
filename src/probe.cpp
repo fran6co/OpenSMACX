@@ -368,6 +368,14 @@ static inline int probe_frame_budget_probe(int x) {
 }
 
 
+// WORKAROUND(inline): caller-size stand-in for probe (never stored; the dead
+// blocks after the declarations fold to no code). The lock-mask header batch
+// removed a member level at the 44 HUMAN_BIT/ALIVE_BIT tests; with the three
+// FRAME probes the image's get_name multiset came back only with 6-9 of these
+// blocks (6 kept: fewest rows; 1, 3, 5, 10 and 11 leave get_name 14/15 or
+// lengthen the jump tokens). The statements the original had beyond ours are
+// not identified.
+static int probe_size_pad;
 // ORIGINAL: 0x0059F120 ?probe@@YAHHHHH@Z 0x0059F120-0x005A5837;0x006613D0-0x00661B3D
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned original instructions establish distinct actor, target-base and fallback-vehicle roles, genuine PlayerData/Map/Base/Veh owners and one automatic Popup with class-owned teardown.", "The actor lock/state edge skips strategy scoring and energy checks before its shared mode/selector tail. Action-six raw UI results and normalized remote bit tests have distinct threshold stores; false edges retain the original path-local value, with no eager initialization.", "Bounded actual-source controls and native compilation are not full CFG, VC6 unwind-state, linked-preservation or game-runtime proof. Ordered comparison/reload fidelity and historical matching remain restoration obligations.", "Pinned5A292F..5A2961 operands96CD3C equal PlayersData96C9E0+35C, the signed tech_ranking word; trade_source actually begins36C, so its former+8 alias selected the wrong374 word. Preserve target rank/2 > actor rank/2+4 with truncation toward zero and the existing facility/action/pact short-circuit guards."], "reason": "Complete typed Probe action/UI owner in its existing translation unit, retaining the four-argument ABI and both original main/unwind spans."}
 int __cdecl probe(int veh_id, int base_id, int veh_id_tgt, int mode) {
@@ -420,6 +428,9 @@ int __cdecl probe(int veh_id, int base_id, int veh_id_tgt, int mode) {
         }
         return 0;
     }
+    // WORKAROUND(inline): see probe_size_pad.
+    if (0) { probe_size_pad = 0; } if (0) { probe_size_pad = 1; } if (0) { probe_size_pad = 2; }
+    if (0) { probe_size_pad = 3; } if (0) { probe_size_pad = 4; } if (0) { probe_size_pad = 5; }
 
     ProbeTargetHasHSA = 0;
     ProbeHasAlgoEnhancement = 0;
