@@ -1834,15 +1834,6 @@ int BaseCurrentForcesMaintCost;  // 0x0090E91C
 // RECOVERY_OBJECT: v2 0x0090EA08 0x0090EA0C ?BaseCurrentForcesMaintCount@@3IA 0x004E95A5
 uint32_t BaseCurrentForcesMaintCount;  // 0x0090EA08
 
-// Tile base owner, as the yield functions inline it (yield_tile_owner).
-static inline int tile_base_owner(const Map *tile) {
-    if (!(tile->bit & BIT_BASE_IN_TILE)) {
-        return -1;
-    }
-    int owner = tile->val2 & 0xF;
-    return (owner < MaxPlayerNum) ? owner : -1;
-}
-
 static inline int farm_stack_top(int veh_id) {
     while (Vehs[veh_id].prev_veh_id_stack >= 0) {
         veh_id = Vehs[veh_id].prev_veh_id_stack;
@@ -1920,7 +1911,7 @@ void __cdecl farm_compute() {
             continue;
         }
         FarmStatus[position] = 0;
-        if (tile_base_owner(&map_tiles()[y * (int)MapLongitude + (x >> 1)]) >= 0) {
+        if (base_who(x, y) >= 0) {
             FarmStatus[position] = 4;
         }
         int veh_id = stack_fix(veh_at(x, y));
@@ -1986,25 +1977,6 @@ void __cdecl farm_compute() {
     }
 }
 
-
-/*
-Purpose: Identify the faction owning a base standing on the specified tile.
-Original Offset: n/a
-Return Value: Faction id of the base in the tile, or -1 for none/unowned
-Status: Complete
-
-All three yield functions inline this same sequence: the tile's low `bit` flag
-selects it, the owner nibble of val2 supplies the id, and an id at or above
-MaxPlayerNum - 0xF is the "unoccupied" marker - is rejected.
-*/
-static inline int yield_tile_owner(const Map *tile) {
-    if (!(tile->bit & BIT_BASE_IN_TILE)) {
-        return -1;
-    }
-    int owner = tile->val2 & 0xF;
-    return (owner < MaxPlayerNum) ? owner : -1;
-}
-
 /*
 Purpose: Calculate the nutrients produced by a single map square.
 // ORIGINAL: 0x004E6E50 ?crop_yield@@YAHHHHHH@Z 0x004E6E50-0x004E7306 BYTE_EXACT
@@ -2051,7 +2023,7 @@ int __cdecl crop_yield(int faction_id, int base_id, int x, int y,
     uint32_t bit = tile->bit;
     BOOL is_ocean_tile = (tile->climate & ~0x1F) < ALT_BIT_SHORE_LINE;
     // Re-addressed: the image re-reads tile->bit here instead of reusing `bit`.
-    BOOL has_base_in_tile = yield_tile_owner(map_loc(x, y)) >= 0;
+    BOOL has_base_in_tile = base_who(x, y) >= 0;
     // Bonus id 1 is the nutrient bonus.
     BOOL has_nutrient_bonus = bonus_at(x, y, 0) == 1;
     tile = map_loc(x, y);
@@ -2263,7 +2235,7 @@ int __cdecl mine_yield(int faction_id, int base_id, int x, int y,
                   + (landmark_bonus ? 1 : 0);
     BOOL restrict_yield = false;
 
-    if (yield_tile_owner(tile) >= 0) {
+    if (base_who(x, y) >= 0) {
         mineral += ResourceInfo[RSCINFO_BASE_SQ].minerals;
         if (base_id < 0) {
             return mineral; // the original returns here rather than reaching the tail
@@ -2428,7 +2400,7 @@ int __cdecl energy_yield(int faction_id, int base_id, int x, int y,
     // mine_yield's borehole/landmark computation.
     int code = tile->bit2 >> 24;
     BOOL is_ocean_tile = (tile->climate & ~0x1F) < ALT_BIT_SHORE_LINE;
-    BOOL has_base_in_tile = yield_tile_owner(map_loc(x, y)) >= 0;
+    BOOL has_base_in_tile = base_who(x, y) >= 0;
     // Bonus id 3 is the energy bonus.
     BOOL has_energy_bonus = bonus_at(x, y, 0) == 3;
     tile = map_loc(x, y);
