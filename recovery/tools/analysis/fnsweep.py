@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""fnsweep.py <unit> <addr> [--rules r1,r2,..] [--armwo d,t,c,r] [--steps N] [--write] [--json OUT]
+"""fnsweep.py <unit> <addr> [--rules r1,r2,..] [--armwo d,t,c,r] [--steps N] [--min-rows K] [--write] [--json OUT]
 
 Single-site rewrite sweep of one function, ranked by the sdeck structural key (EH distance, named call
 distance, jcc/jmp/call/ret count distance, control-flow hunks, rows). Every candidate site of the rules
@@ -12,6 +12,7 @@ ranks only them.
 
 Comparison (better()): EH distance, then named call distance; when the branch/call count distance of the two
 keys differs by at most 1, control-flow hunks decide before that count, then rows; otherwise count, hunks, rows.
+--min-rows K: a step that changes nothing but rows must save more than K rows.
 Lanes FE_PFX_BASE..FE_PFX_BASE+FE_JOBS-1. Screens only; confirm with `recover measure`."""
 import sys, os, re, json
 from concurrent.futures import ThreadPoolExecutor
@@ -23,10 +24,14 @@ DEFAULT = 'ifswap,elifswap,stmtswap,ternary,earlyret,declswap,cmpswap'
 MARK = re.compile(r'// ORIGINAL: (0x[0-9A-F]{8}) \S+ (0x[0-9A-Fa-f]+)-(0x[0-9A-Fa-f]+)')
 
 
+MIN_ROWS = 0
+
+
 def better(a, b):
-    """True when key a is strictly better than key b (None is worst)."""
+    """True when key a is strictly better than key b (None is worst). A rows-only gain must be over MIN_ROWS."""
     if a is None: return False
     if b is None: return True
+    if a[:4] == b[:4]: return a[4] < b[4] - MIN_ROWS
     if a[:2] != b[:2]: return a[:2] < b[:2]
     if abs(a[2] - b[2]) <= 1: return (a[3], a[2], a[4]) < (b[3], b[2], b[4])
     return a[2:5] < b[2:5]
@@ -78,6 +83,7 @@ def main():
     opt = lambda k, d=None: a[a.index(k) + 1] if k in a else d
     names = opt('--rules', DEFAULT).split(','); arm = opt('--armwo')
     steps = int(opt('--steps', '1')); out = opt('--json')
+    global MIN_ROWS; MIN_ROWS = int(opt('--min-rows', '0'))
     base = int(os.environ.get('FE_PFX_BASE', '8')); jobs = int(os.environ.get('FE_JOBS', '5'))
     path = fe.R + '/src/' + unit; t = open(path, encoding='latin-1').read()
     log = []
