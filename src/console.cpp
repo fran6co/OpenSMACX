@@ -5838,13 +5838,13 @@ int Console::on_key_click(int a1, int a2) {
                 if (Vehs[selected_vehicle_].prev_veh_id_stack == selected_vehicle_ ||
                     Vehs[selected_vehicle_].next_veh_id_stack == selected_vehicle_) {
                     ::clear();
-                    strcat(StringTemp, get_adjective(Vehs[selected_vehicle_].faction_id));
+                    says(get_adjective(Vehs[selected_vehicle_].faction_id));
                     space();
-                    strcat(StringTemp, VehPrototypes[Vehs[selected_vehicle_].proto_id].veh_name);
+                    says(VehPrototypes[Vehs[selected_vehicle_].proto_id].veh_name);
                     space();
                     strcat(StringTemp, "(");
                     say_num(Vehs[selected_vehicle_].x);
-                    strcat(StringTemp, ",");
+                    says(",");
                     say_num(Vehs[selected_vehicle_].y);
                     strcat(StringTemp, ")");
                     danger("Funny Unit", StringTemp, selected_vehicle_,
@@ -5858,9 +5858,9 @@ int Console::on_key_click(int a1, int a2) {
                 break;
             }
             ::clear();
-            strcat(StringTemp, "Checksum");
+            says("Checksum");
             say_num(ConsoleGlobal.faction_id_);
-            strcat(StringTemp, ".TXT");
+            says(".TXT");
             report_log.init(StringTemp);
             report_log.reset();
             report_log.set_state(TRUE);
@@ -5877,7 +5877,7 @@ int Console::on_key_click(int a1, int a2) {
                 value = checksum(reinterpret_cast<char *>(&base.facilities_built[0]), 9, value);
                 ::clear();
                 say_num(value);
-                strcat(StringTemp, " Base ");
+                says(" Base ");
                 say_num(base_id);
                 report_log.say(StringTemp, base.name_string, value, 0, 0);
             }
@@ -5888,85 +5888,85 @@ int Console::on_key_click(int a1, int a2) {
                 report_log.say(get_noun(faction_id), 0, 0, 0, 0);
                 ::clear();
                 say_num(PlayersData[faction_id].tech_accumulated);
-                strcat(StringTemp, " Research");
+                says(" Research");
                 report_log.say(StringTemp, 0, 0, 0, 0);
                 ::clear();
                 say_num(PlayersData[faction_id].tech_id_researching);
-                strcat(StringTemp, " Researching");
+                says(" Researching");
                 report_log.say(StringTemp, 0, 0, 0, 0);
                 ::clear();
                 say_num(PlayersData[faction_id].planet_ecology);
-                strcat(StringTemp, " Planet");
+                says(" Planet");
                 report_log.say(StringTemp, 0, 0, 0, 0);
                 ::clear();
                 say_num(PlayersData[faction_id].energy_reserves);
-                strcat(StringTemp, " Energy");
+                says(" Energy");
                 report_log.say(StringTemp, 0, 0, 0, 0);
                 ::clear();
                 say_num(PlayersData[faction_id].integrity_blemishes);
-                strcat(StringTemp, " Blacken");
+                says(" Blacken");
                 report_log.say(StringTemp, 0, 0, 0, 0);
                 for (int social = 0; social < 4; ++social) {
                     ::clear();
                     say_num(static_cast<int>(PlayersData[faction_id].soc_category_pending.models_[social]));
-                    strcat(StringTemp, " Social");
+                    says(" Social");
                     say_num(social);
                     report_log.say(StringTemp, 0, 0, 0, 0);
                 }
                 for (int satellite = 0; satellite < 4; ++satellite) {
                     ::clear();
                     say_num(PlayersData[faction_id].satellites_[satellite]);
-                    strcat(StringTemp, " Satellites");
+                    says(" Satellites");
                     say_num(satellite);
                     report_log.say(StringTemp, 0, 0, 0, 0);
                 }
                 for (int other = 0; other < MaxPlayerNum; ++other) {
                     ::clear();
                     say_num(static_cast<int>(PlayersData[faction_id].diplo_treaties[other]));
-                    strcat(StringTemp, " Treaties with ");
-                    strcat(StringTemp, get_noun(other));
+                    says(" Treaties with ");
+                    says(get_noun(other));
                     report_log.say(StringTemp, 0, 0, 0, 0);
                 }
                 for (other = 0; other < MaxPlayerNum; ++other) {
                     ::clear();
                     say_num(PlayersData[faction_id].diplo_agenda[other]);
-                    strcat(StringTemp, " Agenda with ");
-                    strcat(StringTemp, get_noun(other));
+                    says(" Agenda with ");
+                    says(get_noun(other));
                     report_log.say(StringTemp, 0, 0, 0, 0);
                 }
                 for (other = 0; other < MaxPlayerNum; ++other) {
                     ::clear();
                     say_num(PlayersData[faction_id].diplo_friction[other]);
-                    strcat(StringTemp, " Friction with ");
-                    strcat(StringTemp, get_noun(other));
+                    says(" Friction with ");
+                    says(get_noun(other));
                     report_log.say(StringTemp, 0, 0, 0, 0);
                 }
                 for (other = 0; other < MaxPlayerNum; ++other) {
                     ::clear();
                     say_num(PlayersData[faction_id].diplo_patience[other]);
-                    strcat(StringTemp, " Patience with ");
-                    strcat(StringTemp, get_noun(other));
+                    says(" Patience with ");
+                    says(get_noun(other));
                     report_log.say(StringTemp, 0, 0, 0, 0);
                 }
                 for (other = 0; other < MaxPlayerNum; ++other) {
                     ::clear();
                     say_num(PlayersData[faction_id].diplo_merc[other]);
-                    strcat(StringTemp, " Merc with ");
-                    strcat(StringTemp, get_noun(other));
+                    says(" Merc with ");
+                    says(get_noun(other));
                     report_log.say(StringTemp, 0, 0, 0, 0);
                 }
                 for (other = 0; other < MaxPlayerNum; ++other) {
                     ::clear();
                     say_num(PlayersData[faction_id].diplo_spoke[other]);
-                    strcat(StringTemp, " Spoke with ");
-                    strcat(StringTemp, get_noun(other));
+                    says(" Spoke with ");
+                    says(get_noun(other));
                     report_log.say(StringTemp, 0, 0, 0, 0);
                 }
                 for (other = 0; other < MaxPlayerNum; ++other) {
                     ::clear();
                     say_num(PlayersData[faction_id].diplo_wrongs[other]);
-                    strcat(StringTemp, " Wrongs with ");
-                    strcat(StringTemp, get_noun(other));
+                    says(" Wrongs with ");
+                    says(get_noun(other));
                     report_log.say(StringTemp, 0, 0, 0, 0);
                 }
             }
@@ -5982,10 +5982,10 @@ int Console::on_key_click(int a1, int a2) {
                 value = checksum(reinterpret_cast<char *>(&vehicle.home_base_id), 2, value);
                 ::clear();
                 say_num(value);
-                strcat(StringTemp, " Veh ");
+                says(" Veh ");
                 say_num(veh_id);
                 say_colon();
-                strcat(StringTemp, get_adjective(vehicle.faction_id));
+                says(get_adjective(vehicle.faction_id));
                 space();
                 strcat(StringTemp, VehPrototypes[vehicle.proto_id].veh_name);
                 report_log.say(StringTemp, 0, value, 0, 0);
@@ -6006,9 +6006,9 @@ int Console::on_key_click(int a1, int a2) {
                         value = checksum(reinterpret_cast<char *>(&tile->bit_visible[0]), 1, value);
                         ::clear();
                         say_num(value);
-                        strcat(StringTemp, " (");
+                        says(" (");
                         say_num(x);
-                        strcat(StringTemp, ",");
+                        says(",");
                         say_num(y);
                         strcat(StringTemp, ")");
                         report_log.say(StringTemp, 0, value, 0, 0);
@@ -6023,56 +6023,56 @@ int Console::on_key_click(int a1, int a2) {
                 ::clear();
                 say_num(base_id);
                 space();
-                strcat(StringTemp, Bases[base_id].name_string);
+                says(Bases[base_id].name_string);
                 report_log.say(StringTemp, 0, 0, 0, 0);
                 ::clear();
                 say_num(Bases[base_id].x);
-                strcat(StringTemp, " X");
+                says(" X");
                 report_log.say(StringTemp, 0, 0, 0, 0);
                 ::clear();
                 say_num(Bases[base_id].y);
-                strcat(StringTemp, " Y");
+                says(" Y");
                 report_log.say(StringTemp, 0, 0, 0, 0);
                 ::clear();
                 say_num(Bases[base_id].population_size);
-                strcat(StringTemp, " Size");
+                says(" Size");
                 report_log.say(StringTemp, 0, 0, 0, 0);
                 ::clear();
                 say_num(Bases[base_id].faction_id_former);
-                strcat(StringTemp, " Former");
+                says(" Former");
                 report_log.say(StringTemp, 0, 0, 0, 0);
                 ::clear();
                 say_num(Bases[base_id].nutrients_accumulated);
-                strcat(StringTemp, " Nutrient");
+                says(" Nutrient");
                 report_log.say(StringTemp, 0, 0, 0, 0);
                 ::clear();
                 say_num(Bases[base_id].minerals_accumulated);
-                strcat(StringTemp, " Minerals");
+                says(" Minerals");
                 report_log.say(StringTemp, 0, 0, 0, 0);
                 ::clear();
                 say_num(Bases[base_id].queue_size);
-                strcat(StringTemp, " Num Making");
+                says(" Num Making");
                 report_log.say(StringTemp, 0, 0, 0, 0);
                 ::clear();
                 say_num(Bases[base_id].queue_production_id[0]);
-                strcat(StringTemp, " Making");
+                says(" Making");
                 report_log.say(StringTemp, 0, 0, 0, 0);
                 ::clear();
                 say_num(Bases[base_id].resource_sqr_radius);
-                strcat(StringTemp, " Radius");
+                says(" Radius");
                 report_log.say(StringTemp, 0, 0, 0, 0);
                 ::clear();
                 say_num(static_cast<int>(Bases[base_id].spec[0]));
-                strcat(StringTemp, " Spec 0");
+                says(" Spec 0");
                 report_log.say(StringTemp, 0, 0, 0, 0);
                 ::clear();
                 say_num(static_cast<int>(Bases[base_id].spec[1]));
-                strcat(StringTemp, " Spec 1");
+                says(" Spec 1");
                 report_log.say(StringTemp, 0, 0, 0, 0);
                 for (int facility = 0; facility < 9; ++facility) {
                     ::clear();
                     say_num(Bases[base_id].facilities_built[facility]);
-                    strcat(StringTemp, " Fac");
+                    says(" Fac");
                     say_num(facility);
                     report_log.say(StringTemp, 0, 0, 0, 0);
                 }
@@ -6085,41 +6085,41 @@ int Console::on_key_click(int a1, int a2) {
                 ::clear();
                 say_num(veh_id);
                 space();
-                strcat(StringTemp, get_adjective(vehicle.faction_id));
+                says(get_adjective(vehicle.faction_id));
                 space();
-                strcat(StringTemp, VehPrototypes[vehicle.proto_id].veh_name);
+                says(VehPrototypes[vehicle.proto_id].veh_name);
                 report_log.say(StringTemp, 0, 0, 0, 0);
                 ::clear();
                 say_num(vehicle.x);
-                strcat(StringTemp, " X");
+                says(" X");
                 report_log.say(StringTemp, 0, 0, 0, 0);
                 ::clear();
                 say_num(vehicle.y);
-                strcat(StringTemp, " Y");
+                says(" Y");
                 report_log.say(StringTemp, 0, 0, 0, 0);
                 ::clear();
                 say_num(vehicle.proto_id);
-                strcat(StringTemp, " proto");
+                says(" proto");
                 report_log.say(StringTemp, 0, 0, 0, 0);
                 ::clear();
                 say_num(vehicle.faction_id);
-                strcat(StringTemp, " who");
+                says(" who");
                 report_log.say(StringTemp, 0, 0, 0, 0);
                 ::clear();
                 say_num(vehicle.dmg_incurred);
-                strcat(StringTemp, " damage");
+                says(" damage");
                 report_log.say(StringTemp, 0, 0, 0, 0);
                 ::clear();
                 say_num(vehicle.morale);
-                strcat(StringTemp, " morale");
+                says(" morale");
                 report_log.say(StringTemp, 0, 0, 0, 0);
                 ::clear();
                 say_num(vehicle.moves_expended);
-                strcat(StringTemp, " moves");
+                says(" moves");
                 report_log.say(StringTemp, 0, 0, 0, 0);
                 ::clear();
                 say_num(vehicle.home_base_id);
-                strcat(StringTemp, " home");
+                says(" home");
                 report_log.say(StringTemp, 0, 0, 0, 0);
             }
             report_log.set_state(FALSE);

@@ -2147,7 +2147,7 @@ void DesignWin::draw_vehicle(int redraw) {
                           * mineralCostFactor_;               // edi; signed /100 (0x51eb851f)
             StringTemp[0] = 0;
             strcat(StringTemp, "{");                          // 0x683588
-            strcat(StringTemp, label_get(0x2fc / 4));
+            says(label_get(0x2fc / 4));
             say_colon();                         // 0x682e94
             space();                          // 0x682820
             strcat(StringTemp, "}");                          // 0x68358c
@@ -5219,7 +5219,7 @@ void DesignWin::draw_flash() {
         rc.top += 3;
         if (shown == 0x3F) {
             if (strlen(prototype_name_) != 0) {
-                strcat(StringTemp, prototype_name_);
+                says(prototype_name_);
             } else {
                 char proto_name[256];
                 name_proto(proto_name, 0x3F, factionID_,
@@ -5228,10 +5228,10 @@ void DesignWin::draw_flash() {
                            protoArmorType_,
                            static_cast<int>(protoAbilityFlags_),
                            protoReactorType_);
-                strcat(StringTemp, proto_name);
+                says(proto_name);
             }
         } else {
-            strcat(StringTemp, VehPrototypes[Vehs[unit_id].proto_id].veh_name);
+            says(VehPrototypes[Vehs[unit_id].proto_id].veh_name);
         }
         CharUpperA(StringTemp);
 
@@ -5258,7 +5258,7 @@ void DesignWin::draw_flash() {
                 && strlen(StringTable.get(Ability[i].abbreviation)) != 0) {
                 say_comma();
                 char *abbreviation = Ability[i].abbreviation;
-                strcat(StringTemp, StringTable.get(abbreviation));
+                says(StringTable.get(abbreviation));
             }
         }
         say_close_paren();
@@ -5269,23 +5269,23 @@ void DesignWin::draw_flash() {
             char digits[80];
             StringTemp[0] = '\0';
             _itoa(PlayersData[factionID_].proto_id_active[shown], digits, 10);
-            strcat(StringTemp, digits);
+            says(digits);
             space();
-            strcat(StringTemp, StringTable.get(Labels.strings_ptr[0xE80 / 4]));
+            says(StringTable.get(Labels.strings_ptr[0xE80 / 4]));
             y = MainInterfaceGlobal.Buffer::wrap_cent(
                 StringTemp, line_left, y, rc.right - rc.left);
 
             StringTemp[0] = '\0';
             _itoa(PlayersData[factionID_].proto_id_queue[shown], digits, 10);
-            strcat(StringTemp, digits);
+            says(digits);
             space();
-            strcat(StringTemp, StringTable.get(Labels.strings_ptr[0xE84 / 4]));
+            says(StringTable.get(Labels.strings_ptr[0xE84 / 4]));
             y = MainInterfaceGlobal.Buffer::wrap_cent(
                 StringTemp, line_left, y, rc.right - rc.left);
 
             if (VehPrototypes[shown].obsolete_factions & (1 << factionID_)) {
                 StringTemp[0] = '\0';
-                strcat(StringTemp, label_get(0xE40 / 4));
+                says(label_get(0xE40 / 4));
                 CharUpperA(StringTemp);
                 MainInterfaceGlobal.Buffer::wrap_cent(
                     StringTemp, line_left, y, rc.right - rc.left);

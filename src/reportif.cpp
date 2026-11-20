@@ -4628,7 +4628,7 @@ void ReportWin::draw_intel() {
     strcat(StringTemp, Players[viewer].adj_name_faction);
     CharUpperA(StringTemp);
     space();
-    strcat(StringTemp, label_get(0xAE0 / 4));
+    says(label_get(0xAE0 / 4));
     strcat(StringTemp, "]");
     --title.top;
     --title.bottom;
@@ -5437,7 +5437,7 @@ void ReportIf::on_status(int mode) {
         flatButton8_.hide();
         field_10_ += 22;
         StringTemp[0] = 0;
-        strcat(StringTemp, label_get(0x2EB));
+        says(label_get(0x2EB));
         space();
         strcat(StringTemp, label_get(0x20C));
         set_rectangle_dimensions(&draw_workspace_rect_, field_C_, field_10_, field_14_, 20);

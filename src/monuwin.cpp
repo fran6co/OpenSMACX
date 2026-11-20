@@ -793,8 +793,8 @@ void MonuWin::on_redraw() {
     Buffer::restore_clip();
     StringTemp[0] = '\0';
     if (type == 0xD) {
-      strcat(StringTemp, Players[preview_faction_or_page_].filename);
-      strcat(StringTemp, "3.pcx");
+      says(Players[preview_faction_or_page_].filename);
+      says("3.pcx");
       panel.load_pcx(StringTemp, 0, 0xA, 0xEC);
       panel.copy(this, 0x155, 0xB, rects_3134_[2].left, rects_3134_[2].top,
                  0x258, 0x168);
@@ -802,15 +802,15 @@ void MonuWin::on_redraw() {
       strcat(StringTemp,
              Players[FactionMonuments[faction].records_[type].word_8_]
                  .filename);
-      strcat(StringTemp, "3.pcx");
+      says("3.pcx");
       panel.load_pcx(StringTemp, 0, 0xA, 0xEC);
       panel.copy(this, 0x155, 0x174, rects_3134_[2].left, rects_3134_[2].top,
                  0x258, 0x168);
     } else {
-      strcat(StringTemp, "monbig");
+      says("monbig");
       _itoa(type, number, 10);
-      strcat(StringTemp, number);
-      strcat(StringTemp, ".pcx");
+      says(number);
+      says(".pcx");
       panel.load_pcx(StringTemp, 0, 0xA, 0xEC);
       panel.copy(this, 0, 0, rects_3134_[2].left, rects_3134_[2].top,
                  0x258, 0x168);

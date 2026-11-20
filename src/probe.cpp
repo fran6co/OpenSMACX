@@ -748,7 +748,7 @@ L_59fb64:
         says(prod_name);
         space();
         say_open_paren();
-        strcat(StringTemp, label_get(0xF9));
+        says(label_get(0xF9));
         say_close_paren();
         popup.item(StringTemp, 0);
         parse_it(ScriptPopupFile, "ABORTSTRING");

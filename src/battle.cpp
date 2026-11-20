@@ -1169,10 +1169,10 @@ int __cdecl battle_compute(int veh_id_atk, int veh_id_def, int *offense_out, int
                     // NO C++ LIBRARY: the image's callees here are strcat only,
                     // after clearing the shared buffer; add_bat copies the text.
                     StringTemp[0] = '\0';
-                    strcat(StringTemp, StringTable.get(Labels.strings_ptr[331])); // "Terrain"
+                    says(StringTable.get(Labels.strings_ptr[331])); // "Terrain"
                     space();
                     say_open_paren();
-                    strcat(StringTemp, StringTable.get(VehBattleDisplayTerrain));
+                    says(StringTable.get(VehBattleDisplayTerrain));
                     say_close_paren();
                     add_bat(1, 10 * (5 * terrain_def - 10), StringTemp);
                 }

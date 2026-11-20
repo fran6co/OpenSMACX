@@ -4569,9 +4569,9 @@ again:
             if (prototype_faction == 0)
                 continue;
             StringTemp[0] = 0;
-            strcat(StringTemp, "- ");
-            strcat(StringTemp, label_get(0x1b8 / 4));
-            strcat(StringTemp, " -");
+            says("- ");
+            says(label_get(0x1b8 / 4));
+            says(" -");
             popup.item(StringTemp, prototype_id);
         } else {
             if (prototype_faction == 0
@@ -4579,22 +4579,22 @@ again:
                 continue;
             StringTemp[0] = 0;
             if (VehPrototypes[prototype_id].obsolete_factions & (1 << faction_id))
-                strcat(StringTemp, "-");
-            strcat(StringTemp, VehPrototypes[prototype_id].veh_name);
-            strcat(StringTemp, "|");
+                says("-");
+            says(VehPrototypes[prototype_id].veh_name);
+            says("|");
             if (VehPrototypes[prototype_id].obsolete_factions & (1 << faction_id)) {
-                strcat(StringTemp, label_get(0x368 / 4));
+                says(label_get(0x368 / 4));
                 say_comma();
             }
             if (!(VehPrototypes[prototype_id].flags & 4) && prototype_id >= MaxVehProtoFactionNum) {
-                strcat(StringTemp, label_get(0x2e4 / 4));
+                says(label_get(0x2e4 / 4));
                 say_comma();
             }
-            strcat(StringTemp, label_get(0x160 / 4));
+            says(label_get(0x160 / 4));
             say_colon();
             const int cost = cost_factor(faction_id, 1, -1) * VehPrototypes[prototype_id].cost;
             _itoa(cost, number, 10);
-            strcat(StringTemp, number);
+            says(number);
             say_comma();
             say_stats(StringTemp, prototype_id, 0);
             popup.item(StringTemp, prototype_id);

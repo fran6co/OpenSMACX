@@ -2126,7 +2126,7 @@ void NetWin::draw_session_info() {
 
     StringTemp[0] = 0;
     if (NetDaemonNet.allocation_node().session_name_ != 0) {
-        strcat(StringTemp, NetDaemonNet.allocation_node().session_name_);
+        says(NetDaemonNet.allocation_node().session_name_);
     }
     CharUpperA(StringTemp);
     Buffer::set_font(find_font(0xE, 1), 0, 0, 0);
@@ -2158,12 +2158,12 @@ void NetWin::draw_session_info() {
 
     // Difficulty: {label: } <difficulty name>.
     StringTemp[0] = 0;
-    strcat(StringTemp, "{");
-    strcat(StringTemp, label_get(0xFA4 / 4));
+    says("{");
+    says(label_get(0xFA4 / 4));
     say_colon();
-    strcat(StringTemp, "}");
+    says("}");
     space();
-    strcat(StringTemp, table_text(Difficulty[range(
+    says(table_text(Difficulty[range(
         NetWinSessionOptions.fields_.difficulty_, 0, 6)]));
     written = Buffer::write_l(StringTemp, col, row);
     if (NetDaemonNet.primary_state_.leading_words_[0] != 0) {
@@ -2176,12 +2176,12 @@ void NetWin::draw_session_info() {
 
     // Time controls.
     StringTemp[0] = 0;
-    strcat(StringTemp, "{");
-    strcat(StringTemp, label_get(0x100C / 4));
+    says("{");
+    says(label_get(0x100C / 4));
     say_colon();
-    strcat(StringTemp, "}");
+    says("}");
     space();
-    strcat(StringTemp, table_text(
+    says(table_text(
         TimeControl[NetWinSessionOptions.fields_.time_control_].name));
     written = Buffer::write_l(StringTemp, col, row);
     if (NetDaemonNet.primary_state_.leading_words_[0] != 0) {
@@ -2194,33 +2194,33 @@ void NetWin::draw_session_info() {
 
     // Rules or scenario, with the game mode in parentheses.
     StringTemp[0] = 0;
-    strcat(StringTemp, "{");
-    strcat(StringTemp, label_get(0x1078 / 4));
+    says("{");
+    says(label_get(0x1078 / 4));
     say_colon();
-    strcat(StringTemp, "}");
+    says("}");
     space();
     if (NetWinSessionData.fields_.scenario_text_wire_tail_[0] != 0) {
-        strcat(StringTemp, NetWinSessionData.fields_.scenario_text_wire_tail_);
+        says(NetWinSessionData.fields_.scenario_text_wire_tail_);
     } else {
-        strcat(StringTemp, label_get(0x107C / 4));
+        says(label_get(0x107C / 4));
     }
     switch (NetWinSessionData.fields_.mode_) {
     case 3:
         space();
         say_open_paren();
-        strcat(StringTemp, label_get(0x1014 / 4));
+        says(label_get(0x1014 / 4));
         say_close_paren();
         break;
     case 2:
         space();
         say_open_paren();
-        strcat(StringTemp, label_get(0x1018 / 4));
+        says(label_get(0x1018 / 4));
         say_close_paren();
         break;
     case 1:
         space();
         say_open_paren();
-        strcat(StringTemp, label_get(0x10 / 4));
+        says(label_get(0x10 / 4));
         say_close_paren();
         break;
     }
@@ -2238,23 +2238,23 @@ void NetWin::draw_session_info() {
     // reused by avail until row = next after the cloud-cover line).
     // Planet size, or the scenario map's dimensions.
     StringTemp[0] = 0;
-    strcat(StringTemp, "{");
-    strcat(StringTemp, label_get(0xFAC / 4));
+    says("{");
+    says(label_get(0xFAC / 4));
     say_colon();
-    strcat(StringTemp, "}");
+    says("}");
     space();
     if (NetWinSessionData.fields_.scenario_text_wire_tail_[0] != 0) {
         _itoa(NetWinSessionOptions.fields_.option_4_, tally, 10);
         strcat(StringTemp, tally);
         space();
-        strcat(StringTemp, "X");
+        says("X");
         space();
         _itoa(NetWinSessionOptions.fields_.option_5_, tally, 10);
         strcat(StringTemp, tally);
     } else if (NetWinSessionOptions.fields_.planet_size_ == -1) {
-        strcat(StringTemp, label_get(0xFE4 / 4));
+        says(label_get(0xFE4 / 4));
     } else {
-        strcat(StringTemp, world_size_labels_[range(
+        says(world_size_labels_[range(
             NetWinSessionOptions.fields_.planet_size_, 0, 0x1F)]);
     }
     avail = field.right - col - 10;
@@ -2278,17 +2278,17 @@ void NetWin::draw_session_info() {
     bottom = next;
 
     StringTemp[0] = 0;
-    strcat(StringTemp, "{");
-    strcat(StringTemp, label_get(0xFB0 / 4));
+    says("{");
+    says(label_get(0xFB0 / 4));
     say_colon();
-    strcat(StringTemp, "}");
+    says("}");
     space();
     if (NetWinSessionData.fields_.scenario_text_wire_tail_[0] != 0) {
-        strcat(StringTemp, label_get(0x1000 / 4));
+        says(label_get(0x1000 / 4));
     } else if (NetWinSessionOptions.fields_.ocean_coverage_ == -1) {
-        strcat(StringTemp, label_get(0xFE4 / 4));
+        says(label_get(0xFE4 / 4));
     } else {
-        strcat(StringTemp, label_get(NetWinSessionOptions.fields_.ocean_coverage_ + 0x3D8));
+        says(label_get(NetWinSessionOptions.fields_.ocean_coverage_ + 0x3D8));
     }
     avail = field.right - col - 10;
     if (Buffer::text_width(StringTemp) > avail) {
@@ -2311,17 +2311,17 @@ void NetWin::draw_session_info() {
     bottom = next;
 
     StringTemp[0] = 0;
-    strcat(StringTemp, "{");
-    strcat(StringTemp, label_get(0xFB4 / 4));
+    says("{");
+    says(label_get(0xFB4 / 4));
     say_colon();
-    strcat(StringTemp, "}");
+    says("}");
     space();
     if (NetWinSessionData.fields_.scenario_text_wire_tail_[0] != 0) {
-        strcat(StringTemp, label_get(0x1000 / 4));
+        says(label_get(0x1000 / 4));
     } else if (NetWinSessionOptions.fields_.erosion_ == -1) {
-        strcat(StringTemp, label_get(0xFE4 / 4));
+        says(label_get(0xFE4 / 4));
     } else {
-        strcat(StringTemp, label_get(NetWinSessionOptions.fields_.erosion_ + 0x3DB));
+        says(label_get(NetWinSessionOptions.fields_.erosion_ + 0x3DB));
     }
     avail = field.right - col - 10;
     if (Buffer::text_width(StringTemp) > avail) {
@@ -2344,17 +2344,17 @@ void NetWin::draw_session_info() {
     bottom = next;
 
     StringTemp[0] = 0;
-    strcat(StringTemp, "{");
-    strcat(StringTemp, label_get(0xFB8 / 4));
+    says("{");
+    says(label_get(0xFB8 / 4));
     say_colon();
-    strcat(StringTemp, "}");
+    says("}");
     space();
     if (NetWinSessionData.fields_.scenario_text_wire_tail_[0] != 0) {
-        strcat(StringTemp, label_get(0x1000 / 4));
+        says(label_get(0x1000 / 4));
     } else if (NetWinSessionOptions.fields_.native_life_ == -1) {
-        strcat(StringTemp, label_get(0xFE4 / 4));
+        says(label_get(0xFE4 / 4));
     } else {
-        strcat(StringTemp, label_get(NetWinSessionOptions.fields_.native_life_ + 0x3E4));
+        says(label_get(NetWinSessionOptions.fields_.native_life_ + 0x3E4));
     }
     avail = field.right - col - 10;
     if (Buffer::text_width(StringTemp) > avail) {
@@ -2377,17 +2377,17 @@ void NetWin::draw_session_info() {
     bottom = next;
 
     StringTemp[0] = 0;
-    strcat(StringTemp, "{");
-    strcat(StringTemp, label_get(0xFBC / 4));
+    says("{");
+    says(label_get(0xFBC / 4));
     say_colon();
-    strcat(StringTemp, "}");
+    says("}");
     space();
     if (NetWinSessionData.fields_.scenario_text_wire_tail_[0] != 0) {
-        strcat(StringTemp, label_get(0x1000 / 4));
+        says(label_get(0x1000 / 4));
     } else if (NetWinSessionOptions.fields_.cloud_cover_ == -1) {
-        strcat(StringTemp, label_get(0xFE4 / 4));
+        says(label_get(0xFE4 / 4));
     } else {
-        strcat(StringTemp, label_get(NetWinSessionOptions.fields_.cloud_cover_ + 0x3E1));
+        says(label_get(NetWinSessionOptions.fields_.cloud_cover_ + 0x3E1));
     }
     avail = field.right - col - 10;
     if (Buffer::text_width(StringTemp) > avail) {
@@ -2430,10 +2430,10 @@ void NetWin::draw_session_info() {
         }
         Buffer::set_text_color(unclaimed != 0 ? 0xF9 : 0xF1, -1, 1, 1);
         StringTemp[0] = 0;
-        strcat(StringTemp, "{");
-        strcat(StringTemp, label_get(0x113C / 4));
+        says("{");
+        says(label_get(0x113C / 4));
         say_colon();
-        strcat(StringTemp, "}");
+        says("}");
         space();
         _itoa(unclaimed, tally, 10);
         strcat(StringTemp, tally);
