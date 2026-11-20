@@ -527,7 +527,7 @@ int PickTech::draw_tech(int tech, RECT *rect, int) {
             if (SocialCategories[category_id].preq_tech[model] == tech) {
                 StringTemp[0] = '\0';
                 strcat(StringTemp, "{");
-                strcat(StringTemp, table_text(SocialCategories[category_id].name[model]));
+                strcat(StringTemp, StringTable.get(SocialCategories[category_id].name[model]));
                 strcat(StringTemp, "}");
                 UNK1(StringTemp);
             }
