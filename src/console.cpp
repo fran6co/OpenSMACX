@@ -4340,7 +4340,7 @@ void __cdecl nullsub_186() {
 }
 
 // Superseded seed deleted; seed paths below are historical Git provenance.
-// ORIGINAL: 0x00515770 ?chat@Console@@QAEXH@Z 0x00515770-0x005158F4
+// ORIGINAL: 0x00515770 ?chat@Console@@QAEXH@Z 0x00515770-0x005158F4 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/00515770.cpp", "src/netdaemon.h", "src/xpops.h"], "reason": "The chat command belongs to Console, reads network lock state through NetDaemonNet, and uses source-owned text buffers and message services rather than fixed executable addresses; seed matching alone is not structural proof."}
 void Console::chat(int target_faction) {
     if (!IsMultiplayerNet) return;
@@ -4615,7 +4615,7 @@ void Console::erase_landmark(int x_coord, int y_coord) {
 
     const int landmark_id = find_landmark(x_coord, y_coord, 1);
     if (landmark_id < 0) {
-// RECOVERY_LITERAL: v1 0x0068A994 0x0068A9A1 $SG64328 0x00516490
+// RECOVERY_LITERAL: v1 0x0068A994 0x0068A9A1 $SG64327 0x00516490
         NetMsgPrimary.pop("LANDMARKNONE", 5000, 0, nullptr);
         return;
     }
@@ -4626,7 +4626,7 @@ void Console::erase_landmark(int x_coord, int y_coord) {
     }
 
     parse_says(0, MapLandmark[landmark_id].name, -1, -1);
-// RECOVERY_LITERAL: v1 0x0068A9B0 0x0068A9BD $SG64331 0x00516490
+// RECOVERY_LITERAL: v1 0x0068A9B0 0x0068A9BD $SG64330 0x00516490
     if (X_pop("LANDMARKKILL", nullptr) == 0) {
         return;
     }
@@ -5029,25 +5029,25 @@ void Console::use_time_bonus() {
     if (!IsMultiplayerNet) return;
     if ((GameDataStateStorage.fields_.net_turn_flags_ & 0x10) &&
         GameDataStateStorage.fields_.net_turn_faction_ != ConsoleGlobal.faction_id_) {
-// RECOVERY_LITERAL: v1 0x0068AA48 0x0068AA50 $SG64459 0x00517060
+// RECOVERY_LITERAL: v1 0x0068AA48 0x0068AA50 $SG64458 0x00517060
         NetMsgPrimary.pop("SIMULNO", 5000, 0, nullptr);
         return;
     }
     const int faction = ConsoleGlobal.faction_id_;
     if (PlayersData[faction].time_bonus_count <= 0) {
         parse_num(0, TimeControl[selection].refresh);
-// RECOVERY_LITERAL: v1 0x0068AA50 0x0068AA5E $SG64462 0x00517060
+// RECOVERY_LITERAL: v1 0x0068AA50 0x0068AA5E $SG64461 0x00517060
         NetMsgPrimary.pop("NOTIMEBONUSES", 5000, 0, nullptr);
         return;
     }
     if (GameDataStateStorage.fields_.game_state_ & 0x800) {
-// RECOVERY_LITERAL: v1 0x0068AA60 0x0068AA6D $SG64464 0x00517060
+// RECOVERY_LITERAL: v1 0x0068AA60 0x0068AA6D $SG64463 0x00517060
         NetMsgPrimary.pop("NOBONUSATEND", 5000, 0, nullptr);
         return;
     }
     if ((GameDataStateStorage.fields_.game_state_ & 2) &&
         ((1u << faction_id_) & NetDaemonNet.primary_state_.trailing_words_[6])) {
-// RECOVERY_LITERAL: v1 0x0068AA70 0x0068AA7C $SG64466 0x00517060
+// RECOVERY_LITERAL: v1 0x0068AA70 0x0068AA7C $SG64465 0x00517060
         NetMsgPrimary.pop("NOBONUSDONE", 5000, 0, nullptr);
         return;
     }

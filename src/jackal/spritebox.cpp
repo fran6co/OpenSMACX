@@ -342,7 +342,7 @@ static inline SpriteStruct *sprite_list_next_entry(SpriteList &list) {
 // Superseded seed deleted; seed paths below are historical Git provenance.
 // Historical seed observations (not fresh measurements or acceptance):
 // TRIED: no Ghidra hypothesis was provided for this address; body is a direct register-to-variable transcription of the disassembly (no vtable shim - all callees are direct calls; `T[1]`/`T[2]` model a per-class layout-offset table read through ebx= this-0xaa4). Compiles and matches through instr #1; diverges at #2 (push vs mov, prologue-adjacent). Landed at MISMATCH.
-// ORIGINAL: 0x00610540 ?attach@SpriteBox@@QAEHPAUGraphicWin@@HHH@Z 0x00610540-0x006108D5 FILE
+// ORIGINAL: 0x00610540 ?attach@SpriteBox@@QAEHPAUGraphicWin@@HHH@Z 0x00610540-0x006108D5 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["src/unrecovered/00610540.cpp retained original identity, full spans and prior recovery evidence", "recovery/tasks/dialog-control-coverage-wave.json authorized coupled control ownership", "original:0x610540 complete control/data-access review and src/spritebox.h genuine declaration; cross-owner discoveries preserved in task history"], "reason": "Complete Dialog-control behavior belongs to this genuine control owner, with real inherited members, embedded controls, Win receivers and callback dispatch rather than fixed executable calls. Compatible seed identity and historical evidence remain retained; catalogue decorations and emitted ABI are separate facts."}
 // symbol    ?attach@SpriteBox@@UAEHPAVGraphicWin@@HHH@Z
 int SpriteBox::attach(GraphicWin *parent, int x, int y, int flags) {

@@ -2741,7 +2741,7 @@ static inline int gen_radius_budget_probe(int x) {
 }
 
 // Original469190..469718, not the register/goto seed's rectangle arguments.
-// ORIGINAL: 0x00469190 ?gen_radius@MapWin@@QAEXHHHHH@Z 0x00469190-0x00469718
+// ORIGINAL: 0x00469190 ?gen_radius@MapWin@@QAEXHHHHH@Z 0x00469190-0x00469718 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Original469190..469718; retired seed git:5605e9af:src/recovered/units/00469190.cpp records this identity and exact span.", "Original469333..469355 converts left/top then right/top, not the transposed seed arguments;4691FB fills via the genuine GraphicWin receiver. Radius-zero scan widening does not apply to the overlay scan."], "reason": "MapWin owns clipped terrain, vehicle and overlay generation. The original scan is asymmetric; top-left and top-right clip conversions determine terrain extension, while overlays later recompute from the left conversion."}
 void MapWin::gen_radius(int x, int y, int radius, int faction, int skip_terrain) {
     RECT clip;
@@ -5066,37 +5066,37 @@ void MapWin::gen_overlays(int x, int y) {
         int color = 0xFF;
         switch (PlayersData[faction].goals[goal_index].type) {
         case 0:
-// RECOVERY_LITERAL: v1 0x00686360 0x00686362 $SG62733 0x004688E0
+// RECOVERY_LITERAL: v1 0x00686360 0x00686362 $SG62783 0x004688E0
             strcat(StringTemp, "a");
             color = 0xF9;
             break;
         case 2:
-// RECOVERY_LITERAL: v1 0x00686364 0x00686366 $SG62735 0x004688E0
+// RECOVERY_LITERAL: v1 0x00686364 0x00686366 $SG62785 0x004688E0
             strcat(StringTemp, "d");
             color = 0xFB;
             break;
         case 9:
-// RECOVERY_LITERAL: v1 0x00686368 0x0068636A $SG62737 0x004688E0
+// RECOVERY_LITERAL: v1 0x00686368 0x0068636A $SG62787 0x004688E0
             strcat(StringTemp, "f");
             color = 0xFA;
             break;
         case 8:
-// RECOVERY_LITERAL: v1 0x0068636C 0x0068636E $SG62739 0x004688E0
+// RECOVERY_LITERAL: v1 0x0068636C 0x0068636E $SG62789 0x004688E0
             strcat(StringTemp, "c");
             color = 0xFE;
             break;
         case 6:
-// RECOVERY_LITERAL: v1 0x00686370 0x00686372 $SG62741 0x004688E0
+// RECOVERY_LITERAL: v1 0x00686370 0x00686372 $SG62791 0x004688E0
             strcat(StringTemp, "n");
             color = 0xFC;
             break;
         case 41:
-// RECOVERY_LITERAL: v1 0x00686374 0x00686376 $SG62743 0x004688E0
+// RECOVERY_LITERAL: v1 0x00686374 0x00686376 $SG62793 0x004688E0
             strcat(StringTemp, "^");
             color = 0xFF;
             break;
         case 3:
-// RECOVERY_LITERAL: v1 0x00686378 0x0068637A $SG62745 0x004688E0
+// RECOVERY_LITERAL: v1 0x00686378 0x0068637A $SG62795 0x004688E0
             strcat(StringTemp, "s");
             color = 0xFD;
             break;
