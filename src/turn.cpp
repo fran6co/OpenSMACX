@@ -4635,12 +4635,11 @@ skip_upkeep_synch:
             if (net_upkeep_phase(NetUpkeepPhase) != 0) {
                 return;
             }
-            TurnUpkeepPhase = 0;
         } else {
 // RECOVERY_LITERAL: v1 0x0068BC1C 0x0068BC32 $SG67295 0x005290A0
             log_say("Skipping upkeep synch", NetUpkeepPhase, 0, 0);
-            TurnUpkeepPhase = 0;
         }
+        TurnUpkeepPhase = 0;
         ++NetUpkeepPhase;
         if ((flags & 2u) != 0 && (GameDataStateStorage.fields_.game_rules_ & 0x200u) != 0) {
             ConsoleGlobal.set_ai(ConsoleGlobal.faction_id_);
