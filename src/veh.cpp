@@ -3246,7 +3246,7 @@ void __cdecl prune_protos(int faction_id, int prototype_id, int options) {
                 }
             }
             if (VehPrototypes[m].cost < VehPrototypes[rid].cost
-                && VehPrototypes[rid].reactor_id <= VehPrototypes[m].reactor_id) {
+                && VehPrototypes[m].reactor_id >= VehPrototypes[rid].reactor_id) {
                 if (m < MaxVehProtoFactionNum) continue;
                 if (VehPrototypes[m].flags & 8) continue;
             }
