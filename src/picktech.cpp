@@ -612,12 +612,12 @@ int PickTech::draw_tech(int tech, RECT *rect, int) {
     for (int reactor_id = 0; reactor_id < MaxReactorNum; ++reactor_id) {
         if (Reactor[reactor_id].preq_tech == tech) {
             StringTemp[0] = '\0';
-            strcat(StringTemp, table_text(Reactor[reactor_id].name));
+            strcat(StringTemp, StringTable.get(Reactor[reactor_id].name));
             strcat_space(StringTemp);
             strcat_open_paren(StringTemp);
             // Native485D8B truncates this label to one byte too.
             text_buffer[0] = '\0';
-            strcat(text_buffer, StringTable.get(Labels.strings_ptr[0x13c / 4]));
+            strcat(text_buffer, table_text(Labels.strings_ptr[0x13c / 4]));
             text_buffer[1] = '\0';
             strcat(StringTemp, text_buffer);
             strcat_colon(StringTemp);
