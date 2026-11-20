@@ -4428,7 +4428,7 @@ int DesignWin::init() {
     strcat(StringTemp, label_get(0xE58 / 4));
     CharUpperA(StringTemp);
     flatButtons_[1].init(StringTemp, 1, &field_B5C_rect_, static_cast<Win *>(this), 0);
-    flatButtons_[1].set_bubble_text(label_get(0xE7C / 4));
+    flatButtons_[1].set_bubble_text(StringTable.get(Labels.strings_ptr[0xE7C / 4]));
 
     StringTemp[0] = 0;
     strcat(StringTemp, label_get(0x1024 / 4));
@@ -4442,7 +4442,7 @@ int DesignWin::init() {
     strcat(StringTemp, label_get(0xE74 / 4));
     CharUpperA(StringTemp);
     flatButtons_[0].init(StringTemp, 0, &field_B4C_rect_, static_cast<Win *>(this), 0);
-    flatButtons_[0].set_bubble_text(label_get(0xE78 / 4));
+    flatButtons_[0].set_bubble_text(StringTable.get(Labels.strings_ptr[0xE78 / 4]));
 
     StringTemp[0] = 0;
     strcat(StringTemp, label_get(0x1034 / 4));
