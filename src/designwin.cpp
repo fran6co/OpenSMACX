@@ -1871,7 +1871,6 @@ void DesignWin::draw_special_2(int redraw) {
 void DesignWin::draw_vehicle(int redraw) {
     (void)redraw;
     char ability_names[256];
-    char numbuf[80];
     int total_cost;
     RECT src;
     RECT dest;
@@ -1983,8 +1982,7 @@ void DesignWin::draw_vehicle(int redraw) {
         say_colon();                         // 0x682e94
         const int capacity = transport_val(protoChassisType_, protoAbilityFlags_,
                                            protoReactorType_);
-        _itoa(capacity, numbuf, 10);
-        strcat(StringTemp, numbuf);
+        say_num(capacity);
         Buffer::write_cent_l(StringTemp, &dest);
     }
     // 0x4367e1
@@ -1999,8 +1997,7 @@ void DesignWin::draw_vehicle(int redraw) {
         Buffer::set_font(&font2_, 0, 0, 0);
         StringTemp[0] = 0;
         strcat(StringTemp, "+");                          // 0x68356c
-        _itoa(Rules.combat_pct_infantry_vs_base, numbuf, 10);
-        strcat(StringTemp, numbuf);
+        say_num(Rules.combat_pct_infantry_vs_base);
         strcat(StringTemp, "% ");                         // 0x683570
         strcat(StringTemp, label_get(0x88c / 4));
         Buffer::write_cent_l(StringTemp, &dest);
@@ -2017,8 +2014,7 @@ void DesignWin::draw_vehicle(int redraw) {
         Buffer::set_font(&font2_, 0, 0, 0);
         StringTemp[0] = 0;
         strcat(StringTemp, "+");                          // 0x683574
-        _itoa(Rules.combat_pct_mobile_open_ground, numbuf, 10);
-        strcat(StringTemp, numbuf);
+        say_num(Rules.combat_pct_mobile_open_ground);
         strcat(StringTemp, "% ");                         // 0x683578
         strcat(StringTemp, label_get(0x98c / 4));
         Buffer::write_cent_l(StringTemp, &dest);
@@ -2044,13 +2040,11 @@ void DesignWin::draw_vehicle(int redraw) {
         strcat(StringTemp, label_get(0x1e8 / 4));
         say_colon();                         // 0x682e94
         total_cost = protoReactorType_ * mineralCostFactor_;   // mov reactor; imul [factor]
-        _itoa(total_cost, numbuf, 10);
-        strcat(StringTemp, numbuf);
+        say_num(total_cost);
         say_close_paren();                          // 0x682e98
     } else {
         total_cost = mineralCostFactor_ * cost;           // mov factor; imul edi
-        _itoa(total_cost, numbuf, 10);
-        strcat(StringTemp, numbuf);
+        say_num(total_cost);
     }
     // 0x436c12
     if (Chassis[protoChassisType_].speed > 1
@@ -2151,8 +2145,7 @@ void DesignWin::draw_vehicle(int redraw) {
             say_colon();                         // 0x682e94
             space();                          // 0x682820
             strcat(StringTemp, "}");                          // 0x68358c
-            _itoa(total_cost, numbuf, 10);
-            strcat(StringTemp, numbuf);
+            say_num(total_cost);
             if (Chassis[protoChassisType_].speed > 1          // unsigned (jbe)
                 && Armor[protoArmorType_].defense_rating > 1  // signed (jle)
                 && Weapon[protoWeaponType_].cost > 1) {       // unsigned (jbe)
@@ -2208,8 +2201,7 @@ void DesignWin::draw_vehicle(int redraw) {
         } else if (Weapon[protoWeaponType_].offense_rating >= 0x63) {
             strcat(StringTemp, "*");                          // 0x68359c
         } else {
-            _itoa(Weapon[protoWeaponType_].offense_rating, numbuf, 10);
-            strcat(StringTemp, numbuf);
+            say_num(Weapon[protoWeaponType_].offense_rating);
         }
         Buffer::write_l(StringTemp, x, y);                            // guarded; tail -> 0x4374a8
     } else {
@@ -2217,8 +2209,7 @@ void DesignWin::draw_vehicle(int redraw) {
         strcat(StringTemp, preset_names_[14]);                // +0x144e6
         strcat(StringTemp, "}");                              // 0x6835a4
         space();
-        _itoa(Weapon[protoWeaponType_].cost, numbuf, 10);     // zero-extended byte
-        strcat(StringTemp, numbuf);
+        say_num(Weapon[protoWeaponType_].cost);
         Buffer::write_l(StringTemp, x, y);                            // guarded, 0x5dcea0
     }
 
@@ -2232,8 +2223,7 @@ void DesignWin::draw_vehicle(int redraw) {
         if (Armor[protoArmorType_].defense_rating < 0) {
             strcat(StringTemp, label_get(0x310 / 4));
         } else {
-            _itoa(Armor[protoArmorType_].defense_rating, numbuf, 10);
-            strcat(StringTemp, numbuf);
+            say_num(Armor[protoArmorType_].defense_rating);
         }
         Buffer::write_l(StringTemp, x, y);
     }
@@ -2248,8 +2238,7 @@ void DesignWin::draw_vehicle(int redraw) {
     StringTemp[4] = 0;                                        // bug-for-bug truncation
     space();
     const int speed = speed_proto(0x3f) / Rules.move_rate_roads;      // idiv [0x949738]
-    _itoa(speed, numbuf, 10);
-    strcat(StringTemp, numbuf);
+    say_num(speed);
     Buffer::write_l(StringTemp, x, y);
 
     y += font_line_advance(font2_);                           // 0x4376a4
@@ -2258,8 +2247,7 @@ void DesignWin::draw_vehicle(int redraw) {
     strcat(StringTemp, preset_names_[11]);                    // +0x1445f
     strcat(StringTemp, "}");                                  // 0x6835bc
     space();
-    _itoa(protoReactorType_, numbuf, 10);
-    strcat(StringTemp, numbuf);
+    say_num(protoReactorType_);
     Buffer::write_l(StringTemp, x, y);
 
     y += font_line_advance(font2_);                           // 0x437752

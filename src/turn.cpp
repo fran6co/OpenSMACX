@@ -4723,13 +4723,10 @@ prototype_synch:
             strcat(StringTemp, "k:\\breynolds\\multisaves\\");
 // RECOVERY_LITERAL: v1 0x0068BC8C 0x0068BC8F $SG67335 0x005290A0
             strcat(StringTemp, "AC");
-            char number_text[80];
-            _itoa(ConsoleGlobal.faction_id_, number_text, 10);
-            strcat(StringTemp, number_text);
+            say_num(ConsoleGlobal.faction_id_);
 // RECOVERY_LITERAL: v1 0x0068BC90 0x0068BC96 $SG67337 0x005290A0
             strcat(StringTemp, "multi");
-            _itoa(GameDataStateStorage.fields_.turn_current_num_, number_text, 10);
-            strcat(StringTemp, number_text);
+            say_num(GameDataStateStorage.fields_.turn_current_num_);
 // RECOVERY_LITERAL: v1 0x0068BC98 0x0068BCAA $SG67338 0x005290A0
             log_say("Writing save file", StringTemp, 0, 0, 0);
             save_daemon(StringTemp);

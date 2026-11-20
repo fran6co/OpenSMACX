@@ -2215,7 +2215,6 @@ void Datalink::draw_unit() {
     CharUpperA(StringTemp);
     write_cent_l(StringTemp, &title_rect_);
     rect.left += illustration_rect_.right - illustration_rect_.left + 3;
-    char number[80];
     description.reset();
     StringTemp[0] = 0;
     const uint8_t mode = Weapon[VehPrototypes[id].weapon_id].mode;
@@ -2227,8 +2226,7 @@ void Datalink::draw_unit() {
         if (Weapon[VehPrototypes[id].weapon_id].offense_rating < 0) {
             strcat(StringTemp, label_get(0x310 / 4));
         } else {
-            _itoa(Weapon[VehPrototypes[id].weapon_id].offense_rating, number, 10);
-            strcat(StringTemp, number);
+            say_num(Weapon[VehPrototypes[id].weapon_id].offense_rating);
         }
         strcat(StringTemp, "}");
         description.pending_text_ = StringTemp;
@@ -2249,8 +2247,7 @@ void Datalink::draw_unit() {
             if (Weapon[VehPrototypes[id].weapon_id].offense_rating < 0) {
                 strcat(StringTemp, label_get(0x310 / 4));
             } else {
-                _itoa(Weapon[VehPrototypes[id].weapon_id].offense_rating, number, 10);
-                strcat(StringTemp, number);
+                say_num(Weapon[VehPrototypes[id].weapon_id].offense_rating);
             }
             strcat(StringTemp, "}");
         }
@@ -2267,8 +2264,7 @@ void Datalink::draw_unit() {
     if (Armor[VehPrototypes[id].armor_id].defense_rating < 0) {
         strcat(StringTemp, label_get(0x310 / 4));
     } else {
-        _itoa(Armor[VehPrototypes[id].armor_id].defense_rating, number, 10);
-        strcat(StringTemp, number);
+        say_num(Armor[VehPrototypes[id].armor_id].defense_rating);
     }
     strcat(StringTemp, "}");
     description.pending_text_ = StringTemp;
@@ -2282,8 +2278,7 @@ void Datalink::draw_unit() {
     strcat(StringTemp, "{");
     strcat(StringTemp, StringTable.get(Triad[Chassis[VehPrototypes[id].chassis_id].triad]));
     space();
-    _itoa(Chassis[VehPrototypes[id].chassis_id].speed, number, 10);
-    strcat(StringTemp, number);
+    say_num(Chassis[VehPrototypes[id].chassis_id].speed);
     strcat(StringTemp, "}");
     description.pending_text_ = StringTemp;
     description.field_20_ = 4;
@@ -2295,8 +2290,7 @@ void Datalink::draw_unit() {
         say_colon();
         space();
         strcat(StringTemp, "{");
-        _itoa(VehPrototypes[id].carry_capacity, number, 10);
-        strcat(StringTemp, number);
+        say_num(VehPrototypes[id].carry_capacity);
         strcat(StringTemp, "}");
         description.pending_text_ = StringTemp;
         description.field_20_ = 4;
@@ -2310,8 +2304,7 @@ void Datalink::draw_unit() {
         say_colon();
         space();
         strcat(StringTemp, "{");
-        _itoa(Chassis[VehPrototypes[id].chassis_id].range, number, 10);
-        strcat(StringTemp, number);
+        say_num(Chassis[VehPrototypes[id].chassis_id].range);
         space();
         if (Chassis[VehPrototypes[id].chassis_id].range == 1) {
             strcat(StringTemp, label_get(0xC0 / 4));
@@ -2330,8 +2323,7 @@ void Datalink::draw_unit() {
     space();
     strcat(StringTemp, "{");
     const int cost = cost_factor(ConsoleGlobal.faction_id_, 1, -1) * VehPrototypes[id].cost;
-    _itoa(cost, number, 10);
-    strcat(StringTemp, number);
+    say_num(cost);
     strcat(StringTemp, "}");
     description.pending_text_ = StringTemp;
     description.field_20_ = 4;
@@ -2348,6 +2340,7 @@ void Datalink::draw_unit() {
     say_tech(name, tech, 0);
     if (tech >= 0) {
         char link[256];
+        char number[80];
         link[0] = 0;
         _itoa(tech + 140000, number, 10);
         strcat(link, number);
@@ -2367,8 +2360,7 @@ void Datalink::draw_unit() {
     write_strings(&description, rect.left, rect.top, rect.right - rect.left, 0);
     StringTemp[0] = 0;
     strcat(StringTemp, "UNITDESC");
-    _itoa(id, number, 10);
-    strcat(StringTemp, number);
+    say_num(id);
     detail_box_.clear();
     if (detail_box_.strings().load(DatalinkHelpFile, StringTemp, 1, 0) == 0) {
         detail_box_.add_fixup();
