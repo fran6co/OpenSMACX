@@ -468,1565 +468,1565 @@ int __cdecl order_veh(int veh_id, int direction, int mode) {
         direction = 8;
     dest_x = wrap_map_x(src_x + VehMoveDeltaX[direction]);
     dest_y = src_y + VehMoveDeltaY[direction];
-    if (!on_map(dest_x, dest_y))
-        goto done;
-    region = region_at(dest_x, dest_y);
-    target_veh = stack_fix(veh_at(dest_x, dest_y));
-    base_id = base_at(dest_x, dest_y);
-    if (0 <= base_id)
-        owner = Bases[base_id].faction_id_current;
-    else if (target_veh >= 0)
-        owner = Vehs[target_veh].faction_id;
-    else
-        owner = -1;
-    src_ocean = is_ocean(src_x, src_y);
-    dest_ocean = is_ocean(dest_x, dest_y);
-    goody = goody_at(dest_x, dest_y);
-    faction_bit = 1 << faction;
+    if (on_map(dest_x, dest_y)) {
+        region = region_at(dest_x, dest_y);
+        target_veh = stack_fix(veh_at(dest_x, dest_y));
+        base_id = base_at(dest_x, dest_y);
+        if (0 <= base_id)
+            owner = Bases[base_id].faction_id_current;
+        else if (target_veh >= 0)
+            owner = Vehs[target_veh].faction_id;
+        else
+            owner = -1;
+        src_ocean = is_ocean(src_x, src_y);
+        dest_ocean = is_ocean(dest_x, dest_y);
+        goody = goody_at(dest_x, dest_y);
+        faction_bit = 1 << faction;
 
 L_5949b3:
-    stealth = 0;
-    if (Vehs[veh_id].state & 0x4200)
-        stealth = 1;
-    triad = Chassis[VehPrototypes[Vehs[veh_id].proto_id].chassis_id].triad;
-    if (!is_human(faction)
-        && Vehs[veh_id].order == ORDER_MOVE_TO) {
-        territory = whose_territory(faction, Vehs[veh_id].waypoint_x[0],
-                                    Vehs[veh_id].waypoint_y[0], NULL, 0);
-        if (territory >= 0 && territory != faction
-            && !has_treaty(faction, territory, 0xC11)) {
-            Vehs[veh_id].order = ORDER_NONE;
-            goto done;
+        stealth = 0;
+        if (Vehs[veh_id].state & 0x4200)
+            stealth = 1;
+        triad = Chassis[VehPrototypes[Vehs[veh_id].proto_id].chassis_id].triad;
+        if (!is_human(faction)
+            && Vehs[veh_id].order == ORDER_MOVE_TO) {
+            territory = whose_territory(faction, Vehs[veh_id].waypoint_x[0],
+                                        Vehs[veh_id].waypoint_y[0], NULL, 0);
+            if (territory >= 0 && territory != faction
+                && !has_treaty(faction, territory, 0xC11)) {
+                Vehs[veh_id].order = ORDER_NONE;
+                goto done;
+            }
         }
-    }
 
-    // 594a5f: alien artifact entering a friendly base.
-    if (VehPrototypes[Vehs[veh_id].proto_id].plan == PLAN_ALIEN_ARTIFACT
-        && !(Vehs[veh_id].flags & 0x20)) {
-        if (NetDaemonNet.action_mode_ & 1) {
-            Vehs[veh_id].terraforming_turns = 0;
-            if (base_id >= 0 && Bases[base_id].faction_id_current == faction) {
-                parse_says(0, Bases[base_id].name_string, -1, -1);
-                popup.start(PopupStartCaption, "ARTIFACT", -1, NULL, 0, NULL);
-                if (Buffer::get_pcx_dimensions("art_dis_sm.pcx", &width, &height) == 0
-                    && popup.owned_picture().init("art_dis_sm.pcx", width, height) == 0)
-                    popup.select_owned_picture();
-                parse_num(0, Bases[base_id].minerals_accumulated);
-                int cost;
-                if (Bases[base_id].queue_production_id[0] < 0)
-                    cost = cost_factor(faction, 1, -1)
-                         * Facility[-Bases[base_id].queue_production_id[0]].cost;
-                else
-                    cost = veh_cost(Bases[base_id].queue_production_id[0], base_id, NULL)
-                         * cost_factor(faction, 1, -1);
-                parse_num(1, cost);
-                if (X_text_open(ScriptPopupFile, "ARTIFACTMENU") == 0) {
-                    StringTemp[0] = 0;
-                    parse_string(text_get(), StringTemp);
-                    popup.dialogs().item(StringTemp, 0);
-                    int rows = 1;
-                    LPSTR text = text_get();
-                    if (has_fac(FAC_NETWORK_NODE, base_id, 0)
-                        && GameDataStateStorage.fields_.secret_project_.universal_translator() != base_id
-                        && !(Bases[base_id].state & BSTATE_ARTIFACT_ALREADY_LINKED)) {
-                        StringTemp[0] = 0;
-                        parse_string(text, StringTemp);
-                        popup.dialogs().item(StringTemp, 1);
-                        rows++;
-                        if (!is_human(faction))
-                            Vehs[veh_id].terraforming_turns = 1;
-                    }
-                    text = text_get();
-                    if (GameDataStateStorage.fields_.secret_project_.universal_translator() == base_id) {
-                        StringTemp[0] = 0;
-                        parse_string(text, StringTemp);
-                        popup.dialogs().item(StringTemp, 1);
-                        rows++;
-                        if (!is_human(faction))
-                            Vehs[veh_id].terraforming_turns = 1;
-                    }
-                    text = text_get();
-                    if (Bases[base_id].queue_production_id[0] <= -70) {
-                        StringTemp[0] = 0;
-                        int facility = Bases[base_id].queue_production_id[0];
-                        if (facility < 0)
-                            facility = -facility;
-                        parse_say(1, Facility[facility].name, -1, -1);
-                        parse_string(text, StringTemp);
-                        popup.dialogs().item(StringTemp, 2);
-                        rows++;
-                        if (!is_human(faction))
-                            Vehs[veh_id].terraforming_turns = 2;
-                    }
-                    text = text_get();
-                    if (Bases[base_id].queue_production_id[0] >= 0
-                        && Bases[base_id].queue_production_id[0] >= 64
-                        && !(VehPrototypes[Bases[base_id].queue_production_id[0]].flags & 4)) {
-                        StringTemp[0] = 0;
-                        parse_says(2, VehPrototypes[Bases[base_id].queue_production_id[0]].veh_name, -1, -1);
-                        parse_string(text, StringTemp);
-                        popup.dialogs().item(StringTemp, 2);
-                        rows++;
-                    }
-                    if (rows > 1 && faction == ConsoleGlobal.faction_id_
-                        && is_human(faction)) {
-                        Vehs[veh_id].terraforming_turns = popup.exec(0, NULL);
-                        order_veh_synch(veh_id);
-                    }
-                }
-            }
-        }
-    }
-
-    // 594e09
-    if (direction >= 8) {
-        if (get_proto_triad(Vehs[veh_id].proto_id) == TRIAD_AIR
-                && Chassis[VehPrototypes[Vehs[veh_id].proto_id].chassis_id].range != 0
-                && (NetDaemonNet.action_mode_ & 1) != 0
-                && faction == ConsoleGlobal.faction_id_
-                && base_who(dest_x, dest_y) < 0
-                && (bit_at(dest_x, dest_y) & BIT_AIRBASE) == 0) {
-            for (v = veh_top(veh_id); v >= 0; v = veh_next_stack_id(v)) {
-                // Tests the mover, not the stack member (bug kept).
-                if (has_abil(Vehs[veh_id].proto_id, ABL_CARRIER))
-                    goto L_596573;
-                if (VehPrototypes[Vehs[v].proto_id].plan == PLAN_SUPPLY_CONVOY
-                        && get_triad(v) == TRIAD_AIR)
-                    goto L_596573;
-            }
-            if (veh_moves(veh_id)
-                    && (Chassis[VehPrototypes[Vehs[veh_id].proto_id].chassis_id].range == 1
-                        || Vehs[veh_id].terraforming_turns != 0)) {
-                action_home(veh_id, 0);
-                if (Vehs[veh_id].order == ORDER_MOVE_TO) {
-                    if (IsMultiplayerNet && !ConsoleControlTurnActive) {
-                        order_veh_synch(veh_id);
-                    }
-                    return 0;   // 5964cf
-                }
-            }
-        }
-    L_596573:
-        selector = 1;
-        if ((NetDaemonNet.action_mode_ & 2) == 0)
-            goto done;
-        veh_skip(veh_id);
-        Vehs[veh_id].state &= ~0x40U;
-        goto L_598cb9;
-    }
-    Vehs[veh_id].state |= 4;
-    if (VehPrototypes[Vehs[veh_id].proto_id].plan == PLAN_INFO_WARFARE
-        && owner >= 0 && faction != owner) {
-        if (NetDaemonNet.action_mode_ & 1) {
-            Vehs[veh_id].flags &= ~4;
-            if (has_treaty(faction, owner, 1) && !stealth
-                && faction == ConsoleGlobal.faction_id_) {
-                if (base_id >= 0) {
+        // 594a5f: alien artifact entering a friendly base.
+        if (VehPrototypes[Vehs[veh_id].proto_id].plan == PLAN_ALIEN_ARTIFACT
+            && !(Vehs[veh_id].flags & 0x20)) {
+            if (NetDaemonNet.action_mode_ & 1) {
+                Vehs[veh_id].terraforming_turns = 0;
+                if (base_id >= 0 && Bases[base_id].faction_id_current == faction) {
                     parse_says(0, Bases[base_id].name_string, -1, -1);
-                    parse_says(1, get_adjective(owner), -1, -1);
-                    if (!X_pop("PROBEPACT", NULL))
-                        goto L_595083;
-                    Vehs[veh_id].flags |= 4;
-                } else if (stack_check(target_veh, 2, PLAN_INFO_WARFARE, owner, -1)) {
-                    parse_says(0, get_adjective(owner), -1, -1);
-                    if (!X_pop("PROBEPACTTEAM", NULL))
-                        goto L_595083;
-                    Vehs[veh_id].flags |= 4;
+                    popup.start(PopupStartCaption, "ARTIFACT", -1, NULL, 0, NULL);
+                    if (Buffer::get_pcx_dimensions("art_dis_sm.pcx", &width, &height) == 0
+                        && popup.owned_picture().init("art_dis_sm.pcx", width, height) == 0)
+                        popup.select_owned_picture();
+                    parse_num(0, Bases[base_id].minerals_accumulated);
+                    int cost;
+                    if (Bases[base_id].queue_production_id[0] < 0)
+                        cost = cost_factor(faction, 1, -1)
+                             * Facility[-Bases[base_id].queue_production_id[0]].cost;
+                    else
+                        cost = veh_cost(Bases[base_id].queue_production_id[0], base_id, NULL)
+                             * cost_factor(faction, 1, -1);
+                    parse_num(1, cost);
+                    if (X_text_open(ScriptPopupFile, "ARTIFACTMENU") == 0) {
+                        StringTemp[0] = 0;
+                        parse_string(text_get(), StringTemp);
+                        popup.dialogs().item(StringTemp, 0);
+                        int rows = 1;
+                        LPSTR text = text_get();
+                        if (has_fac(FAC_NETWORK_NODE, base_id, 0)
+                            && GameDataStateStorage.fields_.secret_project_.universal_translator() != base_id
+                            && !(Bases[base_id].state & BSTATE_ARTIFACT_ALREADY_LINKED)) {
+                            StringTemp[0] = 0;
+                            parse_string(text, StringTemp);
+                            popup.dialogs().item(StringTemp, 1);
+                            rows++;
+                            if (!is_human(faction))
+                                Vehs[veh_id].terraforming_turns = 1;
+                        }
+                        text = text_get();
+                        if (GameDataStateStorage.fields_.secret_project_.universal_translator() == base_id) {
+                            StringTemp[0] = 0;
+                            parse_string(text, StringTemp);
+                            popup.dialogs().item(StringTemp, 1);
+                            rows++;
+                            if (!is_human(faction))
+                                Vehs[veh_id].terraforming_turns = 1;
+                        }
+                        text = text_get();
+                        if (Bases[base_id].queue_production_id[0] <= -70) {
+                            StringTemp[0] = 0;
+                            int facility = Bases[base_id].queue_production_id[0];
+                            if (facility < 0)
+                                facility = -facility;
+                            parse_say(1, Facility[facility].name, -1, -1);
+                            parse_string(text, StringTemp);
+                            popup.dialogs().item(StringTemp, 2);
+                            rows++;
+                            if (!is_human(faction))
+                                Vehs[veh_id].terraforming_turns = 2;
+                        }
+                        text = text_get();
+                        if (Bases[base_id].queue_production_id[0] >= 0
+                            && Bases[base_id].queue_production_id[0] >= 64
+                            && !(VehPrototypes[Bases[base_id].queue_production_id[0]].flags & 4)) {
+                            StringTemp[0] = 0;
+                            parse_says(2, VehPrototypes[Bases[base_id].queue_production_id[0]].veh_name, -1, -1);
+                            parse_string(text, StringTemp);
+                            popup.dialogs().item(StringTemp, 2);
+                            rows++;
+                        }
+                        if (rows > 1 && faction == ConsoleGlobal.faction_id_
+                            && is_human(faction)) {
+                            Vehs[veh_id].terraforming_turns = popup.exec(0, NULL);
+                            order_veh_synch(veh_id);
+                        }
+                    }
                 }
             }
         }
-        // 594f3c
-        if (base_id >= 0) {
-            if (target_veh >= 0 && stack_check(target_veh, 2, PLAN_INFO_WARFARE, -1, -1))
-                goto L_595083;
-            if (!is_human(faction)
-                && has_treaty(faction, owner, 1)
-                && (Vehs[veh_id].waypoint_x[0] != Bases[base_id].x
-                    || Vehs[veh_id].waypoint_y[0] != Bases[base_id].y))
-                goto L_595083;
-            if (owner == ConsoleGlobal.faction_id_) {
-                ConsoleGlobal.focus(src_x, src_y, faction);
-                if (!IsMultiplayerNet)
-                    clock_wait(400);
-                stack_veh(veh_id, 1);
-                veh_scoot(veh_id, src_x, src_y, direction, 0);
-                stack_put(veh_id, src_x, src_y);
-                draw_tile(dest_x, dest_y, 2);
-            }
-            if (probe(veh_id, base_id, -1, 1) && IsMultiplayerNet && !ConsoleControlTurnActive
+
+        // 594e09
+        if (direction >= 8) {
+            if (get_proto_triad(Vehs[veh_id].proto_id) == TRIAD_AIR
+                    && Chassis[VehPrototypes[Vehs[veh_id].proto_id].chassis_id].range != 0
                     && (NetDaemonNet.action_mode_ & 1) != 0
-                    && (NetDaemonNet.action_mode_ & 2) == 0) {
-                order_veh_synch(veh_id);
-                return 1;   // 596667
+                    && faction == ConsoleGlobal.faction_id_
+                    && base_who(dest_x, dest_y) < 0
+                    && (bit_at(dest_x, dest_y) & BIT_AIRBASE) == 0) {
+                for (v = veh_top(veh_id); v >= 0; v = veh_next_stack_id(v)) {
+                    // Tests the mover, not the stack member (bug kept).
+                    if (has_abil(Vehs[veh_id].proto_id, ABL_CARRIER))
+                        goto L_596573;
+                    if (VehPrototypes[Vehs[v].proto_id].plan == PLAN_SUPPLY_CONVOY
+                            && get_triad(v) == TRIAD_AIR)
+                        goto L_596573;
+                }
+                if (veh_moves(veh_id)
+                        && (Chassis[VehPrototypes[Vehs[veh_id].proto_id].chassis_id].range == 1
+                            || Vehs[veh_id].terraforming_turns != 0)) {
+                    action_home(veh_id, 0);
+                    if (Vehs[veh_id].order == ORDER_MOVE_TO) {
+                        if (IsMultiplayerNet && !ConsoleControlTurnActive) {
+                            order_veh_synch(veh_id);
+                        }
+                        return 0;   // 5964cf
+                    }
+                }
             }
-            goto done;
+    L_596573:
+            selector = 1;
+            if ((NetDaemonNet.action_mode_ & 2) == 0)
+                goto done;
+            veh_skip(veh_id);
+            Vehs[veh_id].state &= ~0x40U;
+            goto L_598cb9;
         }
-        if (!has_treaty(faction, owner, 1)) {
-            if (target_veh >= 0 && stack_check(target_veh, 2, PLAN_INFO_WARFARE, -1, -1))
-                goto L_595083;
-            probed = 1;
-            if (probe(veh_id, -1, target_veh, 1) && IsMultiplayerNet
-                && !ConsoleControlTurnActive
-                && (NetDaemonNet.action_mode_ & 1)
-                && !(NetDaemonNet.action_mode_ & 2)) {
-                order_veh_synch(veh_id);
-                return 1;   // 5966f6
+        Vehs[veh_id].state |= 4;
+        if (VehPrototypes[Vehs[veh_id].proto_id].plan == PLAN_INFO_WARFARE
+            && owner >= 0 && faction != owner) {
+            if (NetDaemonNet.action_mode_ & 1) {
+                Vehs[veh_id].flags &= ~4;
+                if (has_treaty(faction, owner, 1) && !stealth
+                    && faction == ConsoleGlobal.faction_id_) {
+                    if (base_id >= 0) {
+                        parse_says(0, Bases[base_id].name_string, -1, -1);
+                        parse_says(1, get_adjective(owner), -1, -1);
+                        if (!X_pop("PROBEPACT", NULL))
+                            goto L_595083;
+                        Vehs[veh_id].flags |= 4;
+                    } else if (stack_check(target_veh, 2, PLAN_INFO_WARFARE, owner, -1)) {
+                        parse_says(0, get_adjective(owner), -1, -1);
+                        if (!X_pop("PROBEPACTTEAM", NULL))
+                            goto L_595083;
+                        Vehs[veh_id].flags |= 4;
+                    }
+                }
             }
-            if (GameDataStateStorage.fields_.vehicle_current_count_ != group_count_at_entry)
-                goto L_599b2a;
-            if (target_veh >= 0)
-                owner = Vehs[target_veh].faction_id;
+            // 594f3c
+            if (base_id >= 0) {
+                if (target_veh >= 0 && stack_check(target_veh, 2, PLAN_INFO_WARFARE, -1, -1))
+                    goto L_595083;
+                if (!is_human(faction)
+                    && has_treaty(faction, owner, 1)
+                    && (Vehs[veh_id].waypoint_x[0] != Bases[base_id].x
+                        || Vehs[veh_id].waypoint_y[0] != Bases[base_id].y))
+                    goto L_595083;
+                if (owner == ConsoleGlobal.faction_id_) {
+                    ConsoleGlobal.focus(src_x, src_y, faction);
+                    if (!IsMultiplayerNet)
+                        clock_wait(400);
+                    stack_veh(veh_id, 1);
+                    veh_scoot(veh_id, src_x, src_y, direction, 0);
+                    stack_put(veh_id, src_x, src_y);
+                    draw_tile(dest_x, dest_y, 2);
+                }
+                if (probe(veh_id, base_id, -1, 1) && IsMultiplayerNet && !ConsoleControlTurnActive
+                        && (NetDaemonNet.action_mode_ & 1) != 0
+                        && (NetDaemonNet.action_mode_ & 2) == 0) {
+                    order_veh_synch(veh_id);
+                    return 1;   // 596667
+                }
+                goto done;
+            }
+            if (!has_treaty(faction, owner, 1)) {
+                if (target_veh >= 0 && stack_check(target_veh, 2, PLAN_INFO_WARFARE, -1, -1))
+                    goto L_595083;
+                probed = 1;
+                if (probe(veh_id, -1, target_veh, 1) && IsMultiplayerNet
+                    && !ConsoleControlTurnActive
+                    && (NetDaemonNet.action_mode_ & 1)
+                    && !(NetDaemonNet.action_mode_ & 2)) {
+                    order_veh_synch(veh_id);
+                    return 1;   // 5966f6
+                }
+                if (GameDataStateStorage.fields_.vehicle_current_count_ != group_count_at_entry)
+                    goto L_599b2a;
+                if (target_veh >= 0)
+                    owner = Vehs[target_veh].faction_id;
+            }
         }
-    }
 
 L_595083:
-    if (triad == TRIAD_LAND && dest_ocean) {
-        if (faction != owner) {
-            if (has_treaty(faction, owner, 1))
-                goto done;
-            if (base_id < 0) {
-                if (target_veh < 0)
+        if (triad == TRIAD_LAND && dest_ocean) {
+            if (faction != owner) {
+                if (has_treaty(faction, owner, 1))
                     goto done;
-                if (!has_abil(Vehs[veh_id].proto_id, ABL_AIR_SUPERIORITY))
-                    goto done;
-                if (!stack_check(target_veh, 0x12, -1, -1, -1))
-                    goto done;
-                if (stack_check(target_veh, 6, ABL_CARRIER, -1, -1))
-                    goto done;
-                goto L_59512c;
+                if (base_id < 0) {
+                    if (target_veh < 0)
+                        goto done;
+                    if (!has_abil(Vehs[veh_id].proto_id, ABL_AIR_SUPERIORITY))
+                        goto done;
+                    if (!stack_check(target_veh, 0x12, -1, -1, -1))
+                        goto done;
+                    if (stack_check(target_veh, 6, ABL_CARRIER, -1, -1))
+                        goto done;
+                    goto L_59512c;
+                } else {
+                    if (!has_abil(Vehs[veh_id].proto_id, ABL_AMPHIBIOUS)) {
+                        if (faction == ConsoleGlobal.faction_id_
+                                && (NetDaemonNet.action_mode_ & 1) != 0) {
+                            parse_say(0, Ability[abil_index(ABL_AMPHIBIOUS)].name, -1, -1);
+                            NetMsgPrimary.pop("AMPHIBBASE", 5000, 0, NULL);
+                        }
+                        goto done;
+                    }
+                }
             } else {
-                if (!has_abil(Vehs[veh_id].proto_id, ABL_AMPHIBIOUS)) {
-                    if (faction == ConsoleGlobal.faction_id_
+                // 5952c6: own unit/base on an ocean tile: transport check.
+                if (stack_check(target_veh, 8, faction, -1, -1) <= 0
+                    && (base_id < 0
+                        || (!has_abil(Vehs[veh_id].proto_id, ABL_AMPHIBIOUS)
+                            && !stack_check(target_veh, 2, PLAN_NAVAL_TRANSPORT, -1, -1)
+                            && !stack_check(veh_id, 2, PLAN_NAVAL_TRANSPORT, -1, -1)))) {
+                    if (base_id >= 0 && !has_abil(Vehs[veh_id].proto_id, ABL_AMPHIBIOUS)
+                            && !stack_check(target_veh, 2, PLAN_NAVAL_TRANSPORT, -1, -1)
+                            && !stack_check(veh_id, 2, PLAN_NAVAL_TRANSPORT, -1, -1)) {
+                        if (faction == ConsoleGlobal.faction_id_
+                                && (NetDaemonNet.action_mode_ & 1) != 0) {
+                            parse_say(0, Ability[abil_index(ABL_AMPHIBIOUS)].name, -1, -1);
+                            NetMsgPrimary.pop("AMPHIBBASE2", 5000, 0, NULL);
+                        }
+                        goto done;
+                    }
+                    if (stack_check(target_veh, 2, PLAN_NAVAL_TRANSPORT, -1, -1)
+                            && faction == ConsoleGlobal.faction_id_
                             && (NetDaemonNet.action_mode_ & 1) != 0) {
-                        parse_say(0, Ability[abil_index(ABL_AMPHIBIOUS)].name, -1, -1);
-                        NetMsgPrimary.pop("AMPHIBBASE", 5000, 0, NULL);
+                        NetMsgPrimary.pop(stack_check(target_veh, 2, PLAN_NAVAL_TRANSPORT, -1, -1) > 1
+                                              ? "FULLTRANSPORTS" : "FULLTRANSPORT", 5000, 0, NULL);
                     }
                     goto done;
                 }
+                if (base_id < 0)
+                    flag_68 = 1;
             }
-        } else {
-            // 5952c6: own unit/base on an ocean tile: transport check.
-            if (stack_check(target_veh, 8, faction, -1, -1) <= 0
-                && (base_id < 0
-                    || (!has_abil(Vehs[veh_id].proto_id, ABL_AMPHIBIOUS)
-                        && !stack_check(target_veh, 2, PLAN_NAVAL_TRANSPORT, -1, -1)
-                        && !stack_check(veh_id, 2, PLAN_NAVAL_TRANSPORT, -1, -1)))) {
-                if (base_id >= 0 && !has_abil(Vehs[veh_id].proto_id, ABL_AMPHIBIOUS)
-                        && !stack_check(target_veh, 2, PLAN_NAVAL_TRANSPORT, -1, -1)
+        }
+
+        // 59533d
+        if (!src_ocean && !dest_ocean
+            && get_triad(veh_id) == TRIAD_LAND
+            && !(VehPrototypes[Vehs[veh_id].proto_id].ability_flags & ABL_CLOAKED)
+            && VehPrototypes[Vehs[veh_id].proto_id].plan != PLAN_INFO_WARFARE
+            && target_veh < 0
+            && zoc_move(src_x, src_y, faction)
+            && zoc_move(dest_x, dest_y, faction)) {
+            if (faction != ConsoleGlobal.faction_id_ || stealth
+                    || (NetDaemonNet.action_mode_ & 1) == 0)
+                goto done;
+            g_FX.play(13);
+            if (faction == ConsoleGlobal.faction_id_ && !IsMultiplayerNet
+                    && ((GameDataStateStorage.fields_.game_preferences_ & 0x20) != 0
+                        || (PlayersData[faction].diff_level <= 1
+                            && (++OrderVehTutorialNoticeCounter & 3) == 1))) {
+
+                parse_say(0, Ability[abil_index(ABL_CLOAKED)].name, -1, -1);
+                quick_zoc(src_x, src_y, faction, dest_x, dest_y, &zoc_x1, &zoc_y1);
+                quick_zoc(dest_x, dest_y, faction, src_x, src_y, &zoc_x2, &zoc_y2);
+                TutorialWindow.tut_map("ZOCMSG", zoc_x1, zoc_y1, veh_id, NULL, 0, zoc_x2, zoc_y2);
+            }
+            if (IsMultiplayerNet)
+                goto done;
+            probed = 0;
+            {
+            for (int dir = 0; dir < 8; dir++) {
+                x = wrap_map_x(dest_x + VehMoveDeltaX[dir]);
+                int y = dest_y + VehMoveDeltaY[dir];
+                if (!on_map(x, y))
+                    continue;
+                int spotted = stack_fix(veh_at(x, y));
+                if (spotted >= 0 && Vehs[spotted].faction_id != faction
+                        && !has_treaty(faction, Vehs[spotted].faction_id, 1)
+                        && !(faction_bit & Vehs[spotted].visibility)) {
+                    spot_loc(x, y, faction);
+                    probed = 1;
+                }
+            }
+            }
+            if (probed)
+                draw_radius(dest_x, dest_y, 1, 2);
+            goto done;
+        }
+
+        // 5953ba: supply convoy entering a base.
+        if (VehPrototypes[Vehs[veh_id].proto_id].plan == PLAN_SUPPLY_CONVOY
+            && base_id >= 0 && !IsMultiplayerNet) {
+            int shown = supply_options(veh_id, base_id);
+            if (!(NetDaemonNet.action_mode_ & 2)) {
+                if (!shown)
+                    goto done;
+                if (IsMultiplayerNet && !ConsoleControlTurnActive) {
+                    order_veh_synch(veh_id);
+                    return 1;   // 596b32
+                }
+            } else {
+                if (shown)
+                    goto done;
+            }
+        }
+
+        // 595422
+        if (!(NetDaemonNet.action_mode_ & 2))
+            goto L_59512c;
+            if (get_triad(veh_id) != TRIAD_AIR) {
+            if (target_veh >= 0)
+                goto L_595137;
+            if (faction == 0)
+                goto L_59512c;
+            {
+                // Native life may spawn on a fungus tile the unit enters.
+                Map *tile = map_loc(dest_x, dest_y);
+                if (!(tile->bit & BIT_FUNGUS))
+                    goto L_59512c;
+                if ((tile->climate & ~0x1F) < ALT_BIT_OCEAN_SHELF)
+                    goto L_59512c;
+                if (tile->bit & BIT_MAGTUBE)
+                    goto L_59512c;
+            }
+            if ((Weapon[VehPrototypes[Vehs[veh_id].proto_id].weapon_id].offense_rating == 0
+                 || Vehs[veh_id].order == ORDER_MOVE_TO)
+                && has_project(SP_XENOEMPATYH_DOME, faction))
+                goto L_59512c;
+            if (src_ocean != dest_ocean)
+                goto L_59512c;
+            if (goody_at(dest_x, dest_y))
+                goto L_59512c;
+            if (GameDataStateStorage.fields_.game_rules_ & 0x200000)
+                goto L_59512c;
+            base_find(dest_x, dest_y);
+            if (BaseFindDist <= 1)
+                goto L_59512c;
+            {
+                int chance = range(BaseFindDist, 0, 32) + MapNativeLifeForms * 10;
+                if (map_loc(dest_x, dest_y)->bit & BIT_SUPPLY_REMOVE) {
+                    chance /= 2;
+                    if (!MapNativeLifeForms)
+                        chance /= 2;
+                }
+                if (dest_ocean) {
+                    chance /= 2;
+                    if (!MapNativeLifeForms)
+                        chance /= 2;
+                }
+                if (map_loc(dest_x, dest_y)->bit & BIT_ROAD)
+                    chance /= 2;
+                if (Vehs[veh_id].proto_id < 64
+                    && (Weapon[VehPrototypes[Vehs[veh_id].proto_id].weapon_id].offense_rating < 0
+                        || Vehs[veh_id].proto_id == BSC_SPORE_LAUNCHER))
+                    chance /= 2;
+                for (int i = 0; i < 25; i++) {
+                    int x = wrap_map_x(dest_x + RadiusOffsetX[i]);
+                    int y = dest_y + RadiusOffsetY[i];
+                    if (on_map(x, y) && (is_sensor(x, y) || base_who(x, y) >= 0)) {
+                        if (i < 9)
+                            chance /= 4;
+                        else
+                            chance /= 2;
+                    }
+                }
+                if ((int)rnd(100, "WORMSHIDING") < chance) {
+                    int spawn_proto;
+                    if (dest_ocean)
+                        spawn_proto = BSC_ISLE_OF_THE_DEEP;
+                    else if (rand() % 5 == 0 && ExpansionEnabled)
+                        spawn_proto = BSC_SPORE_LAUNCHER;
+                    else
+                        spawn_proto = BSC_MIND_WORMS;
+                    target_veh = veh_init(spawn_proto, 0, dest_x, dest_y);
+                    if (target_veh >= 0) {
+                        // WORKAROUND(inline): dead budget spend (supply_options' probe, see
+                        // its declaration). Without it the final teardown is 16 deep
+                        // against the image's 15. Two calls: with the has_treaty/is_human/
+                        // get_triad spellings (which fixed the four early sites) four
+                        // calls put order_veh over VC6's per-function size ceiling
+                        // (MATCHING_GUIDE 2.8 "Total-size ceiling") before the
+                        // vehicle-count return, whose ??_DStringList the image expands;
+                        // three or none leave the final teardown 16 deep. The original
+                        // spending is not identified. (2026-11-20: three, with the
+                        // order_veh_size_pad blocks before the final return.)
+                        supply_options_budget_probe(2);
+                        supply_options_budget_probe(2);
+                        supply_options_budget_probe(2);
+                        Vehs[veh_id].order = ORDER_NONE;
+                        spot_stack(target_veh, faction);
+                        draw_tile(dest_x, dest_y, 2);
+                        bit_set(dest_x, dest_y, 0x100000, 1);
+                        if (faction == ConsoleGlobal.faction_id_) {
+                            g_FX.play(13);
+                            parse_says(0, get_adjective(owner), -1, -1);
+                            parse_says(1, VehPrototypes[Vehs[target_veh].proto_id].veh_name, -1, -1);
+                            NetMsgPrimary.pop(dest_ocean ? "ISLESPOTTED" : "WORMSSPOTTED", 5000, 0, NULL);
+                        }
+                        goto done;
+                    }
+                    goto L_596052;
+                }
+            }
+        }
+L_59512c:
+        if (target_veh < 0)
+            goto L_596052;
+L_595137:
+        if (!(Vehs[target_veh].flags & 0x400)) {
+            if (faction == owner)
+                goto L_596052;
+            if (has_treaty(faction, owner, 1)
+                && (VehPrototypes[Vehs[veh_id].proto_id].plan != PLAN_INFO_WARFARE
+                    || !(Vehs[veh_id].flags & 4)))
+                goto L_596052;
+        }
+        if (!probed) {
+            if (Vehs[target_veh].flags & 0x400) {
+                Vehs[veh_id].order = ORDER_NONE;
+                spot_stack(target_veh, faction);
+                draw_tile(dest_x, dest_y, 2);
+                if (faction == ConsoleGlobal.faction_id_) {
+                    g_FX.play(13);
+                    parse_says(0, get_adjective(owner), -1, -1);
+                    parse_says(1, VehPrototypes[Vehs[target_veh].proto_id].veh_name, -1, -1);
+                    NetMsgPrimary.pop(owner ? "SPOTTED" : "SPOTTED0", 5000, 0, NULL);
+                }
+                goto done;
+            }
+            if ((Vehs[target_veh].faction_id != faction
+                 || (Vehs[target_veh].flags & 0x440) == 0x440)
+                && !(faction_bit & Vehs[target_veh].visibility)
+                && is_human(faction)) {
+                if (base_id >= 0)
+                    goto L_595734;
+                if ((NetDaemonNet.action_mode_ & 1)
+                    && faction == ConsoleGlobal.faction_id_) {
+                    Vehs[veh_id].order = ORDER_NONE;
+                    spot_stack(target_veh, faction);
+                    draw_tile(dest_x, dest_y, 2);
+                    g_FX.play(13);
+                    parse_says(0, get_adjective(owner), -1, -1);
+                    parse_says(1, VehPrototypes[Vehs[target_veh].proto_id].veh_name, -1, -1);
+                    NetMsgPrimary.pop(owner ? "SPOTTED" : "SPOTTED0", 5000, 0, NULL);
+                    goto done;
+                }
+            }
+            // 59521f
+            if (base_id >= 0)
+                goto L_595734;
+            if (map_loc(dest_x, dest_y)->bit & BIT_AIRBASE)
+                goto L_595734;
+            if (stack_check(target_veh, 0x12, -1, -1, -1)
+                && !has_abil(Vehs[veh_id].proto_id, ABL_AIR_SUPERIORITY)
+                && !stack_check(target_veh, 6, ABL_CARRIER, -1, -1)) {
+                if (faction == ConsoleGlobal.faction_id_
+                        && (NetDaemonNet.action_mode_ & 1) != 0) {
+                    parse_say(0, Ability[abil_index(ABL_AIR_SUPERIORITY)].name, -1, -1);
+                    NetMsgPrimary.pop("FIGHTERRULE", 5000, 0, NULL);
+                }
+                if (Vehs[veh_id].state & 0x4200)
+                    veh_skip(veh_id);
+                goto done;
+            }
+            goto L_595734;
+
+L_595734:
+            if (Vehs[veh_id].proto_id != BSC_SEALURK && src_ocean && !dest_ocean
+                && triad == TRIAD_SEA && !can_arty(Vehs[veh_id].proto_id, 1)
+                && Weapon[VehPrototypes[Vehs[veh_id].proto_id].weapon_id].offense_rating) {
+                if (faction == ConsoleGlobal.faction_id_
+                        && (NetDaemonNet.action_mode_ & 1) != 0)
+                    NetMsgPrimary.pop("PSIBOMB", 5000, 0, NULL);
+                goto done;
+            }
+            if (src_ocean && triad == TRIAD_LAND
+                && !has_abil(Vehs[veh_id].proto_id, ABL_AMPHIBIOUS)
+                && VehPrototypes[Vehs[veh_id].proto_id].plan != PLAN_INFO_WARFARE) {
+                {
+                    int ability = abil_index(ABL_AMPHIBIOUS);
+                    if (faction == ConsoleGlobal.faction_id_
+                            && (NetDaemonNet.action_mode_ & 1) != 0) {
+                        parse_say(0, Ability[ability].name, -1, -1);
+                        if (base_who(src_x, src_y) >= 0)
+                            NetMsgPrimary.pop("AMPHIBBASE", 5000, 0, NULL);
+                        else
+                            NetMsgPrimary.pop("NOTAMPHIB", 5000, 0, NULL);
+                    }
+                }
+                goto done;
+            }
+
+            // 5957d7
+            if (Weapon[VehPrototypes[Vehs[veh_id].proto_id].weapon_id].mode == WPN_MODE_INFOWAR
+                && stack_check(target_veh, 2, PLAN_INFO_WARFARE, -1, -1))
+                goto L_595a92;
+            if (Weapon[VehPrototypes[Vehs[veh_id].proto_id].weapon_id].offense_rating == 0) {
+                if ((NetDaemonNet.action_mode_ & 1) != 0
+                        && faction == ConsoleGlobal.faction_id_) {
+                    g_FX.play(0x33);
+                    NetMsgPrimary.pop("NONCOMBATANT", 5000, 0, NULL);
+                }
+                goto done;
+            }
+            if (VehPrototypes[Vehs[target_veh].proto_id].plan != PLAN_INFO_WARFARE)
+                goto L_595a92;
+            if (stack_check(target_veh, 1, -1, -1, -1) != 1)
+                goto L_595a92;
+            if (IsMultiplayerNet)
+                goto L_595a92;
+            if (!has_treaty(faction, owner, 6))
+                goto L_595a92;
+            if (has_treaty(faction, owner, 1))
+                goto L_595a92;
+            {
+                // 5958ab: capturing an enemy probe team.
+                int found_base = base_find(dest_x, dest_y);
+                if (found_base >= 0 && Bases[found_base].faction_id_current == faction) {
+                    parse_says(0, get_adjective(owner), -1, -1);
+                    parse_says(1, VehPrototypes[Vehs[target_veh].proto_id].veh_name, -1, -1);
+                    parse_says(2, get_title(faction), -1, -1);
+                    if (!is_human(faction))
+                        goto L_596fbc;
+                    int picked;
+                    if (Players[owner].rule_flags & RFLAG_ALIEN)
+                        picked = popp(ScriptPopupFile, "ENEMYPROBE", 0, "al_cap_sm.pcx", NULL);
+                    else
+                        picked = popp(ScriptPopupFile, "ENEMYPROBE", 0, "capture_sm.pcx", NULL);
+                    if (!picked)
+                        goto done;
+                    if (picked == 1) {
+            L_596fbc:
+                        if (faction == ConsoleGlobal.faction_id_ || owner == ConsoleGlobal.faction_id_) {
+                            ConsoleGlobal.focus(src_x, src_y, faction);
+                            stack_veh(veh_id, 1);
+                            veh_scoot(veh_id, src_x, src_y, direction, 0);
+                            stack_put(veh_id, src_x, src_y);
+                            draw_tile(src_x, src_y, 2);
+                        }
+                        {
+                            int best_base = -1;
+                            int best_pop = -1;
+                            for (int b = 0; b < GameDataStateStorage.fields_.base_current_count_; b++) {
+                                if (Bases[b].faction_id_current == owner && Bases[b].population_size > best_pop) {
+                                    best_pop = Bases[b].population_size;
+                                    best_base = b;
+                                }
+                            }
+                            if (best_base >= 0) {
+                                stack_put(target_veh, Bases[best_base].x, Bases[best_base].y);
+                                Vehs[target_veh].visibility = 0;
+                                parse_says(2, Bases[best_base].name_string, -1, -1);
+                            } else if (((1 << owner)
+                                        & GameDataStateStorage.fields_.lock_masks_.human_mask_) == 0) {
+                                veh_kill(target_veh);
+                            }
+                        }
+                        draw_tile(dest_x, dest_y, 2);
+                        if (owner == ConsoleGlobal.faction_id_) {
+                            parse_says(0, get_adjective(faction), -1, -1);
+                            parse_says(1, get_title(owner), -1, -1);
+                            NetMsgPrimary.pop("GOTMYPROBE", 5000, 0, NULL);
+                        } else if (faction == ConsoleGlobal.faction_id_) {
+                            parse_says(0, get_adjective(owner), -1, -1);
+                            parse_says(1, get_title(faction), -1, -1);
+                            NetMsgPrimary.pop("GOTYOURPROBE", 5000, 0, NULL);
+                        }
+                        goto done;
+                    }
+                    goto L_595a92;
+                }
+                if (faction == ConsoleGlobal.faction_id_) {
+                    parse_says(0, get_adjective(owner), -1, -1);
+                    parse_says(1, VehPrototypes[Vehs[target_veh].proto_id].veh_name, -1, -1);
+                    parse_says(2, get_title(faction), -1, -1);
+                    int picked;
+                    if (Players[owner].rule_flags & RFLAG_ALIEN)
+                        picked = popp(ScriptPopupFile, "ENEMYPROBE2", 0, "al_cap_sm.pcx", NULL);
+                    else
+                        picked = popp(ScriptPopupFile, "ENEMYPROBE2", 0, "capture_sm.pcx", NULL);
+                    if (!picked)
+                        goto done;
+                }
+            }
+
+L_595a92:
+            // HASTY: attacking with less than a full move left.
+            if (veh_moves(veh_id) < Rules.move_rate_roads
+                && Vehs[veh_id].proto_id != BSC_SPORE_LAUNCHER
+                && Vehs[veh_id].proto_id != BSC_MIND_WORMS) {
+                if (faction == ConsoleGlobal.faction_id_ && !stealth
+                    && (NetDaemonNet.action_mode_ & 1)) {
+                    parse_says(0, VehPrototypes[Vehs[veh_id].proto_id].veh_name, -1, -1);
+                    parse_num(0, veh_moves(veh_id));
+                    parse_num(1, Rules.move_rate_roads);
+                    if (popp(ScriptPopupFile, "HASTY", 0, "bad_sm.pcx", NULL))
+                        goto done;
+                } else if (!is_human(faction)) {
+                    if (veh_moves(veh_id) <= Rules.move_rate_roads / 2)
+                        goto done;
+                }
+            }
+            // falls through to L_595be6
+L_595be6:
+            GameDataStateStorage.fields_.vehicle_selection_follow_limit_ = veh_id;
+            if ((NetDaemonNet.action_mode_ & 2) == 0)
+                goto L_59729d;
+            if (owner != 0)
+                goto L_59724d;
+                if (get_triad(veh_id) != TRIAD_AIR) {
+                if (Vehs[target_veh].proto_id == BSC_ALIEN_ARTIFACT)
+                    goto L_59724d;
+                if (Vehs[target_veh].proto_id == BSC_FUNGAL_TOWER)
+                    goto L_59724d;
+                if (PlayersData[faction].soc_effect_active.values_[SocialEffect::PLANET] <= 0)
+                    goto L_59724d;
+                if (veh_moves(veh_id) < Rules.move_rate_roads) {
+                    if (PlayersData[faction].soc_effect_base.values_[SocialEffect::PLANET] <= 0)
+                        goto L_59724d;
+                    if (PlayersData[faction].proto_id_active[Vehs[target_veh].proto_id] != 0)
+                        goto L_59724d;
+                }
+                {
+                    int nearby_base = base_find(dest_x, dest_y, faction);
+                    if ((NetDaemonNet.action_mode_ & 2) == 0)
+                        goto L_59724d;
+                    if (Vehs[target_veh].order_auto_type == faction)
+                        goto L_597216;
+                    if (nearby_base >= 0 && Bases[nearby_base].eco_damage != 0)
+                        goto L_597216;
+                }
+                log_say("Precapture who, enemy", faction, target_veh, 0);
+                log_say("Precapture fac, proto",
+                        PlayersData[faction].soc_effect_base.values_[SocialEffect::PLANET],
+                        PlayersData[faction].proto_id_active[Vehs[target_veh].proto_id], 0);
+                log_say("Precapture type, soc2", Vehs[target_veh].proto_id,
+                        PlayersData[faction].soc_effect_active.values_[SocialEffect::PLANET], 0);
+                if ((Vehs[target_veh].flags & 0x2000) != 0)
+                    goto L_5971ce;
+                if ((int)rnd(4, "ORDER") < PlayersData[faction].soc_effect_active.values_[SocialEffect::PLANET]) {
+                    int roll = rnd(GameDataStateStorage.fields_.turn_current_num_ / 5 + 100, "ORDER2");
+                    if (roll >= PlayersData[faction].proto_id_active[Vehs[target_veh].proto_id] * 10
+                            || rand() % 10 == 0)
+                        goto L_595e1b;
+                }
+                if (PlayersData[faction].soc_effect_base.values_[SocialEffect::PLANET] <= 0)
+                    goto L_5971ce;
+                if (PlayersData[faction].proto_id_active[Vehs[target_veh].proto_id] != 0)
+                    goto L_5971ce;
+
+L_595e1b:
+                {
+                for (v = veh_top(target_veh); v >= 0; v = veh_next_stack_id(v)) {
+                    Vehs[v].faction_id = (uint8_t)faction;
+                    Vehs[v].morale = (uint8_t)morale_alien(v, 0);
+                    int b = base_find(dest_x, dest_y);
+                    // Bases[-1] is read when no base exists (bug kept).
+                    if (Bases[b].faction_id_current == faction && Bases[b].population_size >= 3)
+                        Vehs[v].home_base_id = (int16_t)b;
+                    else
+                        Vehs[v].home_base_id = -1;
+                    veh_skip(v);
+                }
+                }
+                bit_set(dest_x, dest_y, 0x100000, 1);
+                owner_set(dest_x, dest_y, faction);
+                if (faction == ConsoleGlobal.faction_id_)
+                    draw_tile_fixup(dest_x, dest_y, 1, 2);
+                else
+                    draw_tile(dest_x, dest_y, 2);
+                if (faction == ConsoleGlobal.faction_id_) {
+                    parse_says(0, VehPrototypes[Vehs[target_veh].proto_id].veh_name, -1, -1);
+                    if (Vehs[target_veh].proto_id == BSC_SPORE_LAUNCHER) {
+                        if (PlayersData[faction].proto_id_active[BSC_SPORE_LAUNCHER] == 0)
+                            popp(ScriptPopupFile, "WORMCAPTURE", 0, "sporlnch_sm.pcx", 0);
+                        else
+                            NetMsgPrimary.pop("WORMCAPTURE", 5000, 0, NULL);
+                    } else if (Vehs[target_veh].proto_id == BSC_SEALURK) {
+                        if (PlayersData[faction].proto_id_active[BSC_SEALURK] == 0)
+                            popp(ScriptPopupFile, "WORMCAPTURE", 0, "sealrk_sm.pcx", 0);
+                        else
+                            NetMsgPrimary.pop("WORMCAPTURE", 5000, 0, NULL);
+                    } else if (PlayersData[faction].proto_id_active[Vehs[target_veh].proto_id] == 0) {
+                        popp(ScriptPopupFile, "WORMCAPTURE", 0,
+                             is_ocean(dest_x, dest_y) ? "isle_sm.pcx" : "mindworm_sm.pcx", 0);
+                    } else {
+                        NetMsgPrimary.pop("WORMCAPTURE", 5000, 0, NULL);
+                    }
+                }
+                log_say("Captured", 0, 0, 0);
+                goto L_596052;
+
+L_5971ce:
+                Vehs[target_veh].flags |= 0x2000;
+                if (faction == ConsoleGlobal.faction_id_)
+                    NetMsgPrimary.pop("WORMNOCAPTURE", 5000, 0, NULL);
+                log_say("No Capture", 0, 0, 0);
+                goto L_59724d;
+
+L_597216:
+                log_say("Agitated", 0, 0, 0);
+                if (faction == ConsoleGlobal.faction_id_)
+                    NetMsgPrimary.pop("WORMSAGITATED", 5000, 0, NULL);
+            }
+L_59724d:
+            flag_6c = 1;
+            switch (battle_fight(veh_id, direction, 0, 1, 0)) {
+            case 0:
+                goto done;
+            default:
+                selector = 0;
+                goto done;
+            case 1:
+                veh_id = GameDataStateStorage.fields_.vehicle_selection_follow_limit_;
+                dest_y = src_y;
+                dest_x = src_x;
+                flag_74 = 1;
+                goody = 0;
+                goto L_598cb9;
+            }
+
+L_59729d:
+            selector = battle_fight(veh_id, direction, 0, 1, 0) == 0;
+            goto done;
+
+
+L_596052:
+            if (src_ocean) {
+                if (dest_ocean)
+                    goto L_597345;
+                if (triad == TRIAD_LAND && target_veh < 0
+                        && !has_abil(Vehs[veh_id].proto_id, ABL_AMPHIBIOUS)
+                        && base_who(src_x, src_y) >= 0
                         && !stack_check(veh_id, 2, PLAN_NAVAL_TRANSPORT, -1, -1)) {
                     if (faction == ConsoleGlobal.faction_id_
                             && (NetDaemonNet.action_mode_ & 1) != 0) {
                         parse_say(0, Ability[abil_index(ABL_AMPHIBIOUS)].name, -1, -1);
-                        NetMsgPrimary.pop("AMPHIBBASE2", 5000, 0, NULL);
+                        veh_battle_msg("AMPHIBBASE2", NULL);
                     }
                     goto done;
                 }
-                if (stack_check(target_veh, 2, PLAN_NAVAL_TRANSPORT, -1, -1)
-                        && faction == ConsoleGlobal.faction_id_
-                        && (NetDaemonNet.action_mode_ & 1) != 0) {
-                    NetMsgPrimary.pop(stack_check(target_veh, 2, PLAN_NAVAL_TRANSPORT, -1, -1) > 1
-                                          ? "FULLTRANSPORTS" : "FULLTRANSPORT", 5000, 0, NULL);
-                }
-                goto done;
-            }
-            if (base_id < 0)
-                flag_68 = 1;
-        }
-    }
-
-    // 59533d
-    if (!src_ocean && !dest_ocean
-        && get_triad(veh_id) == TRIAD_LAND
-        && !(VehPrototypes[Vehs[veh_id].proto_id].ability_flags & ABL_CLOAKED)
-        && VehPrototypes[Vehs[veh_id].proto_id].plan != PLAN_INFO_WARFARE
-        && target_veh < 0
-        && zoc_move(src_x, src_y, faction)
-        && zoc_move(dest_x, dest_y, faction)) {
-        if (faction != ConsoleGlobal.faction_id_ || stealth
-                || (NetDaemonNet.action_mode_ & 1) == 0)
-            goto done;
-        g_FX.play(13);
-        if (faction == ConsoleGlobal.faction_id_ && !IsMultiplayerNet
-                && ((GameDataStateStorage.fields_.game_preferences_ & 0x20) != 0
-                    || (PlayersData[faction].diff_level <= 1
-                        && (++OrderVehTutorialNoticeCounter & 3) == 1))) {
-
-            parse_say(0, Ability[abil_index(ABL_CLOAKED)].name, -1, -1);
-            quick_zoc(src_x, src_y, faction, dest_x, dest_y, &zoc_x1, &zoc_y1);
-            quick_zoc(dest_x, dest_y, faction, src_x, src_y, &zoc_x2, &zoc_y2);
-            TutorialWindow.tut_map("ZOCMSG", zoc_x1, zoc_y1, veh_id, NULL, 0, zoc_x2, zoc_y2);
-        }
-        if (IsMultiplayerNet)
-            goto done;
-        probed = 0;
-        {
-        for (int dir = 0; dir < 8; dir++) {
-            x = wrap_map_x(dest_x + VehMoveDeltaX[dir]);
-            int y = dest_y + VehMoveDeltaY[dir];
-            if (!on_map(x, y))
-                continue;
-            int spotted = stack_fix(veh_at(x, y));
-            if (spotted >= 0 && Vehs[spotted].faction_id != faction
-                    && !has_treaty(faction, Vehs[spotted].faction_id, 1)
-                    && !(faction_bit & Vehs[spotted].visibility)) {
-                spot_loc(x, y, faction);
-                probed = 1;
-            }
-        }
-        }
-        if (probed)
-            draw_radius(dest_x, dest_y, 1, 2);
-        goto done;
-    }
-
-    // 5953ba: supply convoy entering a base.
-    if (VehPrototypes[Vehs[veh_id].proto_id].plan == PLAN_SUPPLY_CONVOY
-        && base_id >= 0 && !IsMultiplayerNet) {
-        int shown = supply_options(veh_id, base_id);
-        if (!(NetDaemonNet.action_mode_ & 2)) {
-            if (!shown)
-                goto done;
-            if (IsMultiplayerNet && !ConsoleControlTurnActive) {
-                order_veh_synch(veh_id);
-                return 1;   // 596b32
-            }
-        } else {
-            if (shown)
-                goto done;
-        }
-    }
-
-    // 595422
-    if (!(NetDaemonNet.action_mode_ & 2))
-        goto L_59512c;
-        if (get_triad(veh_id) != TRIAD_AIR) {
-        if (target_veh >= 0)
-            goto L_595137;
-        if (faction == 0)
-            goto L_59512c;
-        {
-            // Native life may spawn on a fungus tile the unit enters.
-            Map *tile = map_loc(dest_x, dest_y);
-            if (!(tile->bit & BIT_FUNGUS))
-                goto L_59512c;
-            if ((tile->climate & ~0x1F) < ALT_BIT_OCEAN_SHELF)
-                goto L_59512c;
-            if (tile->bit & BIT_MAGTUBE)
-                goto L_59512c;
-        }
-        if ((Weapon[VehPrototypes[Vehs[veh_id].proto_id].weapon_id].offense_rating == 0
-             || Vehs[veh_id].order == ORDER_MOVE_TO)
-            && has_project(SP_XENOEMPATYH_DOME, faction))
-            goto L_59512c;
-        if (src_ocean != dest_ocean)
-            goto L_59512c;
-        if (goody_at(dest_x, dest_y))
-            goto L_59512c;
-        if (GameDataStateStorage.fields_.game_rules_ & 0x200000)
-            goto L_59512c;
-        base_find(dest_x, dest_y);
-        if (BaseFindDist <= 1)
-            goto L_59512c;
-        {
-            int chance = range(BaseFindDist, 0, 32) + MapNativeLifeForms * 10;
-            if (map_loc(dest_x, dest_y)->bit & BIT_SUPPLY_REMOVE) {
-                chance /= 2;
-                if (!MapNativeLifeForms)
-                    chance /= 2;
-            }
-            if (dest_ocean) {
-                chance /= 2;
-                if (!MapNativeLifeForms)
-                    chance /= 2;
-            }
-            if (map_loc(dest_x, dest_y)->bit & BIT_ROAD)
-                chance /= 2;
-            if (Vehs[veh_id].proto_id < 64
-                && (Weapon[VehPrototypes[Vehs[veh_id].proto_id].weapon_id].offense_rating < 0
-                    || Vehs[veh_id].proto_id == BSC_SPORE_LAUNCHER))
-                chance /= 2;
-            for (int i = 0; i < 25; i++) {
-                int x = wrap_map_x(dest_x + RadiusOffsetX[i]);
-                int y = dest_y + RadiusOffsetY[i];
-                if (on_map(x, y) && (is_sensor(x, y) || base_who(x, y) >= 0)) {
-                    if (i < 9)
-                        chance /= 4;
-                    else
-                        chance /= 2;
-                }
-            }
-            if ((int)rnd(100, "WORMSHIDING") < chance) {
-                int spawn_proto;
+            } else {
                 if (dest_ocean)
-                    spawn_proto = BSC_ISLE_OF_THE_DEEP;
-                else if (rand() % 5 == 0 && ExpansionEnabled)
-                    spawn_proto = BSC_SPORE_LAUNCHER;
-                else
-                    spawn_proto = BSC_MIND_WORMS;
-                target_veh = veh_init(spawn_proto, 0, dest_x, dest_y);
-                if (target_veh >= 0) {
-                    // WORKAROUND(inline): dead budget spend (supply_options' probe, see
-                    // its declaration). Without it the final teardown is 16 deep
-                    // against the image's 15. Two calls: with the has_treaty/is_human/
-                    // get_triad spellings (which fixed the four early sites) four
-                    // calls put order_veh over VC6's per-function size ceiling
-                    // (MATCHING_GUIDE 2.8 "Total-size ceiling") before the
-                    // vehicle-count return, whose ??_DStringList the image expands;
-                    // three or none leave the final teardown 16 deep. The original
-                    // spending is not identified. (2026-11-20: three, with the
-                    // order_veh_size_pad blocks before the final return.)
-                    supply_options_budget_probe(2);
-                    supply_options_budget_probe(2);
-                    supply_options_budget_probe(2);
-                    Vehs[veh_id].order = ORDER_NONE;
-                    spot_stack(target_veh, faction);
-                    draw_tile(dest_x, dest_y, 2);
-                    bit_set(dest_x, dest_y, 0x100000, 1);
-                    if (faction == ConsoleGlobal.faction_id_) {
-                        g_FX.play(13);
-                        parse_says(0, get_adjective(owner), -1, -1);
-                        parse_says(1, VehPrototypes[Vehs[target_veh].proto_id].veh_name, -1, -1);
-                        NetMsgPrimary.pop(dest_ocean ? "ISLESPOTTED" : "WORMSSPOTTED", 5000, 0, NULL);
-                    }
-                    goto done;
-                }
-                goto L_596052;
+                    goto L_597345;
             }
-        }
-    }
-L_59512c:
-    if (target_veh < 0)
-        goto L_596052;
-L_595137:
-    if (!(Vehs[target_veh].flags & 0x400)) {
-        if (faction == owner)
-            goto L_596052;
-        if (has_treaty(faction, owner, 1)
-            && (VehPrototypes[Vehs[veh_id].proto_id].plan != PLAN_INFO_WARFARE
-                || !(Vehs[veh_id].flags & 4)))
-            goto L_596052;
-    }
-    if (probed)
-        goto done;
-    if (Vehs[target_veh].flags & 0x400) {
-        Vehs[veh_id].order = ORDER_NONE;
-        spot_stack(target_veh, faction);
-        draw_tile(dest_x, dest_y, 2);
-        if (faction == ConsoleGlobal.faction_id_) {
-            g_FX.play(13);
-            parse_says(0, get_adjective(owner), -1, -1);
-            parse_says(1, VehPrototypes[Vehs[target_veh].proto_id].veh_name, -1, -1);
-            NetMsgPrimary.pop(owner ? "SPOTTED" : "SPOTTED0", 5000, 0, NULL);
-        }
-        goto done;
-    }
-    if ((Vehs[target_veh].faction_id != faction
-         || (Vehs[target_veh].flags & 0x440) == 0x440)
-        && !(faction_bit & Vehs[target_veh].visibility)
-        && is_human(faction)) {
-        if (base_id >= 0)
-            goto L_595734;
-        if ((NetDaemonNet.action_mode_ & 1)
-            && faction == ConsoleGlobal.faction_id_) {
-            Vehs[veh_id].order = ORDER_NONE;
-            spot_stack(target_veh, faction);
-            draw_tile(dest_x, dest_y, 2);
-            g_FX.play(13);
-            parse_says(0, get_adjective(owner), -1, -1);
-            parse_says(1, VehPrototypes[Vehs[target_veh].proto_id].veh_name, -1, -1);
-            NetMsgPrimary.pop(owner ? "SPOTTED" : "SPOTTED0", 5000, 0, NULL);
-            goto done;
-        }
-    }
-    // 59521f
-    if (base_id >= 0)
-        goto L_595734;
-    if (map_loc(dest_x, dest_y)->bit & BIT_AIRBASE)
-        goto L_595734;
-    if (stack_check(target_veh, 0x12, -1, -1, -1)
-        && !has_abil(Vehs[veh_id].proto_id, ABL_AIR_SUPERIORITY)
-        && !stack_check(target_veh, 6, ABL_CARRIER, -1, -1)) {
-        if (faction == ConsoleGlobal.faction_id_
-                && (NetDaemonNet.action_mode_ & 1) != 0) {
-            parse_say(0, Ability[abil_index(ABL_AIR_SUPERIORITY)].name, -1, -1);
-            NetMsgPrimary.pop("FIGHTERRULE", 5000, 0, NULL);
-        }
-        if (Vehs[veh_id].state & 0x4200)
-            veh_skip(veh_id);
-        goto done;
-    }
-    goto L_595734;
-
-L_595734:
-    if (Vehs[veh_id].proto_id != BSC_SEALURK && src_ocean && !dest_ocean
-        && triad == TRIAD_SEA && !can_arty(Vehs[veh_id].proto_id, 1)
-        && Weapon[VehPrototypes[Vehs[veh_id].proto_id].weapon_id].offense_rating) {
-        if (faction == ConsoleGlobal.faction_id_
-                && (NetDaemonNet.action_mode_ & 1) != 0)
-            NetMsgPrimary.pop("PSIBOMB", 5000, 0, NULL);
-        goto done;
-    }
-    if (src_ocean && triad == TRIAD_LAND
-        && !has_abil(Vehs[veh_id].proto_id, ABL_AMPHIBIOUS)
-        && VehPrototypes[Vehs[veh_id].proto_id].plan != PLAN_INFO_WARFARE) {
-        {
-            int ability = abil_index(ABL_AMPHIBIOUS);
-            if (faction == ConsoleGlobal.faction_id_
-                    && (NetDaemonNet.action_mode_ & 1) != 0) {
-                parse_say(0, Ability[ability].name, -1, -1);
-                if (base_who(src_x, src_y) >= 0)
-                    NetMsgPrimary.pop("AMPHIBBASE", 5000, 0, NULL);
-                else
-                    NetMsgPrimary.pop("NOTAMPHIB", 5000, 0, NULL);
-            }
-        }
-        goto done;
-    }
-
-    // 5957d7
-    if (Weapon[VehPrototypes[Vehs[veh_id].proto_id].weapon_id].mode == WPN_MODE_INFOWAR
-        && stack_check(target_veh, 2, PLAN_INFO_WARFARE, -1, -1))
-        goto L_595a92;
-    if (Weapon[VehPrototypes[Vehs[veh_id].proto_id].weapon_id].offense_rating == 0) {
-        if ((NetDaemonNet.action_mode_ & 1) != 0
-                && faction == ConsoleGlobal.faction_id_) {
-            g_FX.play(0x33);
-            NetMsgPrimary.pop("NONCOMBATANT", 5000, 0, NULL);
-        }
-        goto done;
-    }
-    if (VehPrototypes[Vehs[target_veh].proto_id].plan != PLAN_INFO_WARFARE)
-        goto L_595a92;
-    if (stack_check(target_veh, 1, -1, -1, -1) != 1)
-        goto L_595a92;
-    if (IsMultiplayerNet)
-        goto L_595a92;
-    if (!has_treaty(faction, owner, 6))
-        goto L_595a92;
-    if (has_treaty(faction, owner, 1))
-        goto L_595a92;
-    {
-        // 5958ab: capturing an enemy probe team.
-        int found_base = base_find(dest_x, dest_y);
-        if (found_base >= 0 && Bases[found_base].faction_id_current == faction) {
-            parse_says(0, get_adjective(owner), -1, -1);
-            parse_says(1, VehPrototypes[Vehs[target_veh].proto_id].veh_name, -1, -1);
-            parse_says(2, get_title(faction), -1, -1);
-            if (!is_human(faction))
-                goto L_596fbc;
-            int picked;
-            if (Players[owner].rule_flags & RFLAG_ALIEN)
-                picked = popp(ScriptPopupFile, "ENEMYPROBE", 0, "al_cap_sm.pcx", NULL);
-            else
-                picked = popp(ScriptPopupFile, "ENEMYPROBE", 0, "capture_sm.pcx", NULL);
-            if (!picked)
-                goto done;
-            if (picked == 1) {
-            L_596fbc:
-                if (faction == ConsoleGlobal.faction_id_ || owner == ConsoleGlobal.faction_id_) {
-                    ConsoleGlobal.focus(src_x, src_y, faction);
-                    stack_veh(veh_id, 1);
-                    veh_scoot(veh_id, src_x, src_y, direction, 0);
-                    stack_put(veh_id, src_x, src_y);
-                    draw_tile(src_x, src_y, 2);
-                }
-                {
-                    int best_base = -1;
-                    int best_pop = -1;
-                    for (int b = 0; b < GameDataStateStorage.fields_.base_current_count_; b++) {
-                        if (Bases[b].faction_id_current == owner && Bases[b].population_size > best_pop) {
-                            best_pop = Bases[b].population_size;
-                            best_base = b;
-                        }
-                    }
-                    if (best_base >= 0) {
-                        stack_put(target_veh, Bases[best_base].x, Bases[best_base].y);
-                        Vehs[target_veh].visibility = 0;
-                        parse_says(2, Bases[best_base].name_string, -1, -1);
-                    } else if (((1 << owner)
-                                & GameDataStateStorage.fields_.lock_masks_.human_mask_) == 0) {
-                        veh_kill(target_veh);
-                    }
-                }
-                draw_tile(dest_x, dest_y, 2);
-                if (owner == ConsoleGlobal.faction_id_) {
-                    parse_says(0, get_adjective(faction), -1, -1);
-                    parse_says(1, get_title(owner), -1, -1);
-                    NetMsgPrimary.pop("GOTMYPROBE", 5000, 0, NULL);
-                } else if (faction == ConsoleGlobal.faction_id_) {
-                    parse_says(0, get_adjective(owner), -1, -1);
-                    parse_says(1, get_title(faction), -1, -1);
-                    NetMsgPrimary.pop("GOTYOURPROBE", 5000, 0, NULL);
-                }
-                goto done;
-            }
-            goto L_595a92;
-        }
-        if (faction == ConsoleGlobal.faction_id_) {
-            parse_says(0, get_adjective(owner), -1, -1);
-            parse_says(1, VehPrototypes[Vehs[target_veh].proto_id].veh_name, -1, -1);
-            parse_says(2, get_title(faction), -1, -1);
-            int picked;
-            if (Players[owner].rule_flags & RFLAG_ALIEN)
-                picked = popp(ScriptPopupFile, "ENEMYPROBE2", 0, "al_cap_sm.pcx", NULL);
-            else
-                picked = popp(ScriptPopupFile, "ENEMYPROBE2", 0, "capture_sm.pcx", NULL);
-            if (!picked)
-                goto done;
-        }
-    }
-
-L_595a92:
-    // HASTY: attacking with less than a full move left.
-    if (veh_moves(veh_id) < Rules.move_rate_roads
-        && Vehs[veh_id].proto_id != BSC_SPORE_LAUNCHER
-        && Vehs[veh_id].proto_id != BSC_MIND_WORMS) {
-        if (faction == ConsoleGlobal.faction_id_ && !stealth
-            && (NetDaemonNet.action_mode_ & 1)) {
-            parse_says(0, VehPrototypes[Vehs[veh_id].proto_id].veh_name, -1, -1);
-            parse_num(0, veh_moves(veh_id));
-            parse_num(1, Rules.move_rate_roads);
-            if (popp(ScriptPopupFile, "HASTY", 0, "bad_sm.pcx", NULL))
-                goto done;
-        } else if (!is_human(faction)) {
-            if (veh_moves(veh_id) <= Rules.move_rate_roads / 2)
-                goto done;
-        }
-    }
-    // falls through to L_595be6
-L_595be6:
-    GameDataStateStorage.fields_.vehicle_selection_follow_limit_ = veh_id;
-    if ((NetDaemonNet.action_mode_ & 2) == 0)
-        goto L_59729d;
-    if (owner != 0)
-        goto L_59724d;
-        if (get_triad(veh_id) != TRIAD_AIR) {
-        if (Vehs[target_veh].proto_id == BSC_ALIEN_ARTIFACT)
-            goto L_59724d;
-        if (Vehs[target_veh].proto_id == BSC_FUNGAL_TOWER)
-            goto L_59724d;
-        if (PlayersData[faction].soc_effect_active.values_[SocialEffect::PLANET] <= 0)
-            goto L_59724d;
-        if (veh_moves(veh_id) < Rules.move_rate_roads) {
-            if (PlayersData[faction].soc_effect_base.values_[SocialEffect::PLANET] <= 0)
-                goto L_59724d;
-            if (PlayersData[faction].proto_id_active[Vehs[target_veh].proto_id] != 0)
-                goto L_59724d;
-        }
-        {
-            int nearby_base = base_find(dest_x, dest_y, faction);
-            if ((NetDaemonNet.action_mode_ & 2) == 0)
-                goto L_59724d;
-            if (Vehs[target_veh].order_auto_type == faction)
-                goto L_597216;
-            if (nearby_base >= 0 && Bases[nearby_base].eco_damage != 0)
-                goto L_597216;
-        }
-        log_say("Precapture who, enemy", faction, target_veh, 0);
-        log_say("Precapture fac, proto",
-                PlayersData[faction].soc_effect_base.values_[SocialEffect::PLANET],
-                PlayersData[faction].proto_id_active[Vehs[target_veh].proto_id], 0);
-        log_say("Precapture type, soc2", Vehs[target_veh].proto_id,
-                PlayersData[faction].soc_effect_active.values_[SocialEffect::PLANET], 0);
-        if ((Vehs[target_veh].flags & 0x2000) != 0)
-            goto L_5971ce;
-        if ((int)rnd(4, "ORDER") < PlayersData[faction].soc_effect_active.values_[SocialEffect::PLANET]) {
-            int roll = rnd(GameDataStateStorage.fields_.turn_current_num_ / 5 + 100, "ORDER2");
-            if (roll >= PlayersData[faction].proto_id_active[Vehs[target_veh].proto_id] * 10
-                    || rand() % 10 == 0)
-                goto L_595e1b;
-        }
-        if (PlayersData[faction].soc_effect_base.values_[SocialEffect::PLANET] <= 0)
-            goto L_5971ce;
-        if (PlayersData[faction].proto_id_active[Vehs[target_veh].proto_id] != 0)
-            goto L_5971ce;
-
-L_595e1b:
-        {
-        for (v = veh_top(target_veh); v >= 0; v = veh_next_stack_id(v)) {
-            Vehs[v].faction_id = (uint8_t)faction;
-            Vehs[v].morale = (uint8_t)morale_alien(v, 0);
-            int b = base_find(dest_x, dest_y);
-            // Bases[-1] is read when no base exists (bug kept).
-            if (Bases[b].faction_id_current == faction && Bases[b].population_size >= 3)
-                Vehs[v].home_base_id = (int16_t)b;
-            else
-                Vehs[v].home_base_id = -1;
-            veh_skip(v);
-        }
-        }
-        bit_set(dest_x, dest_y, 0x100000, 1);
-        owner_set(dest_x, dest_y, faction);
-        if (faction == ConsoleGlobal.faction_id_)
-            draw_tile_fixup(dest_x, dest_y, 1, 2);
-        else
-            draw_tile(dest_x, dest_y, 2);
-        if (faction == ConsoleGlobal.faction_id_) {
-            parse_says(0, VehPrototypes[Vehs[target_veh].proto_id].veh_name, -1, -1);
-            if (Vehs[target_veh].proto_id == BSC_SPORE_LAUNCHER) {
-                if (PlayersData[faction].proto_id_active[BSC_SPORE_LAUNCHER] == 0)
-                    popp(ScriptPopupFile, "WORMCAPTURE", 0, "sporlnch_sm.pcx", 0);
-                else
-                    NetMsgPrimary.pop("WORMCAPTURE", 5000, 0, NULL);
-            } else if (Vehs[target_veh].proto_id == BSC_SEALURK) {
-                if (PlayersData[faction].proto_id_active[BSC_SEALURK] == 0)
-                    popp(ScriptPopupFile, "WORMCAPTURE", 0, "sealrk_sm.pcx", 0);
-                else
-                    NetMsgPrimary.pop("WORMCAPTURE", 5000, 0, NULL);
-            } else if (PlayersData[faction].proto_id_active[Vehs[target_veh].proto_id] == 0) {
-                popp(ScriptPopupFile, "WORMCAPTURE", 0,
-                     is_ocean(dest_x, dest_y) ? "isle_sm.pcx" : "mindworm_sm.pcx", 0);
-            } else {
-                NetMsgPrimary.pop("WORMCAPTURE", 5000, 0, NULL);
-            }
-        }
-        log_say("Captured", 0, 0, 0);
-        goto L_596052;
-
-L_5971ce:
-        Vehs[target_veh].flags |= 0x2000;
-        if (faction == ConsoleGlobal.faction_id_)
-            NetMsgPrimary.pop("WORMNOCAPTURE", 5000, 0, NULL);
-        log_say("No Capture", 0, 0, 0);
-        goto L_59724d;
-
-L_597216:
-        log_say("Agitated", 0, 0, 0);
-        if (faction == ConsoleGlobal.faction_id_)
-            NetMsgPrimary.pop("WORMSAGITATED", 5000, 0, NULL);
-    }
-L_59724d:
-    flag_6c = 1;
-    switch (battle_fight(veh_id, direction, 0, 1, 0)) {
-    case 0:
-        goto done;
-    default:
-        selector = 0;
-        goto done;
-    case 1:
-        veh_id = GameDataStateStorage.fields_.vehicle_selection_follow_limit_;
-        dest_y = src_y;
-        dest_x = src_x;
-        flag_74 = 1;
-        goody = 0;
-        goto L_598cb9;
-    }
-
-L_59729d:
-    selector = battle_fight(veh_id, direction, 0, 1, 0) == 0;
-    goto done;
-
-
-L_596052:
-    if (src_ocean) {
-        if (dest_ocean)
-            goto L_597345;
-        if (triad == TRIAD_LAND && target_veh < 0
-                && !has_abil(Vehs[veh_id].proto_id, ABL_AMPHIBIOUS)
-                && base_who(src_x, src_y) >= 0
-                && !stack_check(veh_id, 2, PLAN_NAVAL_TRANSPORT, -1, -1)) {
-            if (faction == ConsoleGlobal.faction_id_
-                    && (NetDaemonNet.action_mode_ & 1) != 0) {
-                parse_say(0, Ability[abil_index(ABL_AMPHIBIOUS)].name, -1, -1);
-                veh_battle_msg("AMPHIBBASE2", NULL);
-            }
-            goto done;
-        }
-    } else {
-        if (dest_ocean)
-            goto L_597345;
-    }
-    if (base_id >= 0)
-        goto L_597350;
-    if (triad == TRIAD_SEA && IsMultiplayerNet)
-        goto done;
-    if (triad != TRIAD_SEA || IsMultiplayerNet)
-        goto L_597345;
-    if (faction != ConsoleGlobal.faction_id_)
-        goto done;
-    if ((NetDaemonNet.action_mode_ & 1) == 0)
-        goto done;
-    // Disembark dialog.
-    Vehs[veh_id].order = ORDER_NONE;
-    parse_says(0, VehPrototypes[Vehs[veh_id].proto_id].veh_name, -1, -1);
-    popup.start(PopupStartCaption, "DISEMBARK", -1, NULL, 0, NULL);
-    if (!X_text_open(ScriptPopupFile, "DISEMBARKERS")) {
-        text_get();
-        stack_veh(veh_id, 0);
-        {
-            int last_moving = -1;
-            int attached = 0;
-            for (v = veh_top(veh_id); v >= 0; v = veh_next_stack_id(v)) {
-                if (Vehs[v].order == ORDER_SENTRY_BOARD && Vehs[v].waypoint_x[0] == veh_id) {
-                    attached++;
-                    if (veh_moves(v)) {
-                        last_moving = v;
-                        StringTemp[0] = '\0';
-                        parse_says(1, VehPrototypes[Vehs[v].proto_id].veh_name, -1, -1);
-                        parse_string(TextBufferGetPtr, StringTemp);
-                        popup.dialogs().item(StringTemp, v + 1);
-                    }
-                }
-            }
-            if (last_moving >= 0) {
-                int chosen = popup.exec(0, NULL) - 1;
-                if (chosen < 0)
-                    goto done;
-                veh_id = chosen;
-                Vehs[chosen].order = ORDER_NONE;
-                goto L_5949b3;
-            } else {
-                // Image places this else arm out of line at 59731d.
-                if (attached)
-                    NetMsgPrimary.pop("DISEMBARKFAIL", 5000, 0, NULL);
-                goto done;
-            }
-        }
+            if (base_id >= 0)
+                goto L_597350;
+                if (!(triad == TRIAD_SEA && IsMultiplayerNet)) {
+                if (triad != TRIAD_SEA || IsMultiplayerNet)
+                    goto L_597345;
+                if (faction == ConsoleGlobal.faction_id_) {
+                    if ((NetDaemonNet.action_mode_ & 1) != 0) {
+                        // Disembark dialog.
+                        Vehs[veh_id].order = ORDER_NONE;
+                        parse_says(0, VehPrototypes[Vehs[veh_id].proto_id].veh_name, -1, -1);
+                        popup.start(PopupStartCaption, "DISEMBARK", -1, NULL, 0, NULL);
+                        if (!X_text_open(ScriptPopupFile, "DISEMBARKERS")) {
+                            text_get();
+                            stack_veh(veh_id, 0);
+                            {
+                                int last_moving = -1;
+                                int attached = 0;
+                                for (v = veh_top(veh_id); v >= 0; v = veh_next_stack_id(v)) {
+                                    if (Vehs[v].order == ORDER_SENTRY_BOARD && Vehs[v].waypoint_x[0] == veh_id) {
+                                        attached++;
+                                        if (veh_moves(v)) {
+                                            last_moving = v;
+                                            StringTemp[0] = '\0';
+                                            parse_says(1, VehPrototypes[Vehs[v].proto_id].veh_name, -1, -1);
+                                            parse_string(TextBufferGetPtr, StringTemp);
+                                            popup.dialogs().item(StringTemp, v + 1);
+                                        }
+                                    }
+                                }
+                                if (last_moving >= 0) {
+                                    int chosen = popup.exec(0, NULL) - 1;
+                                    if (chosen < 0)
+                                        goto done;
+                                    veh_id = chosen;
+                                    Vehs[chosen].order = ORDER_NONE;
+                                    goto L_5949b3;
+                                } else {
+                                    // Image places this else arm out of line at 59731d.
+                                    if (attached)
+                                        NetMsgPrimary.pop("DISEMBARKFAIL", 5000, 0, NULL);
+                                    goto done;
+                                }
+                            }
 
 L_597345:
-        if (base_id >= 0) {
+                            if (base_id >= 0) {
 L_597350:
-            if (owner != faction
-                    && !has_treaty(faction, owner, 1)) {
-                if (triad == TRIAD_AIR) {
-                    if (Chassis[VehPrototypes[Vehs[veh_id].proto_id].chassis_id].range) {
-                        if (faction == ConsoleGlobal.faction_id_
-                                && (NetDaemonNet.action_mode_ & 1)) {
-                            parse_say(0, Chassis[VehPrototypes[Vehs[veh_id].proto_id].chassis_id].offsv_1_name, -1, -1);
-                            NetMsgPrimary.pop("AIRCONQUER", 5000, 0, 0);
-                        }
-                        goto done;
-                    }
-                } else if (triad == TRIAD_SEA) {
-                    if (!dest_ocean) {
-                        if (faction == ConsoleGlobal.faction_id_
-                                && (NetDaemonNet.action_mode_ & 1)) {
-                            NetMsgPrimary.pop("SEACONQUER", 5000, 0, 0);
-                        }
-                        goto done;
-                    }
-                } else if (triad == TRIAD_LAND && dest_ocean
-                        && !has_abil(Vehs[veh_id].proto_id, ABL_AMPHIBIOUS)) {
-                    if (faction == ConsoleGlobal.faction_id_
-                            && (NetDaemonNet.action_mode_ & 1)) {
-                        NetMsgPrimary.pop("LANDCONQUER", 5000, 0, 0);
-                    }
-                    goto done;
-                }
-                if (!Weapon[VehPrototypes[Vehs[veh_id].proto_id].weapon_id].offense_rating) {
-                    if (faction == ConsoleGlobal.faction_id_
-                            && (NetDaemonNet.action_mode_ & 1)) {
-                        NetMsgPrimary.pop("COMBATCONQUER", 5000, 0, 0);
-                    }
-                    goto done;
-                }
-                if (has_treaty(faction, owner, 7)) {
-                    if (!is_human(faction)) {
-                        Vehs[veh_id].order = ORDER_NONE;
-                        goto done;
-                    }
-                    if ((faction == ConsoleGlobal.faction_id_
-                            && (NetDaemonNet.action_mode_ & 1)
-                            && break_treaty(faction, owner, 7)) != 0) {
-                        goto done;
-                    }
-                }
-            }
-        }
-        // 597564
-        if (faction == ConsoleGlobal.faction_id_
-                && is_human(faction)
-                && (NetDaemonNet.action_mode_ & 1)
-                && Vehs[veh_id].order == ORDER_MOVE_TO
-                && (Vehs[veh_id].waypoint_x[0] != dest_x
-                    || Vehs[veh_id].waypoint_y[0] != dest_y)
-                && get_triad(veh_id) != TRIAD_AIR
-                && !(Vehs[veh_id].state & 0x4200)
-                && goody_at(dest_x, dest_y)
-                && popp(ScriptPopupFile, "GOTOGOODY", 0, "supply_sm.pcx", 0)) {
-            Vehs[veh_id].order = ORDER_NONE;
-            goto done;
-        }
-        // 59763b
-        if (!veh_moves(veh_id)) {
-            goto done;
-        }
-        {
-            int cost = hex_cost(Vehs[veh_id].proto_id, faction, src_x, src_y,
-                                dest_x, dest_y, 0);
-            if (cost > veh_moves(veh_id)
-                    && triad == TRIAD_LAND
-                    && (veh_moves(veh_id) < Rules.move_rate_roads
-                        || ((map_loc(dest_x, dest_y)->bit & BIT_FUNGUS)
-                            && (map_loc(dest_x, dest_y)->climate & ~0x1F) >= 0x40
-                            && (Vehs[veh_id].proto_id >= 64
-                                || Weapon[VehPrototypes[Vehs[veh_id].proto_id].weapon_id].offense_rating >= 0)
-                            && VehPrototypes[Vehs[veh_id].proto_id].plan != PLAN_TERRAFORMING
-                            && VehPrototypes[Vehs[veh_id].proto_id].plan != PLAN_ALIEN_ARTIFACT
-                            && target_veh < 0))
-                    && ((NetDaemonNet.action_mode_ & 1)
-                        || !(GameDataStateStorage.fields_.lock_masks_.human_mask_ & faction_bit))) {
-                // 5977c7
-                int roll;
-                if (ConsoleControlTurnActive) {
-                    roll = bounded_crt_random(cost);
-                } else {
-                    roll = random(0, cost);
-                }
-                if (roll >= veh_moves(veh_id)
-                        + ((Vehs[veh_id].state & 0x8000) ? Rules.move_rate_roads : 0)) {
-                    if (faction == ConsoleGlobal.faction_id_
-                            && !Vehs[veh_id].order
-                            && !HIBYTE(GetAsyncKeyState(VK_SHIFT))
-                            && (NetDaemonNet.action_mode_ & 1)
-                            && !(Vehs[veh_id].state & 0x200)
-                            && !(GameDataStateStorage.fields_.game_more_preferences_ & 0x80)) {
-                        ConsoleGlobal.focus(src_x, src_y, ConsoleGlobal.faction_id_);
-                        stack_veh(veh_id, 1);
-                        veh_scoot(veh_id, src_x, src_y, direction + 8, 0);
-                        stack_put(veh_id, src_x, src_y);
-                        for (int i = 0; i < 8; i++) {
-                            int x = wrap_map_x(dest_x + VehMoveDeltaX[i]);
-                            int y = dest_y + VehMoveDeltaY[i];
-                            if (on_map(x, y)) {
-                                spot_loc(x, y, faction);
+                                if (owner != faction
+                                        && !has_treaty(faction, owner, 1)) {
+                                    if (triad == TRIAD_AIR) {
+                                        if (Chassis[VehPrototypes[Vehs[veh_id].proto_id].chassis_id].range) {
+                                            if (faction == ConsoleGlobal.faction_id_
+                                                    && (NetDaemonNet.action_mode_ & 1)) {
+                                                parse_say(0, Chassis[VehPrototypes[Vehs[veh_id].proto_id].chassis_id].offsv_1_name, -1, -1);
+                                                NetMsgPrimary.pop("AIRCONQUER", 5000, 0, 0);
+                                            }
+                                            goto done;
+                                        }
+                                    } else if (triad == TRIAD_SEA) {
+                                        if (!dest_ocean) {
+                                            if (faction == ConsoleGlobal.faction_id_
+                                                    && (NetDaemonNet.action_mode_ & 1)) {
+                                                NetMsgPrimary.pop("SEACONQUER", 5000, 0, 0);
+                                            }
+                                            goto done;
+                                        }
+                                    } else if (triad == TRIAD_LAND && dest_ocean
+                                            && !has_abil(Vehs[veh_id].proto_id, ABL_AMPHIBIOUS)) {
+                                        if (faction == ConsoleGlobal.faction_id_
+                                                && (NetDaemonNet.action_mode_ & 1)) {
+                                            NetMsgPrimary.pop("LANDCONQUER", 5000, 0, 0);
+                                        }
+                                        goto done;
+                                    }
+                                    if (!Weapon[VehPrototypes[Vehs[veh_id].proto_id].weapon_id].offense_rating) {
+                                        if (faction == ConsoleGlobal.faction_id_
+                                                && (NetDaemonNet.action_mode_ & 1)) {
+                                            NetMsgPrimary.pop("COMBATCONQUER", 5000, 0, 0);
+                                        }
+                                        goto done;
+                                    }
+                                    if (has_treaty(faction, owner, 7)) {
+                                        if (!is_human(faction)) {
+                                            Vehs[veh_id].order = ORDER_NONE;
+                                            goto done;
+                                        }
+                                        if ((faction == ConsoleGlobal.faction_id_
+                                                && (NetDaemonNet.action_mode_ & 1)
+                                                && break_treaty(faction, owner, 7)) != 0) {
+                                            goto done;
+                                        }
+                                    }
+                                }
                             }
-                        }
-                        draw_tiles(dest_x, dest_y, 2);
-                    }
-                    // 597969
-                    if (faction == ConsoleGlobal.faction_id_
-                            && (map_loc(dest_x, dest_y)->bit & BIT_FUNGUS)
-                            && (map_loc(dest_x, dest_y)->climate & ~0x1F) >= 0x40
-                            && !Vehs[veh_id].order
-                            && VehPrototypes[Vehs[veh_id].proto_id].plan != PLAN_TERRAFORMING
-                            && VehPrototypes[Vehs[veh_id].proto_id].plan != PLAN_ALIEN_ARTIFACT
-                            && (NetDaemonNet.action_mode_ & 1)) {
-                        if (tut_check(0x1000)) {
-                            ++VehOrderDelayCounter;
-                            g_FX.play(9);
-                            TutorialWindow.tut_map("SLOWFUNGUS", dest_x, dest_y, -1,
-                                                   NULL, 0, -1, -1);
-                            Vehs[veh_id].order = ORDER_NONE;
-                            goto done;
-                        }
-                        if (!stealth) {
-                            ++VehOrderDelayCounter;
-                        }
-                    }
-                    // 597a37
-                    if (faction == ConsoleGlobal.faction_id_
-                            && !Vehs[veh_id].order
-                            && !TutorialWindow.tutorial_blocked()
-                            && (NetDaemonNet.action_mode_ & 1)
-                            && (!(map_loc(dest_x, dest_y)->bit & BIT_FUNGUS)
-                                || (map_loc(dest_x, dest_y)->climate & ~0x1F) < 0x40)
-                            && tut_check(0x4000)) {
-                        TutorialWindow.tut_map("FRACTIONALMOVE", dest_x, dest_y, veh_id,
-                                               NULL, 0, src_x, src_y);
-                        Vehs[veh_id].order = ORDER_NONE;
-                        goto done;
-                    }
-                    // 597acf
-                    veh_skip(veh_id);
-                    Vehs[veh_id].state |= 0x8000;
-                    if ((NetDaemonNet.action_mode_ & 1)
-                            && IsMultiplayerNet && !ConsoleControlTurnActive) {
-                        order_veh_synch(veh_id);
-                    }
-                    selector = 1;
-                    goto done;
-                }
-            }
-            // 597b24
-            selector = 1;
-            if (!(NetDaemonNet.action_mode_ & 2)) {
-                goto done;
-            }
-            Vehs[veh_id].moves_expended += cost;
-            Vehs[veh_id].state &= ~0x8040;
-            if (base_id >= 0 && owner != faction
-                    && !has_treaty(faction, owner, 1)) {
-                if (has_treaty(owner, faction, 7)
-                        && owner == ConsoleGlobal.faction_id_) {
-                    // get_title / get_name / get_noun, expanded
-                    parse_says(0, get_title(faction), -1, -1);
-                    parse_says(1, get_name(faction), -1, -1);
-                    parse_says(2, get_noun(faction), -1, -1);
-                    NetMsgPrimary.pop("SURPRISE", 5000, 0, 0);
-                }
-                if (faction != ConsoleGlobal.faction_id_
-                        && owner != ConsoleGlobal.faction_id_
-                        && (Bases[base_id].faction_id_current == ConsoleGlobal.faction_id_
-                            || (Bases[base_id].visibility & (1 << ConsoleGlobal.faction_id_)))
-                        && faction) {
-                    spot_stack(veh_id, ConsoleGlobal.faction_id_);
-                }
-            }
-            // 597cce
-            if (faction == ConsoleGlobal.faction_id_
-                       || (Vehs[veh_id].faction_id == ConsoleGlobal.faction_id_
-                           && (Vehs[veh_id].flags & 0x440) != 0x440)
-                       || (Vehs[veh_id].visibility & (1 << ConsoleGlobal.faction_id_))
-                       || (GameDataStateStorage.fields_.game_state_ & 0x80)) {
-                spotted = 1;
-            } else {
-                spotted = 0;
-            }
-            // 597d18
-            if (((GameDataStateStorage.fields_.game_state_ & 0x80)
-                    || (PlayersData[ConsoleGlobal.faction_id_].flags & 0x200)
-                    || (map_loc(dest_x, dest_y)->visibility & (1 << ConsoleGlobal.faction_id_)))
-                    && !spotted) {
-                for (int i = 0; !spotted && i < 21; i++) {
-                    int x = wrap_map_x(dest_x + RadiusOffsetX[i]);
-                    int y = dest_y + RadiusOffsetY[i];
-                    if (on_map(x, y)) {
-                        if (is_ocean(x, y) != is_ocean(dest_x, dest_y)
-                                || region_at(x, y) == region_at(dest_x, dest_y)) {
-                            if (is_sensor(x, y)
-                                    && whose_territory(ConsoleGlobal.faction_id_, x, y, NULL, 0)
-                                       == ConsoleGlobal.faction_id_) {
-                                spotted = 1;
+                            // 597564
+                            if (faction == ConsoleGlobal.faction_id_
+                                    && is_human(faction)
+                                    && (NetDaemonNet.action_mode_ & 1)
+                                    && Vehs[veh_id].order == ORDER_MOVE_TO
+                                    && (Vehs[veh_id].waypoint_x[0] != dest_x
+                                        || Vehs[veh_id].waypoint_y[0] != dest_y)
+                                    && get_triad(veh_id) != TRIAD_AIR
+                                    && !(Vehs[veh_id].state & 0x4200)
+                                    && goody_at(dest_x, dest_y)
+                                    && popp(ScriptPopupFile, "GOTOGOODY", 0, "supply_sm.pcx", 0)) {
+                                Vehs[veh_id].order = ORDER_NONE;
+                                goto done;
                             }
-                            if ((i < 9 ? anything_at(x, y) : base_who(x, y))
-                                    == ConsoleGlobal.faction_id_) {
-                                spotted = 1;
+                            // 59763b
+                            if (!veh_moves(veh_id)) {
+                                goto done;
                             }
-                        }
-                    }
-                }
-            }
-            // 597f26
-            if (spotted) {
-                stealth = (faction == ConsoleGlobal.faction_id_
-                           || ((GameDataStateStorage.fields_.game_preferences_ & 4)
-                               && !has_treaty(ConsoleGlobal.faction_id_, faction, 1))
-                           || ((GameDataStateStorage.fields_.game_preferences_ & 0x8000)
-                               && has_treaty(ConsoleGlobal.faction_id_, faction, 1))
-                           || (base_id >= 0
-                               && Bases[base_id].faction_id_current != faction
-                               && !has_treaty(faction, Bases[base_id].faction_id_current, 1)));
-                int shift_down = HIBYTE(GetAsyncKeyState(VK_SHIFT));
-                if (shift_down) {
-                    stealth = 0;
-                }
-                if ((!cost
-                        && (faction != ConsoleGlobal.faction_id_
-                            || (Vehs[veh_id].state & 0x4200)
-                            || Vehs[veh_id].order == ORDER_MOVE_TO))
-                        || shift_down
-                        || (GameDataStateStorage.fields_.game_more_preferences_ & 0x80)
-                        || ((GameDataStateStorage.fields_.game_more_preferences_ & 0x40)
-                            && ((faction == ConsoleGlobal.faction_id_
-                                 && ((Vehs[veh_id].state & 0x4200)
-                                     || Vehs[veh_id].order == ORDER_MOVE_TO))
-                                || (faction != ConsoleGlobal.faction_id_
-                                    && triad == TRIAD_AIR)))) {
-                    stealth = 0;
-                    ConsoleGlobal.vehicle_order_ui_state() = 1;
-                    if (faction == ConsoleGlobal.faction_id_) {
-                        ConsoleGlobal.vehicle_order_ui_state() = 2;
-                        ConsoleGlobal.cursor_next(dest_x, dest_y);
-                    }
-                }
-                // 598072
-                if (spotted && !HIBYTE(GetAsyncKeyState(VK_CONTROL))
-                        && (stealth
-                            || !(GameDataStateStorage.fields_.game_preferences_ & 0x80000))) {
-                    ConsoleGlobal.focus(src_x, src_y, faction);
-                }
-            } else {
-                stealth = 0;
-            }
-        }
-        // 5980a8
-        stack_veh(veh_id, 1);
-        if (stealth) {
-            if (faction == ConsoleGlobal.faction_id_) {
-                g_FX.engine_pitch((map_loc(dest_x, dest_y)->climate & ~0x1F)
-                                  > (map_loc(src_x, src_y)->climate & ~0x1F) ? 300 : 200);
-            }
-            veh_scoot(veh_id, src_x, src_y, direction, 0);
-            if (faction == ConsoleGlobal.faction_id_) {
-                g_FX.engine_pitch(0);
-            }
-        } else if (spotted) {
-            veh_scoot(veh_id, src_x, src_y, direction, 0x4000);
-        } else {
-            Vehs[veh_id].facing = direction;
-        }
-        // 59818b
-        if (faction) {
-            unspot_stack(veh_id);
-        } else {
-            Vehs[veh_id].visibility &= map_loc(dest_x, dest_y)->visibility;
-            for (territory = 1; territory < 8; territory++) {
-                if (Vehs[veh_id].visibility & (1 << territory)) {
-                    base_find(dest_x, dest_y, territory);
-                    if (BaseFindDist >= 8
-                            && whose_territory(territory, dest_x, dest_y, NULL, 0) != territory) {
-                        Vehs[veh_id].visibility &= ~(1 << territory);
-                    }
-                }
-            }
-        }
-        // 598240
-        if ((map_loc(dest_x, dest_y)->bit & BIT_BUNKER)
-                && target_veh < 0
-                && get_triad(veh_id) == TRIAD_LAND
-                && VehPrototypes[Vehs[veh_id].proto_id].plan != PLAN_INFO_WARFARE) {
-            territory = whose_territory(faction, dest_x, dest_y, NULL, 0);
-            if (territory >= 0 && territory != faction
-                    && !has_treaty(faction, territory, 1)) {
-                veh_skip(veh_id);
-                if (faction == ConsoleGlobal.faction_id_) {
-                    NetMsgPrimary.pop("BUNKERCAPTURED", 5000, 0, 0);
-                }
-            }
-        }
-        // 598317
-        if (base_id >= 0 && faction != owner && !faction) {
-            int tries;
-            int fac;
-            for (tries = 0; tries <= 100; tries++) {
-                fac = rnd(70, "MOVE1");
-                int ok = 1;
-                for (int b = 0; b < Players[0].faction_bonus_count; b++) {
-                    if ((Players[0].faction_bonus_id[b] == 2
-                            || (Players[0].faction_bonus_id[b] == 12
-                                && has_tech(Facility[Players[0].faction_bonus_val1[b]].preq_tech, 0)))
-                            && fac == Players[0].faction_bonus_val1[b]) {
-                        ok = 0;
-                        break;
-                    }
-                }
-                if (fac == 26) {
-                    if (is_ocean(dest_x, dest_y)) {
-                        ok = 0;
-                    }
-                } else if (fac <= 1 || fac >= 65) {
-                    continue;
-                }
-                flag_68 = has_fac(fac, base_id, 0);
-                if (flag_68 && ok) {
-                    break;
-                }
-            }
-            // 59843a
-            *StringTemp = 0;
-            strcat(StringTemp, "WORMSATTACK");
-            parse_says(2, VehPrototypes[Vehs[veh_id].proto_id].veh_name, -1, -1);
-            if (tries <= 100) {
-                strcat(StringTemp, "1");
-                set_fac(fac, base_id, 0);
-                parse_say(1, Facility[fac].name, -1, -1);
-            }
-            if (spotted && owner == ConsoleGlobal.faction_id_) {
-                parse_says(0, Bases[base_id].name_string, -1, -1);
-                NetMsgPrimary.pop(StringTemp, 5000, 0, 0);
-            }
-            kill(veh_id);
-            int seen = 0;
-            for (int i = 0; i < 25; i++) {
-                int x = wrap_map_x(dest_x + RadiusOffsetX[i]);
-                int y = dest_y + RadiusOffsetY[i];
-                if (on_map(x, y)) {
-                    veh_id = stack_fix(veh_at(x, y));
-                    if (veh_id >= 0 && !Vehs[veh_id].faction_id) {
-                        veh_id = veh_top(veh_id);
-                        while (veh_id >= 0) {
-                            int next = Vehs[veh_id].next_veh_id_stack;
-                            if (seen < PlayersData[owner].planet_ecology) {
-                                seen++;
+                            {
+                                int cost = hex_cost(Vehs[veh_id].proto_id, faction, src_x, src_y,
+                                                    dest_x, dest_y, 0);
+                                if (cost > veh_moves(veh_id)
+                                        && triad == TRIAD_LAND
+                                        && (veh_moves(veh_id) < Rules.move_rate_roads
+                                            || ((map_loc(dest_x, dest_y)->bit & BIT_FUNGUS)
+                                                && (map_loc(dest_x, dest_y)->climate & ~0x1F) >= 0x40
+                                                && (Vehs[veh_id].proto_id >= 64
+                                                    || Weapon[VehPrototypes[Vehs[veh_id].proto_id].weapon_id].offense_rating >= 0)
+                                                && VehPrototypes[Vehs[veh_id].proto_id].plan != PLAN_TERRAFORMING
+                                                && VehPrototypes[Vehs[veh_id].proto_id].plan != PLAN_ALIEN_ARTIFACT
+                                                && target_veh < 0))
+                                        && ((NetDaemonNet.action_mode_ & 1)
+                                            || !(GameDataStateStorage.fields_.lock_masks_.human_mask_ & faction_bit))) {
+                                    // 5977c7
+                                    int roll;
+                                    if (ConsoleControlTurnActive) {
+                                        roll = bounded_crt_random(cost);
+                                    } else {
+                                        roll = random(0, cost);
+                                    }
+                                    if (roll >= veh_moves(veh_id)
+                                            + ((Vehs[veh_id].state & 0x8000) ? Rules.move_rate_roads : 0)) {
+                                        if (faction == ConsoleGlobal.faction_id_
+                                                && !Vehs[veh_id].order
+                                                && !HIBYTE(GetAsyncKeyState(VK_SHIFT))
+                                                && (NetDaemonNet.action_mode_ & 1)
+                                                && !(Vehs[veh_id].state & 0x200)
+                                                && !(GameDataStateStorage.fields_.game_more_preferences_ & 0x80)) {
+                                            ConsoleGlobal.focus(src_x, src_y, ConsoleGlobal.faction_id_);
+                                            stack_veh(veh_id, 1);
+                                            veh_scoot(veh_id, src_x, src_y, direction + 8, 0);
+                                            stack_put(veh_id, src_x, src_y);
+                                            for (int i = 0; i < 8; i++) {
+                                                int x = wrap_map_x(dest_x + VehMoveDeltaX[i]);
+                                                int y = dest_y + VehMoveDeltaY[i];
+                                                if (on_map(x, y)) {
+                                                    spot_loc(x, y, faction);
+                                                }
+                                            }
+                                            draw_tiles(dest_x, dest_y, 2);
+                                        }
+                                        // 597969
+                                        if (faction == ConsoleGlobal.faction_id_
+                                                && (map_loc(dest_x, dest_y)->bit & BIT_FUNGUS)
+                                                && (map_loc(dest_x, dest_y)->climate & ~0x1F) >= 0x40
+                                                && !Vehs[veh_id].order
+                                                && VehPrototypes[Vehs[veh_id].proto_id].plan != PLAN_TERRAFORMING
+                                                && VehPrototypes[Vehs[veh_id].proto_id].plan != PLAN_ALIEN_ARTIFACT
+                                                && (NetDaemonNet.action_mode_ & 1)) {
+                                            if (tut_check(0x1000)) {
+                                                ++VehOrderDelayCounter;
+                                                g_FX.play(9);
+                                                TutorialWindow.tut_map("SLOWFUNGUS", dest_x, dest_y, -1,
+                                                                       NULL, 0, -1, -1);
+                                                Vehs[veh_id].order = ORDER_NONE;
+                                                goto done;
+                                            }
+                                            if (!stealth) {
+                                                ++VehOrderDelayCounter;
+                                            }
+                                        }
+                                        // 597a37
+                                        if (faction == ConsoleGlobal.faction_id_
+                                                && !Vehs[veh_id].order
+                                                && !TutorialWindow.tutorial_blocked()
+                                                && (NetDaemonNet.action_mode_ & 1)
+                                                && (!(map_loc(dest_x, dest_y)->bit & BIT_FUNGUS)
+                                                    || (map_loc(dest_x, dest_y)->climate & ~0x1F) < 0x40)
+                                                && tut_check(0x4000)) {
+                                            TutorialWindow.tut_map("FRACTIONALMOVE", dest_x, dest_y, veh_id,
+                                                                   NULL, 0, src_x, src_y);
+                                            Vehs[veh_id].order = ORDER_NONE;
+                                            goto done;
+                                        }
+                                        // 597acf
+                                        veh_skip(veh_id);
+                                        Vehs[veh_id].state |= 0x8000;
+                                        if ((NetDaemonNet.action_mode_ & 1)
+                                                && IsMultiplayerNet && !ConsoleControlTurnActive) {
+                                            order_veh_synch(veh_id);
+                                        }
+                                        selector = 1;
+                                        goto done;
+                                    }
+                                }
+                                // 597b24
+                                selector = 1;
+                                if (!(NetDaemonNet.action_mode_ & 2)) {
+                                    goto done;
+                                }
+                                Vehs[veh_id].moves_expended += cost;
+                                Vehs[veh_id].state &= ~0x8040;
+                                if (base_id >= 0 && owner != faction
+                                        && !has_treaty(faction, owner, 1)) {
+                                    if (has_treaty(owner, faction, 7)
+                                            && owner == ConsoleGlobal.faction_id_) {
+                                        // get_title / get_name / get_noun, expanded
+                                        parse_says(0, get_title(faction), -1, -1);
+                                        parse_says(1, get_name(faction), -1, -1);
+                                        parse_says(2, get_noun(faction), -1, -1);
+                                        NetMsgPrimary.pop("SURPRISE", 5000, 0, 0);
+                                    }
+                                    if (faction != ConsoleGlobal.faction_id_
+                                            && owner != ConsoleGlobal.faction_id_
+                                            && (Bases[base_id].faction_id_current == ConsoleGlobal.faction_id_
+                                                || (Bases[base_id].visibility & (1 << ConsoleGlobal.faction_id_)))
+                                            && faction) {
+                                        spot_stack(veh_id, ConsoleGlobal.faction_id_);
+                                    }
+                                }
+                                // 597cce
+                                if (faction == ConsoleGlobal.faction_id_
+                                           || (Vehs[veh_id].faction_id == ConsoleGlobal.faction_id_
+                                               && (Vehs[veh_id].flags & 0x440) != 0x440)
+                                           || (Vehs[veh_id].visibility & (1 << ConsoleGlobal.faction_id_))
+                                           || (GameDataStateStorage.fields_.game_state_ & 0x80)) {
+                                    spotted = 1;
+                                } else {
+                                    spotted = 0;
+                                }
+                                // 597d18
+                                if (((GameDataStateStorage.fields_.game_state_ & 0x80)
+                                        || (PlayersData[ConsoleGlobal.faction_id_].flags & 0x200)
+                                        || (map_loc(dest_x, dest_y)->visibility & (1 << ConsoleGlobal.faction_id_)))
+                                        && !spotted) {
+                                    for (int i = 0; !spotted && i < 21; i++) {
+                                        int x = wrap_map_x(dest_x + RadiusOffsetX[i]);
+                                        int y = dest_y + RadiusOffsetY[i];
+                                        if (on_map(x, y)) {
+                                            if (is_ocean(x, y) != is_ocean(dest_x, dest_y)
+                                                    || region_at(x, y) == region_at(dest_x, dest_y)) {
+                                                if (is_sensor(x, y)
+                                                        && whose_territory(ConsoleGlobal.faction_id_, x, y, NULL, 0)
+                                                           == ConsoleGlobal.faction_id_) {
+                                                    spotted = 1;
+                                                }
+                                                if ((i < 9 ? anything_at(x, y) : base_who(x, y))
+                                                        == ConsoleGlobal.faction_id_) {
+                                                    spotted = 1;
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                                // 597f26
+                                if (spotted) {
+                                    stealth = (faction == ConsoleGlobal.faction_id_
+                                               || ((GameDataStateStorage.fields_.game_preferences_ & 4)
+                                                   && !has_treaty(ConsoleGlobal.faction_id_, faction, 1))
+                                               || ((GameDataStateStorage.fields_.game_preferences_ & 0x8000)
+                                                   && has_treaty(ConsoleGlobal.faction_id_, faction, 1))
+                                               || (base_id >= 0
+                                                   && Bases[base_id].faction_id_current != faction
+                                                   && !has_treaty(faction, Bases[base_id].faction_id_current, 1)));
+                                    int shift_down = HIBYTE(GetAsyncKeyState(VK_SHIFT));
+                                    if (shift_down) {
+                                        stealth = 0;
+                                    }
+                                    if ((!cost
+                                            && (faction != ConsoleGlobal.faction_id_
+                                                || (Vehs[veh_id].state & 0x4200)
+                                                || Vehs[veh_id].order == ORDER_MOVE_TO))
+                                            || shift_down
+                                            || (GameDataStateStorage.fields_.game_more_preferences_ & 0x80)
+                                            || ((GameDataStateStorage.fields_.game_more_preferences_ & 0x40)
+                                                && ((faction == ConsoleGlobal.faction_id_
+                                                     && ((Vehs[veh_id].state & 0x4200)
+                                                         || Vehs[veh_id].order == ORDER_MOVE_TO))
+                                                    || (faction != ConsoleGlobal.faction_id_
+                                                        && triad == TRIAD_AIR)))) {
+                                        stealth = 0;
+                                        ConsoleGlobal.vehicle_order_ui_state() = 1;
+                                        if (faction == ConsoleGlobal.faction_id_) {
+                                            ConsoleGlobal.vehicle_order_ui_state() = 2;
+                                            ConsoleGlobal.cursor_next(dest_x, dest_y);
+                                        }
+                                    }
+                                    // 598072
+                                    if (spotted && !HIBYTE(GetAsyncKeyState(VK_CONTROL))
+                                            && (stealth
+                                                || !(GameDataStateStorage.fields_.game_preferences_ & 0x80000))) {
+                                        ConsoleGlobal.focus(src_x, src_y, faction);
+                                    }
+                                } else {
+                                    stealth = 0;
+                                }
+                            }
+                            // 5980a8
+                            stack_veh(veh_id, 1);
+                            if (stealth) {
+                                if (faction == ConsoleGlobal.faction_id_) {
+                                    g_FX.engine_pitch((map_loc(dest_x, dest_y)->climate & ~0x1F)
+                                                      > (map_loc(src_x, src_y)->climate & ~0x1F) ? 300 : 200);
+                                }
+                                veh_scoot(veh_id, src_x, src_y, direction, 0);
+                                if (faction == ConsoleGlobal.faction_id_) {
+                                    g_FX.engine_pitch(0);
+                                }
+                            } else if (spotted) {
+                                veh_scoot(veh_id, src_x, src_y, direction, 0x4000);
                             } else {
-                                veh_kill(veh_id);
+                                Vehs[veh_id].facing = direction;
                             }
-                            veh_id = next;
-                        }
-                    }
-                }
-            }
-            // 598625
-            if (GameDataStateStorage.fields_.turn_current_num_ >= 10) {
-                Bases[base_id].population_size--;
-                if (is_objective(base_id)) {
-                    Bases[base_id].population_size = max(1, Bases[base_id].population_size);
-                }
-                if (!Bases[base_id].population_size) {
-                    base_kill(base_id);
-                    draw_map(1);
-                    eliminate_player(owner, 0);
-                    draw_map(1);
-                    goto done;
-                }
-            }
-            if (tries > 100) {
-                Bases[base_id].minerals_accumulated = 0;
-            }
-            draw_tile(Bases[base_id].x, Bases[base_id].y, 2);
-            TutWinBaseWindow.check_base(base_id);
-            goto done;
-        }
-        // 5986ef
-        stack_put(veh_id, dest_x, dest_y);
-        if (base_id >= 0) {
-            if (faction != owner
-                    && !has_treaty(faction, owner, 1)) {
-                if (ExpansionEnabled
-                        && Vehs[veh_id].proto_id != 16
-                        && Vehs[veh_id].proto_id != 17
-                        && Vehs[veh_id].proto_id != 18) {
-                    Vehs[veh_id].dmg_incurred = 0;
-                }
-                GameDataStateStorage.fields_.vehicle_selection_follow_limit_ = veh_id;
-                act_of_aggression(faction, owner);
-                capture_base(base_id, faction, 0);
-                veh_id = GameDataStateStorage.fields_.vehicle_selection_follow_limit_;
-            }
-        } else if (dest_ocean
-                && get_triad(veh_id) == TRIAD_SEA) {
-            // 5987c5
-            int arty_count = 0;
-            for (int i = 0; i < 25; i++) {
-                int x = wrap_map_x(dest_x + RadiusOffsetX[i]);
-                int y = dest_y + RadiusOffsetY[i];
-                if (on_map(x, y)) {
-                    for (v = stack_fix(veh_at(x, y)); v >= 0; v = veh_next_stack_id(v)) {
-                        if (can_arty(Vehs[v].proto_id, 1)
-                                && get_triad(v) == TRIAD_LAND
-                                && Vehs[v].faction_id != faction
-                                && has_treaty(faction, Vehs[v].faction_id, 0x10)
-                                && ((Vehs[veh_id].faction_id == Vehs[v].faction_id
-                                     && (Vehs[veh_id].flags & 0x440) != 0x440)
-                                    || (Vehs[veh_id].visibility & (1 << Vehs[v].faction_id)))) {
-                            arty_count++;
-                            territory = Vehs[v].faction_id;
-                            spot_stack(v, faction);
-                        }
-                    }
-                }
-            }
-            if (arty_count) {
-                Vehs[veh_id].moves_expended += arty_count * Rules.move_rate_roads;
-                if (faction == ConsoleGlobal.faction_id_) {
-                    parse_says(0, get_adjective(territory), -1, -1);
-                    NetMsgPrimary.pop("GIBRALTAR", 5000, 0, 0);
-                }
-            }
-        }
-        // 598993
-        if (veh_cargo(veh_id) && base_id >= 0
-                && (faction == ConsoleGlobal.faction_id_
-                    || (IsMultiplayerNet
-                        && is_human(faction)))
-                && (Vehs[veh_id].order != ORDER_MOVE_TO
-                    || (Vehs[veh_id].waypoint_x[0] == dest_x
-                        && Vehs[veh_id].waypoint_y[0] == dest_y))) {
-            for (v = veh_top(veh_id); v >= 0; v = veh_next_stack_id(v)) {
-                if (Vehs[v].faction_id == faction
-                        && Vehs[v].order == ORDER_SENTRY_BOARD
-                        && (Vehs[v].waypoint_x[0] < 0 || Vehs[v].waypoint_x[0] == veh_id)) {
-                    Vehs[v].order = ORDER_NONE;
-                }
-            }
-        }
-        // 598a84
-        if (faction == ConsoleGlobal.faction_id_
-                && (GameDataStateStorage.fields_.game_preferences_ & 0x80000000)
-                && get_triad(veh_id) == TRIAD_SEA
-                && veh_cargo(veh_id)
-                && dest_ocean
-                && !veh_moves(veh_id)
-                && (Vehs[veh_id].order != ORDER_MOVE_TO
-                    || (Vehs[veh_id].waypoint_x[0] == dest_x
-                        && Vehs[veh_id].waypoint_y[0] == dest_y))) {
-            int found = 0;
-            for (int dir = 0; dir < 8; dir++) {
-                int x = wrap_map_x(dest_x + VehMoveDeltaX[dir]);
-                int y = dest_y + VehMoveDeltaY[dir];
-                if (on_map(x, y) && (!is_ocean(x, y) || base_who(x, y) >= 0)) {
-                    found = 1;
-                    break;
-                }
-            }
-            if (found) {
-                for (v = veh_top(veh_id); v >= 0; v = veh_next_stack_id(v)) {
-                    if (get_triad(v) == TRIAD_LAND
-                            && Vehs[v].order == ORDER_SENTRY_BOARD
-                            && veh_moves(v)) {
-                        Vehs[v].order = ORDER_NONE;
-                        ConsoleGlobal.selected_vehicle_ = v;
-                    }
-                }
-            }
-        }
-        // 598c83
-        if (triad == TRIAD_LAND && src_ocean && !dest_ocean) {
-            PlayersData[faction].region_total_combat_vehs[region]++;
-        }
-        // falls into L_598cb9
+                            // 59818b
+                            if (faction) {
+                                unspot_stack(veh_id);
+                            } else {
+                                Vehs[veh_id].visibility &= map_loc(dest_x, dest_y)->visibility;
+                                for (territory = 1; territory < 8; territory++) {
+                                    if (Vehs[veh_id].visibility & (1 << territory)) {
+                                        base_find(dest_x, dest_y, territory);
+                                        if (BaseFindDist >= 8
+                                                && whose_territory(territory, dest_x, dest_y, NULL, 0) != territory) {
+                                            Vehs[veh_id].visibility &= ~(1 << territory);
+                                        }
+                                    }
+                                }
+                            }
+                            // 598240
+                            if ((map_loc(dest_x, dest_y)->bit & BIT_BUNKER)
+                                    && target_veh < 0
+                                    && get_triad(veh_id) == TRIAD_LAND
+                                    && VehPrototypes[Vehs[veh_id].proto_id].plan != PLAN_INFO_WARFARE) {
+                                territory = whose_territory(faction, dest_x, dest_y, NULL, 0);
+                                if (territory >= 0 && territory != faction
+                                        && !has_treaty(faction, territory, 1)) {
+                                    veh_skip(veh_id);
+                                    if (faction == ConsoleGlobal.faction_id_) {
+                                        NetMsgPrimary.pop("BUNKERCAPTURED", 5000, 0, 0);
+                                    }
+                                }
+                            }
+                            // 598317
+                            if (base_id >= 0 && faction != owner && !faction) {
+                                int tries;
+                                int fac;
+                                for (tries = 0; tries <= 100; tries++) {
+                                    fac = rnd(70, "MOVE1");
+                                    int ok = 1;
+                                    for (int b = 0; b < Players[0].faction_bonus_count; b++) {
+                                        if ((Players[0].faction_bonus_id[b] == 2
+                                                || (Players[0].faction_bonus_id[b] == 12
+                                                    && has_tech(Facility[Players[0].faction_bonus_val1[b]].preq_tech, 0)))
+                                                && fac == Players[0].faction_bonus_val1[b]) {
+                                            ok = 0;
+                                            break;
+                                        }
+                                    }
+                                    if (fac == 26) {
+                                        if (is_ocean(dest_x, dest_y)) {
+                                            ok = 0;
+                                        }
+                                    } else if (fac <= 1 || fac >= 65) {
+                                        continue;
+                                    }
+                                    flag_68 = has_fac(fac, base_id, 0);
+                                    if (flag_68 && ok) {
+                                        break;
+                                    }
+                                }
+                                // 59843a
+                                *StringTemp = 0;
+                                strcat(StringTemp, "WORMSATTACK");
+                                parse_says(2, VehPrototypes[Vehs[veh_id].proto_id].veh_name, -1, -1);
+                                if (tries <= 100) {
+                                    strcat(StringTemp, "1");
+                                    set_fac(fac, base_id, 0);
+                                    parse_say(1, Facility[fac].name, -1, -1);
+                                }
+                                if (spotted && owner == ConsoleGlobal.faction_id_) {
+                                    parse_says(0, Bases[base_id].name_string, -1, -1);
+                                    NetMsgPrimary.pop(StringTemp, 5000, 0, 0);
+                                }
+                                kill(veh_id);
+                                int seen = 0;
+                                for (int i = 0; i < 25; i++) {
+                                    int x = wrap_map_x(dest_x + RadiusOffsetX[i]);
+                                    int y = dest_y + RadiusOffsetY[i];
+                                    if (on_map(x, y)) {
+                                        veh_id = stack_fix(veh_at(x, y));
+                                        if (veh_id >= 0 && !Vehs[veh_id].faction_id) {
+                                            veh_id = veh_top(veh_id);
+                                            while (veh_id >= 0) {
+                                                int next = Vehs[veh_id].next_veh_id_stack;
+                                                if (seen < PlayersData[owner].planet_ecology) {
+                                                    seen++;
+                                                } else {
+                                                    veh_kill(veh_id);
+                                                }
+                                                veh_id = next;
+                                            }
+                                        }
+                                    }
+                                }
+                                // 598625
+                                if (GameDataStateStorage.fields_.turn_current_num_ >= 10) {
+                                    Bases[base_id].population_size--;
+                                    if (is_objective(base_id)) {
+                                        Bases[base_id].population_size = max(1, Bases[base_id].population_size);
+                                    }
+                                    if (!Bases[base_id].population_size) {
+                                        base_kill(base_id);
+                                        draw_map(1);
+                                        eliminate_player(owner, 0);
+                                        draw_map(1);
+                                        goto done;
+                                    }
+                                }
+                                if (tries > 100) {
+                                    Bases[base_id].minerals_accumulated = 0;
+                                }
+                                draw_tile(Bases[base_id].x, Bases[base_id].y, 2);
+                                TutWinBaseWindow.check_base(base_id);
+                                goto done;
+                            }
+                            // 5986ef
+                            stack_put(veh_id, dest_x, dest_y);
+                            if (base_id >= 0) {
+                                if (faction != owner
+                                        && !has_treaty(faction, owner, 1)) {
+                                    if (ExpansionEnabled
+                                            && Vehs[veh_id].proto_id != 16
+                                            && Vehs[veh_id].proto_id != 17
+                                            && Vehs[veh_id].proto_id != 18) {
+                                        Vehs[veh_id].dmg_incurred = 0;
+                                    }
+                                    GameDataStateStorage.fields_.vehicle_selection_follow_limit_ = veh_id;
+                                    act_of_aggression(faction, owner);
+                                    capture_base(base_id, faction, 0);
+                                    veh_id = GameDataStateStorage.fields_.vehicle_selection_follow_limit_;
+                                }
+                            } else if (dest_ocean
+                                    && get_triad(veh_id) == TRIAD_SEA) {
+                                // 5987c5
+                                int arty_count = 0;
+                                for (int i = 0; i < 25; i++) {
+                                    int x = wrap_map_x(dest_x + RadiusOffsetX[i]);
+                                    int y = dest_y + RadiusOffsetY[i];
+                                    if (on_map(x, y)) {
+                                        for (v = stack_fix(veh_at(x, y)); v >= 0; v = veh_next_stack_id(v)) {
+                                            if (can_arty(Vehs[v].proto_id, 1)
+                                                    && get_triad(v) == TRIAD_LAND
+                                                    && Vehs[v].faction_id != faction
+                                                    && has_treaty(faction, Vehs[v].faction_id, 0x10)
+                                                    && ((Vehs[veh_id].faction_id == Vehs[v].faction_id
+                                                         && (Vehs[veh_id].flags & 0x440) != 0x440)
+                                                        || (Vehs[veh_id].visibility & (1 << Vehs[v].faction_id)))) {
+                                                arty_count++;
+                                                territory = Vehs[v].faction_id;
+                                                spot_stack(v, faction);
+                                            }
+                                        }
+                                    }
+                                }
+                                if (arty_count) {
+                                    Vehs[veh_id].moves_expended += arty_count * Rules.move_rate_roads;
+                                    if (faction == ConsoleGlobal.faction_id_) {
+                                        parse_says(0, get_adjective(territory), -1, -1);
+                                        NetMsgPrimary.pop("GIBRALTAR", 5000, 0, 0);
+                                    }
+                                }
+                            }
+                            // 598993
+                            if (veh_cargo(veh_id) && base_id >= 0
+                                    && (faction == ConsoleGlobal.faction_id_
+                                        || (IsMultiplayerNet
+                                            && is_human(faction)))
+                                    && (Vehs[veh_id].order != ORDER_MOVE_TO
+                                        || (Vehs[veh_id].waypoint_x[0] == dest_x
+                                            && Vehs[veh_id].waypoint_y[0] == dest_y))) {
+                                for (v = veh_top(veh_id); v >= 0; v = veh_next_stack_id(v)) {
+                                    if (Vehs[v].faction_id == faction
+                                            && Vehs[v].order == ORDER_SENTRY_BOARD
+                                            && (Vehs[v].waypoint_x[0] < 0 || Vehs[v].waypoint_x[0] == veh_id)) {
+                                        Vehs[v].order = ORDER_NONE;
+                                    }
+                                }
+                            }
+                            // 598a84
+                            if (faction == ConsoleGlobal.faction_id_
+                                    && (GameDataStateStorage.fields_.game_preferences_ & 0x80000000)
+                                    && get_triad(veh_id) == TRIAD_SEA
+                                    && veh_cargo(veh_id)
+                                    && dest_ocean
+                                    && !veh_moves(veh_id)
+                                    && (Vehs[veh_id].order != ORDER_MOVE_TO
+                                        || (Vehs[veh_id].waypoint_x[0] == dest_x
+                                            && Vehs[veh_id].waypoint_y[0] == dest_y))) {
+                                int found = 0;
+                                for (int dir = 0; dir < 8; dir++) {
+                                    int x = wrap_map_x(dest_x + VehMoveDeltaX[dir]);
+                                    int y = dest_y + VehMoveDeltaY[dir];
+                                    if (on_map(x, y) && (!is_ocean(x, y) || base_who(x, y) >= 0)) {
+                                        found = 1;
+                                        break;
+                                    }
+                                }
+                                if (found) {
+                                    for (v = veh_top(veh_id); v >= 0; v = veh_next_stack_id(v)) {
+                                        if (get_triad(v) == TRIAD_LAND
+                                                && Vehs[v].order == ORDER_SENTRY_BOARD
+                                                && veh_moves(v)) {
+                                            Vehs[v].order = ORDER_NONE;
+                                            ConsoleGlobal.selected_vehicle_ = v;
+                                        }
+                                    }
+                                }
+                            }
+                            // 598c83
+                            if (triad == TRIAD_LAND && src_ocean && !dest_ocean) {
+                                PlayersData[faction].region_total_combat_vehs[region]++;
+                            }
+                            // falls into L_598cb9
 L_598cb9:
-        if (Weapon[VehPrototypes[Vehs[veh_id].proto_id].weapon_id].offense_rating == 0)
-            veh_demote(veh_id);
-        if (!faction) {
-            if ((bit_at(dest_x, dest_y) & BIT_FUNGUS)
-                    && (map_loc(dest_x, dest_y)->climate & ~0x1F) >= 0x40
-                    && Vehs[veh_id].dmg_incurred > 0)
-                Vehs[veh_id].dmg_incurred--;
-        }
-        spot_all(veh_id, 1);
-        if (faction != ConsoleGlobal.faction_id_
-                && !(static_cast<uint8_t>(faction_bit)
-                     & GameDataStateStorage.fields_.lock_masks_.human_mask_)
-                && !(GameDataStateStorage.fields_.game_state_ & STATE_OMNISCIENT_VIEW)
-                && spotted
-                && !ConsoleGlobal.vehicle_order_ui_state()
-                && !HIBYTE(GetAsyncKeyState(VK_SHIFT))
-                && !IsMultiplayerNet) {
-            clock_wait((stealth && !ConsoleGlobal.vehicle_order_ui_state()) ? 100 : 5);
-        }
+                            if (Weapon[VehPrototypes[Vehs[veh_id].proto_id].weapon_id].offense_rating == 0)
+                                veh_demote(veh_id);
+                            if (!faction) {
+                                if ((bit_at(dest_x, dest_y) & BIT_FUNGUS)
+                                        && (map_loc(dest_x, dest_y)->climate & ~0x1F) >= 0x40
+                                        && Vehs[veh_id].dmg_incurred > 0)
+                                    Vehs[veh_id].dmg_incurred--;
+                            }
+                            spot_all(veh_id, 1);
+                            if (faction != ConsoleGlobal.faction_id_
+                                    && !(static_cast<uint8_t>(faction_bit)
+                                         & GameDataStateStorage.fields_.lock_masks_.human_mask_)
+                                    && !(GameDataStateStorage.fields_.game_state_ & STATE_OMNISCIENT_VIEW)
+                                    && spotted
+                                    && !ConsoleGlobal.vehicle_order_ui_state()
+                                    && !HIBYTE(GetAsyncKeyState(VK_SHIFT))
+                                    && !IsMultiplayerNet) {
+                                clock_wait((stealth && !ConsoleGlobal.vehicle_order_ui_state()) ? 100 : 5);
+                            }
 
-        // 598db1: air units out of range / out of moves.
-        if (get_triad(veh_id) == TRIAD_AIR) {
-            int stranded;
-            if (base_who(dest_x, dest_y) < 0
-                && !(bit_at(dest_x, dest_y) & BIT_AIRBASE)) {
-                stranded = 1;
-            } else {
-                stranded = 0;
-            }
-            for (int stack_id = veh_top(veh_id); stranded && stack_id >= 0;
-                    stack_id = Vehs[stack_id].next_veh_id_stack) {
-                if (has_abil(Vehs[stack_id].proto_id, ABL_CARRIER))
-                    stranded = 0;
-            }
-            if (static_cast<uint8_t>(faction_bit)
-                    & GameDataStateStorage.fields_.lock_masks_.human_mask_) {
-                if (!stranded
-                        && (Chassis[VehPrototypes[Vehs[veh_id].proto_id].chassis_id].range != 1
-                            || !veh_moves(veh_id) || !flag_74)
-                        && (!veh_moves(veh_id)
-                            || ((veh_moves(veh_id) <= Rules.move_rate_roads
-                                 || Vehs[veh_id].terraforming_turns + 1
-                                    >= Chassis[VehPrototypes[Vehs[veh_id].proto_id].chassis_id].range)
-                                && !zoc_veh(dest_x, dest_y, faction))))
-                    goto L_599121;
-            } else if (!stranded)
-                goto L_599121;
+                            // 598db1: air units out of range / out of moves.
+                            if (get_triad(veh_id) == TRIAD_AIR) {
+                                int stranded;
+                                if (base_who(dest_x, dest_y) < 0
+                                    && !(bit_at(dest_x, dest_y) & BIT_AIRBASE)) {
+                                    stranded = 1;
+                                } else {
+                                    stranded = 0;
+                                }
+                                for (int stack_id = veh_top(veh_id); stranded && stack_id >= 0;
+                                        stack_id = Vehs[stack_id].next_veh_id_stack) {
+                                    if (has_abil(Vehs[stack_id].proto_id, ABL_CARRIER))
+                                        stranded = 0;
+                                }
+                                if (static_cast<uint8_t>(faction_bit)
+                                        & GameDataStateStorage.fields_.lock_masks_.human_mask_) {
+                                    if (!stranded
+                                            && (Chassis[VehPrototypes[Vehs[veh_id].proto_id].chassis_id].range != 1
+                                                || !veh_moves(veh_id) || !flag_74)
+                                            && (!veh_moves(veh_id)
+                                                || ((veh_moves(veh_id) <= Rules.move_rate_roads
+                                                     || Vehs[veh_id].terraforming_turns + 1
+                                                        >= Chassis[VehPrototypes[Vehs[veh_id].proto_id].chassis_id].range)
+                                                    && !zoc_veh(dest_x, dest_y, faction))))
+                                        goto L_599121;
+                                } else if (!stranded)
+                                    goto L_599121;
 
-            // 598f9e
-            if (Chassis[VehPrototypes[Vehs[veh_id].proto_id].chassis_id].range) {
-                if (!(static_cast<uint8_t>(faction_bit)
-                      & GameDataStateStorage.fields_.lock_masks_.human_mask_)
-                        || (faction == ConsoleGlobal.faction_id_
-                            && ((GameDataStateStorage.fields_.game_preferences_ & 0x10000)
-                                || (Vehs[veh_id].state & 0x4200))
-                            && (Vehs[veh_id].state & 0x1000200) != 0x1000200
-                            && ((Vehs[veh_id].state & 0x2000200) != 0x2000200
-                                || Vehs[veh_id].patrol_current_point >= Vehs[veh_id].waypoint_count)))
-                    action_home(veh_id, 1);
-                if (!veh_moves(veh_id)) {
-                    if (Vehs[veh_id].terraforming_turns + 1
-                            >= Chassis[VehPrototypes[Vehs[veh_id].proto_id].chassis_id].range) {
-                        // 599098: out of fuel.
-                        Vehs[veh_id].state |= 0x4;
-                        if (spotted)
-                            boom(Vehs[veh_id].x, Vehs[veh_id].y, 0x80);
-                        if (Chassis[VehPrototypes[Vehs[veh_id].proto_id].chassis_id].range == 1
-                                && VehPrototypes[Vehs[veh_id].proto_id].chassis_id == CHSI_COPTER) {
-                            Vehs[veh_id].dmg_incurred +=
-                                VehPrototypes[Vehs[veh_id].proto_id].reactor_id * 3;
-                        } else {
-                            Vehs[veh_id].dmg_incurred += range(
-                                proto_power(veh_id) - Vehs[veh_id].dmg_incurred, 0, 9999);
-                        }
-                        if (range(proto_power(veh_id) - Vehs[veh_id].dmg_incurred, 0, 9999) <= 0) {
-                            kill(veh_id);
-                            if (spotted && faction == ConsoleGlobal.faction_id_)
-                                NetMsgPrimary.pop("PLANECRASH", 5000, 0, NULL);
-                            goto done;
-                        }
-                        Vehs[veh_id].terraforming_turns = 0;
-                        draw_tile(Vehs[veh_id].x, Vehs[veh_id].y, 2);
-                        if (spotted && faction == ConsoleGlobal.faction_id_)
-                            veh_battle_msg("CHOPPERFUEL", NULL);
-                    } else {
-                        // 5993c2: half range, head home.
-                        if (Vehs[veh_id].terraforming_turns + 1
-                                    >= Chassis[VehPrototypes[Vehs[veh_id].proto_id].chassis_id].range / 2
-                                && (!(static_cast<uint8_t>(faction_bit)
-                                      & GameDataStateStorage.fields_.lock_masks_.human_mask_)
-                                    || (faction == ConsoleGlobal.faction_id_
-                                        && ((GameDataStateStorage.fields_.game_preferences_ & 0x10000)
-                                            || (Vehs[veh_id].state & 0x4200))
-                                        && (Vehs[veh_id].state & 0x1000200) != 0x1000200
-                                        && ((Vehs[veh_id].state & 0x2000200) != 0x2000200
-                                            || Vehs[veh_id].patrol_current_point
-                                               >= Vehs[veh_id].waypoint_count)
-                                        && Vehs[veh_id].order != ORDER_MOVE_TO)))
-                            action_home(veh_id, 0);
-                        Vehs[veh_id].terraforming_turns++;
-                    }
-                }
-            }
-            goto L_599154;
+                                // 598f9e
+                                if (Chassis[VehPrototypes[Vehs[veh_id].proto_id].chassis_id].range) {
+                                    if (!(static_cast<uint8_t>(faction_bit)
+                                          & GameDataStateStorage.fields_.lock_masks_.human_mask_)
+                                            || (faction == ConsoleGlobal.faction_id_
+                                                && ((GameDataStateStorage.fields_.game_preferences_ & 0x10000)
+                                                    || (Vehs[veh_id].state & 0x4200))
+                                                && (Vehs[veh_id].state & 0x1000200) != 0x1000200
+                                                && ((Vehs[veh_id].state & 0x2000200) != 0x2000200
+                                                    || Vehs[veh_id].patrol_current_point >= Vehs[veh_id].waypoint_count)))
+                                        action_home(veh_id, 1);
+                                    if (!veh_moves(veh_id)) {
+                                        if (Vehs[veh_id].terraforming_turns + 1
+                                                >= Chassis[VehPrototypes[Vehs[veh_id].proto_id].chassis_id].range) {
+                                            // 599098: out of fuel.
+                                            Vehs[veh_id].state |= 0x4;
+                                            if (spotted)
+                                                boom(Vehs[veh_id].x, Vehs[veh_id].y, 0x80);
+                                            if (Chassis[VehPrototypes[Vehs[veh_id].proto_id].chassis_id].range == 1
+                                                    && VehPrototypes[Vehs[veh_id].proto_id].chassis_id == CHSI_COPTER) {
+                                                Vehs[veh_id].dmg_incurred +=
+                                                    VehPrototypes[Vehs[veh_id].proto_id].reactor_id * 3;
+                                            } else {
+                                                Vehs[veh_id].dmg_incurred += range(
+                                                    proto_power(veh_id) - Vehs[veh_id].dmg_incurred, 0, 9999);
+                                            }
+                                            if (range(proto_power(veh_id) - Vehs[veh_id].dmg_incurred, 0, 9999) <= 0) {
+                                                kill(veh_id);
+                                                if (spotted && faction == ConsoleGlobal.faction_id_)
+                                                    NetMsgPrimary.pop("PLANECRASH", 5000, 0, NULL);
+                                                goto done;
+                                            }
+                                            Vehs[veh_id].terraforming_turns = 0;
+                                            draw_tile(Vehs[veh_id].x, Vehs[veh_id].y, 2);
+                                            if (spotted && faction == ConsoleGlobal.faction_id_)
+                                                veh_battle_msg("CHOPPERFUEL", NULL);
+                                        } else {
+                                            // 5993c2: half range, head home.
+                                            if (Vehs[veh_id].terraforming_turns + 1
+                                                        >= Chassis[VehPrototypes[Vehs[veh_id].proto_id].chassis_id].range / 2
+                                                    && (!(static_cast<uint8_t>(faction_bit)
+                                                          & GameDataStateStorage.fields_.lock_masks_.human_mask_)
+                                                        || (faction == ConsoleGlobal.faction_id_
+                                                            && ((GameDataStateStorage.fields_.game_preferences_ & 0x10000)
+                                                                || (Vehs[veh_id].state & 0x4200))
+                                                            && (Vehs[veh_id].state & 0x1000200) != 0x1000200
+                                                            && ((Vehs[veh_id].state & 0x2000200) != 0x2000200
+                                                                || Vehs[veh_id].patrol_current_point
+                                                                   >= Vehs[veh_id].waypoint_count)
+                                                            && Vehs[veh_id].order != ORDER_MOVE_TO)))
+                                                action_home(veh_id, 0);
+                                            Vehs[veh_id].terraforming_turns++;
+                                        }
+                                    }
+                                }
+                                goto L_599154;
 L_599121:
-                Vehs[veh_id].terraforming_turns = 0;
-                veh_skip(veh_id);
-                veh_demote(veh_id);
-                draw_tile(Vehs[veh_id].x, Vehs[veh_id].y, 2);
-        }
+                                    Vehs[veh_id].terraforming_turns = 0;
+                                    veh_skip(veh_id);
+                                    veh_demote(veh_id);
+                                    draw_tile(Vehs[veh_id].x, Vehs[veh_id].y, 2);
+                            }
 L_599154:
-        // 599154: monolith and supply pod.
-        if ((bit_at(dest_x, dest_y) & BIT_MONOLITH) && triad != TRIAD_AIR
-                && (direction >= 0
-                    || (Weapon[VehPrototypes[Vehs[veh_id].proto_id].weapon_id].offense_rating
-                        && (Vehs[veh_id].dmg_incurred || !(Vehs[veh_id].state & 0x100))))
-                && !flag_6c)
-            monolith(veh_id);
-        if (goody && triad != TRIAD_AIR && faction && goody_box(veh_id, goody))
-            goto done;
+                            // 599154: monolith and supply pod.
+                            if ((bit_at(dest_x, dest_y) & BIT_MONOLITH) && triad != TRIAD_AIR
+                                    && (direction >= 0
+                                        || (Weapon[VehPrototypes[Vehs[veh_id].proto_id].weapon_id].offense_rating
+                                            && (Vehs[veh_id].dmg_incurred || !(Vehs[veh_id].state & 0x100))))
+                                    && !flag_6c)
+                                monolith(veh_id);
+                            if (goody && triad != TRIAD_AIR && faction && goody_box(veh_id, goody))
+                                goto done;
 
-        // 5991f6: a lone artifact next to a stronger foreign land stack is taken.
-        if (VehPrototypes[Vehs[veh_id].proto_id].plan == PLAN_ALIEN_ARTIFACT
-                && base_id < 0
-                && stack_check(veh_id, 1, -1, -1, -1) == 1
-                && direction < 8) {
-            for (int i = 0; i < 8; i++) {
-                int x = wrap_map_x(dest_x + VehMoveDeltaX[i]);
-                int y = dest_y + VehMoveDeltaY[i];
-                if (!on_map(x, y))
-                    continue;
-                if (is_ocean(x, y))
-                    continue;
-                int stack_id = stack_fix(veh_at(x, y));
-                if (stack_id >= 0
-                        && Vehs[stack_id].faction_id != faction
-                        && Vehs[stack_id].faction_id
-                        && !has_treaty(faction, Vehs[stack_id].faction_id, 1)
-                        && stack_check(stack_id, 2, PLAN_ALIEN_ARTIFACT, -1, -1)
-                           < stack_check(stack_id, 1, -1, -1, -1)) {
-                    // 599547
-                    Vehs[veh_id].faction_id = Vehs[stack_id].faction_id;
-                    Vehs[veh_id].order = ORDER_NONE;
-                    draw_tile(dest_x, dest_y, 2);
-                    owner_set(dest_x, dest_y, Vehs[veh_id].faction_id);
-                    if (faction == ConsoleGlobal.faction_id_) {
-                        ConsoleGlobal.selected_vehicle_ = -1;
-                        parse_says(0, get_noun(Vehs[stack_id].faction_id), -1, -1);
-                        popp(ScriptPopupFile, "TOOKARTIFACT", 0, "artstolen_sm.pcx", NULL);
-                    } else if (Vehs[stack_id].faction_id == ConsoleGlobal.faction_id_) {
-                        parse_says(0, VehPrototypes[Vehs[stack_id].proto_id].veh_name, -1, -1);
-                        parse_says(1, get_noun(faction), -1, -1);
-                        popp(ScriptPopupFile, "TAKENARTIFACT", 0, "artstolen_sm.pcx", NULL);
-                    }
-                    faction = Vehs[veh_id].faction_id;
-                    break;
-                }
-            }
-        }
+                            // 5991f6: a lone artifact next to a stronger foreign land stack is taken.
+                            if (VehPrototypes[Vehs[veh_id].proto_id].plan == PLAN_ALIEN_ARTIFACT
+                                    && base_id < 0
+                                    && stack_check(veh_id, 1, -1, -1, -1) == 1
+                                    && direction < 8) {
+                                for (int i = 0; i < 8; i++) {
+                                    int x = wrap_map_x(dest_x + VehMoveDeltaX[i]);
+                                    int y = dest_y + VehMoveDeltaY[i];
+                                    if (!on_map(x, y))
+                                        continue;
+                                    if (is_ocean(x, y))
+                                        continue;
+                                    int stack_id = stack_fix(veh_at(x, y));
+                                    if (stack_id >= 0
+                                            && Vehs[stack_id].faction_id != faction
+                                            && Vehs[stack_id].faction_id
+                                            && !has_treaty(faction, Vehs[stack_id].faction_id, 1)
+                                            && stack_check(stack_id, 2, PLAN_ALIEN_ARTIFACT, -1, -1)
+                                               < stack_check(stack_id, 1, -1, -1, -1)) {
+                                        // 599547
+                                        Vehs[veh_id].faction_id = Vehs[stack_id].faction_id;
+                                        Vehs[veh_id].order = ORDER_NONE;
+                                        draw_tile(dest_x, dest_y, 2);
+                                        owner_set(dest_x, dest_y, Vehs[veh_id].faction_id);
+                                        if (faction == ConsoleGlobal.faction_id_) {
+                                            ConsoleGlobal.selected_vehicle_ = -1;
+                                            parse_says(0, get_noun(Vehs[stack_id].faction_id), -1, -1);
+                                            popp(ScriptPopupFile, "TOOKARTIFACT", 0, "artstolen_sm.pcx", NULL);
+                                        } else if (Vehs[stack_id].faction_id == ConsoleGlobal.faction_id_) {
+                                            parse_says(0, VehPrototypes[Vehs[stack_id].proto_id].veh_name, -1, -1);
+                                            parse_says(1, get_noun(faction), -1, -1);
+                                            popp(ScriptPopupFile, "TAKENARTIFACT", 0, "artstolen_sm.pcx", NULL);
+                                        }
+                                        faction = Vehs[veh_id].faction_id;
+                                        break;
+                                    }
+                                }
+                            }
 
-        // 599692: artifact inside a base (terraforming_turns = pending action).
-        if (VehPrototypes[Vehs[veh_id].proto_id].plan == PLAN_ALIEN_ARTIFACT
-                && base_id >= 0 && Vehs[veh_id].terraforming_turns) {
-            switch (Vehs[veh_id].terraforming_turns) {
-            case 2:
-                Bases[base_id].minerals_accumulated +=
-                    VehPrototypes[Vehs[veh_id].proto_id].cost * 10 / 2;
-                Bases[base_id].production_id_last = Bases[base_id].queue_production_id[0];
-                Bases[base_id].minerals_accumulated_2 = Bases[base_id].minerals_accumulated;
-                kill(veh_id);
-                TutWinBaseWindow.check_base(base_id);
-                break;
-            case 1:
-                if (study_artifact(veh_id))
-                    goto done;
-                break;
-            }
-        }
+                            // 599692: artifact inside a base (terraforming_turns = pending action).
+                            if (VehPrototypes[Vehs[veh_id].proto_id].plan == PLAN_ALIEN_ARTIFACT
+                                    && base_id >= 0 && Vehs[veh_id].terraforming_turns) {
+                                switch (Vehs[veh_id].terraforming_turns) {
+                                case 2:
+                                    Bases[base_id].minerals_accumulated +=
+                                        VehPrototypes[Vehs[veh_id].proto_id].cost * 10 / 2;
+                                    Bases[base_id].production_id_last = Bases[base_id].queue_production_id[0];
+                                    Bases[base_id].minerals_accumulated_2 = Bases[base_id].minerals_accumulated;
+                                    kill(veh_id);
+                                    TutWinBaseWindow.check_base(base_id);
+                                    break;
+                                case 1:
+                                    if (study_artifact(veh_id))
+                                        goto done;
+                                    break;
+                                }
+                            }
 
-        // 599732
-        if (src_ocean && !dest_ocean
-                && VehPrototypes[Vehs[veh_id].proto_id].plan == PLAN_COLONIZATION)
-            PlayersData[faction].unk_77[region] |= 2;
+                            // 599732
+                            if (src_ocean && !dest_ocean
+                                    && VehPrototypes[Vehs[veh_id].proto_id].plan == PLAN_COLONIZATION)
+                                PlayersData[faction].unk_77[region] |= 2;
 
-        // 59977d
-        if (flag_68) {
-            sleep(veh_id);
-            veh_skip(veh_id);
-            for (v = veh_top(veh_id); v >= 0; v = veh_next_stack_id(v)) {
-                if (!veh_cargo(v)) {
-                    if (Vehs[v].moves_expended > speed(v, 0)) {
-                        Vehs[v].order = ORDER_NONE;
-                    } else {
-                        stack_veh(v, 0);
-                        if (Vehs[veh_id].waypoint_x[0] == v) {
-                            ConsoleGlobal.selected_vehicle_ = v;
-                            Vehs[v].order = ORDER_NONE;
-                            break;
+                            // 59977d
+                            if (flag_68) {
+                                sleep(veh_id);
+                                veh_skip(veh_id);
+                                for (v = veh_top(veh_id); v >= 0; v = veh_next_stack_id(v)) {
+                                    if (!veh_cargo(v)) {
+                                        if (Vehs[v].moves_expended > speed(v, 0)) {
+                                            Vehs[v].order = ORDER_NONE;
+                                        } else {
+                                            stack_veh(v, 0);
+                                            if (Vehs[veh_id].waypoint_x[0] == v) {
+                                                ConsoleGlobal.selected_vehicle_ = v;
+                                                Vehs[v].order = ORDER_NONE;
+                                                break;
+                                            }
+                                        }
+                                    }
+                                }
+                                draw_tile(dest_x, dest_y, 2);
+                            }
+
+                            // 59985a: an AI transport out of moves at sea sets a transport goal.
+                            if (!(static_cast<uint8_t>(1 << faction)
+                                  & GameDataStateStorage.fields_.lock_masks_.human_mask_)
+                                    && VehPrototypes[Vehs[veh_id].proto_id].plan == PLAN_NAVAL_TRANSPORT
+                                    && is_ocean(dest_x, dest_y)
+                                    && base_id < 0
+                                    && !veh_moves(veh_id)) {
+                                if (zoc_any(Vehs[veh_id].x, Vehs[veh_id].y, faction)
+                                        || (GameDataStateStorage.fields_.lock_masks_.human_mask_ & Vehs[veh_id].visibility)
+                                        || Vehs[veh_id].move_to_ai_type == 0x75) {
+                                    for (v = veh_top(veh_id); v >= 0; v = veh_next_stack_id(v)) {
+                                        if (Vehs[v].order == ORDER_SENTRY_BOARD && Vehs[v].waypoint_x[0] == veh_id)
+                                            Vehs[veh_id].order = ORDER_NONE;
+                                    }
+                                }
+                                int goal_x = dest_x;
+                                int goal_y = dest_y;
+                                if (Vehs[veh_id].order == ORDER_MOVE_TO) {
+                                    goal_x = (Vehs[veh_id].waypoint_x[0] + dest_x) / 2;
+                                    goal_y = (Vehs[veh_id].waypoint_y[0] + dest_y) / 2;
+                                    if (goal_x & 1)
+                                        goal_x--;
+                                    if (goal_y & 1)
+                                        goal_x++;   // sic: the image bumps x, not y
+                                    if (!is_ocean(goal_x, goal_y)) {
+                                        goal_x = dest_x;
+                                        goal_y = dest_y;
+                                    }
+                                }
+                                if (is_ocean(goal_x, goal_y))
+                                    add_goal(faction, 6, 2, goal_x, goal_y, -1);
+                            }
+
+                            // 599a24: KEEPMOVING nag for the local player.
+                            if (faction == ConsoleGlobal.faction_id_
+                                    && (Vehs[veh_id].order == ORDER_MOVE_TO || (Vehs[veh_id].state & 0x4200))) {
+                                Vehs[veh_id].unk_6++;
+                                if ((Vehs[veh_id].state & 0x10000) && direction == (Vehs[veh_id].facing ^ 4))
+                                    Vehs[veh_id].unk_6 += 8;
+                                if (Vehs[veh_id].unk_6 >= 0x20) {
+                                    parse_says(0, VehPrototypes[Vehs[veh_id].proto_id].veh_name, -1, -1);
+                                    if (IsMultiplayerNet || X_pop("KEEPMOVING", NULL)) {
+                                        Vehs[veh_id].order = ORDER_NONE;
+                                        Vehs[veh_id].state &= 0xFCFFBDFF;
+                                    }
+                                    Vehs[veh_id].unk_6 = 0;
+                                }
+                            }
+                            if (direction >= 0 && direction < 8) {
+                                Vehs[veh_id].facing = static_cast<int8_t>(direction);
+                                Vehs[veh_id].state |= 0x10000;
+                            } else {
+                                Vehs[veh_id].state &= ~0x10000;
+                            }
+                            // falls into done (L_599b1a)
                         }
                     }
                 }
             }
-            draw_tile(dest_x, dest_y, 2);
         }
-
-        // 59985a: an AI transport out of moves at sea sets a transport goal.
-        if (!(static_cast<uint8_t>(1 << faction)
-              & GameDataStateStorage.fields_.lock_masks_.human_mask_)
-                && VehPrototypes[Vehs[veh_id].proto_id].plan == PLAN_NAVAL_TRANSPORT
-                && is_ocean(dest_x, dest_y)
-                && base_id < 0
-                && !veh_moves(veh_id)) {
-            if (zoc_any(Vehs[veh_id].x, Vehs[veh_id].y, faction)
-                    || (GameDataStateStorage.fields_.lock_masks_.human_mask_ & Vehs[veh_id].visibility)
-                    || Vehs[veh_id].move_to_ai_type == 0x75) {
-                for (v = veh_top(veh_id); v >= 0; v = veh_next_stack_id(v)) {
-                    if (Vehs[v].order == ORDER_SENTRY_BOARD && Vehs[v].waypoint_x[0] == veh_id)
-                        Vehs[veh_id].order = ORDER_NONE;
-                }
-            }
-            int goal_x = dest_x;
-            int goal_y = dest_y;
-            if (Vehs[veh_id].order == ORDER_MOVE_TO) {
-                goal_x = (Vehs[veh_id].waypoint_x[0] + dest_x) / 2;
-                goal_y = (Vehs[veh_id].waypoint_y[0] + dest_y) / 2;
-                if (goal_x & 1)
-                    goal_x--;
-                if (goal_y & 1)
-                    goal_x++;   // sic: the image bumps x, not y
-                if (!is_ocean(goal_x, goal_y)) {
-                    goal_x = dest_x;
-                    goal_y = dest_y;
-                }
-            }
-            if (is_ocean(goal_x, goal_y))
-                add_goal(faction, 6, 2, goal_x, goal_y, -1);
-        }
-
-        // 599a24: KEEPMOVING nag for the local player.
-        if (faction == ConsoleGlobal.faction_id_
-                && (Vehs[veh_id].order == ORDER_MOVE_TO || (Vehs[veh_id].state & 0x4200))) {
-            Vehs[veh_id].unk_6++;
-            if ((Vehs[veh_id].state & 0x10000) && direction == (Vehs[veh_id].facing ^ 4))
-                Vehs[veh_id].unk_6 += 8;
-            if (Vehs[veh_id].unk_6 >= 0x20) {
-                parse_says(0, VehPrototypes[Vehs[veh_id].proto_id].veh_name, -1, -1);
-                if (IsMultiplayerNet || X_pop("KEEPMOVING", NULL)) {
-                    Vehs[veh_id].order = ORDER_NONE;
-                    Vehs[veh_id].state &= 0xFCFFBDFF;
-                }
-                Vehs[veh_id].unk_6 = 0;
-            }
-        }
-        if (direction >= 0 && direction < 8) {
-            Vehs[veh_id].facing = static_cast<int8_t>(direction);
-            Vehs[veh_id].state |= 0x10000;
-        } else {
-            Vehs[veh_id].state &= ~0x10000;
-        }
-        // falls into done (L_599b1a)
     }
 done:
     if (GameDataStateStorage.fields_.vehicle_current_count_ != group_count_at_entry) {
