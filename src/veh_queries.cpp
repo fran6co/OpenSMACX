@@ -342,7 +342,7 @@ void __cdecl veh_clear(int veh_id, int proto_id, int faction_id) {
 
 // The superseded raw-address scaffold was deleted after full owner recovery.
 // Its seed path below is historical Git provenance, not a source dependency.
-// ORIGINAL: 0x005C03D0 ?veh_init@@YAHHHHH@Z 0x005C03D0-0x005C08C0
+// ORIGINAL: 0x005C03D0 ?veh_init@@YAHHHHH@Z 0x005C03D0-0x005C08C0 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["src/unrecovered/005c03d0.cpp; recovery/tasks/base-colony-economy-coverage-wave.json; recovery/tests/test_base_colony_production.py", "Pinned01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf full389instructions5C03D0..5C08C0.", "Native5C04C6/5C04D0 invalidate BaseComputedID, not BaseIDCurrentSelected;5C05D6 scores the current faction region count, not the rival count.", "Native5C06E8 uses signed minimum after wrapped threshold doubling/division;5C07B0 immediately returns when the probe-allocation bit is already set."], "reason": "Recover complete typed Vehicle creation, home-base assignment and target-region allocation, replacing only its executable-address forwarder. Preserve original seed and historical obligations; no new byte, linked-preservation or runtime acceptance claim."}
 // symbol    ?veh_init@@YAHHHHH@Z
 // TRIED: direct Ghidra transcription with own extern DAT_ table arrays (byte/dword typed per bracket-index width) instead of the given g_ address pointers; diverges at insn #5, plausibly register-allocation shape of the ~200-line body
@@ -536,7 +536,7 @@ void __cdecl veh_kill(int veh_id) {
         NetDaemonNet.deletion_list_.add_deletion(veh_id);
     }
 
-// RECOVERY_LITERAL: v1 0x00691DC0 0x00691DDB $SG60247 0x005C08C0
+// RECOVERY_LITERAL: v1 0x00691DC0 0x00691DDB $SG60250 0x005C08C0
     log_say("Killing vehicle (v,who,v2)", veh_id, Vehs[veh_id].faction_id,
             Vehs[veh_id].proto_id);
 
