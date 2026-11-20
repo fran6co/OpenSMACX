@@ -6975,6 +6975,14 @@ Helpers and inlines
   neutral at most; the image rejects it at several exact sites.
 - A virtual-base receiver adjusted once with no null test and reused across
   two calls comes only from a member body of the base class (BasePop::exec).
+- An invented inline helper's boundary decides how much nested (pass-2)
+  room its inner calls get: the level that holds an inner call, not the
+  budget, decides whether that call expands. Move the boundary (what the
+  helper wraps) before trying budget probes. In draw_active 0x004B4CF0 a
+  helper around the whole damage percentage called all four ranges; a
+  helper around power minus health, with the multiply and divide written
+  in the caller, expands the outer proto_power sites and calls
+  veh_health's two ranges as the image does (418 -> 60 rows).
 
 Registers and scratch choice
 - A named local for a global or field read, against the bare argument
@@ -7029,6 +7037,15 @@ Rectangles
   `offset_rect(&r, 0, d)` expanded (BaseWin::init).
 
 Layout
+- A boolean or int flag set in one arm and tested once later to skip a
+  shared block (`skip = 1; ... if (!skip) { tail; }`) was an original
+  `goto` past the block when the image jumps from the setting arm straight
+  to the code after the block. The flag keeps the arm's live values in
+  frame homes across the block and frees callee-saved registers early;
+  `goto past;` gives the image's register regions (energy_yield 0x004E7750:
+  297 -> 7 rows, then exact). This is the converse of the council_action
+  rule in 2.6: there the image tests a join flag, here it never does.
+  Screen: `recovery/tools/flagscan.py`.
 - A far `je` to a fallback call at the function end is
   `if (c) { body } else { fallback(); }`, not an early return.
 - A guard that is the negation of a later admission test is written as that
