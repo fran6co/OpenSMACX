@@ -3285,23 +3285,6 @@ int __cdecl end_of_game(int check_victory) {
     return 0;
 }
 
-// WORKAROUND(noinline): proto_power with its range() called through a
-// pointer, which forces the image's out-of-line range call (the original's
-// inline budget). Measured 2026-11-20: veh_health(vehicle_id) at both sites
-// (37 rows), proto_power at both (37), one site each (10-27) all expand
-// reactor_power's range where the image calls it at both (0x525A36,
-// 0x525A92); has_treaty spellings of the caretaker tests move nothing. The
-// missing pass-2 room is not found yet.
-typedef int (__cdecl *TurnRangeFnT)(int, int, int);
-static inline int turn_proto_power(int veh_id) {
-    TurnRangeFnT range_fn = &range;
-    if (VehPrototypes[Vehs[veh_id].proto_id].plan == PLAN_ALIEN_ARTIFACT) {
-        return 1;
-    }
-    int reactor = VehPrototypes[Vehs[veh_id].proto_id].reactor_id;
-    return range_fn(reactor, 1, 100) * 10;
-}
-
 // WORKAROUND(decl): unidentified inline helper taking the tile coordinates
 // as parameters. The image copies x and y into fresh registers before the
 // base_who/airbase tile test (0x00525941..0x00525984); only an inline call
@@ -3311,32 +3294,50 @@ static inline BOOL turn_air_unit_unsheltered(int x, int y) {
     return base_who(x, y) < 0 && !(map_loc(x, y)->bit & BIT_AIRBASE);
 }
 
+// WORKAROUND(decl): unidentified inline helpers around the fuel test and the
+// crash. Measured 2026-11-20 (par-1): the image calls range(reactor, 1, 100)
+// at both attrition sites (0x525A36, 0x525A92) and expands the outer
+// range(.., 0, 9999) there; written inline in turn_upkeep both reactor ranges
+// expand (37 rows), and dead pass-1 spend refuses them only from about 72
+// if-units placed in the loop (after the loop it refuses ascent first). The
+// fuel predicate plus a crash helper that owns the state store, the damage
+// and the kill test (veh_health at both sites) give the image's decisions
+// with no other change; the crash helper without the state store calls only
+// the first. Original names and spelling are unknown.
+static inline BOOL turn_air_unit_exposed(int veh_id) {
+    return get_triad(veh_id) == TRIAD_AIR
+        && Chassis[VehPrototypes[Vehs[veh_id].proto_id].chassis_id].range
+        && veh_moves(veh_id)
+        && turn_air_unit_unsheltered(Vehs[veh_id].x, Vehs[veh_id].y)
+        && !stack_check(veh_id, 6, 0x80, -1, -1);
+}
+
+static inline void turn_air_unit_crash(int veh_id) {
+    Vehs[veh_id].state |= 4;
+    if (Chassis[VehPrototypes[Vehs[veh_id].proto_id].chassis_id].range == 1
+        && VehPrototypes[Vehs[veh_id].proto_id].chassis_id == 6) {
+        Vehs[veh_id].dmg_incurred += VehPrototypes[Vehs[veh_id].proto_id].reactor_id * 3;
+    } else {
+        Vehs[veh_id].dmg_incurred += veh_health(veh_id);
+    }
+    if (veh_health(veh_id) <= 0) {
+        kill(veh_id);
+    }
+}
+
 // ORIGINAL: 0x005258C0 ?turn_upkeep@@YAXXZ 0x005258C0-0x0052602D BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["git:6e78872480ef8b4a486516e322f23e9f8652665d:src/unrecovered/005258c0.cpp", "pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf", "recovery/tasks/game-logic-seed-owner-coverage.json; preserve original extents and historical seed lessons. Ordinary owned literals have pinned content provenance, not exact original data-allocation claims."], "reason": "Recover end-turn aircraft attrition, climate, native-life/alien arrival, caretaker diplomacy and ordered alien-pair stores through genuine owners. Random-events remains an explicitly unfinished separate dependency; build continuity is not game behavior acceptance."}
 // TRIED: transcribed directly from Ghidra's decompile (already correct, self-consistent short*/uint* pointer arithmetic throughout), fixing only DAT_/FUN_ names against the catalogue (all ~25 callees were already declared with matching signatures) and CharUpperA (undeclared IAT slot at 0x66931C, called through a typed function-pointer global). MapWin::main_caption()'s receiver is `*g_007d3c3c`, confirmed against src/console.cpp's own use of the same slot. Framed build compiles and matches through instr #3 (mov vs push), sim 0.75 - not chased further, very large orchestration function, landed for coverage.
 void __cdecl turn_upkeep() {
     for (int vehicle_id = GameDataStateStorage.fields_.vehicle_current_count_ - 1; vehicle_id >= 0; vehicle_id--) {
         // Air units with limited range burn fuel away from airbases.
-        if (get_triad(vehicle_id) == TRIAD_AIR
-            && Chassis[VehPrototypes[Vehs[vehicle_id].proto_id].chassis_id].range
-            && veh_moves(vehicle_id)
-            && turn_air_unit_unsheltered(Vehs[vehicle_id].x, Vehs[vehicle_id].y)
-            && !stack_check(vehicle_id, 6, 0x80, -1, -1)) {
+        if (turn_air_unit_exposed(vehicle_id)) {
             if (Vehs[vehicle_id].terraforming_turns
                 < Chassis[VehPrototypes[Vehs[vehicle_id].proto_id].chassis_id].range - 1) {
                 Vehs[vehicle_id].terraforming_turns++;
                 return;
             }
-            Vehs[vehicle_id].state |= 4;
-            if (Chassis[VehPrototypes[Vehs[vehicle_id].proto_id].chassis_id].range == 1
-                && VehPrototypes[Vehs[vehicle_id].proto_id].chassis_id == 6) {
-                Vehs[vehicle_id].dmg_incurred += VehPrototypes[Vehs[vehicle_id].proto_id].reactor_id * 3;
-            } else {
-                Vehs[vehicle_id].dmg_incurred += range(turn_proto_power(vehicle_id) - Vehs[vehicle_id].dmg_incurred, 0, 9999);
-            }
-            if (range(turn_proto_power(vehicle_id) - Vehs[vehicle_id].dmg_incurred, 0, 9999) <= 0) {
-                kill(vehicle_id);
-            }
+            turn_air_unit_crash(vehicle_id);
         }
     }
 
