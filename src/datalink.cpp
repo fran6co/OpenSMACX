@@ -390,9 +390,7 @@ void Datalink::exec(unsigned int topic, int index) {
     ReportIfGlobal.report_faction_id_ = ConsoleGlobal.faction_id_;
 
     set_cat(topic, 1);
-    history_[0] = index;
-    listBox_.set_selected_id(field_29DC_ * 10000 + index);
-    repaint_slot();
+    set_index(index, 0);
     set_modal(1, pop_wait, &MainInterfaceGlobal);
 
     ReportWinGlobal.shared_research_focus() = static_cast<int32_t>(field_A1C_);
@@ -890,9 +888,7 @@ Status: Complete
 */
 void Datalink::show_topic(unsigned int category, int index) {
     set_cat(category, 0);
-    history_[0] = index;
-    listBox_.set_selected_id(field_29DC_ * 10000 + index);
-    repaint_slot();
+    set_index(index, 0);
 }
 
 /*
@@ -1999,9 +1995,7 @@ void Datalink::pop_history() {
 
     set_cat(static_cast<unsigned int>(category), 0);
     const int facility = topic - category * 10000;
-    history_[0] = facility;
-    listBox_.set_selected_id(field_29DC_ * 10000 + facility);
-    repaint_slot();
+    set_index(facility, 0);
     draw_entry();
 }
 
