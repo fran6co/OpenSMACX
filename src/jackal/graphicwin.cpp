@@ -1448,23 +1448,9 @@ void GraphicWin::load_all_nc_sprites_from_defs() {
         Win **cursor = WinZOrderArray;
         do {
             if ((*cursor)->get_graphic_win() != nullptr) {
-                Win *window = *cursor;
-                // A callback can replace the entry with a plain unstyled Win.
-                // Test the base flags before assuming a GraphicWin receiver.
-                if (window->iFlags_ & 0x30000000) {
-                    GraphicWin *graphic = static_cast<GraphicWin *>(window);
-                    graphic->frame_top_left_ = GraphicWinInitDefaults.top_left;
-                    graphic->frame_top_right_ = GraphicWinInitDefaults.top_right;
-                    graphic->frame_bottom_left_ = GraphicWinInitDefaults.bottom_left;
-                    graphic->frame_bottom_right_ = GraphicWinInitDefaults.bottom_right;
-                    graphic->frame_top_ = GraphicWinInitDefaults.top;
-                    graphic->frame_bottom_ = GraphicWinInitDefaults.bottom;
-                    graphic->frame_left_ = GraphicWinInitDefaults.left;
-                    graphic->frame_right_ = GraphicWinInitDefaults.right;
-                    graphic->frame_noncaption_left_ = GraphicWinInitDefaults.noncaption_left;
-                    graphic->frame_noncaption_right_ = GraphicWinInitDefaults.noncaption_right;
-                    graphic->frame_noncaption_middle_ = GraphicWinInitDefaults.noncaption_middle;
-                }
+                // A callback can replace the entry; the receiver is reloaded
+                // and load_nc_sprites_from_defs tests its style bits itself.
+                static_cast<GraphicWin *>(*cursor)->load_nc_sprites_from_defs();
             }
             ++index;
             ++cursor;
