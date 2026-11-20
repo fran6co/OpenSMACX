@@ -3601,6 +3601,22 @@ void DesignWin::select_reactor() {
     on_update();
 }
 
+// WORKAROUND(inline): select_special's 28 separator appends push the shared
+// header-inline COMDAT texts (" " 0x00682820, ": " 0x00682E94, "(" 0x00682E9C,
+// ")" 0x00682E98), so each site is an inline expansion, but every
+// destination-taking strcat_X form (strings.h, plain or __forceinline)
+// overspends its /Ob2 budget against the original: three ~StringList
+// teardowns stop expanding (EH 64 -> 61 states, ~StringList 3 -> 6 calls).
+// A text-returning inline inside the caller's own strcat spends what the
+// image shows (EH and teardowns exact; only the five-argument Popup::start
+// site still differs). The original helper names and home are unknown;
+// cleanup: replace with the original header helpers once a call shape
+// names them.
+inline const char *__cdecl select_special_space_text() { return " "; }
+inline const char *__cdecl select_special_colon_text() { return ": "; }
+inline const char *__cdecl select_special_open_paren_text() { return "("; }
+inline const char *__cdecl select_special_close_paren_text() { return ")"; }
+
 /*
 Purpose: The unit-special ability picker both select_special_N thunks tail
          into: gate the popup on the faction's tech state and chassis kind,
@@ -3714,11 +3730,11 @@ void DesignWin::select_special(int which) {
 
         StringTemp[0] = 0;
         strcat(StringTemp, table_text(Ability[i].name));
-        strcat_colon(StringTemp);
+        strcat(StringTemp, select_special_colon_text());
         strcat(StringTemp, table_text(Ability[i].description));
         strcat(StringTemp, "|");
         say_label(0x58);
-        strcat_colon(StringTemp);
+        strcat(StringTemp, select_special_colon_text());
 
         RulesAbility *ability = &Ability[i];
         if (ability->cost_factor < 0) {
@@ -3726,86 +3742,86 @@ void DesignWin::select_special(int which) {
             case -1: {
                 say_num(range(Weapon[protoWeaponType_].cost
                               / Armor[protoArmorType_].cost, 0, 2));
-                strcat_space(StringTemp);
-                strcat_open_paren(StringTemp);
+                strcat(StringTemp, select_special_space_text());
+                strcat(StringTemp, select_special_open_paren_text());
                 say_label(0x7C);
                 strcat(StringTemp, "/");
                 say_label(0x55);
-                strcat_close_paren(StringTemp);
+                strcat(StringTemp, select_special_close_paren_text());
                 break;
             }
             case -2:
                 say_num(Weapon[protoWeaponType_].cost - 1);
-                strcat_space(StringTemp);
-                strcat_open_paren(StringTemp);
+                strcat(StringTemp, select_special_space_text());
+                strcat(StringTemp, select_special_open_paren_text());
                 say_label(0x7C);
                 strcat(StringTemp, "-1");
-                strcat_close_paren(StringTemp);
+                strcat(StringTemp, select_special_close_paren_text());
                 break;
             case -3:
                 say_num(Armor[protoArmorType_].cost - 1);
-                strcat_space(StringTemp);
-                strcat_open_paren(StringTemp);
+                strcat(StringTemp, select_special_space_text());
+                strcat(StringTemp, select_special_open_paren_text());
                 say_label(0x55);
                 strcat(StringTemp, "-1");
-                strcat_close_paren(StringTemp);
+                strcat(StringTemp, select_special_close_paren_text());
                 break;
             case -4:
                 say_num(Chassis[protoChassisType_].speed - 1);
-                strcat_space(StringTemp);
-                strcat_open_paren(StringTemp);
+                strcat(StringTemp, select_special_space_text());
+                strcat(StringTemp, select_special_open_paren_text());
                 say_label(0x2C5);
                 strcat(StringTemp, "-1");
-                strcat_close_paren(StringTemp);
+                strcat(StringTemp, select_special_close_paren_text());
                 break;
             case -5:
                 say_num(Armor[protoArmorType_].cost
                         + Weapon[protoWeaponType_].cost - 2);
-                strcat_space(StringTemp);
-                strcat_open_paren(StringTemp);
+                strcat(StringTemp, select_special_space_text());
+                strcat(StringTemp, select_special_open_paren_text());
                 say_label(0x7C);
                 strcat(StringTemp, "+");
                 say_label(0x55);
                 strcat(StringTemp, "-2");
-                strcat_close_paren(StringTemp);
+                strcat(StringTemp, select_special_close_paren_text());
                 break;
             case -6:
                 say_num(Chassis[protoChassisType_].speed
                         + Weapon[protoWeaponType_].cost - 2);
-                strcat_space(StringTemp);
-                strcat_open_paren(StringTemp);
+                strcat(StringTemp, select_special_space_text());
+                strcat(StringTemp, select_special_open_paren_text());
                 say_label(0x7C);
                 strcat(StringTemp, "+");
                 say_label(0x2C5);
                 strcat(StringTemp, "-2");
-                strcat_close_paren(StringTemp);
+                strcat(StringTemp, select_special_close_paren_text());
                 break;
             case -7:
                 say_num(Chassis[protoChassisType_].speed
                         + Armor[protoArmorType_].cost - 2);
-                strcat_space(StringTemp);
-                strcat_open_paren(StringTemp);
+                strcat(StringTemp, select_special_space_text());
+                strcat(StringTemp, select_special_open_paren_text());
                 say_label(0x55);
                 strcat(StringTemp, "+");
                 say_label(0x2C5);
                 strcat(StringTemp, "-2");
-                strcat_close_paren(StringTemp);
+                strcat(StringTemp, select_special_close_paren_text());
                 break;
             }
         } else if (ability->flags & 0x400) {
             // Cost scales with the triad: one more on land.
             if (Chassis[protoChassisType_].triad == 0) {
                 say_num(ability->cost_factor + 1);
-                strcat_space(StringTemp);
-                strcat_open_paren(StringTemp);
+                strcat(StringTemp, select_special_space_text());
+                strcat(StringTemp, select_special_open_paren_text());
             } else {
                 say_num(ability->cost_factor);
-                strcat_space(StringTemp);
-                strcat_open_paren(StringTemp);
+                strcat(StringTemp, select_special_space_text());
+                strcat(StringTemp, select_special_open_paren_text());
             }
             strcat(StringTemp,
                    table_text(Triad[Chassis[protoChassisType_].triad]));
-            strcat_close_paren(StringTemp);
+            strcat(StringTemp, select_special_close_paren_text());
         } else {
             say_num(ability->cost_factor);
         }
