@@ -1692,26 +1692,9 @@ void __cdecl fixup_landmarks() {
 //    prologue), it had enough register pressure to do so. That is a
 //    hard case - the tool reports a similarity ratio so you can tell a
 //    near miss from a wrong body.
+void __cdecl clear_dirty();
 void __cdecl set_dirty() {
-    int y = 0;
-    Map *tile = map_tiles();
-    if (MapLatitudeBounds > 0) {
-        int limit = MapLongitudeBounds;
-        do {
-            int x = y & 1;
-            if (x < limit) {
-                do {
-                    tile->bit2 |= BIT_CONDENSER;
-                    x += 2;
-                    tile++;
-                    limit = MapLongitudeBounds;
-                } while (x < limit);
-            }
-            y++;
-        } while (y < MapLatitudeBounds);
-        WorldClimateWorldWin.field_239BC_ |= 4;
-        return;
-    }
+    clear_dirty();
     WorldClimateWorldWin.field_239BC_ |= 4;
 }
 // ORIGINAL: 0x00592AF0 ?clear_dirty@@YAXXZ 0x00592AF0-0x00592B3C FILE BYTE_EXACT
