@@ -741,9 +741,9 @@ void StatusWin::draw_status(int veh, int a2, int a3, int x, int a5) {
                       && a5)) {
                     veh = -1;
                 }
-            } else if (!((Vehs[top].faction_id == ConsoleGlobal.faction_id_
+            } else if (((Vehs[top].faction_id == ConsoleGlobal.faction_id_
                           && (Vehs[top].flags & 0x440) != 0x440)
-                         || (Vehs[top].visibility & (1 << ConsoleGlobal.faction_id_)))) {
+                         || (Vehs[top].visibility & (1 << ConsoleGlobal.faction_id_))) == 0) {
                 veh = -1;
             }
         }
