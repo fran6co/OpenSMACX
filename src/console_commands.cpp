@@ -727,7 +727,7 @@ int Console::upgrade(int veh_id) { // 0x004D06C0
     }
     if (Vehs[veh_id].moves_expended
         && (is_human(Vehs[veh_id].faction_id))) {
-        NetMsgPrimary.pop(Language ? "UNITMOVED" : "UNITMOVED2",
+        NetMsgPrimary.pop(!Language ? "UNITMOVED2" : "UNITMOVED",
                           5000, 0, nullptr);
         return 0;
     }
@@ -744,7 +744,7 @@ int Console::upgrade(int veh_id) { // 0x004D06C0
             return 0;
         }
         if (Vehs[veh_id].moves_expended) {
-            NetMsgPrimary.pop(Language ? "UNITMOVED" : "UNITMOVED2",
+            NetMsgPrimary.pop(!Language ? "UNITMOVED2" : "UNITMOVED",
                               5000, 0, nullptr);
             NetDaemonNet.unlock_veh();
             return 0;
