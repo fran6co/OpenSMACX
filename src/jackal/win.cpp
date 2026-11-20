@@ -1812,66 +1812,10 @@ void Win::OnLButtonDown(HWND window, LONG dbl, int x, int y, WPARAM keys) {
             || (target->iFlags_ & WinFlagHitTestIndirect) != 0) {
             const int hit = target->on_nc_hittest(x, y);
             if (hit != 0) {
-                // WRITTEN OUT TWICE, as the original has it: the
-                // parent's child list and the root list are the same
-                // shuffle over different arrays, and factoring them
-                // together costs 158 bytes of the 571.
-                Win *const parent = target->win_parent_;
-                if (parent != nullptr) {
-                    if ((target->iFlags_ & WinFlagNoRaise) == 0) {
-                        int index = 0;
-                        while (index < parent->child_count_
-                               && parent->children_[index] != target) {
-                            ++index;
-                        }
-                        if (index < parent->child_count_) {
-                            while (index > 0) {
-                                parent->children_[index] = parent->children_[index - 1];
-                                --index;
-                            }
-                            parent->children_[0] = target;
-                        }
-                        WinZOrderCount = 0;
-                        for (int root = 0; root < WinRootCount; ++root) {
-                            if (WinZOrderWindow != nullptr
-                                && WinZOrderWindow == WinRootWindows[root]) {
-                                WinZOrderCount = 0;
-                                WinZOrderFlag = 0;
-                            }
-                            if ((WinRootWindows[root]->iSomeFlag_
-                                 & WinFlagVisible) != 0) {
-                                recurse_zorder(WinRootWindows[root]);
-                            }
-                        }
-                    }
-                } else {
-                    if ((target->iFlags_ & WinFlagNoRaise) == 0) {
-                        int index = 0;
-                        while (index < WinRootCount
-                               && WinRootWindows[index] != target) {
-                            ++index;
-                        }
-                        if (index < WinRootCount) {
-                            while (index > 0) {
-                                WinRootWindows[index] = WinRootWindows[index - 1];
-                                --index;
-                            }
-                            WinRootWindows[0] = target;
-                        }
-                        WinZOrderCount = 0;
-                        for (int root = 0; root < WinRootCount; ++root) {
-                            if (WinZOrderWindow != nullptr
-                                && WinZOrderWindow == WinRootWindows[root]) {
-                                WinZOrderCount = 0;
-                                WinZOrderFlag = 0;
-                            }
-                            if ((WinRootWindows[root]->iSomeFlag_
-                                 & WinFlagVisible) != 0) {
-                                recurse_zorder(WinRootWindows[root]);
-                            }
-                        }
-                    }
-                }
+                // bring_to_top (0x005F4AB0, no callers in the image) expands
+                // here with both raises and their update_zorder copies; the
+                // null test of the receiver folds against `target`.
+                target->bring_to_top();
                 if (hit == 2 || (hit > 9 && hit <= 0x11)) {
                     WinTrackingWindow = target;
                     WinTrackingMode = hit;
@@ -4139,48 +4083,29 @@ inline void Win::hide() {
 // explain8F4 and900. Win is Buffer's friend, so these are real members.
 // ORIGINAL: 0x005F63C0 ?on_l_button_down@Win@@UAEXJHHIH@Z 0x005F63C0-0x005F654E FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Historical3cb99d43^:src/recovered/units/005f63c0.cpp recorded unclaimed FILE398-byte5F63C0..5F654E under catalogue ?on_l_button_down@Win@@QAEXJHHIH@Z. Commit3cb99d431fb928d698e7eb29afee4ac2fc664027 deleted the seed without its source binding. No exact claim is inferred.", "Original Win-family tables place5F63C0 at slot81; observed actual compiler emits virtual UAEXJHHIH. Use that evidence-backed virtual name interpretation instead of retaining the old plain-method catalogue guess. Full original endsRET20 at5F654B; next two bytes are padding before5F6550.", "Original5F6442 fifth argument selects both capture owner and slot28/38; fourth WPARAM is unused. Pushes5F64B0/B1 and5F64D4/D5 deliver x,y; original seed had both coordinate reversals and wrong fourth-argument selector. Preserve live parent/related receiver reloads and virtual admission as predicate only.", "GraphicWin owns Buffer at444, Spot4B0 and link texts4BC. Original5F6523 loads this+900+4*index; slot88 on_link_clicked result controls left_down_event fallback. This binding does not verify every original-address service, class lifetime or full GUI."], "reason": "Restore original identity lost during Win rehoming; recover full left-down argument routing and genuine GraphicWin link dispatch."}
-// WORKAROUND(noinline): the image calls update_zorder 0x005F5020, a static
-// member of this unit defined earlier (lower address), while VC6 /Ob2
-// auto-inlines it here (42 rows); the only change without the region. The
-// other Win functions that run its loop spell the body out by hand.
-// Measured 2026-11-19 (fe, win.cpp): the root-raise block above is
-// bring_parent_to_top's body (same `this != nullptr` test), but calling
-// bring_parent_to_top here is no fix. Written with its loop, bring_parent_to_top
-// is over the per-callee size cap and stays a call (117 rows, 143 in the
-// image); written as find/shift + update_zorder() it is under the cap and
-// expands here with update_zorder at depth 2 (168 rows), and also into show
-// and on_r_button_down, which the image calls it from (0x005EDA3E,
-// 0x005F672A). Replacing the other hand-written loops with update_zorder()
-// does the same. A for-loop update_zorder is byte-exact standalone but
-// breaks show's expanded copy (43 rows), so its local-cached spelling is the
-// original. Unresolved: why on_l refuses a depth-1 update_zorder that show
-// (larger, defined earlier) expands is a budget question.
-#pragma inline_depth(0)
+// The raise is bring_to_top() (0x005F4AB0 has no caller in the image: every
+// use expands it). Its body gets an equal share of what is left of this
+// function's budget (MATCHING_GUIDE 2.8 rule 8), and the image's decisions
+// inside it pin that share: here bring_child_to_top is called,
+// bring_parent_to_top expands and its update_zorder is called; in
+// on_r_button_down and show both raises are called; standalone and in
+// OnLButtonDown everything expands. The double-click block is dispatch_28
+// (its 0x200000 gate merges with the 0x200 test into one 0x200200 test).
+//
+// WORKAROUND(inline): three free inline sites after bring_to_top, here and
+// in on_r_button_down. With parent_window() for both parent reads the image's
+// decisions need exactly three more later sites in on_l (two refuse
+// bring_parent_to_top, four call it) and at least three in on_r (fe,
+// 2026-11-20 par-6). The original's later sites are not identified.
+inline void raise_share_probe() {}
 void Win::on_l_button_down(long double_click, int x, int y, unsigned int, int from_parent) {
-    Win *child = win_parent_;
-    if (child != 0) {
-        child->bring_child_to_top(this);
-    } else if (this != nullptr &&
-               (iFlags_ & 0x2000000) == 0) {
-        int32_t idx;
-        for (idx = 0; idx < WinRootCount; ++idx) {
-            if (WinRootWindows[idx] == this) {
-                break;
-            }
-        }
-        if (idx < WinRootCount) {
-            while (idx > 0) {
-                WinRootWindows[idx] = WinRootWindows[idx - 1];
-                --idx;
-            }
-            WinRootWindows[0] = this;
-        }
-        this->update_zorder();
-    }
+    bring_to_top();
+    raise_share_probe();
+    raise_share_probe();
+    raise_share_probe();
 
-    child = win_parent_;
-    if (child != 0) {
-        child->set_dialog_focus(this);
+    if (parent_window() != 0) {
+        parent_window()->set_dialog_focus(this);
     }
 
     if (from_parent != 0) {
@@ -4192,29 +4117,8 @@ void Win::on_l_button_down(long double_click, int x, int y, unsigned int, int fr
     }
 
     WinSizingFlag = 1;
-    if (double_click != 0 &&
-        (iFlags_ & 0x200200) == 0 &&
-        (iSomeFlag_ & 8) == 0) {
-
-        if (from_parent == 0) {
-            WinCallbackWindow = this;
-            WinMouseEventCallback callback = field_40C_;
-            if (callback != 0) {
-                callback(x, y);
-            }
-            this->on_left_double_click(x, y);
-            // Written out: play_if_idle cannot expand under inline_depth(0).
-            Sound *const sound = val_17_;
-            if (sound != 0 && sound->is_playing() == 0) {
-                sound->play();
-            }
-        } else {
-            this->vslot_38(x, y);
-            Sound *const sound = val_26_;
-            if (sound != 0 && sound->is_playing() == 0) {
-                sound->play();
-            }
-        }
+    if (double_click != 0 && (iFlags_ & 0x200) == 0) {
+        dispatch_28(x, y, from_parent);
     }
 
     GraphicWin *hitTest = this->get_graphic_win();
@@ -4226,7 +4130,6 @@ void Win::on_l_button_down(long double_click, int x, int y, unsigned int, int fr
         this->left_down_event(x, y, from_parent);
     }
 }
-#pragma inline_depth()
 
 // ===== homed from src/recovered/units/005f6550.cpp =====
 
@@ -4377,54 +4280,17 @@ LRESULT Win::on_window_pos_changed(WINDOWPOS* pos) {
 // ORIGINAL: 0x005F4AB0 ?bring_to_top@Win@@QAEXXZ 0x005F4AB0-0x005F4C24 FILE BYTE_EXACT
 // symbol    ?bring_to_top@Win@@QAEXXZ
 // kind game
+// Two calls: the image expands both raises here, each with its update_zorder
+// copy, and the `this != 0` tests are their null checks of the argument. No
+// image call reaches this copy; show, on_l/on_r_button_down and OnLButtonDown
+// expand it, and their decisions inside it follow the equal-share rule
+// (MATCHING_GUIDE 2.8 rule 8, see on_l_button_down).
 void Win::bring_to_top() {
     Win *parent = win_parent_;
     if (parent != 0) {
-        if (this != 0 && (iFlags_ & 0x2000000) == 0) {
-            int index = 0;
-            while (index < parent->child_count_ && parent->children_[index] != this) {
-                ++index;
-            }
-            if (index < parent->child_count_) {
-                while (index > 0) {
-                    parent->children_[index] = parent->children_[index - 1];
-                    --index;
-                }
-                parent->children_[0] = this;
-            }
-            WinZOrderCount = 0;
-            for (int root = 0; root < WinRootCount; ++root) {
-                if (WinZOrderWindow != 0 && WinZOrderWindow == WinRootWindows[root]) {
-                    WinZOrderCount = 0;
-                    WinZOrderFlag = 0;
-                }
-                if (WinRootWindows[root]->iSomeFlag_ & 1) {
-                    recurse_zorder(WinRootWindows[root]);
-                }
-            }
-        }
-    } else if (this != 0 && (iFlags_ & 0x2000000) == 0) {
-        int index = 0;
-        while (index < WinRootCount && WinRootWindows[index] != this) {
-            ++index;
-        }
-        if (index < WinRootCount) {
-            while (index > 0) {
-                WinRootWindows[index] = WinRootWindows[index - 1];
-                --index;
-            }
-            WinRootWindows[0] = this;
-        }
-        WinZOrderCount = 0;
-        for (int root = 0; root < WinRootCount; ++root) {
-            if (WinZOrderWindow != 0 && WinZOrderWindow == WinRootWindows[root]) {
-                WinZOrderCount = 0;
-                WinZOrderFlag = 0;
-            }
-            if (WinRootWindows[root]->iSomeFlag_ & 1) {
-                recurse_zorder(WinRootWindows[root]);
-            }
-        }
+        parent->bring_child_to_top(this);
+    } else {
+        bring_parent_to_top(this);
     }
 }
 
@@ -5331,8 +5197,11 @@ Win *Win::get_key_window() {
 // folds to nothing, but spends the budget the image had already used before
 // its rect block: nonclient_to_screen(RECT *) then calls client_to_screen(int *)
 // and client_to_screen(RECT *) calls offset_rect, as at 0x005EDB78/0x005EDC8D.
-// The window is 8-12 tests since the closing play_if_idle(val_3_) is the real
-// call (2026-11-20). It was 22-25 while that tail was written out, and 27-30
+// The window is 4-10 tests since the raise is the expanded bring_to_top()
+// (2026-11-20 par-6; with no probe call at all bring_parent_to_top expands,
+// so the probe also counts as one later site of bring_to_top). It was 8-12
+// once the closing play_if_idle(val_3_) was the real call, 22-25 while that
+// tail was written out, and 27-30
 // while nonclient_to_screen(RECT *) had nonclient_to_screen(int *, int *)
 // written out by hand (calling it, as the image's do_tracking shows at
 // 0x005F7798, moved it on 2026-11-12); the original spending is not identified.
@@ -5344,9 +5213,6 @@ static int show_budget_probe(int x) {
     if (x == 5) x = 6;
     if (x == 6) x = 7;
     if (x == 7) x = 8;
-    if (x == 8) x = 9;
-    if (x == 9) x = 10;
-    if (x == 10) x = 11;
     return x;
 }
 
@@ -5365,11 +5231,7 @@ void Win::show(int visible) {
         }
         iSomeFlag_ |= 1;
         if ((visible & 4) == 0) {
-            if (win_parent_) {
-                win_parent_->bring_child_to_top(this);
-            } else {
-                Win::bring_parent_to_top(this);
-            }
+            bring_to_top();
         }
 
         update_zorder();
@@ -6383,16 +6245,7 @@ void __cdecl Win::bring_parent_to_top(Win * window) {
             }
             WinRootWindows[0] = window;
         }
-        WinZOrderCount = 0;
-        for (int root = 0; root < WinRootCount; ++root) {
-            if (WinZOrderWindow != 0 && WinZOrderWindow == WinRootWindows[root]) {
-                WinZOrderCount = 0;
-                WinZOrderFlag = 0;
-            }
-            if (WinRootWindows[root]->iSomeFlag_ & 1) {
-                recurse_zorder(WinRootWindows[root]);
-            }
-        }
+        update_zorder();
     }
 
 }
@@ -6515,7 +6368,9 @@ void Win::update_window(RECT * area) {
 // symbol    ?bring_child_to_top@Win@@QAEXPAV1@@Z
 // TRIED: MISMATCH, closest at 193/188 bytes (mnemonic_similarity 0.90). An extra `push ebx` appears (register pressure from 4 live locals in the z-order loop: entry/cur/j plus the 'this'-Win receiver) that the original avoids; tried both a direct `(*entry)->iSomeFlag_ & 1` and a cached `Win *w = *entry;` form, no difference. `g_win_zorder_list` as its own `extern Win *[]` (not the fixed-address alias) for the indexed array walk, per the indexed-table-base lever.
 // ===== homed from src/unrecovered/005f52e0.cpp =====
-
+// find/shift + update_zorder(): under the per-callee auto-inline cap, so the
+// raise expands where bring_to_top's share allows (2026-11-20 par-6); the
+// image's own copy expands update_zorder.
 void Win::bring_child_to_top(Win * child) {
     if (child != 0 && (child->iFlags_ & 0x2000000) == 0) {
         int index = 0;
@@ -6529,16 +6384,7 @@ void Win::bring_child_to_top(Win * child) {
             }
             children_[0] = child;
         }
-        WinZOrderCount = 0;
-        for (int root = 0; root < WinRootCount; ++root) {
-            if (WinZOrderWindow != 0 && WinZOrderWindow == WinRootWindows[root]) {
-                WinZOrderCount = 0;
-                WinZOrderFlag = 0;
-            }
-            if (WinRootWindows[root]->iSomeFlag_ & 1) {
-                recurse_zorder(WinRootWindows[root]);
-            }
-        }
+        update_zorder();
     }
 }
 
@@ -7149,16 +6995,14 @@ void Win::update_window_to_buffer(Buffer * buffer) {
 // RECOVERY_BINDING: v1 {"evidence": ["git show 2bf26a91^:src/recovered/units/005f6710.cpp preserves this identity and span. The body remains in win.cpp beneath its original homing heading. Its parentless path calls the receiver-free root-order helper at0x5F672A; declaration repair changes that ABI without rewriting the handler body."], "reason": "Restore the unclaimed original mapping omitted during homing of the existing right-button handler. This binding is not a matching or behavioral claim."}
 // symbol    ?on_r_button_down@Win@@UAEXJHHIH@Z
 void Win::on_r_button_down(long flags, int x, int y, unsigned int keys, int dbl) {
-    Win *parent = win_parent_;
-    if (parent != 0) {
-        parent->bring_child_to_top(this);
-    } else {
-        bring_parent_to_top(this);
-    }
+    bring_to_top();
+    // WORKAROUND(inline): budget-share sites, see on_l_button_down.
+    raise_share_probe();
+    raise_share_probe();
+    raise_share_probe();
 
-    parent = win_parent_;
-    if (parent != 0) {
-        parent->set_dialog_focus(this);
+    if (parent_window() != 0) {
+        parent_window()->set_dialog_focus(this);
     }
 
     if (dbl != 0) {
@@ -9592,9 +9436,11 @@ int __stdcall win_reparent_window(HWND hwnd, int unused) {
 // the original's second `mov eax, [0x9b7b34]` at the bottom of the loop) -
 // only the ONE-TIME guard above the loop uses the cached local.
 //
-// `target != 0 && target == arr[i]` short-circuits to exactly the original's
-// two-branch `cmp ecx,ebp / je skip; cmp ecx,[esi] / jne skip` - no
-// restructuring needed there.
+// The loop reads the globals directly (2026-11-20 par-6). The earlier
+// cached `target`/`arr` locals cost more: with them the copy inside
+// bring_parent_to_top reloads the target before the count after
+// recurse_zorder, and a for-loop is too cheap (update_back_to_window then
+// expands client_to_screen one level deeper).
 //
 // WinRootWindows (the Win* array base) did NOT need the extern-array override
 // the general lever warns about: the given `static Win *const g = ...`
@@ -9615,22 +9461,20 @@ int __stdcall win_reparent_window(HWND hwnd, int unused) {
 // where they can be edited without regenerating anything and are in
 // context from the first token rather than behind a file read. This
 // emitter computes declarations; it does not carry lessons.
-// Win::show inlines this; on_l_button_down (inline_depth(0)) calls it.
+// show, the raises and update_back_to_window expand this; the copy of
+// bring_parent_to_top inside on_l_button_down calls it.
 void __cdecl Win::update_zorder() {
     int i = 0;
     int n = WinRootCount;
     WinZOrderCount = 0;
     if (n > 0) {
-        Win **arr = WinRootWindows;
-        Win *target = WinZOrderWindow;
         do {
-            if (target != 0 && target == arr[i]) {
+            if (WinZOrderWindow != 0 && WinZOrderWindow == WinRootWindows[i]) {
                 WinZOrderCount = 0;
                 WinZOrderFlag = 0;
             }
-            if (arr[i]->iSomeFlag_ & 1) {
-                recurse_zorder(arr[i]);
-                target = WinZOrderWindow;
+            if (WinRootWindows[i]->iSomeFlag_ & 1) {
+                recurse_zorder(WinRootWindows[i]);
             }
             i++;
         } while (i < WinRootCount);
