@@ -1101,10 +1101,6 @@ int DiploOffersDirty;
 // Original initialized .data and literal evidence, inspected from the pinned image.
 // DiploKnownTechColor (0x0068A5C4) is IfaceColorTable[9]; its identity moved
 // to interface_assets.cpp.
-// RECOVERY_OBJECT: v2 0x006839F4 0x006839F6 ?DiploKnownTechOpen@@3PADA 0x00443170
-char DiploKnownTechOpen[2] = "(";
-// RECOVERY_OBJECT: v2 0x006839F8 0x006839FA ?DiploKnownTechClose@@3PADA 0x00443170
-char DiploKnownTechClose[2] = ")";
 
 // RECOVERY_ASSOCIATED: v1 switch_targets 0x00443170 0x004436A0 0x004436B8 0x00443480
 // ORIGINAL: 0x00443170 ?draw_offers@DiploWin@@QAEXXZ 0x00443170-0x0044369F BYTE_EXACT
@@ -1163,9 +1159,9 @@ void DiploWin::draw_offers() {
                 if (side == 1 && offer_value_[1][i] < 89
                     && has_tech(offer_value_[1][i], faction_id_)) {
                     set_text_color(DiploKnownTechColor, 0, side, side);
-                    strcat(StringTemp, DiploKnownTechOpen);
+                    strcat(StringTemp, "(");
                     say_tech(StringTemp, offer_value_[1][i], side);
-                    strcat(StringTemp, DiploKnownTechClose);
+                    strcat(StringTemp, ")");
                 } else {
                     say_tech(StringTemp, offer_value_[side][i], 1);
                 }
