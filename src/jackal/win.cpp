@@ -6320,12 +6320,12 @@ void Win::on_redraw_nc(RECT * area, int flags) {
         bottomThick = this->bottom_border_thickness_;
     }
 
-    int clientH = this->client_rect_.bottom - this->client_rect_.top;
-    int clientW = this->client_rect_.right - this->client_rect_.left;
+    int clientH = rect_height(&this->client_rect_);
+    int clientW = rect_width(&this->client_rect_);
     int bottomY = clientH - bottomThick;
     RECT frame;
     make_rect(&frame, this->border_thickness_ - 1, capHeight - 1,
-              (this->outer_rect_.right - this->outer_rect_.left) + 2,
+              rect_width(&this->outer_rect_) + 2,
               (bottomY - capHeight) + 2);
     int i;
 
@@ -6379,7 +6379,7 @@ void Win::on_redraw_nc(RECT * area, int flags) {
         if (area != 0) {
             clip = *area;
             offset_rect(&clip, -savedLeft,
-                        (this->client_rect_.bottom - this->client_rect_.top) - bottomThick - savedTop);
+                        rect_height(&this->client_rect_) - bottomThick - savedTop);
         } else {
             clip = outer;
         }
@@ -6446,7 +6446,7 @@ void Win::on_redraw_nc(RECT * area, int flags) {
         if (area != 0) {
             clip = *area;
             offset_rect(&clip,
-                        (this->client_rect_.right - this->client_rect_.left) - this->border_thickness_ - savedLeft,
+                        rect_width(&this->client_rect_) - this->border_thickness_ - savedLeft,
                         capHeight - savedTop);
         } else {
             clip = outer;
