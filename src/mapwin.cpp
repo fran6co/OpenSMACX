@@ -1558,7 +1558,7 @@ void __cdecl draw_tiles(int x_coord, int y_coord, int draw_type) {
         // 0x0046B157 `cmp esi, 0x7d3c3c` / 0x0046B15D je.
         if (slot != 0) {
             const uint32_t active =
-                static_cast<const volatile MapWin *>(window)->view_active_;
+                window->view_active_;
             if (active == 0) {
                 continue;
             }
@@ -2894,7 +2894,7 @@ void __cdecl draw_radius(int x_coord, int y_coord, int a3, int draw_type) {
         MapWin *const window = MapWinTable[slot];
         if (window != nullptr) {
             if (slot == 0 ||
-                static_cast<const volatile MapWin *>(window)->view_active_ != 0) {
+                window->view_active_ != 0) {
                 window->draw_radius(x_coord, y_coord, a3, draw_type);
             }
         }
@@ -5003,37 +5003,37 @@ void MapWin::gen_overlays(int x, int y) {
         int color = 0xFF;
         switch (PlayersData[faction].goals[goal_index].type) {
         case 0:
-// RECOVERY_LITERAL: v1 0x00686360 0x00686362 $SG62735 0x004688E0
+// RECOVERY_LITERAL: v1 0x00686360 0x00686362 $SG62733 0x004688E0
             strcat(StringTemp, "a");
             color = 0xF9;
             break;
         case 2:
-// RECOVERY_LITERAL: v1 0x00686364 0x00686366 $SG62737 0x004688E0
+// RECOVERY_LITERAL: v1 0x00686364 0x00686366 $SG62735 0x004688E0
             strcat(StringTemp, "d");
             color = 0xFB;
             break;
         case 9:
-// RECOVERY_LITERAL: v1 0x00686368 0x0068636A $SG62739 0x004688E0
+// RECOVERY_LITERAL: v1 0x00686368 0x0068636A $SG62737 0x004688E0
             strcat(StringTemp, "f");
             color = 0xFA;
             break;
         case 8:
-// RECOVERY_LITERAL: v1 0x0068636C 0x0068636E $SG62741 0x004688E0
+// RECOVERY_LITERAL: v1 0x0068636C 0x0068636E $SG62739 0x004688E0
             strcat(StringTemp, "c");
             color = 0xFE;
             break;
         case 6:
-// RECOVERY_LITERAL: v1 0x00686370 0x00686372 $SG62743 0x004688E0
+// RECOVERY_LITERAL: v1 0x00686370 0x00686372 $SG62741 0x004688E0
             strcat(StringTemp, "n");
             color = 0xFC;
             break;
         case 41:
-// RECOVERY_LITERAL: v1 0x00686374 0x00686376 $SG62745 0x004688E0
+// RECOVERY_LITERAL: v1 0x00686374 0x00686376 $SG62743 0x004688E0
             strcat(StringTemp, "^");
             color = 0xFF;
             break;
         case 3:
-// RECOVERY_LITERAL: v1 0x00686378 0x0068637A $SG62747 0x004688E0
+// RECOVERY_LITERAL: v1 0x00686378 0x0068637A $SG62745 0x004688E0
             strcat(StringTemp, "s");
             color = 0xFD;
             break;

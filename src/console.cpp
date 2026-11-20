@@ -1692,12 +1692,12 @@ int Console::focus(int x_coord, int y_coord, int faction_id) {
             }
         }
         // 0x00510902 reads the window's wide flag dword, one dword ahead of the
-        // activity field mapwin.h already names. MapWin owns both members;
-        // retain the volatile read on the actual window receiver. 0x00510908
+        // activity field mapwin.h already names; MapWin owns both members
+        // (a plain read: the former volatile cast was dead). 0x00510908
         // `test ecx, edx` is a bitwise AND against the tag bits, not an
         // equality, so a window carrying 0x60000000 matches either mask.
         const uint32_t flags =
-            static_cast<const volatile MapWin *>(window)->field_1DD70_;
+            window->field_1DD70_;
         // 0x00510908 `test ecx, edx` is ONE test with two consumers: the
         // image branches on the tag FIRST and only then on the slot, which is
         // this chained guard and not an `if (slot == 0)` outer test. Written
@@ -3552,7 +3552,7 @@ void Console::move_cursor(int direction) {
 // ORIGINAL: 0x00514990 ?quit_game@Console@@QAEXXZ 0x00514990-0x00514B2C BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/00514990.cpp: original identity and complete spans", "source:src/console.h: Console owner declarations and layout", "source:src/console.cpp: coupled navigation, selection and lifecycle caller relationships"], "reason": "The original Console operation is expressed by the corresponding real Console owner definition, using its recovered members and source-owned callees rather than the retained seed scaffold."}
 void Console::quit_game() {
-// RECOVERY_LITERAL: v1 0x0068A7E4 0x0068A7EF $SG64011 0x00514990
+// RECOVERY_LITERAL: v1 0x0068A7E4 0x0068A7EF $SG64010 0x00514990
     if (!X_pop((IsMultiplayerNet || IsMultiplayerPBEM) &&
                bit_count(GameDataStateStorage.fields_.lock_masks_.human_mask_) > 1
                    ? ConsoleReallyWimpOut : "REALLYQUIT", nullptr)) return;
@@ -3565,7 +3565,7 @@ void Console::quit_game() {
     if ((GameDataStateStorage.fields_.game_rules_ & 0x400) && !IsMultiplayerPBEM) auto_save();
     net_hang_up_if_net();
     ExitTurnLoop = 1;
-// RECOVERY_LITERAL: v1 0x0068A7F0 0x0068A818 $SG64015 0x00514990
+// RECOVERY_LITERAL: v1 0x0068A7F0 0x0068A818 $SG64014 0x00514990
     log_say("Quit***********************************", 0, 0, 0);
 }
 
@@ -3589,8 +3589,8 @@ void Console::retire_game() { // 0x00514B30
         (IsMultiplayerNet || IsMultiplayerPBEM) &&
         bit_count(GameDataStateStorage.fields_.lock_masks_.human_mask_ > 1) != 0;
     const char *const prompt = multiple_players ? retire_wimpout :
-// RECOVERY_LITERAL: v1 0x0068A828 0x0068A836 $SG64033 0x00514B30
-// RECOVERY_LITERAL: v1 0x0068A838 0x0068A845 $SG64034 0x00514B30
+// RECOVERY_LITERAL: v1 0x0068A828 0x0068A836 $SG64032 0x00514B30
+// RECOVERY_LITERAL: v1 0x0068A838 0x0068A845 $SG64033 0x00514B30
         (GameDataStateStorage.fields_.game_rules_ & RULES_IRONMAN) ? "REALLYRETIRE2" : "REALLYRETIRE";
     if (!X_pop(prompt, nullptr)) {
         return;
@@ -3622,7 +3622,7 @@ void Console::retire_game() { // 0x00514B30
     }
     GameRestartQueued = !closed_network;
     ExitTurnLoop = 1;
-// RECOVERY_LITERAL: v1 0x0068A848 0x0068A86C $SG64042 0x00514B30
+// RECOVERY_LITERAL: v1 0x0068A848 0x0068A86C $SG64041 0x00514B30
     log_say("Retire*****************************", 0, 0, 0);
 }
 
@@ -4619,7 +4619,7 @@ void Console::erase_landmark(int x_coord, int y_coord) {
 
     const int landmark_id = find_landmark(x_coord, y_coord, 1);
     if (landmark_id < 0) {
-// RECOVERY_LITERAL: v1 0x0068A994 0x0068A9A1 $SG64331 0x00516490
+// RECOVERY_LITERAL: v1 0x0068A994 0x0068A9A1 $SG64330 0x00516490
         NetMsgPrimary.pop("LANDMARKNONE", 5000, 0, nullptr);
         return;
     }
@@ -4630,7 +4630,7 @@ void Console::erase_landmark(int x_coord, int y_coord) {
     }
 
     parse_says(0, MapLandmark[landmark_id].name, -1, -1);
-// RECOVERY_LITERAL: v1 0x0068A9B0 0x0068A9BD $SG64334 0x00516490
+// RECOVERY_LITERAL: v1 0x0068A9B0 0x0068A9BD $SG64333 0x00516490
     if (X_pop("LANDMARKKILL", nullptr) == 0) {
         return;
     }
@@ -5033,25 +5033,25 @@ void Console::use_time_bonus() {
     if (!IsMultiplayerNet) return;
     if ((GameDataStateStorage.fields_.net_turn_flags_ & 0x10) &&
         GameDataStateStorage.fields_.net_turn_faction_ != ConsoleGlobal.faction_id_) {
-// RECOVERY_LITERAL: v1 0x0068AA48 0x0068AA50 $SG64462 0x00517060
+// RECOVERY_LITERAL: v1 0x0068AA48 0x0068AA50 $SG64461 0x00517060
         NetMsgPrimary.pop("SIMULNO", 5000, 0, nullptr);
         return;
     }
     const int faction = ConsoleGlobal.faction_id_;
     if (PlayersData[faction].time_bonus_count <= 0) {
         parse_num(0, TimeControl[selection].refresh);
-// RECOVERY_LITERAL: v1 0x0068AA50 0x0068AA5E $SG64465 0x00517060
+// RECOVERY_LITERAL: v1 0x0068AA50 0x0068AA5E $SG64464 0x00517060
         NetMsgPrimary.pop("NOTIMEBONUSES", 5000, 0, nullptr);
         return;
     }
     if (GameDataStateStorage.fields_.game_state_ & 0x800) {
-// RECOVERY_LITERAL: v1 0x0068AA60 0x0068AA6D $SG64467 0x00517060
+// RECOVERY_LITERAL: v1 0x0068AA60 0x0068AA6D $SG64466 0x00517060
         NetMsgPrimary.pop("NOBONUSATEND", 5000, 0, nullptr);
         return;
     }
     if ((GameDataStateStorage.fields_.game_state_ & 2) &&
         ((1u << faction_id_) & NetDaemonNet.primary_state_.trailing_words_[6])) {
-// RECOVERY_LITERAL: v1 0x0068AA70 0x0068AA7C $SG64469 0x00517060
+// RECOVERY_LITERAL: v1 0x0068AA70 0x0068AA7C $SG64468 0x00517060
         NetMsgPrimary.pop("NOBONUSDONE", 5000, 0, nullptr);
         return;
     }
