@@ -4557,7 +4557,7 @@ again:
     PopupModalState = 5;
     popup.dialogs().set_draw_callback(&hq_list_draw);
     const int zoom = WorkshopPreviewZoom;
-    int width = zoom_scale(132, zoom);
+    int width = zoom_scale(132, WorkshopPreviewZoom);
     popup.dialogs().set_field_34(width * 2 + 3);
     popup.dialogs().field_48_ = zoom_scale(75, zoom);
     popup.dialogs().set_field_50(8);
@@ -4638,10 +4638,9 @@ again:
             const int candidate_id = faction_id * MaxVehProtoFactionNum + slot;
             if (candidate_id == selected)
                 continue;
-            const uint16_t flags = VehPrototypes[candidate_id].flags;
-            if (flags & PROTO_ACTIVE
+            if (VehPrototypes[candidate_id].flags & PROTO_ACTIVE
                 && !(VehPrototypes[candidate_id].obsolete_factions & (1 << faction_id))
-                && flags & 4
+                && VehPrototypes[candidate_id].flags & 4
                 && VehPrototypes[candidate_id].plan == VehPrototypes[selected].plan
                 && VehPrototypes[candidate_id].unk_1 == VehPrototypes[selected].unk_1
                 && get_proto_triad(candidate_id) == get_proto_triad(selected)) {
