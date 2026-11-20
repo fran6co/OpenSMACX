@@ -1959,9 +1959,11 @@ SaveNameDefaultStorage SaveNameDefaultStorageGlobal;
 
 // load_game's header-context stand-ins. The image expands each of these in
 // load_game (0x005AAAB0); their real header spellings are not recovered yet.
-// WORKAROUND(inline): image 0x005AAC1A..0x005AAC3E pushes each branch's label
-// before one shared Strings::get call; alpha.h's __forceinline label_get
-// (temp form) shares the push instead and spends no /Ob2 budget.
+// WORKAROUND(inline): save_game (0x005A9EB0) only. load_game writes the plain
+// StringTable.get(Labels.strings_ptr[k]) out, as 326 other sites do, and is
+// exact that way; in save_game the written-out form adds one out-of-line
+// teardown call at its last return (42 -> 45 rows), label_get 133 rows, so
+// this /Ob2-charged plain inline stands in for budget the original spent.
 inline LPSTR load_game_label_branch(int label_offset) {
     return StringTable.get(Labels.strings_ptr[label_offset]);
 }
@@ -2185,8 +2187,8 @@ again:
     file_box.set_def_name(name);
     file_box.set_def_ext(const_cast<char *>(
         mode != 0 ? ScenarioFileExtension : SaveGameFileExtension));
-    file_box.add_filter(filter, mode != 0 ? load_game_label_branch(0x9C8 / 4)
-                                          : load_game_label_branch(0x674 / 4));
+    file_box.add_filter(filter, mode != 0 ? StringTable.get(Labels.strings_ptr[0x9C8 / 4])
+                                          : StringTable.get(Labels.strings_ptr[0x674 / 4]));
 
     extension[0] = '\0';
     strcat(extension, ".");
