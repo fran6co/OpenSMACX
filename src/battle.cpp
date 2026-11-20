@@ -3693,7 +3693,7 @@ L_509980:
         }
 
         // 0x50A730: kill the defender alone, or damage the whole stack
-        if ((base_id >= 0
+        if (((base_id >= 0
              || (map_loc(target_x, target_y)->bit & BIT_BUNKER)
              || get_triad(def_id) == TRIAD_AIR
              || get_triad(veh_id) == TRIAD_AIR
@@ -3706,7 +3706,7 @@ L_509980:
                 || ((veh_cargo(def_id) == 0 || base_id >= 0
                      || VehPrototypes[Vehs[veh_id].proto_id].plan == PLAN_INFO_WARFARE)
                     && (VehPrototypes[Vehs[veh_id].proto_id].plan == PLAN_INFO_WARFARE
-                        || (stack_check(def_id, 1, -1, -1, -1) - stack_check(def_id, 2, PLAN_ALIEN_ARTIFACT, -1, -1) - stack_check(def_id, 2, PLAN_COLONIZATION, -1, -1) - stack_check(def_id, 2, PLAN_INFO_WARFARE, -1, -1) - stack_check(def_id, 2, PLAN_SUPPLY_CONVOY, -1, -1)) > 1)))) {
+                        || (stack_check(def_id, 1, -1, -1, -1) - stack_check(def_id, 2, PLAN_ALIEN_ARTIFACT, -1, -1) - stack_check(def_id, 2, PLAN_COLONIZATION, -1, -1) - stack_check(def_id, 2, PLAN_INFO_WARFARE, -1, -1) - stack_check(def_id, 2, PLAN_SUPPLY_CONVOY, -1, -1)) > 1)))) != 0) {
             // 0x50A8DC: kill just the defender
             battle_kill(def_id, &kill_count, &booty_count, &husk_energy, veh_id, att_faction);
         } else {
