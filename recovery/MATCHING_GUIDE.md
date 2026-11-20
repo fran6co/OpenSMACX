@@ -9107,7 +9107,13 @@ Counters and tie arms (par-5 2026-11-20, councwin)
   done: at its fall-through (proposal_menu 78 -> 1 rows). An if-block
   wrapping a fail site whose false edge joins the label's last site is the
   form to remove; an empty then-arm (`if (!f()) {} else goto L;`) is not a
-  non-claiming site (shoot 0x00500560: no change).
+  non-claiming site (shoot 0x00500560: no change). shoot moved the other
+  way (par-5 2026-11-20): the image answers BUSTERSAC with `jne fail; jmp
+  decrement` and lays the failure block after the must-sacrifice arm; both
+  sacrifice arms written as `goto sacrifice;` to a label after the failure
+  block's `return 0` (instead of an if/else join with `goto failed` into
+  the else) give that test and placement (46 -> 41 rows, jseq 5 -> 3
+  hunks); the decrement block still lands before the failure block.
   upgrade_prototype: our last site is the no_energy `if (set_flag && ...)
   goto fail;` (claims; 27 rows, one extra `ret`); every rewrite of those
   sites tried (else-goto, `||` else, nested, returns, no_energy inline or
