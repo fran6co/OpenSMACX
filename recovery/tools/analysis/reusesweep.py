@@ -400,7 +400,7 @@ def sweep(unit, addr, write=False, top=6, log=print):
     if not ps:
         log('  no pairs')
         return dict(base=base['diff'], best=None)
-    keyed = {'%s@L%d->%s' % (L['name'], L['line'], T): (L, T) for L, T in ps}
+    keyed = {'%s@L%s->%s' % (L['name'], L['line'], T): (L, T) for L, T in ps}
     bsig = ours_sig(base)
     vd, screened = volatile_dead(unit, addr, text, ps, log)
     rest = {k: p for k, p in keyed.items() if p[1] not in screened}
@@ -483,7 +483,7 @@ def main():
         text = open(R + '/' + unit, encoding='latin-1').read()
         ps, m = pairs(text, int(addr, 16))
         for L, T in ps:
-            if '%s@L%d->%s' % (L['name'], L['line'], T) == a.show:
+            if '%s@L%s->%s' % (L['name'], L['line'], T) == a.show:
                 import difflib
                 v = rename_variant(text, m, L, T)
                 sys.stdout.writelines(difflib.unified_diff(text.splitlines(1), v.splitlines(1), n=1))
