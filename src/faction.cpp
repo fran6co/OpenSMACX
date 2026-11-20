@@ -3952,6 +3952,7 @@ void __cdecl pledge_truce(int faction_id, int faction_id_with,
 // TRIED: literal register-machine transliteration (pseudo-regs eax..edi, a raw 0x5440-byte buffer for the Popup/BasePop/Scroll object standing in for real ebp-relative locals, goto per basic block). Popup/BasePop/Scroll/FlatButton/ Dialogs/Dialog/Spot/Sprite/Heap/StringStruct lifecycle calls (ctor, start, exec, close, item, sprite, dtors) go through original_method<> on that buffer instead of real typed C++ locals, so no SEH frame or manual vtable re-stamp before each close()/dtor call is modeled - those writes are compiler-generated partial-construction unwind bookkeeping with no observable effect once the real ctor already ran. cdq/sub/sar divide-by- 2/3/4/6/10 idioms folded to `/N`; the negative-magic-constant /5 idiom (0x99999999) folded to `-(x/5)`. Covers the full control-flow graph and every external/method call in original order (4899 rebuilt vs 4536 original bytes); divergence is from the object-model/frame shape, not from missing branches or wrong call order.
 void __cdecl make_gift(int giver, int receiver) {
     Popup popup;
+    int favored;
     const int mode = DiplomacyProposalMode;
     PopupDialogFactionID = receiver;
     if (mode == 4 || mode == 7) {
@@ -4067,7 +4068,7 @@ void __cdecl make_gift(int giver, int receiver) {
         }
         if (!strcmp(search_key, "SPARTANS")) amount /= 2;
 
-        int favored = amount >= PlayersData[receiver].energy_reserves / 2
+        favored = amount >= PlayersData[receiver].energy_reserves / 2
             && amount >= PlayersData[giver].energy_reserves / 3
             && amount >= GameDataStateStorage.fields_.turn_current_num_ * 2;
         int strong_offer = amount >= PlayersData[receiver].energy_reserves / 4
@@ -4139,7 +4140,7 @@ void __cdecl make_gift(int giver, int receiver) {
         if (strcmp(Players[giver].search_key, "SPARTANS") == 0)
             base_value = diplo_mul(base_value, 2);
 
-        int favored =
+        favored =
             base_value >= static_cast<int>(PlayersData[receiver].energy_reserves) / 2 &&
             base_value >= static_cast<int>(PlayersData[giver].energy_reserves) / 3 &&
             base_value >= diplo_mul(GameDataStateStorage.fields_.turn_current_num_, 2);
