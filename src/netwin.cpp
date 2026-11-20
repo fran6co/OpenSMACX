@@ -2987,7 +2987,11 @@ int NetWin::exec() {
     rect.top += 3;
     rect.right -= 3;
     rect.bottom = rect.top + 0x1A;
-    setup_rects_[0] = rect;
+    // 0x482622: the title rect's address is formed before the edges (edi)
+    // and the scratch RECT keeps all four edges in its frame slots: a copy
+    // through a pointer, not a member assignment.
+    RECT *const title = &setup_rects_[0];
+    *title = rect;
 
     set_rect(&setup_rects_[1], 7, 0x3A, 0x134, 0x180);
     set_rect(&setup_rects_[2], 7, 0x24, 0x134, 0x38);
