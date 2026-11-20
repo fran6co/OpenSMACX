@@ -3016,7 +3016,8 @@ int NetWin::exec() {
     netwin_set_column(&setup_rects_[13], 0x215, 0x3A, 0x2A1, 0x4E);
     netwin_set_column(&setup_rects_[20], 0x2A3, 0x3A, 0x319, 0x4E);
 
-    set_rect(&setup_rects_[34], 0x13D, 0xD4, 0x229, 0xE8);
+    set_rect(&rect, 0x13D, 0xD4, 0x229, 0xE8);
+    setup_rects_[34] = rect;
     set_rect(&rect, 0x22C, 0xD4, 0x318, 0xE8);
     setup_rects_[35] = rect;
 
