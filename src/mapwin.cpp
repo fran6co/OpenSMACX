@@ -5384,7 +5384,8 @@ int MapWin::right_menu(int tile_x, int tile_y, int screen_x, int screen_y) {
             space();
             const int production = Bases[base_id].queue_production_id[0];
             if (production < 0) {
-                strcat(StringTemp, StringTable.get(Facility[-production].name));
+                const int fac = -production;
+                strcat(StringTemp, StringTable.get(Facility[fac].name));
             } else {
                 strcat(StringTemp, VehPrototypes[production].veh_name);
             }
