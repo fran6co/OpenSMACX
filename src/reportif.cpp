@@ -5500,7 +5500,7 @@ void ReportIf::on_status(int mode) {
             if (other != ConsoleGlobal.faction_id_) {
                 int elevators = 0;
                 for (int base = 0; base < GameDataStateStorage.fields_.base_current_count_; ++base) {
-                    if (Bases[base].faction_id_current == other && has_fac(41, base, 0)) {
+                    if ((Bases[base].faction_id_current == other && has_fac(41, base, 0)) != 0) {
                         ++elevators;
                     }
                 }
