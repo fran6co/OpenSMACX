@@ -6332,6 +6332,24 @@ result over 64 symbol-counter pads, so none of these is a counter canary.
   there: the scan used the function-scope pair as scratch, so the stores stay
   live (the variables are read later on other paths). Block-local `x_k`/`y_k`
   live in registers only (1059 -> 1023 rows).
+- **A never-reloaded store of a value whose reads all come from a register is
+  an inline function's parameter** (par-2 2026-11-20, BaseWin::draw_expenses
+  0x00412AA0). VC6 homes the parameters of an expanded inline and stores each
+  one at its binding even when every read inside the body is served from the
+  register that computed it; a named local or a plain edge store is copy
+  propagated and leaves no store. draw_expenses' three tile rectangles stored
+  the centred top to [ebp-0x3c] (never read; the slot later hosts loop
+  counters) and computed `max(1, unit - 1)` through memory (`mov [m],1; jl;
+  mov [m],eax`, then `mov edx,[m]; add edx,left`): both are the `y` and
+  `width` parameters of `set_rectangle_dimensions(&tile, line.left, top,
+  max(1, unit - 1), font.pixel_height())` (rectangle_operations.h). A named
+  `top` local, `tile.top = v = ...` with any existing local, and `set_rect`
+  with computed edges all compile to the old code or worse (1023 -> 985 with
+  the inline). Signs: a frame store with no load of that slot until a later
+  unrelated store, next to the field stores of a RECT (or other aggregate)
+  the inline fills; a ternary/min/max result stored to a slot and reloaded at
+  once. Frame still 4 short there (packrev's blockers name the remaining
+  slot).
 - **Declaration order of function-scope scalars does not set frame offsets**
   (par-5 2026-11-19, setup_text: mode/pane at -0x10 against a pointer temp at
   -0x14, row_pitch/width/base among -0x88..-0x90; declaration order, block
@@ -6795,7 +6813,9 @@ result over 64 symbol-counter pads, so none of these is a counter canary.
     image, [ebp-0x3C], shared by the `&production_outer_rect_` address
     temporary (0x412B23, reload 0x412E48), a never-reloaded copy of tile.top
     (0x413297, 0x413B2F, 0x4143FA) and the three sections' loop counters
-    (0x4132CA, 0x413B62, 0x41442D); ours spreads the same temporaries over
+    (0x4132CA, 0x413B62, 0x41442D) [the tile.top copy and the homed max are
+    set_rectangle_dimensions' parameters, fixed 2026-11-20, see "A
+    never-reloaded store ..."]; ours spreads the same temporaries over
     the homes of `left`, `mineral_cost` and `energy_cost`. `wide` and `left`
     share [ebp-0x8C] in the image by packing; merging the names in the source
     is worse (1024 -> 1301 rows).
