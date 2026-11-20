@@ -3135,6 +3135,69 @@ we cannot see, so the numbers are fitted within about 0.3 unit.
      written-out owners. WorldWin::right_menu's case 2 is the body of
      three identical orphans (set_center, focus, follow_center); which one
      it called is not decidable from the bytes.
+9. **Destructor bodies: member and base destructors are ordinary sites;
+   read teardowns per site, not by call count** (high; `inline/dtor_mb.py`,
+   `inline/teardowns.py`, 2026-11-20 par-4).
+   - The implicit calls in a destructor body (members in reverse
+     declaration order, then the base) are rule-8 sites of that body. They
+     are greedy in that order, each counts in later_j for the ones before
+     it, and they are charged like explicit sites. The base gets no
+     exemption and no other order. Family `P : B { M m; }` with N returns,
+     ~M and ~B of 0-12 ifs (1075 teardown decisions): plain rule 8 with the
+     same charge formula for both (2.5 + ifs, ~P 3.5, S = 54.5) misses 20,
+     all one-site shifts at the end. Base first misses 266. The base lifted
+     to the caller's level misses 560. A refused member with an expanded
+     base (`mB`) happens only when the member costs more.
+   - **"~BasePop expands where ~Scroll is refused" is a count artifact.**
+     terraform (0x004D3470) calls ~Scroll at 17 of 30 teardowns and ~BasePop
+     only twice. Read per teardown (`teardowns.py`), image and ours alike:
+     1-17 `~Scroll | ~BasePop`, 18-26 ~Scroll expanded with both FlatButtons
+     called, 27-28 one FlatButton expanded, and ~BasePop expanded only at
+     29 and 30 (the closing teardown). The other 28 `call ~BasePop` tails
+     cross-jump into two copies: site 28's, which falls into the epilogue,
+     and site 3's, which differs by its enclosing EH state.
+   - **Teardown cross-jump model** (`predict.py`). The tail-merge rule
+     ("into the block that falls through into the common target", 3.7)
+     applied to teardowns:
+     - Each expanded copy writes its own EH state numbers. The base call
+       writes the caller's state (the body's -1), so it is the same at every
+       site in one scope.
+     - A teardown merges the longest identical suffix with a host: same
+       calls, same object, same state stores. A call whose own store
+       differs still merges (the jumper keeps the store and jumps to the
+       call), but nothing before it does.
+     - Walk the teardowns from the last back. A teardown that matches no
+       host keeps everything and becomes a host. This gives terraform
+       exactly: sites 1-27 jump into 28 (`~BasePop`, or `~GraphicWin
+       ~BasePop` after the expanded ~Scroll's private state), and 29 jumps
+       into the closing site's `~Heap ~GraphicWin`.
+     - With this model the predictor's fit to ours drops from 80 to 27
+       named calls in terraform and from 55 to 9 in call_council.
+       pick_player stays at 6. probe goes from 329 to 292, or 122 with
+       `--ceiling` (rule 7's T fitted): probe's teardowns are identical
+       image to ours, and its misfit is ceiling and budget order, not
+       teardowns.
+   - **Where the image differs, it differs at the closing teardowns.**
+     terraform: the image also expands BasePop's two FlatButtons at site 29
+     and both StringLists at site 30, so it has more room at the end.
+     call_council (0x0052C880): sites 1-15 are equal, and at the closing
+     site the image expands one FlatButton (`S(Ff)`) where ours expands
+     both, so it has less room at the end. The closing teardown gets
+     everything left (later = 0), so any spend change before it moves it
+     first. A dead charged probe (`__pd_probe`, three folded ifs) at every
+     tested position in call_council (lines 1140-1300 and 1340-1402) gives
+     the same result: the closing teardown expands *more* (~BasePop
+     expanded, one more ~Scroll call), which is the wrong direction. In
+     terraform, the same probe anywhere in lines 1849-1892 adds one or two
+     ~Scroll calls to the suffix and still leaves sites 29-30 short. Neither
+     is a budget-probe case.
+   - Negative (tree-wide `feall --all`, 2026-11-20): editor_edit_veh's
+     lead (the image expands ~StringStruct inside ~StringList at its two
+     sites, ours calls it) is not a destructor respelling.
+     `~StringList() { remove_all(); current_position_ = 0; }` loses 24
+     exact functions, among them ~StringList 0x004066C0 itself (diff 3),
+     so it is wrong against the image. `~StringStruct() { remove_all();
+     current_position_ = 0; }` loses 18.
 
 Using it
 - Run inlinemap. For each callee row:

@@ -23,8 +23,19 @@ range that reproduces ours, reports whether the image's counts lie on the same S
 --leads searches the single changes that make the model give the image's counts at ours' S:
 a site's charge +-d (`cost@site`), one more / one fewer later site in a body (`later@body`), S itself.
 A lead names the site (caller line or callee body) whose spend differs from the original.
-Tail merging (cross-jumped identical calls) makes observed counts lower than site counts: a callee whose
-ours count is below the model at every S is reported as `merged` and left out of the distance.
+Implicit member and base destructor calls inside a destructor body are ordinary sites of that body, in
+destruction order (members in reverse declaration order, then bases); no exemption (2.8 rule 9).
+
+Teardown cross-jumping (2.8 rule 9): every caller-level destructor site is flattened into the calls it
+leaves, each tagged with the EH state stores written before it (state -1 of an expanded body = the
+caller's state at the call; every other state number is private to that copy, so it never matches
+another site) and the destroyed object. Walking the teardowns from the last back, a teardown merges the
+longest identical suffix with an earlier-kept host (a call whose store differs still merges, nothing
+before it); one that matches no host keeps everything and becomes a host. terraform: sites 1-27 jump
+into site 28, site 29 into the closing site 30, as in the image.
+
+--ceiling also fits rule 7's total-size ceiling T (own /Od size plus every body expanded so far, free
+ones too). It is one more free parameter: use it on ceiling-bound giants (analysis/ceilscan.py).
 """
 import sys, os, re, json, argparse, subprocess, collections
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -79,7 +90,7 @@ def procs(asm):
             continue
         name, body = m.group(2), m.group(3)
         body = body.split('_TEXT\tENDS')[0]
-        sites, size, line = [], 0, 0
+        sites, stores, recv, size, line, st, rc = [], [], [], 0, 0, (), None
         for l in body.split('\n'):
             ml = re.match(r'^; (\d+)\s+:', l)
             if ml:
@@ -90,12 +101,21 @@ def procs(asm):
             s = l.strip().split(';')[0].strip()
             if not s or s.endswith('ENDS') or s.endswith('SEGMENT'):
                 continue
+            ms = re.match(r'mov\s+(?:DWORD|BYTE) PTR __\$EHRec\$\[ebp\+8\], (-?\d+)', s)
+            if ms:
+                st = st + (int(ms.group(1)),)
+            mr = re.match(r'(?:lea|mov)\s+ecx, (.*)', s)
+            if mr:
+                rc = mr.group(1)
             mc = re.match(r'call\s+(\S+)', s)
             if mc and not mc.group(1).startswith(('DWORD', '__chkstk')):
                 sites.append((line, mc.group(1)))
+                stores.append(st)    # EH state stores since the previous call (cross-jump boundaries)
+                recv.append(rc)      # the receiver (destroyed object) of a caller-level teardown
+                st, rc = (), None
             if not FRAME.match(s):
                 size += 1
-        res[name] = dict(sites=sites, size=size, file=cur_file)
+        res[name] = dict(sites=sites, stores=stores, recv=recv, size=size, file=cur_file)
     return res
 
 
@@ -237,7 +257,9 @@ class Model:
         self.site_over = {}               # (body, index) -> charge delta
         self.later_over = {}              # body -> {index: extra later count}
         self.merge = os.environ.get('PREDICT_MERGE', '1') == '1'
-        self.base_free = float(os.environ['PREDICT_BASE']) if os.environ.get('PREDICT_BASE') else None
+        self.ceiling = False              # --ceiling: fit T as well
+        self.T = None                     # rule 7 total-size ceiling in /Od instructions (fitted), None = off
+        self.total = 0
         marked = set(re.findall(r'// ORIGINAL: 0x[0-9A-F]{8} (\S+)', unit_text))
         marked |= set(re.findall(r'// symbol\s+(\S+)', unit_text))
         self.auto = {n for n in P if n in marked}
@@ -266,11 +288,11 @@ class Model:
             c = allsites[j][1]
             later = len(idx) - q - 1 + sum(v for k, v in lo.items() if k > j)
             ch = self.charge(c) + self.site_over.get((body, j), 0.0)
-            if self.base_free is not None and body.startswith('??1') and c.startswith('??1') and \
-                    j == max(k for k, (_, x) in enumerate(allsites) if x.startswith('??1')):
-                ch = ch * self.base_free     # the base-class destructor of a destructor body
-            if depth < 8 and ch <= S - spent + 1e-9:
+            # rule 7 ceiling: the caller's own size plus every body expanded so far (free ones too)
+            over = self.T is not None and self.total + self.P[c]['size'] > self.T
+            if depth < 8 and not over and ch <= S - spent + 1e-9:
                 spent += ch
+                self.total += self.P[c]['size']
                 sub = (S - spent) / (1 + later)
                 out.append((path + (j,), c, 'E', depth))
                 k = len(out) - 1
@@ -284,37 +306,74 @@ class Model:
     def counts(self, sym, S):
         """-> Counter of called keys (sites refused at a reachable position + non-inline calls)"""
         out = []
+        self.total = self.P[sym]['size']
         self.walk(sym, S, 0, (), out)
         exp = {x[0] for x in out if x[2] == 'E'}
         cnt = collections.Counter()
 
-        def flat(body, path):
-            toks = []
-            for j, (_, c) in enumerate(self.P.get(body, {'sites': []})['sites']):
+        def flat(body, path, entry, per=None):
+            """-> [(key, boundary)] of the calls a site leaves in the code; boundary = the EH state stores
+            written since the previous call. In an expanded body, state -1 (no member alive) is the
+            caller's state at the call (`entry`); every other state number is private to that copy."""
+            toks, cur = [], entry
+            d = self.P.get(body, {'sites': [], 'stores': []})
+            for j, (_, c) in enumerate(d['sites']):
                 p = path + (j,)
+                raw = d.get('stores', [()] * len(d['sites']))[j]
+                bd = []
+                for v in raw:
+                    if not path:
+                        cur = ('top', v)
+                    else:
+                        cur = entry if v == -1 else ('u', p, v)
+                    bd.append(cur)
+                bd = tuple(bd)
                 if p in exp:
-                    toks += flat(c, p)
+                    sub = flat(c, p, cur)
+                    if sub:
+                        sub[0] = (sub[0][0], bd + sub[0][1])
                 else:
-                    toks.append(im.key(c))
+                    sub = [(im.key(c), bd)]
+                toks += sub
+                if per is not None:
+                    obj = d['recv'][j] if 'recv' in d else None
+                    sub = [(k, b, obj) for k, b in sub]   # another object's teardown never merges
+                    per.append((c, sub))
             return toks
 
-        # scope-exit teardowns (a destructor site at the caller's level) end in the same epilogue: VC6
-        # cross-jumps their identical suffixes, so they are counted through a suffix trie (one call per
-        # distinct suffix node), every other site directly.
-        trie = {}
-        for j, (_, c) in enumerate(self.P.get(sym, {'sites': []})['sites']):
-            p = (j,)
-            toks = flat(c, p) if p in exp else [im.key(c)]
-            if self.merge and c.startswith('??1'):
-                node = trie
-                for t in reversed(toks):
-                    if t not in node:
-                        node[t] = {}
-                        cnt[t] += 1
-                    node = node[t]
+        def merged(a, b):
+            """VC6 cross-jumping: the longest identical instruction suffix. A call whose preceding state
+            store differs still merges (the jumper keeps its store and jumps to the call), nothing before."""
+            n = 0
+            while n < min(len(a), len(b)):
+                x, y = a[-1 - n], b[-1 - n]
+                if x[0] != y[0] or x[2] != y[2]:
+                    break
+                n += 1
+                if x[1] != y[1]:
+                    break
+            return n
+
+        # scope-exit teardowns (destructor sites at the caller's level) all end in an epilogue. Walked from
+        # the last one back: a teardown whose suffix matches an earlier-kept host's tail jumps into it
+        # (only the unmatched calls stay), one that matches none falls through into an epilogue of its own
+        # and becomes a host (terraform: sites 1-27 into site 28, site 29 into the closing site 30).
+        per = []
+        flat(sym, (), ('top', -1), per)
+        hosts = []
+        keep = [None] * len(per)
+        for q in range(len(per) - 1, -1, -1):
+            c, toks = per[q]
+            if self.merge and c.startswith('??1') and toks:
+                best = max([merged(toks, h) for h in hosts] or [0])
+                if best == 0:
+                    hosts.append(toks)
+                keep[q] = toks[:len(toks) - best]
             else:
-                for t in toks:
-                    cnt[t] += 1
+                keep[q] = toks
+        for toks in keep:
+            for t in toks:
+                cnt[t[0]] += 1
         return cnt, out
 
 
@@ -347,6 +406,7 @@ def ranges(v, step):
 
 def analyse(unit, addr, text, Pod, Pog, model, leads=False, show=False):
     sym, lo, hi = fe.ident(text, addr)
+    model.T = None
     if sym not in Pod or sym not in Pog:
         return dict(addr='%08X' % addr, sym=sym, error='not in listing')
     img = collections.Counter(n for _, n in im.img_stream(lo, hi))
@@ -363,11 +423,26 @@ def analyse(unit, addr, text, Pod, Pog, model, leads=False, show=False):
     keys = sorted({im.key(c) for c in reach} | {im.key(c) for b in reach if b in Pod for _, c in Pod[b]['sites']})
     grid = [float(os.environ['PREDICT_S'])] if os.environ.get('PREDICT_S') else [x * 0.5 for x in range(0, 1201)]
     d_o, S_o, c_o = fit(model, sym, ours, keys, grid)
+    if model.ceiling and d_o:
+        # rule 7: fit the total-size ceiling T too (coarse T grid, then S at the best T)
+        model.T = None
+        _, full = model.counts(sym, grid[-1])
+        tmax = model.total
+        lo_t = Pod[sym]['size']
+        best = (d_o, None)
+        for q in range(41):
+            model.T = lo_t + (tmax - lo_t) * q / 40.0
+            d, Ss, _ = fit(model, sym, ours, keys, grid[::4])
+            if d < best[0]:
+                best = (d, model.T)
+        model.T = best[1]
+        if model.T is not None:
+            d_o, S_o, c_o = fit(model, sym, ours, keys, grid)
     # the image target in model terms: ours' model counts moved by the image's difference from ours, so the
     # site counts that tail merging removes on both sides cancel (an offset the model does not know)
     tgt = collections.Counter({k: c_o[k] + img[k] - ours[k] for k in keys})
     d_i, S_i, c_i = fit(model, sym, tgt, keys, grid)
-    r = dict(addr='%08X' % addr, sym=sym, keys=len(keys), sites=len(reach),
+    r = dict(addr='%08X' % addr, sym=sym, keys=len(keys), sites=len(reach), T=model.T,
              ours_fit=d_o, ours_S=ranges(S_o, 0.5), img_fit=d_i, img_S=ranges(S_i, 0.5),
              diff={k: (img[k], ours[k]) for k in keys if img[k] != ours[k]})
     if show:
@@ -427,6 +502,7 @@ def main():
     ap.add_argument('--src')
     ap.add_argument('--pfx', default=os.environ.get('FE_PFX_BASE', '21'))
     ap.add_argument('--json')
+    ap.add_argument('--ceiling', action='store_true', help='also fit the rule-7 total-size ceiling (giants)')
     ap.add_argument('--no-measure', action='store_true', help='size proxy only, no probe callers')
     ap.add_argument('--tree', nargs='*')
     ap.add_argument('--from', dest='frm')
@@ -449,6 +525,7 @@ def main():
             print(unit, 'compile failed', str(e)[:200])
             continue
         model = Model(Pod, text, a.scale, a.free)
+        model.ceiling = a.ceiling
         if not a.no_measure:
             reach = set()
             for addr in addrs:
@@ -476,8 +553,9 @@ def report(r):
     if 'error' in r:
         print('%s %s %s' % (r['addr'], r['sym'], r['error']))
         return
-    print('%s %-44s sites %3d  ours fit %d at S %s | image (offset) fit %d at S %s' % (
-        r['addr'], r['sym'][:44], r['sites'], r['ours_fit'], r['ours_S'][:40], r['img_fit'], r['img_S'][:40]))
+    print('%s %-44s sites %3d  ours fit %d at S %s | image (offset) fit %d at S %s%s' % (
+        r['addr'], r['sym'][:44], r['sites'], r['ours_fit'], r['ours_S'][:40], r['img_fit'], r['img_S'][:40],
+        '  T %d' % r['T'] if r.get('T') else ''))
     if r['diff']:
         print('    image/ours: ' + ' '.join('%s %d/%d' % (k, a, b) for k, (a, b) in sorted(r['diff'].items())))
     if 'model_vs' in r:
