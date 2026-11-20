@@ -423,11 +423,15 @@ void NewTechWin::exec(int technology_id, int other_faction_id) {
     boxes[2] = row_rects_[2];
     boxes[3] = row_rects_[3];
     for (int box_index = 0; box_index < 4; ++box_index) {
-        RECT *const rect = &boxes[box_index];
-        expand_rect(rect, -4, -4);
+        // The box is indexed at every use, not named through a RECT pointer:
+        // through the pointer local VC6 spills one edge to a frame slot the
+        // image does not have (frame 0x78 against 0x74).
+        expand_rect(&boxes[box_index], -4, -4);
+        stringBoxes_[box_index].init(
+            boxes[box_index].left, boxes[box_index].top,
+            boxes[box_index].right - boxes[box_index].left,
+            boxes[box_index].bottom - boxes[box_index].top, this, 0, -1);
         StringBox &box = stringBoxes_[box_index];
-        box.init(rect->left, rect->top, rect->right - rect->left,
-                 rect->bottom - rect->top, this, 0, -1);
         box.Buffer::set_font(find_font(0xe, 0), find_font(0xe, 1),
                              find_font(0xe, 2),
                              find_font(0xe, IsMultiplayerNet != 0 ? 2 : 3));
