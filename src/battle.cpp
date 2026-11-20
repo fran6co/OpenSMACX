@@ -2371,20 +2371,32 @@ void __cdecl invasions(int base_id) {
     }
 }
 
-// WORKAROUND(inline): 0x5067AB-0x5067BF calls range(reactor, 1, 100) out of line
-// and passes the zero-extended reactor through an inline parameter copy
-// (`mov eax, edx; push eax`); the original inline helper and the /Ob2 budget
-// that left its range() unexpanded are unknown. The function pointer keeps the
-// call out of line (it resolves to a direct call), the helper supplies the copy.
-// MEASURED 2026-11-19 (par-1): a plain range in this helper expands (interceptor
-// 80 -> 90 rows); 1-8 dead probes refuse nothing, 16 refuse it with x_dist,
-// base_who, on_map and wrap_map_x calls first. Kept.
-// 2026-11-20: reactor_power 83, proto_power/veh_health 82-83 rows (73 with
-// this twin); one more inline level under reactor_power refuses nothing here
-// or in turn_upkeep, whose twin shows the same refused range.
-static inline int interceptor_reactor_power(int reactor) {
-    int (__cdecl *const range_fn)(int, int, int) = range;
-    return range_fn(reactor, 1, 100) * 10;
+// WORKAROUND(decl): unidentified inline owners of the readiness test and the
+// score. 0x5067AB-0x5067BF calls range(reactor, 1, 100) out of line (with the
+// reactor_power parameter copy `mov eax, edx; push eax`) and expands the outer
+// range(.., 0, 9999). Measured 2026-11-20 (par-1): written in the loop body,
+// reactor_power, proto_power or veh_health all expand the reactor range
+// (82-86 rows); 1-8 dead probes refuse nothing. The readiness predicate plus a
+// score helper on veh_health give the image's call multiset (76 rows, the
+// range-pointer twin it replaces gave 77), as the fuel predicate and crash
+// helper do in turn_upkeep. Original names and spelling are unknown.
+static inline BOOL interceptor_ready(int veh_id, int faction_id, int x, int y) {
+    return Vehs[veh_id].faction_id == faction_id
+        && get_triad(veh_id) == TRIAD_AIR
+        && has_abil(Vehs[veh_id].proto_id, ABL_AIR_SUPERIORITY)
+        && (base_who(Vehs[veh_id].x, Vehs[veh_id].y) >= 0
+            || bit_at(Vehs[veh_id].x, Vehs[veh_id].y) & BIT_AIRBASE
+            || stack_check(veh_id, 6, ABL_CARRIER, -1, -1))
+        && map_range(Vehs[veh_id].x, Vehs[veh_id].y, x, y) <= 2;
+}
+
+static inline int interceptor_score(int veh_id) {
+    int weight = 1;
+    const int8_t offense = get_proto_offense_rating(Vehs[veh_id].proto_id);
+    if (offense >= 1) {
+        weight = offense;
+    }
+    return weight * veh_health(veh_id);
 }
 
 // ORIGINAL: 0x00506650 ?interceptor@@YAHHHHH@Z 0x00506650-0x00506A53
@@ -2395,22 +2407,8 @@ int __cdecl interceptor(int faction_id, int opposing_faction,
     int best_vehicle = -1;
     int best_score = 0;
     for (int vehicle_id = 0; vehicle_id < GameDataStateStorage.fields_.vehicle_current_count_; ++vehicle_id) {
-        if (Vehs[vehicle_id].faction_id == faction_id
-            && get_triad(vehicle_id) == TRIAD_AIR
-            && has_abil(Vehs[vehicle_id].proto_id, ABL_AIR_SUPERIORITY)
-            && (base_who(Vehs[vehicle_id].x, Vehs[vehicle_id].y) >= 0
-                || bit_at(Vehs[vehicle_id].x, Vehs[vehicle_id].y) & BIT_AIRBASE
-                || stack_check(vehicle_id, 6, ABL_CARRIER, -1, -1))
-            && map_range(Vehs[vehicle_id].x, Vehs[vehicle_id].y, target_x, target_y) <= 2) {
-            int weight = 1;
-            const int proto_id = Vehs[vehicle_id].proto_id;
-            const int8_t offense = get_proto_offense_rating(proto_id);
-            if (offense >= 1) {
-                weight = offense;
-            }
-            const int power = VehPrototypes[proto_id].plan == PLAN_ALIEN_ARTIFACT
-                ? 1 : interceptor_reactor_power(VehPrototypes[proto_id].reactor_id);
-            weight *= range(power - Vehs[vehicle_id].dmg_incurred, 0, 9999);
+        if (interceptor_ready(vehicle_id, faction_id, target_x, target_y)) {
+            int weight = interceptor_score(vehicle_id);
             if (weight >= best_score) {
                 best_score = weight;
                 best_vehicle = vehicle_id;
