@@ -337,6 +337,14 @@ an explicit `--pfx` is only needed to pick another lane.
   more instructions. Read with the probe/save_game notes in MATCHING_GUIDE 3.7: the image's choice of the join's
   fallthrough predecessor decides which copy survives. `jj=N` (and `JJ` lines) counts our jumper-into-jumper merges,
   the strongest single sign of a merge the image does not make (33/110 non-exact vs 15/626 exact functions sampled). `HOST` lines: each join whose host (the predecessor it is laid after) differs between the image and ours, both sides' predecessors as `line[last instruction]` in our source order (`H:` host, `x:` cross-jumped into it, `/T` inner then-arm tail), whether rules 1-2 of MATCHING_GUIDE 3.7 predict our host, and the source change they predict gives the image's (pop size: move a call across a branch; image host not first partnered: its tail was an inner then-arm; ours promoted by a then-arm: make it a lone if / else-arm; or reorder arms). `--tree --hosts` prints them all.
+- `analysis/xjhostscan.py [unit ...] [--from TAILSCAN.json] [--json F]` cross-jump host screen (MATCHING_GUIDE 3.7
+  "Cross-jump host", "Host orientation"): reads tailscan's HOST joins and classifies each by where the image's and our
+  host copies sit among the predecessors in our source order: `ORDER` (a middle copy hosts on one side: by the last-copy
+  rule the image's host was last in the original, move it after the others), `ORIENT-LAST` / `ORIENT-FIRST` (one side
+  hosts the first copy, the other the last: an orientation flip from a construct elsewhere in the function, not an arm
+  order; see the guide). 50 s tree-wide (tailscan's cost). tailscan's tree pass now skips only the markers with a
+  `// compile_context` line instead of their whole unit (veh.cpp, buffer.cpp, net_class.cpp were missing: 251 -> 328
+  functions).
 - `analysis/runscan.py [unit ...] [--fe FEALL.json] [--level 1|2] [--top N] [--json F]` repeated statement-run screen
   (MATCHING_GUIDE 2.8, "Helper screen"; text only, 20 s tree-wide): 2-5 statement windows of straight-line code (a no-else
   simple `if` counts as one statement) holding a call, normalised (locals V, numbers K, strings S; level 2 also collapses

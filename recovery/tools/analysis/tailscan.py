@@ -627,8 +627,11 @@ def main():
                 t = open(fe.R + '/' + u, encoding='latin-1').read()
             except OSError:
                 continue
-            ad = markers(t)
-            if ad and '// compile_context' not in t:
+            # markers measured in another unit's compile (`// compile_context`) are skipped, not their whole unit
+            ctx = set(int(m.group(1), 16) for m in re.finditer(
+                r'// ORIGINAL: 0x([0-9A-F]{8})[^\n]*\n(?:// [^\n]*\n){0,12}?// compile_context', t))
+            ad = [x for x in markers(t) if x not in ctx]
+            if ad:
                 work.append((u, ad))
         jobs = int(os.environ.get('FE_JOBS', '5'))
         fe.compile_cmd(units[0])  # load compile_commands before the lanes start (lazy global)
