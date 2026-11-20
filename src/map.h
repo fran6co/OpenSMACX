@@ -698,7 +698,7 @@ MEASURED inline int __cdecl vector_dist(int x_point_a, int y_point_a, int x_poin
 }
 
 MEASURED inline uint8_t __cdecl abstract_at(int x, int y) {
-    return (MapAbstract())[(x >> 1) + y * (MapAbstractLongBounds >> 1)];
+    return MapAbstractTiles[(x >> 1) + y * (MapAbstractLongBounds >> 1)];
 }
 
 void __cdecl abstract_set(int x, int y, uint8_t region);

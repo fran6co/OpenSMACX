@@ -35,7 +35,7 @@ tile, unlike the twenty-eight and twenty-one radius tiles, is never bounds
 checked, so a negative x reaches the shift.
 */
 __forceinline static Map *site_tile(int x, int y) {
-    return &map_tiles()[(x >> 1) + y * (int)MapLongitude];
+    return &MapTiles[(x >> 1) + y * (int)MapLongitude];
 }
 
 #endif // OPENSMACX_MAP_COORDINATES_H
