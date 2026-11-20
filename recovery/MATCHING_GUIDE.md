@@ -2762,6 +2762,14 @@ Using it
   one free probe before and after the refused site; if both are called, look
   for statements before the stop that the original did not have or spelled
   smaller, not for spend.
+  Round 28 (2026-11-20 par-2): the nerve-gas owner's parameters by value
+  (att_faction or def_faction by value is enough; all 32 ref/value
+  combinations screened) make the rounds' boom site (0x509013) expand the
+  reactor range as the image does: named call multiset equal (range
+  12/12), rung 2 -> rung 3 (frame 0x134 against 0x138), rows 2349 -> 2414.
+  A by-reference owner parameter is not free spend: it changes how much
+  nested room the owner leaves for later sites, so screen an invented
+  owner's parameter passing before its body.
   order_veh 0x005947C0 (same round): its four early Popup returns expanded
   ~FlatButton where the image calls it. 20 raw treaty tests, 12 raw human-mask
   tests and 11 raw triad reads spelled as has_treaty/is_human/get_triad (free
@@ -5411,8 +5419,17 @@ result over 64 symbol-counter pads, so none of these is a counter canary.
   a named weight temporary in the territory loop, `&territory_weights[0]`,
   a named value in the boundarypercents loop, eight element stores instead
   of the initialiser, and duplicating the make_territory body (213 rows).
-  The scalars there (regenerate, transparent_second) are not address-taken
-  and follow the last-fit packing rule, not this one.
+  Resolved (par-2 2026-11-20, 129 -> 38): the two transparent weights are
+  one `int transparent_weights[2]` (only [0] is compared and cached). The
+  8-byte array takes the slot above the 32-byte ones and the 32-byte and
+  energy orders then follow without any extra territory_weights read; the
+  same change stops VC6 strength-reducing `i * second` in the transparent
+  loop (the image keeps `i` in edi and does `imul eax,[ebp-0x44]`: an
+  array element is aliased memory, a scalar whose address is taken through
+  a propagated pointer is not). Dead reads, `if (0)` uses, self-stores and
+  `sizeof` add no counted reference; a folded `if (array)` does but emits
+  `lea/test/je`. So when a "missing reference" decides an address-taken
+  order, look for a scalar neighbour that was really an array element.
 - **An expanded has_fac's offset/mask/is_built slots are the host's packing,
   not the inline's spelling** (par-2 2026-11-20, draw_supported 0x0040C850
   175 rows, draw_production 0x0040E360 137). Image vs ours: draw_supported
