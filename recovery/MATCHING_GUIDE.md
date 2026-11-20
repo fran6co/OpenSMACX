@@ -6504,6 +6504,29 @@ result over 64 symbol-counter pads, so none of these is a counter canary.
   and -5` is `x == K ? -5 : 0` (BattleWin::battle_report 0x422153).
 - **Bool-to-flag forms differ.** `x ? 1 : 2` gives `neg/sbb/add 2`, while
   `2 - (x != 0)` gives `setne/sub`. `(c ? 1 : 0) + K` avoids `and ecx,0xff`.
+  More pairs (par-6 2026-11-20, `analysis/selscan.py`): a bool or select plus
+  a constant folds the constant into the consumer, the single ternary does not.
+  `t += 1 + (c)` gives `setcc; lea [t + c + 1]`, `t += c ? 2 : 1` gives the
+  image's `setcc; inc; add` (draw_supported); `s += (c ? 24 : 0) + 8` gives
+  `neg; sbb; and 0x18; lea [s + eax + 8]`, `s += c ? 32 : 8` the image's
+  `and 0x18; add 8; add` (enemy_move); `(c != 0) - 2` gives `setne; sub 2`,
+  `c ? -1 : -2` gives `setne; add -2` (air_power); `(f != 0) + 1 - h`
+  reassociates to `setne; sub; inc`, `(f ? 2 : 1) - h` keeps `setne; inc;
+  sub` (base_terraform). `A[(c) + 2]` folds the 2 into the displacement and
+  `A[c ? 3 : 2]` keeps `setl; add 2` (draw_ops, not applied: reportif.cpp).
+- **A negation folded into its use: name it** (par-6 2026-11-20). VC6
+  rewrites `Facility[-p]` into `Facility - p*48` (`shl; sub`) and
+  `(-s + n - 1) / -s` into `1 - (n - s - 1) / s`; the image's `neg r` before
+  the index or divisor is a named `const int f = -p` (MapWin::right_menu,
+  BaseWin::draw_nutrients). Not every site: StatusWin::on_right_click's
+  ternary arm and queue_click keep the fold or flip registers with the local;
+  base_yield's `-i_c - 1` (image `neg; ...; dec` across an inline) does not
+  move with any spelling.
+- **`!(c ? a : b)` folds into the jump; per-arm negations materialise**
+  (base_terraform 0x4EE36A). The image's `xor eax; test edx; sete al; test
+  eax; jne` after two arms that only load is `rocky ? (food ? !x : !y) : !y`
+  (each arm a negation, tail-merged); `!((rocky && food) ? x : y)` lowers to
+  a plain `test; je`.
 - **`g -= c + 1` with a bool `c` folds to `or reg,-1; sub`** (par-5
   2026-11-19): VC6 rewrites `c + 1` of a 0/1 value as a branchless
   `neg/sbb`-style constant and subtracts it. Only the ternary
