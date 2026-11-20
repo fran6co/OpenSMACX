@@ -1662,32 +1662,35 @@ void CouncWin::draw_leader(int factionID) {
         return;
     }
 
-    int activeFactions = 0;
-    for (int faction = 1; faction < MaxPlayerNum; ++faction) {
+    // One counter serves all three faction counts (the image's lea order of
+    // `count + rankBase` follows the reused variable; separate locals swap it).
+    int count = 0;
+    int faction;
+    for (faction = 1; faction < MaxPlayerNum; ++faction) {
         if ((Players[faction].rule_flags & RFLAG_ALIEN) == 0) {
-            ++activeFactions;
+            ++count;
         }
     }
-    const int rankBase = (7 - activeFactions) / 2;
+    const int rankBase = (7 - count) / 2;
 
-    int precedingFactions = 0;
-    for (int precedingFaction = 1; precedingFaction < factionID; ++precedingFaction) {
-        if ((Players[precedingFaction].rule_flags & RFLAG_ALIEN) == 0) {
-            ++precedingFactions;
+    count = 0;
+    for (faction = 1; faction < factionID; ++faction) {
+        if ((Players[faction].rule_flags & RFLAG_ALIEN) == 0) {
+            ++count;
         }
     }
 
-    int rank = precedingFactions + rankBase + 1;
+    int rank = count + rankBase + 1;
     if (GameDataStateStorage.fields_.governor_faction_ == factionID) {
         rank = 4;
     } else if (GameDataStateStorage.fields_.governor_faction_ >= 0 && rank == 4) {
-        int governorPreceding = 0;
-        for (int governorFaction = 1; governorFaction < GameDataStateStorage.fields_.governor_faction_; ++governorFaction) {
-            if ((Players[governorFaction].rule_flags & RFLAG_ALIEN) == 0) {
-                ++governorPreceding;
+        count = 0;
+        for (faction = 1; faction < GameDataStateStorage.fields_.governor_faction_; ++faction) {
+            if ((Players[faction].rule_flags & RFLAG_ALIEN) == 0) {
+                ++count;
             }
         }
-        rank = governorPreceding + rankBase + 1;
+        rank = count + rankBase + 1;
     }
 
     RECT rect = leader_rects_[(GameDataStateStorage.fields_.governor_faction_ < 0 ? 1 : 0) + rank * 2];
@@ -1788,6 +1791,9 @@ void CouncWin::draw_leader(int factionID) {
         badgeRect.bottom -= 0x14;
         _itoa(leader_tech_[factionID], number, 10);
         strcat(StringTemp, number);
+        // space()'s " " is the shared COMDAT literal popup.cpp keeps
+        // (strings.h); the image pushes 0x00682820 here (0x004263B5).
+        // RECOVERY_LITERAL: v2 merged 0x00682820 0x00682822 ??_C@_01FCOA@?5?$AA@ 0x00425DB0
         space();
         strcat(StringTemp, StringTable.get(leader_tech_[factionID] != 1 ? Labels.strings_ptr[0x80C / 4]
                                                                   : Labels.strings_ptr[0x808 / 4]));
