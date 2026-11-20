@@ -2443,7 +2443,11 @@ int Net::send_packet_type(void *data, int data_size, unsigned long target,
         }
         if (any_pending == 0) goto done;
 
-        while (NetDirectPlay != 0) {
+        for (;;) {
+            if (NetDirectPlay == 0) {
+                free(packet);
+                return 0;
+            }
             sent_at[0] = timeGetTime();
             for (index = 1; index < 16; ++index) sent_at[index] = sent_at[0];
             if (NetDirectPlay->Send(local_player_id_, 0, 0, packet,
@@ -2522,10 +2526,9 @@ int Net::send_packet_type(void *data, int data_size, unsigned long target,
             }
             MessageBoxA(0, "Oh no!! Send failed after many tries!",
                         "Message from the Net Underworld", 0);
-            break;
+            free(packet);
+            return 0;
         }
-        free(packet);
-        return 0;
     } else {
         header->type_flags_ = static_cast<WORD>(packet_type);
         DWORD send_flags;
@@ -2707,7 +2710,11 @@ int Net::send(void *data, int data_size, unsigned long target, int flags) {
             goto done;
         }
 
-        while (NetDirectPlay != 0) {
+        for (;;) {
+            if (NetDirectPlay == 0) {
+                free(packet);
+                return 0;
+            }
             sent_at[0] = timeGetTime();
             for (index = 1; index < 16; ++index) sent_at[index] = sent_at[0];
             if (NetDirectPlay->Send(local_player_id_, 0, 0, packet,
@@ -2781,22 +2788,17 @@ int Net::send(void *data, int data_size, unsigned long target, int flags) {
             switch (pop_caption("jackal",
                                 "NET_SENDTIMEDOUT", 0)) {
             case 0:
-                break;
+                continue;
             case 1:
                 close();
-                free(packet);
-                return 0;
+                break;
             case 2:
                 ExitTurnLoop = 1;
-                free(packet);
-                return 0;
-            default:
-                free(packet);
-                return 0;
+                break;
             }
+            free(packet);
+            return 0;
         }
-        free(packet);
-        return 0;
     }
 
     header->type_flags_ = 1;
