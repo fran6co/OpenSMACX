@@ -1762,6 +1762,25 @@ not see, and those are the levers:
     each use (`mov ecx,[B]` once in the wrap arm, `cmp edx,[B]`). A hoisted
     global therefore competes with the counter for the last scratch register:
     in the full tour-shaped body MapLongitude takes eax and the counter esi.
+  - Census (candset.py, 5059 fe-exact non-asm functions, 2026-11-20): with
+    call-crossing webs ranked above call-free ones (G1's consequence) and
+    call-free pairs ranked by raw references, then range length, the rank
+    model explains 9578 of 11402 constraints (9313 before); 3733 of 4287
+    call-free callee-saved webs have every scratch register busy over their
+    range (G1/G3 hold), and 29 of 45 split zero webs have full pressure
+    between the pieces (Z10). `ctrscan.py` pairs loops and flags counter
+    class / hoist differences (no BYTE_EXACT function flags).
+  - A loop-invariant global that is NOT hoisted can be aliasing, not
+    pressure: rankings 0x005AC690 rereads the alive mask (`dword` + `ah`)
+    in the faction_rankings_ store loop because both are fields of
+    GameDataStateStorage; the image hoists `mov dl, byte ptr [mask]` before
+    the loop. A probe with the store into a separate extern array hoists
+    the mask and gives the image's esi counter / edx `humans` (22 -> 17):
+    in the original the rankings table and the lock masks are separate
+    objects (header question, not taken).
+  - Console::editor_natural 0x004E14D0: the probe loop's wrap through
+    xrange_inline hoists MapLongitudeBounds into ebx as the image does
+    (wrap_map_x's ternary put it in scratch ecx; 116 -> 105).
   - TutWin::tour 0x004BC6E0 (open). Image dir loop: counter eax (own `xor`),
     MapTiles in edi (reloaded after crop_yield for `tile` and kept through the
     loop), `elevated` in ebx, esi for pieces (x, y_adj, tile, index);
