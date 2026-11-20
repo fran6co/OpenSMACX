@@ -3419,13 +3419,13 @@ int __cdecl air_power(int veh_id, int a2, int a3, int *a4, int *a5) {
                     } else {
                         odds /= 2;
                         val = 4;
-                        if (!stack_check(i, 2, 7, -1, -1)
+                        if (!(!stack_check(i, 2, 7, -1, -1)
                             && (!stack_check(i, 2, 9, -1, -1) || !is_ocean(Vehs[i].x, Vehs[i].y))
-                            && whose_territory(faction_id, Vehs[i].x, Vehs[i].y, 0, 0) != faction_id) {
+                            && whose_territory(faction_id, Vehs[i].x, Vehs[i].y, 0, 0) != faction_id)) {
+                            pods++;
+                        } else {
                             val = 2;
                             odds /= 2;
-                        } else {
-                            pods++;
                         }
                     }
                     int artifacts = stack_check(i, 0x13, -1, -1, -1);
