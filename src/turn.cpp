@@ -21,6 +21,7 @@
 // rendezvous and control_game, in image order. The boundary is inferred from
 // the CRT init table and subject change; council.cpp follows without a marker.
 #define DIALOGS_DTOR_INLINE  // stand-in: see ~Dialogs in dialogs.h
+#define STRINGSTRUCT_CURRENT_ENTRY_INLINE
 #include "stdafx.h"
 
 // Original read_tamper/set_tamper at 0x0051E000/0x0051E090 use these registry exports through the SDK.
@@ -492,23 +493,16 @@ void __cdecl clear_player_messages(int faction) {
 // RECOVERY_BINDING: v1 {"evidence": ["git:276d612614085e5d57743cf8cc92903d9468e346:src/unrecovered/0051e530.cpp", "Pinned original01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf", "recovery/tests/test_player_message_state_behavior.py"], "reason": "Recover the complete player-message display_player_messages operation through existing StringList/MessageWin owners and eight faction combat-summary counters. Preserve deletion hooks, live count reloads, reset/display order and retained original seed; no new measured claim."}
 // symbol    ?display_player_messages@@YAHH@Z
 // TRIED: char* record-base arithmetic (self+0x30*a1 relative to 0x93a7b0) with adjustor-thunk VCall dispatch (slot000/slot001) for the two destroy-list virtual calls; reaches #13
-// The id and text lookups are separate inline phases: head_ is reloaded.
-static inline int deferred_message_id(StringList &items) {
-    return items.head_ != 0 ? items.current_->id : 0;
-}
-static inline char *deferred_message_text(StringList &items) {
-    return items.head_ != 0
-               ? (*(StringStructEntry *volatile *)&(items.current_))->string_payload()->text
-               : 0;
-}
+// The id and text lookups are the header inlines current_id and
+// current_text, each with its own head test (head_ is reloaded).
 
 int __cdecl display_player_messages(int faction) {
     InterfaceMessageWin.clear();
     for (int index = 0; index < MessageWinDeferredBaseMessages[faction].entry_count_; ++index) {
         MessageWinDeferredBaseMessages[faction].seek_pos(index);
         ++ConsoleGlobal.message_count_;
-        const int id = deferred_message_id(MessageWinDeferredBaseMessages[faction]);
-        char *text = deferred_message_text(MessageWinDeferredBaseMessages[faction]);
+        const int id = MessageWinDeferredBaseMessages[faction].current_id();
+        char *text = MessageWinDeferredBaseMessages[faction].current_text();
         InterfaceMessageWin.listBox_.item(text, id | 0x40000000);
         InterfaceMessageWin.listBox_.set_selected_pos(-1, 1);
     }
