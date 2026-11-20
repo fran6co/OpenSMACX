@@ -2,7 +2,7 @@
 """rules.py <rule> <unit> <pfx> [--write] : greedy single-site rewrites inside non-exact functions.
 A site is kept when no fe-exact function of the unit is lost and the unit's total diff drops.
 Rules: see RULES (ifswap, elifswap, ternary, cmpswap, earlyret, declswap, stmtswap, declsplit, unname, labelget,
-       labelraw, expand, contract, ternret, iftern, armdup, freshctr). analysis/fnsweep.py runs them on one function
+       labelraw, expand, contract, ternret, iftern, armdup, freshctr, gotoelse, elsegoto). analysis/fnsweep.py runs them on one function
        ranked by the sdeck key.  Run under `uv run python`."""
 import sys,re,os,json
 S=os.path.dirname(os.path.abspath(__file__)); sys.path.insert(0,S); import fe
@@ -459,6 +459,56 @@ def rule_elifswap(t,mt,pos):
         cond=t[p0+1:p1]
         yield (s,c1,'if (!('+cond+')) {\n'+t[c0:c1]+'\n} else '+t[b0:b1+1],'elifswap')
 RULES['elifswap']=rule_elifswap
+def neg(cond):
+    """!(cond), dropping a double negation of a single primary (`!f(x)`, `!v`, `!(..)`)"""
+    c=cond.strip()
+    if c.startswith('!') and not c.startswith('!='):
+        r=c[1:].strip()
+        m=re.match(r'[\w\.\[\]]*(?:->[\w\.\[\]]+)*',r)
+        k=m.end()
+        if k<len(r) and r[k]=='(':
+            q=match(r,k,'(',')'); k=q+1 if q>=0 else -1
+        if k==len(r) and r: return r
+    return '!('+c+')'
+def rule_gotoelse(t,mt,pos):
+    # MATCHING_GUIDE 3.7 "Label block placement": a claiming site `if (C) goto L; S1..Sk` (k = 1..3 following
+    # statements, none a label or a declaration) as the non-claiming `if (!(C)) { S1..Sk } else goto L;`
+    for m in re.finditer(r'\bif\s*\(',mt[pos:]):
+        s=pos+m.start(); p0=pos+m.end()-1
+        if re.search(r'else\s*$',mt[max(0,s-12):s]): continue
+        p1=match(mt,p0,'(',')')
+        if p1<0: continue
+        g=re.compile(r'\s*goto\s+(\w+)\s*;').match(mt,p1+1)
+        if not g: continue
+        e=g.end(); ends=[]
+        for k in range(3):
+            q=skipws(mt,e)
+            if q>=len(mt) or mt[q]=='}' or re.match(r'(\w+)\s*:(?!:)',mt[q:]) or re.match(r'(case|default|else)\b',mt[q:]): break
+            if re.match(r'(?:const |unsigned |signed |static )*[A-Za-z_][\w:]*(?:[ \*&]+)\w+( = [^;]*)?;',mt[q:]) and not re.match(r'(return|goto|delete)\b',mt[q:]): break
+            e2=_stmt_full_end(mt,q)
+            if e2<0: break
+            e=e2; ends.append(e)
+        cond=t[p0+1:p1]
+        for e in ends:
+            yield (s,e,'if ('+neg(cond)+') {'+t[g.end():e]+'\n} else goto '+g.group(1)+';','gotoelse%d'%(ends.index(e)+1))
+def rule_elsegoto(t,mt,pos):
+    # the reverse: `if (C) { S } else goto L;`  ->  `if (!(C)) goto L; S`
+    for m in re.finditer(r'\bif\s*\(',mt[pos:]):
+        s=pos+m.start(); p0=pos+m.end()-1
+        if re.search(r'else\s*$',mt[max(0,s-12):s]): continue
+        p1=match(mt,p0,'(',')')
+        if p1<0: continue
+        b0=skipws(mt,p1+1)
+        if mt[b0]!='{': continue
+        b1=match(mt,b0,'{','}')
+        if b1<0: continue
+        g=re.compile(r'\s*else\s+goto\s+(\w+)\s*;').match(mt,b1+1)
+        if not g: continue
+        inner=mt[b0+1:b1]
+        if re.search(r'^\s*(?:const |unsigned |signed |static )*[A-Za-z_][\w:]*(?:[ \*&]+)\w+( = [^;]*)?;',inner,re.M) and not re.search(r'^\s*(return|goto|delete)\b',inner,re.M): continue
+        cond=t[p0+1:p1]
+        yield (s,g.end(),'if ('+neg(cond)+') goto '+g.group(1)+';'+t[b0+1:b1],'elsegoto')
+RULES['gotoelse']=rule_gotoelse; RULES['elsegoto']=rule_elsegoto
 def main():
     rule=RULES[sys.argv[1]]; unit=sys.argv[2]; unit=unit if unit.startswith('src/') else 'src/'+unit; pfx=sys.argv[3]
     path=R+'/'+unit; text=open(path,encoding='latin-1').read()

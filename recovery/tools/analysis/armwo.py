@@ -827,6 +827,47 @@ def fingerprint(unit, path, addr, pfx):
     return dict(named=named, calls=cdiff, frame=fd, cand=cand, rows=r['diff'], exact=r['exact'])
 
 
+def build_deck(t, addr, only, cap=27, maxn=80):
+    """[('base', t), (key, whole-file variant), ...] for the d/t/c/r spellings of the function at addr (None on a parse error)."""
+    bs, be, isvoid = locate(t, addr)
+    body = t[bs + 1:be - 1]
+    try:
+        root = N('block', 0, len(body), ch=Parser(body).stmts(end='\x00'))
+    except Exception as e:
+        print('PARSE', addr, e)
+        return None
+    vs = []
+    if 'd' in only:
+        vs += gen_d(body, root, cap)
+    if 't' in only:
+        vs += gen_t(body, root, isvoid, cap)
+    if 'c' in only:
+        vs += gen_c(body, root)
+    if 'r' in only:
+        vs += gen_r(body, root)
+    seen = {norm(body)}
+    deck = [('base', t)]
+    for k, b in vs:
+        nb = norm(b)
+        if nb in seen:
+            continue
+        seen.add(nb)
+        deck.append((k, t[:bs + 1] + reindent(body, b) + t[be - 1:]))
+    # round-robin over sites so a long function's first labels do not take the whole budget
+    groups = collections.OrderedDict()
+    for k, v in deck[1:]:
+        groups.setdefault(k.rsplit(':', 1)[0], []).append((k, v))
+    rr = []
+    while groups and len(rr) < maxn:
+        for g in list(groups):
+            if groups[g]:
+                rr.append(groups[g].pop(0))
+            if not groups[g]:
+                del groups[g]
+    deck = [deck[0]] + rr[:maxn]
+    return deck
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument('unit')
@@ -848,43 +889,9 @@ def main():
         print(json.dumps(fingerprint(unit, a.fp, a.addr, a.pfx)))
         return 0
     t = open(unit, encoding='latin-1').read()
-    bs, be, isvoid = locate(t, a.addr)
-    body = t[bs + 1:be - 1]
-    try:
-        root = N('block', 0, len(body), ch=Parser(body).stmts(end='\x00'))
-    except Exception as e:
-        print('PARSE', a.addr, e)
+    deck = build_deck(t, a.addr, set(a.only.split(',')), a.cap, a.max)
+    if deck is None:
         return 2
-    only = set(a.only.split(','))
-    vs = []
-    if 'd' in only:
-        vs += gen_d(body, root, a.cap)
-    if 't' in only:
-        vs += gen_t(body, root, isvoid, a.cap)
-    if 'c' in only:
-        vs += gen_c(body, root)
-    if 'r' in only:
-        vs += gen_r(body, root)
-    seen = {norm(body)}
-    deck = [('base', t)]
-    for k, b in vs:
-        nb = norm(b)
-        if nb in seen:
-            continue
-        seen.add(nb)
-        deck.append((k, t[:bs + 1] + reindent(body, b) + t[be - 1:]))
-    # round-robin over sites so a long function's first labels do not take the whole budget
-    groups = collections.OrderedDict()
-    for k, v in deck[1:]:
-        groups.setdefault(k.rsplit(':', 1)[0], []).append((k, v))
-    rr = []
-    while groups and len(rr) < a.max:
-        for g in list(groups):
-            if groups[g]:
-                rr.append(groups[g].pop(0))
-            if not groups[g]:
-                del groups[g]
-    deck = [deck[0]] + rr[:a.max]
     if a.show:
         import difflib
         for ln in difflib.unified_diff(t.split("\n"), dict(deck)[a.show].split("\n"), lineterm="", n=2):

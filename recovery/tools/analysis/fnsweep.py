@@ -1,12 +1,14 @@
 #!/usr/bin/env python3
-"""fnsweep.py <unit> <addr> [--rules r1,r2,..] [--steps N] [--write] [--json OUT] [--min-hunks K]
+"""fnsweep.py <unit> <addr> [--rules r1,r2,..] [--armwo d,t,c,r] [--steps N] [--write] [--json OUT]
 
 Single-site rewrite sweep of one function, ranked by the sdeck structural key (EH distance, named call
 distance, jcc/jmp/call/ret count distance, control-flow hunks, rows). Every candidate site of the rules
 (rules.py RULES; default ifswap,elifswap,stmtswap,ternary,earlyret,declswap,cmpswap) inside the function's
 source span is applied alone and evaluated; the best site that beats the base is taken, the function is
 re-swept, and so on for up to --steps rounds (greedy until flat). --write writes the unit after every
-accepted step (so a caller can commit per step: run with --steps 1 --write, commit, rerun).
+accepted step, so a caller can commit per step (run with --steps 1 --write, commit, rerun). --armwo adds
+armwo.py's whole-function arm spellings of those families (up to ARMWO_MAX) to the same ranking; `--rules ''`
+ranks only them.
 
 Comparison (better()): EH distance, then named call distance; when the branch/call count distance of the two
 keys differs by at most 1, control-flow hunks decide before that count, then rows; otherwise count, hunks, rows.
@@ -36,29 +38,36 @@ def span(t, addr):
     return m.start(), (nx.start() if nx else len(t)), int(m.group(2), 16), int(m.group(3), 16)
 
 
-def candidates(t, addr, names):
+def candidates(t, addr, names, arm=None):
     lo, hi, _, _ = span(t, addr); mt = RL.mask(t); out = []
+    if arm:
+        import armwo
+        with open(os.devnull, 'w') as dn:
+            deck = armwo.build_deck(t, '0x%08X' % addr, set(arm.split(',')), maxn=int(os.environ.get('ARMWO_MAX', '400'))) or []
+        for k, v in deck[1:]:
+            d = next((i for i, (x, y) in enumerate(zip(t, v)) if x != y), 0)
+            out.append((0, len(t), v, 'armwo-' + k, d))
     for r in names:
         for c in RL.RULES[r](t, mt, lo):
             s, e, rep, label = c[:4]
-            if lo <= s and e <= hi: out.append((s, e, rep, label))
+            if lo <= s and e <= hi: out.append((s, e, rep, label, s))
     return out
 
 
-def sweep(unit, addr, t, names, base, jobs, verbose=True):
+def sweep(unit, addr, t, names, base, jobs, verbose=True, arm=None):
     _, _, ilo, ihi = span(t, addr)
-    cands = candidates(t, addr, names)
+    cands = candidates(t, addr, [n for n in names if n], arm)
     B = sdeck.evaluate(unit, addr, ilo, ihi, t, base)
     if verbose: print('BASE', B, 'sites', len(cands), flush=True)
     res = [None] * len(cands)
 
     def lane(k):
         for i in range(k, len(cands), jobs):
-            s, e, rep, label = cands[i]
+            s, e, rep, label, at = cands[i]
             r = sdeck.evaluate(unit, addr, ilo, ihi, t[:s] + rep + t[e:], base + k)
             res[i] = r
             if verbose and better(r, B):
-                print('  BETTER', r, label, 'L%d' % (t.count('\n', 0, s) + 1), flush=True)
+                print('  BETTER', r, label, 'L%d' % (t.count('\n', 0, at) + 1), flush=True)
     with ThreadPoolExecutor(jobs) as ex: list(ex.map(lane, range(jobs)))
     return B, cands, res
 
@@ -67,19 +76,19 @@ def main():
     a = sys.argv[1:]
     unit = a[0]; unit = unit[4:] if unit.startswith('src/') else unit; addr = int(a[1], 16)
     opt = lambda k, d=None: a[a.index(k) + 1] if k in a else d
-    names = opt('--rules', DEFAULT).split(',')
+    names = opt('--rules', DEFAULT).split(','); arm = opt('--armwo')
     steps = int(opt('--steps', '1')); out = opt('--json')
     base = int(os.environ.get('FE_PFX_BASE', '8')); jobs = int(os.environ.get('FE_JOBS', '5'))
     path = fe.R + '/src/' + unit; t = open(path, encoding='latin-1').read()
     log = []
     for step in range(steps):
-        B, cands, res = sweep(unit, addr, t, names, base, jobs)
+        B, cands, res = sweep(unit, addr, t, names, base, jobs, arm=arm)
         best = None
         for i, r in enumerate(res):
             if better(r, B) and (best is None or better(r, res[best])): best = i
         if best is None:
             print('FLAT', B); log.append(dict(step=step, base=B, accepted=None)); break
-        s, e, rep, label = cands[best]; line = t.count('\n', 0, s) + 1
+        s, e, rep, label, at = cands[best]; line = t.count('\n', 0, at) + 1
         print('STEP', step, label, 'L%d' % line, B, '->', res[best], flush=True)
         log.append(dict(step=step, base=B, key=res[best], label=label, line=line))
         t = t[:s] + rep + t[e:]
