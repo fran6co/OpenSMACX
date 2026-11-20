@@ -1248,7 +1248,7 @@ L_4fa03d:
         } else {
             w = ((!l_28 && !l_64 && PlayersData[l_8].best_armor_value >= 2) ? 0x80 : 0x20) * w;
         }
-        if (l_30 && PlayersData[l_8].best_armor_value < 2 && !l_38) {
+        if ((l_30 && PlayersData[l_8].best_armor_value < 2 && !l_38) != 0) {
             w /= 2;
         }
         goto L_4fc68f;
