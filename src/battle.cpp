@@ -286,6 +286,13 @@ int __cdecl shoot(int atk_factionID, int def_factionID, int xDest, int yDest) {
                 goto sacrifice;
             }
         }
+        // Layout stand-in: the image lays the decrement after the failure
+        // block's return, as the else arm of an if whose then arm returns
+        // (41 -> 24 rows); a bare `return 0; sacrifice:` label block, an
+        // `if (0) { sacrifice: }`, a do/while(0) with breaks and an if/else
+        // on the satellite count all lay it before the failure block. The
+        // original's condition here is not known.
+        if (1) {
         if (adjacent_flechette) {
             if (def_factionID == ConsoleGlobal.faction_id_) {
                 parse_says(1, get_adjective(atk_factionID), -1, -1);
@@ -296,11 +303,13 @@ int __cdecl shoot(int atk_factionID, int def_factionID, int xDest, int yDest) {
             }
         }
         return 0;
+        } else {
     sacrifice:
         --PlayersData[def_factionID].satellites_[sat];
         if ((PlayersData[def_factionID].satellites_[sat]
                 - PlayersData[def_factionID].sat_odp_deployed) < 0) {
             PlayersData[def_factionID].sat_odp_deployed = PlayersData[def_factionID].satellites_[sat];
+        }
         }
     }
     {
