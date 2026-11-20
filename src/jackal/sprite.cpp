@@ -276,11 +276,16 @@ int Sprite::extract(Buffer *buffer, int transparent, int left, int top,
         }
         do_sound();
         buffer->free_data(1);
-        // LEFT TRIM: on every kept row, find the first visible column.
+        // LEFT TRIM: on every kept row, find the first visible column. The
+        // column and the right trim's count below are cleared before their
+        // loops and again at the end of each row: the image clears them in
+        // the preheader and the latch (`xor ecx,ecx` 0x5E3BE5/0x5E3C1E,
+        // `xor edi,edi` 0x5E3C52/0x5E3C98), never at the top of the body.
         pixels = buffer->get_data(left, top + iTopOffset_);
         iLeftOffset_ = width;
+        col = 0;
         for (rows = iSpriteHeight_; rows > 0; rows--) {
-            for (col = 0; col < width; col++) {
+            for (; col < width; col++) {
                 if (pixels[col] != transparent) {
                     break;
                 }
@@ -289,6 +294,7 @@ int Sprite::extract(Buffer *buffer, int transparent, int left, int top,
                 iLeftOffset_ = col;
             }
             pixels += stride;
+            col = 0;
         }
         do_sound();
         buffer->free_data(1);
@@ -297,8 +303,8 @@ int Sprite::extract(Buffer *buffer, int transparent, int left, int top,
         // addressing here, unlike the bottom trim above.
         pixels = buffer->get_data(left, top + iTopOffset_);
         right_trim = width;
+        int counted = 0;
         for (rows = iSpriteHeight_; rows > 0; rows--) {
-            int counted = 0;
             for (col = width; col > 0; col--) {
                 if (pixels[col - 1] != transparent) {
                     break;
@@ -308,6 +314,7 @@ int Sprite::extract(Buffer *buffer, int transparent, int left, int top,
             if (counted < right_trim) {
                 right_trim = counted;
             }
+            counted = 0;
             pixels += stride;
         }
         buffer->free_data(1);
