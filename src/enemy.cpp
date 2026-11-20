@@ -8226,7 +8226,7 @@ L_57717f:
         if (!is_coast(tx, ty, 0))
             coast -= 32;
         if (!i && !coast) {
-            score += (coast_goal ? 24 : 0) + 8;
+            score += coast_goal ? 32 : 8;
             base_find(tx, ty, faction_id);
             if (BaseFindDist <= home_dist)
                 score += 8;
