@@ -45,7 +45,37 @@ RULES=collections.OrderedDict([
  ('treaty_fn',(r'(?<![\w.>])PlayersData\[([^\[\]]+)\]\.diplo_treaties\[([^\[\]]+)\] & (\w+)\b(?!\s*[\[(])', lambda m:'has_treaty(%s, %s, %s)'%(m.group(1),m.group(2),m.group(3)))),
  ('rw_raw',(r'\brect_width\(&('+OBJ+r')\)', lambda m:'(%s.right - %s.left)'%(m.group(1),m.group(1)))),
  ('rh_raw',(r'\brect_height\(&('+OBJ+r')\)', lambda m:'(%s.bottom - %s.top)'%(m.group(1),m.group(1)))),
+ # round 44 (par-1): the image's own header inlines against their written-out bodies, both directions
+ ('says_raw',(r'(?<![\w.>:])says\('+ARG+r'\)', lambda m:'strcat(StringTemp, %s)'%m.group(1))),
+ ('sayl_raw',(r'(?<![\w.>:])say_label\('+ARG+r'\)', lambda m:'strcat(StringTemp, label_get(%s))'%m.group(1))),
+ ('clear_raw',(r'(?<![\w.>])::clear\(\);', lambda m:'StringTemp[0] = 0;')),
+ ('saynum_raw',(r'(?<![\w.>:])say_num\('+ARG+r'\);', lambda m:'{ char say_num_text[0x50]; _itoa(%s, say_num_text, 10); strcat(StringTemp, say_num_text); }'%m.group(1))),
+ ('saynum_fn',(r'(?<![\w.>:])_itoa\('+r'((?:[^(),]|\((?:[^()]|\([^()]*\))*\))+)'+r', (\w+), 10\);(\s*)strcat\(StringTemp, \2\);', lambda m:'say_num(%s);%s'%(m.group(1),m.group(3)))),
+ ('getter_raw',(r'(?<![\w.>:])get_(adjective|adjective_leader|adjective_insult_leader|adjective_faction|adjective_insult_faction)\('+ARG+r'\)',
+   lambda m:'Players[%s].%s'%(m.group(2),{'adjective':'adj_name_faction','adjective_leader':'adj_leader','adjective_insult_leader':'adj_insult_leader','adjective_faction':'adj_faction','adjective_insult_faction':'adj_insult_faction'}[m.group(1)]))),
+ ('getter_fn',(r'(?<![\w.>:])Players\[([^\[\]]+)\]\.(adj_name_faction|adj_leader|adj_insult_leader|adj_faction|adj_insult_faction)\b(?!\s*(?:=[^=]|\[))',
+   lambda m:'get_%s(%s)'%({'adj_name_faction':'adjective','adj_leader':'adjective_leader','adj_insult_leader':'adjective_insult_leader','adj_faction':'adjective_faction','adj_insult_faction':'adjective_insult_faction'}[m.group(2)],m.group(1)))),
+ ('name_raw',(r'(?<![\w.>:])get_(name|title|noun)\('+ARG+r'\)',
+   lambda m:('(parse_set(Players[%s].noun_gender, Players[%s].is_noun_plural), Players[%s].noun_faction)'%((m.group(2),)*3) if m.group(1)=='noun'
+             else '(parse_set(Players[%s].is_leader_female, 0), Players[%s].%s)'%(m.group(2),m.group(2),'name_leader' if m.group(1)=='name' else 'title_leader')))),
+ # a written-out get_name/get_title/get_noun: the parse_set statement and the field read of the next statement
+ ('name_fn',(r'(?<![\w.>:])parse_set\(Players\[([^\[\]]+)\]\.(is_leader_female, 0|noun_gender, Players\[\1\]\.is_noun_plural)\);(\s*)([^;]*?)Players\[\1\]\.(name_leader|title_leader|noun_faction)\b',
+   lambda m:'%sget_%s(%s)'%(m.group(4),{'name_leader':'name','title_leader':'title','noun_faction':'noun'}[m.group(5)],m.group(1)))),
+ ('pset_raw',(r'(?<![\w.>:])parse_set\(((?:[^(),]|\((?:[^()]|\([^()]*\))*\))+), '+ARG+r'\);', lambda m:'GenderDefault = %s; PluralityDefault = %s;'%(m.group(1),m.group(2)))),
+ ('pset_fn',(r'(?<![\w.>:])GenderDefault = ([^;\n]+);(\s*)PluralityDefault = ([^;\n]+);', lambda m:'parse_set(%s, %s);'%(m.group(1),m.group(3)))),
+ ('pset_fn2',(r'(?<![\w.>:])PluralityDefault = ([^;\n]+);(\s*)GenderDefault = ([^;\n]+);', lambda m:'parse_set(%s, %s);'%(m.group(3),m.group(1)))),
+ ('range_raw',(r'(?<![\w.>:])range\(([\w.\[\]>-]+), ([\w.\[\]>-]+), ([\w.\[\]>-]+)\)',
+   lambda m:'((%s) < (%s) || (%s) < (%s) ? (%s) : (%s) > (%s) ? (%s) : (%s))'%(m.group(1),m.group(2),m.group(3),m.group(2),m.group(2),m.group(1),m.group(3),m.group(3),m.group(1)))),
+ ('dist_raw',(r'(?<![\w.>:])(?:vector_dist|map_dist)\(([^(),]+), ([^(),]+), ([^(),]+), ([^(),]+)\)', lambda m:'vector_dist(x_dist(%s, %s), abs(%s - %s))'%(m.group(1),m.group(3),m.group(2),m.group(4)))),
+ ('dist_fn',(r'(?<![\w.>:])vector_dist\(x_dist\(([^(),]+), ([^(),]+)\), abs\(([^(),]+) - ([^(),]+)\)\)', lambda m:'vector_dist(%s, %s, %s, %s)'%(m.group(1),m.group(3),m.group(2),m.group(4)))),
+ ('dist_md',(r'(?<![\w.>:])vector_dist\(([^(),]+), ([^(),]+), ([^(),]+), ([^(),]+)\)', lambda m:'map_dist(%s, %s, %s, %s)'%m.groups())),
+ ('mrange_raw',(r'(?<![\w.>:])map_range\(([^(),]+), ([^(),]+), ([^(),]+), ([^(),]+)\)', lambda m:'((abs(%s - %s) + x_dist(%s, %s)) >> 1)'%(m.group(2),m.group(4),m.group(1),m.group(3)))),
+ ('compass_raw',(r'(?<![\w.>:])compass_name\('+ARG+r'\)', lambda m:'StringTable.get(Compass[%s])'%m.group(1))),
 ])
+ALL44=['human_raw','alive_raw','alien_raw','tiles_raw','abs_raw','human_fn','alive_fn','tiles_fn','abs_fn','rw_fn','rh_fn','rw_raw','rh_raw',
+ 'says_fn','sayl_fn','clear_fn','table_fn','table_raw','label_raw','label_fn','treaty_fn',
+ 'says_raw','sayl_raw','clear_raw','saynum_raw','saynum_fn','getter_raw','getter_fn','name_raw','pset_raw','pset_fn','pset_fn2','range_raw',
+ 'dist_raw','dist_fn','dist_md','mrange_raw','compass_raw']
 def par(a):
     a=a.strip(); return a if re.fullmatch(r'[\w.\[\]>-]+',a) and '->' not in a.replace('->','') or re.fullmatch(r'\w+',a) else '('+a+')'
 def span(t,addr):
