@@ -6218,6 +6218,32 @@ result over 64 symbol-counter pads, so none of these is a counter canary.
   the two forms differ (22 on 2026-11-19); most (alien_fauna, enemy_move,
   Path::find) differ because y sits in a different register or slot, a
   register-allocation symptom (2.7), not a source spelling.
+- **`lea` base/index order of `this + field` is a counter tie: the number of
+  pointer memory references created before it** (par-5 2026-11-20,
+  `analysis/probes/leaorder/run.py`, high). `&text_[field]`, `text_ + field`,
+  `field + text_`, `&field[text_]` compile alike; whether the lea prints
+  `[idx+esi+K]` or `[esi+idx+K]` is fixed per field for the whole function
+  (every site of `this + field_B44_` agrees) and moves only with the memory
+  references through a pointer (`this->f`, `q->f`; loads, stores, and ones
+  the optimizer folds away such as `f = f` or the load of `f = 0; f |= 1`)
+  that precede the field's first use: with one extra distinct load before,
+  the pattern cycles with period 4 (TiTi, iTiT, iiii, iiii, TiTi; stores
+  period 2). Global and parameter loads, local-struct stores, dead `{int t
+  = f;}`, `if (f) {}` and code after the site do not count. Reading the
+  image: a wrong base/index order with equal registers means the original
+  made a different number of member references earlier in the function,
+  usually one that leaves no code. Applied: EditBox::on_key_down
+  0x00615840 `field_B38_ |= 1` (as the `|= 2` beside it; the folded load of
+  the just-zeroed flag is the missing reference, 7 -> 3 rows).
+  SpriteBox::draw_item 0x00610C50 needs the same (+1 or +2 references before
+  `area.left`: exact with a stand-in self-assignment), no natural source
+  found yet (operand orders, `win_parent_` reread, extent locals tried).
+  The reassociation of `a + (b - c)` (which pair is summed first) is NOT
+  this counter (ListBox::UNK1, EditBox 0x00615A24: 9 prefix counts, 5
+  positions, no change). There, a direct member read in the inner pair
+  (`item_width + (Dialog::field_40_ - (Dialog::field_40_ << 1))` instead of
+  the `inset` local) keeps the image's grouping, with a register swap left
+  (ListBox::UNK1 7 -> 8 rows, not applied).
 - **Runtime constant arithmetic is almost absent** (par-6 2026-11-19,
   `analysis/constfold.py`: every straight-line `op r,K2` whose register input
   is a known constant from `mov r,K`/`xor r,r`, both sides, all 5,600
