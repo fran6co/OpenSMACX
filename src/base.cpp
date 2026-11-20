@@ -69,7 +69,11 @@
 // WORKAROUND(inline): has_project() spelled through base_project(), as the
 // header's comment says makes base_minerals (0x004E9CB0) exact; the header
 // keeps the operator[] read for allocate_energy (0x005267B0). Only
-// base_minerals uses this twin.
+// base_minerals uses this twin. Measured 2026-11-20: with header has_project
+// the only difference is the eco_damage product's operand order (imul
+// [esi+0x48] before diff_factor, 2 rows), unmoved by four respellings of the
+// product; header has_project through base_project() costs call/EH rungs in
+// base_build, order_veh, enemies_treaty and probe.
 static inline BOOL has_project_via_base_project(int project_id, int faction_id) {
     int base_id = base_project(project_id);
     if (base_id < 0) {
