@@ -713,18 +713,8 @@ void BaseWin::farm_click(int x, int y, int) {
                     const int tile_y = BaseCurrent->y + RadiusOffsetY[i];
                     if (tile_y < 0 || tile_y >= MapLatitudeBounds || tile_x < 0 || tile_x >= MapLongitudeBounds
                         || !(BaseCurrent->resource_sqr_radius & (1u << i))) continue;
-                    // WORKAROUND(decl): one clamp bound is a named local. With
-                    // literal bounds everywhere the tile test folds its loads
-                    // (`add eax,[RadiusOffsetY]`, `cmp eax,[MapLatitudeBounds]`);
-                    // the image keeps them apart (0x40A60A..0x40A629: mov/mov/add,
-                    // mov ecx,eax / mov eax,[bounds] / cmp ecx,eax) and so does any
-                    // one of the six bounds held in a plain local (all six give the
-                    // same code; a dead local or a local passed to log_say do not).
-                    // The image holds no store of the constant, so which bound the
-                    // original named is unknown (MATCHING_GUIDE 3.2, cost_factor).
-                    int divisor_floor = 1;
                     const int nutrient_divisor = range(BaseCurrent->intake_2[RSC_NUTRIENTS]
-                        - BaseCurrent->population_size * Rules.nutrient_req_citizen, divisor_floor, 99);
+                        - BaseCurrent->population_size * Rules.nutrient_req_citizen, 1, 99);
                     int score = resource_yield(0, faction, BaseIDCurrentSelected, tile_x, tile_y)
                         * (growth + 3) * 4 / nutrient_divisor;
                     const int mineral_divisor = range(BaseCurrent->intake_2[RSC_MINERALS]
