@@ -2298,15 +2298,15 @@ MEASURED inline void __cdecl ascent() {
 // RECOVERY_BINDING: v1 {"evidence": ["task:time-control-calculation-and-dialog", "historical seed:src/recovered/units/00523c60.cpp", "Pinned original native instructions and existing typed source layout; seed aliases independently reconciled."], "reason": "Recover complete turn-duration calculation through typed rules, faction and vehicle records and actual NetDaemon state; preserve the native bonus-update order and state predicates."}
 void __cdecl set_time_controls() {
     int active_factions = 0;
-    int eligible_vehicle_support = 0;
     int weighted_base_count = 0;
+    int eligible_vehicle_support = 0;
     int seconds = TimeControl[GameDataStateStorage.fields_.time_controls_selection_].turn;
-    const unsigned int active_mask = GameDataStateStorage.fields_.lock_masks_.human_mask_;
 
     for (int faction_id = 1; faction_id < MaxPlayerNum; ++faction_id) {
+        int refresh = TimeControl[GameDataStateStorage.fields_.time_controls_selection_].refresh;
         if (ConsoleControlTurnActive != 0 && ControlTurnPhase == 0 &&
-            TimeControl[GameDataStateStorage.fields_.time_controls_selection_].refresh != 0 &&
-            GameDataStateStorage.fields_.turn_current_num_ % TimeControl[GameDataStateStorage.fields_.time_controls_selection_].refresh == 0) {
+            refresh != 0 &&
+            GameDataStateStorage.fields_.turn_current_num_ % refresh == 0) {
             int next_bonus = PlayersData[faction_id].time_bonus_count + 1;
             if (next_bonus >= TimeControl[GameDataStateStorage.fields_.time_controls_selection_].accumulated) {
                 next_bonus = TimeControl[GameDataStateStorage.fields_.time_controls_selection_].accumulated;
@@ -2314,7 +2314,7 @@ void __cdecl set_time_controls() {
             PlayersData[faction_id].time_bonus_count = next_bonus;
         }
 
-        if ((active_mask & (1u << faction_id)) == 0) {
+        if ((GameDataStateStorage.fields_.lock_masks_.human_mask_ & (1u << faction_id)) == 0) {
             continue;
         }
 
