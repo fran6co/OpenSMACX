@@ -40,6 +40,7 @@
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned CRT slot 0x682624 selects startup 0x50e980..0x50e996 and registers cleanup 0x50e9a0..0x50e9aa. Complete root decode proves the exclusive RET/JMP endpoints.", "The source-owned object ?ConsoleTimer@@3VTime@@A is selected by physical COFF constructor/destructor relocations; current emitted finalizer is identified by the adjacent symbol fact. Original receiver 0x939e88 belongs to this real global; preserve its class lifetime and registration.", "Buffer relative declaration order is PCX, interface array, middle, vehicle, special-text owner, Sprite, shared Buffer. Generated helpers are compiler output, not hand-authored address callbacks. Selected same-owner order does not establish full CRT order, dependency provider, linked preservation or runtime/game acceptance. Guarded cleanup is a separate unfinished obligation."], "reason": "Bind original fini operation to the genuine C++ lifetime of ?ConsoleTimer@@3VTime@@A; retain original behavior and remaining matching obligations."}
 // symbol    _$E19
 #include "stdafx.h"
+#include "crt_random_inline.h"  // bounded_crt_random
 
 // Distinct writable string cells observed at the original call sites.
 // These role names do not claim original source names or allocation bounds.
@@ -5749,7 +5750,7 @@ int Console::on_key_click(int a1, int a2) {
             int samples = 0x14;
             for (;;) {
                 while (remaining != 0 && samples != 0) {
-                    const int range_sample = range - 1 > 0 ? rand() % range : 0;
+                    const int range_sample = bounded_crt_random(range);
                     if (range_sample > rand() % 0x30) {
                         --samples;
                         ++high_count;
@@ -5774,7 +5775,7 @@ int Console::on_key_click(int a1, int a2) {
                         do_task();
                     }
                 } else {
-                    if ((range + 0x2F > 0 ? rand() % (range + 0x30) : 0) < 0x30 && widened == 0) {
+                    if ((int)bounded_crt_random(range + 0x30) < 0x30 && widened == 0) {
                         widened = 1;
                         range += range / 2;
                     }
