@@ -731,10 +731,10 @@ void ProdPicker::calculate() {
         field_A828_ = TutWinBaseWindow.pixel_height();
         column_count_ = 5;
         field_A814_ = (WinScreenWidth > 800) + 3;
-        const int width = (TutWinBaseWindow.pixel_width() - 0x51) / 5;
+        const int avail = field_A824_ - 0x51;
+        cell_width_ = avail / 5;
         row_height_ = field_A838_;
-        cell_width_ = width;
-        column_count_ = (TutWinBaseWindow.pixel_width() - 0x51) / width;
+        column_count_ = avail / cell_width_;
         field_A82C_ = field_A814_ * column_count_;
         font1_.init(DefaultFontFace, 0xC, 1);
         int size = cell_width_ / 15;
