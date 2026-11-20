@@ -825,14 +825,6 @@ static inline int report_write_right(char *text, int x, int y) {
     return MainInterfaceGlobal.Buffer::write_right_l(text, x, y, static_cast<int>(strlen(text)));
 }
 
-// Local rectangle inflation; inlined by reset and on_button_passover.
-static inline void inflate_frame(RECT *rect, int dx, int dy) {
-    rect->left -= dx;
-    rect->right += dx;
-    rect->top -= dy;
-    rect->bottom += dy;
-}
-
 /*
 Purpose: Reset the seven report buttons, initialize the report text buffer,
          copy the current report bounds, draw both panel frames, and restore
@@ -865,9 +857,9 @@ void ReportWin::reset() {
 
     Buffer::box_sprite(&report_panel_rect_, &InterfaceBoxStyles[9]);
 
-    inflate_frame(&report_frame_rect_, 3, 3);
+    expand_rect(&report_frame_rect_, 3, 3);
     Buffer::box_sprite(&report_frame_rect_, &InterfaceBoxStyles[3]);
-    inflate_frame(&report_frame_rect_, -3, -3);
+    expand_rect(&report_frame_rect_, -3, -3);
 }
 
 // RECOVERY_ASSOCIATED: v1 switch_targets 0x00496D00 0x00496DE4 0x00496E08 0x00496D35
@@ -1849,28 +1841,28 @@ void ReportWin::draw_labs() {
             bar.right = range(bar.left + next, bar.left, right);
         }
         Buffer::set_clip(&bar);
-        inflate_frame(&bar, 7, 7);
+        expand_rect(&bar, 7, 7);
         switch (tech_category(PlayersData[faction].tech_id_researching)) {
         case 0: Buffer::box_sprite(&bar, &InterfaceBoxStyles[36]); break;
         case 1: Buffer::box_sprite(&bar, &InterfaceBoxStyles[39]); break;
         case 2: Buffer::box_sprite(&bar, &InterfaceBoxStyles[42]); break;
         case 3: Buffer::box_sprite(&bar, &InterfaceBoxStyles[45]); break;
         }
-        inflate_frame(&bar, -7, -7);
+        expand_rect(&bar, -7, -7);
         Buffer::restore_clip();
         // UNSURE: the image stores left, top, right, bottom here and right,
         // left, bottom, top for the next inflate; inflate_frame stores
         // left, right, top, bottom.
-        inflate_frame(&bar, -1, -1);
+        expand_rect(&bar, -1, -1);
         Buffer::set_clip(&bar);
-        inflate_frame(&bar, 7, 7);
+        expand_rect(&bar, 7, 7);
         switch (tech_category(PlayersData[faction].tech_id_researching)) {
         case 0: Buffer::box_sprite(&bar, &InterfaceBoxStyles[38]); break;
         case 1: Buffer::box_sprite(&bar, &InterfaceBoxStyles[41]); break;
         case 2: Buffer::box_sprite(&bar, &InterfaceBoxStyles[44]); break;
         case 3: Buffer::box_sprite(&bar, &InterfaceBoxStyles[47]); break;
         }
-        inflate_frame(&bar, -7, -7);
+        expand_rect(&bar, -7, -7);
         Buffer::restore_clip();
 
         // 0x499421..0x499521: discovery captions.
@@ -2139,7 +2131,7 @@ void ReportWin::draw_labs() {
             box.bottom = field_A24_ + y + 6;
             box.top = y - 9;
             host->Buffer::box_sprite(&box, &InterfaceBoxStyles[3]);
-            inflate_frame(&box, -3, -3);
+            expand_rect(&box, -3, -3);
             host->Buffer::box_sprite(&box, &InterfaceBoxStyles[0]);
             y = host->Buffer::wrap_cent(StringTemp, x + 3, y, field_59A8_ - 6);
         } else {
@@ -2550,22 +2542,22 @@ void ReportWin::on_button_passover(int button_id, int state) {
         last_y = (int)lab_center_y_;
     }
 
-    inflate_frame(&report_work_rect_, 3, 3);
+    expand_rect(&report_work_rect_, 3, 3);
 
     RECT marker;
     int x = (int)field_A28_;
     int center_y = (field_A34_ + field_A2C_ - field_A24_) / 2 - 3;
     set_rectangle_dimensions(&marker, x, center_y, field_59A8_, field_A24_ + 3);
-    inflate_frame(&marker, 3, 6);
+    expand_rect(&marker, 3, 6);
     if (state != 0) {
         host->Buffer::box_sprite(&marker, &InterfaceBoxStyles[5]);
-        inflate_frame(&marker, -3, -3);
+        expand_rect(&marker, -3, -3);
         host->Buffer::box_sprite(&report_work_rect_, &InterfaceBoxStyles[5]);
         labs_line(first_x, first_y, last_x, last_y,
                   field_59A0_, field_59A4_, 1);
     } else {
         host->Buffer::box_sprite(&marker, &InterfaceBoxStyles[3]);
-        inflate_frame(&marker, -3, -3);
+        expand_rect(&marker, -3, -3);
         host->Buffer::box_sprite(&report_work_rect_, &InterfaceBoxStyles[3]);
         labs_line(first_x, first_y, last_x, last_y,
                   field_59A0_, field_59A4_, 0);
@@ -2636,10 +2628,10 @@ void ReportWin::labs_line(int first_id, int second_id, int, int branch_id,
             set_rect(&report_work_rect_,
                 static_cast<int>(lab_prerequisite_x_) + x_offset - 4, line_height,
                 first_id + 7, line_height + 20);
-            inflate_frame(&report_work_rect_, -7, 0);
+            expand_rect(&report_work_rect_, -7, 0);
             report_work_rect_.bottom -= 7;
             host->Buffer::set_clip(&report_work_rect_);
-            inflate_frame(&report_work_rect_, 7, 0);
+            expand_rect(&report_work_rect_, 7, 0);
             report_work_rect_.bottom += 7;
             if (style_select) {
                 host->Buffer::box_sprite(&report_work_rect_, &InterfaceBoxStyles[5]);
@@ -2677,10 +2669,10 @@ void ReportWin::labs_line(int first_id, int second_id, int, int branch_id,
         set_rect(&report_work_rect_,
             first_id - 7, line_height,
             static_cast<int>(lab_center_x_) + 4, line_height + 20);
-        inflate_frame(&report_work_rect_, -7, 0);
+        expand_rect(&report_work_rect_, -7, 0);
         report_work_rect_.bottom -= 7;
         host->Buffer::set_clip(&report_work_rect_);
-        inflate_frame(&report_work_rect_, 7, 0);
+        expand_rect(&report_work_rect_, 7, 0);
         report_work_rect_.bottom += 7;
         host->Buffer::box_sprite(&report_work_rect_,
             style_select ? &InterfaceBoxStyles[5] : &InterfaceBoxStyles[3]);
@@ -2708,10 +2700,10 @@ void ReportWin::labs_line(int first_id, int second_id, int, int branch_id,
                 set_rect(&report_work_rect_,
                     first_id - 7, line_height,
                     static_cast<int>(lab_child_x_) + 4, line_height + 20);
-                inflate_frame(&report_work_rect_, -7, 0);
+                expand_rect(&report_work_rect_, -7, 0);
                 report_work_rect_.bottom -= 7;
                 host->Buffer::set_clip(&report_work_rect_);
-                inflate_frame(&report_work_rect_, 7, 0);
+                expand_rect(&report_work_rect_, 7, 0);
                 report_work_rect_.bottom += 7;
             } else {
                 // 0x49B836
@@ -2796,20 +2788,20 @@ void ReportWin::labs_line(int first_id, int second_id, int, int branch_id,
     if (style_select) {
         report_work_rect_.right = first_id + 7;
         report_work_rect_.bottom = line_height + 20;
-        inflate_frame(&report_work_rect_, -7, 0);
+        expand_rect(&report_work_rect_, -7, 0);
         report_work_rect_.bottom -= 7;
         host->Buffer::set_clip(&report_work_rect_);
-        inflate_frame(&report_work_rect_, 7, 0);
+        expand_rect(&report_work_rect_, 7, 0);
         report_work_rect_.bottom += 7;
         host->Buffer::box_sprite(&report_work_rect_, &InterfaceBoxStyles[5]);
         host->Buffer::restore_clip();
     } else {
         report_work_rect_.right = first_id + 7;
         report_work_rect_.bottom = line_height + 20;
-        inflate_frame(&report_work_rect_, -7, 0);
+        expand_rect(&report_work_rect_, -7, 0);
         report_work_rect_.bottom -= 7;
         host->Buffer::set_clip(&report_work_rect_);
-        inflate_frame(&report_work_rect_, 7, 0);
+        expand_rect(&report_work_rect_, 7, 0);
         report_work_rect_.bottom += 7;
         host->Buffer::box_sprite(&report_work_rect_, &InterfaceBoxStyles[3]);
         host->Buffer::restore_clip();
@@ -3073,11 +3065,11 @@ void ReportWin::draw_energy() {
     rect1_.left = list_body.left + 6;
     rect1_.top = list_body.top + 6;
     rect1_.right = list_body.right - list_body.left - 12;
-    inflate_frame(&list_body, -3, -3);
+    expand_rect(&list_body, -3, -3);
     ListBox *list = &listBox_;
     list->close();
     list->Dialog::init(&list_body, 0);
-    inflate_frame(&list_body, 3, 3);
+    expand_rect(&list_body, 3, 3);
     list->Dialog::field_48_ = field_E268_ + 3;
     listBox_.Dialog::set_dialog_font(ReportIfGlobal.field_1E184_,
                                      ReportIfGlobal.field_1E184_,
@@ -3950,7 +3942,7 @@ void ReportWin::draw_sat() {
     buffer2_.fill(9);
     flic_.init(&buffer2_, "satellite.flc", 0, 0, 0);
     Buffer::box_sprite(&satellite_rect_, &InterfaceBoxStyles[4]);
-    inflate_frame(&satellite_rect_, -3, -3);
+    expand_rect(&satellite_rect_, -3, -3);
     field_F918_ = 0;
     for (i = 1; i < 8; ++i) {
         for (satellite_index_ = 0; satellite_index_ < 4; ++satellite_index_) {
@@ -5097,26 +5089,26 @@ void ReportIf::reset() {
     field_40_.left += 7;
     MainInterfaceGlobal.Buffer::set_clip(MainInterfaceGlobal.buffer_working_rect());
 
-    inflate_frame(&field_20_, -3, -3);
-    inflate_frame(&field_30_, -3, -3);
-    inflate_frame(&field_50_, -4, -4);
-    inflate_frame(&field_40_, -4, -4);
+    expand_rect(&field_20_, -3, -3);
+    expand_rect(&field_30_, -3, -3);
+    expand_rect(&field_50_, -4, -4);
+    expand_rect(&field_40_, -4, -4);
     field_40_.left -= 3;
     MainInterfaceGlobal.Buffer::box_sprite(&field_20_, &InterfaceBoxStyles[3]);
     MainInterfaceGlobal.Buffer::box_sprite(&field_30_, &InterfaceBoxStyles[3]);
     MainInterfaceGlobal.Buffer::box_sprite(&field_50_, &InterfaceBoxStyles[3]);
     MainInterfaceGlobal.Buffer::box_sprite(&field_40_, &InterfaceBoxStyles[3]);
 
-    inflate_frame(&field_50_, -3, -3);
-    inflate_frame(&field_40_, -3, -3);
+    expand_rect(&field_50_, -3, -3);
+    expand_rect(&field_40_, -3, -3);
     MainInterfaceGlobal.Buffer::box_sprite(&field_50_, &InterfaceBoxStyles[0]);
     MainInterfaceGlobal.Buffer::box_sprite(&field_40_, &InterfaceBoxStyles[0]);
 
     field_40_.left += 3;
-    inflate_frame(&field_20_, 3, 3);
-    inflate_frame(&field_30_, 3, 3);
-    inflate_frame(&field_50_, 7, 7);
-    inflate_frame(&field_40_, 7, 7);
+    expand_rect(&field_20_, 3, 3);
+    expand_rect(&field_30_, 3, 3);
+    expand_rect(&field_50_, 7, 7);
+    expand_rect(&field_40_, 7, 7);
 
     MainInterfaceGlobal.Buffer::set_font(field_1E180_, field_1E184_, field_1E184_, 0);
     MainInterfaceGlobal.Buffer::set_text_color(0x99, -1, 1, 1);
@@ -6216,7 +6208,7 @@ void ReportIf::draw_labs() {
     field_10_ += 32;
     field_18_ -= 32;
     set_rectangle_dimensions(&draw_workspace_rect_, field_C_, field_10_, field_14_, field_18_);
-    inflate_frame(&draw_workspace_rect_, -3, -3);
+    expand_rect(&draw_workspace_rect_, -3, -3);
     scroll_small();
     ListBox *list = &listBox1_;
     list->close();
@@ -6567,7 +6559,7 @@ void ReportIf::draw_energy() {
     set_rect(&draw_workspace_rect_, field_C_, draw_workspace_rect_.bottom + 2,
                     field_C_ + field_14_, field_10_ + field_18_);
     MainInterfaceGlobal.Buffer::box_sprite(&draw_workspace_rect_, &InterfaceBoxStyles[0]);
-    inflate_frame(&draw_workspace_rect_, -3, -3);
+    expand_rect(&draw_workspace_rect_, -3, -3);
     scroll_small();
     ListBox *bases = &listBox1_;
     bases->close();
@@ -6663,7 +6655,7 @@ void ReportIf::draw_energy() {
     set_rect(&draw_workspace_rect_, field_C_, draw_workspace_rect_.bottom + 2,
                     field_C_ + field_14_, field_10_ + field_18_);
     MainInterfaceGlobal.Buffer::box_sprite(&draw_workspace_rect_, &InterfaceBoxStyles[0]);
-    inflate_frame(&draw_workspace_rect_, -3, -3);
+    expand_rect(&draw_workspace_rect_, -3, -3);
     scroll_small();
     ListBox *facilities = &listBox2_;
     facilities->close();
@@ -7021,9 +7013,9 @@ void ReportIf::draw_ops() {
     field_18_ = rect_height(&field_30_) - 12;
     MainInterfaceGlobal.Buffer::box_sprite(&field_30_, &InterfaceBoxStyles[33]);
     set_rectangle_dimensions(&draw_workspace_rect_, field_C_, field_10_, field_14_, field_1C_ + 6);
-    inflate_frame(&draw_workspace_rect_, 3, 3);
+    expand_rect(&draw_workspace_rect_, 3, 3);
     MainInterfaceGlobal.Buffer::box_sprite(workspace, &InterfaceBoxStyles[3]);
-    inflate_frame(workspace, -3, -3);
+    expand_rect(workspace, -3, -3);
     MainInterfaceGlobal.Buffer::box_sprite(workspace, &InterfaceBoxStyles[0]);
     MainInterfaceGlobal.Buffer::set_font(field_1E190_, field_1E194_, field_1E198_, 0);
     StringTemp[0] = 0;
@@ -7089,7 +7081,7 @@ void ReportIf::draw_projects() {
     draw_workspace_rect_.bottom = field_20_.bottom - 6;
     MainInterfaceGlobal.Buffer::box_sprite(&draw_workspace_rect_, &InterfaceBoxStyles[0]);
 
-    inflate_frame(&draw_workspace_rect_, -3, -3);
+    expand_rect(&draw_workspace_rect_, -3, -3);
     MainInterfaceGlobal.Buffer::set_font(field_1E184_, field_1E194_, field_1E198_, nullptr);
     StringTemp[0] = 0;
     strcat(StringTemp, "[");
@@ -7168,9 +7160,9 @@ void ReportIf::draw_projects() {
     field_18_ = rect_height(&field_30_) - 0xC;
     MainInterfaceGlobal.Buffer::box_sprite(&field_30_, &InterfaceBoxStyles[33]);
     set_rectangle_dimensions(&draw_workspace_rect_, field_C_, field_10_, field_14_, field_1C_ + 6);
-    inflate_frame(&draw_workspace_rect_, 3, 3);
+    expand_rect(&draw_workspace_rect_, 3, 3);
     MainInterfaceGlobal.Buffer::box_sprite(&draw_workspace_rect_, &InterfaceBoxStyles[3]);
-    inflate_frame(&draw_workspace_rect_, -3, -3);
+    expand_rect(&draw_workspace_rect_, -3, -3);
     MainInterfaceGlobal.Buffer::box_sprite(&draw_workspace_rect_, &InterfaceBoxStyles[0]);
     MainInterfaceGlobal.Buffer::set_font(field_1E190_, field_1E194_, field_1E198_, nullptr);
     StringTemp[0] = 0;
@@ -7256,7 +7248,7 @@ void ReportIf::draw_sat() {
         draw_workspace_rect_.top = draw_workspace_rect_.bottom + 2;
         draw_workspace_rect_.bottom = field_20_.bottom - 6;
         MainInterfaceGlobal.Buffer::box_sprite(&draw_workspace_rect_, &InterfaceBoxStyles[0]);
-        inflate_frame(&draw_workspace_rect_, -3, -3);
+        expand_rect(&draw_workspace_rect_, -3, -3);
         MainInterfaceGlobal.Buffer::set_font(field_1E184_, field_1E194_, field_1E198_, 0);
         StringTemp[0] = 0;
         strcat(StringTemp, "[");
@@ -7358,7 +7350,7 @@ void ReportIf::draw_sat() {
         // The original lower panel deliberately uses the upper panel's bottom.
         draw_workspace_rect_.bottom = field_20_.bottom - 6;
         MainInterfaceGlobal.Buffer::box_sprite(&draw_workspace_rect_, &InterfaceBoxStyles[0]);
-        inflate_frame(&draw_workspace_rect_, -3, -3);
+        expand_rect(&draw_workspace_rect_, -3, -3);
         MainInterfaceGlobal.Buffer::set_font(field_1E184_, field_1E194_, field_1E198_, 0);
         StringTemp[0] = 0;
         strcat(StringTemp, "[");
@@ -7498,7 +7490,7 @@ void ReportIf::draw_security() {
     draw_workspace_rect_.top = draw_workspace_rect_.bottom + 2;
     draw_workspace_rect_.bottom = field_20_.bottom - 6;
     MainInterfaceGlobal.Buffer::box_sprite(&draw_workspace_rect_, &InterfaceBoxStyles[0]);
-    inflate_frame(&draw_workspace_rect_, -3, -3);
+    expand_rect(&draw_workspace_rect_, -3, -3);
     MainInterfaceGlobal.Buffer::set_font(field_1E184_, field_1E194_, field_1E198_, nullptr);
     StringTemp[0] = 0;
     strcat(StringTemp, "[");
@@ -7600,7 +7592,7 @@ void ReportIf::draw_security() {
     // Original intentionally uses the FIRST panel's bottom for this frame.
     draw_workspace_rect_.bottom = field_20_.bottom - 6;
     MainInterfaceGlobal.Buffer::box_sprite(&draw_workspace_rect_, &InterfaceBoxStyles[0]);
-    inflate_frame(&draw_workspace_rect_, -3, -3);
+    expand_rect(&draw_workspace_rect_, -3, -3);
     MainInterfaceGlobal.Buffer::set_font(field_1E184_, field_1E194_, field_1E198_, nullptr);
     StringTemp[0] = 0;
     strcat(StringTemp, "[");
@@ -7721,7 +7713,7 @@ void ReportIf::draw_intel() {
     set_rect(&draw_workspace_rect_, field_C_, draw_workspace_rect_.bottom + 2,
                     field_C_ + field_14_, field_10_ + field_18_);
     MainInterfaceGlobal.Buffer::box_sprite(&draw_workspace_rect_, &InterfaceBoxStyles[0]);
-    inflate_frame(&draw_workspace_rect_, -3, -3);
+    expand_rect(&draw_workspace_rect_, -3, -3);
     scroll_small();
     ListBox *list = &listBox1_;
     list->close();
@@ -7787,7 +7779,7 @@ void ReportIf::draw_intel() {
     set_rect(&draw_workspace_rect_, field_C_, draw_workspace_rect_.bottom + 2,
                     field_C_ + field_14_, field_10_ + field_18_);
     MainInterfaceGlobal.Buffer::box_sprite(&draw_workspace_rect_, &InterfaceBoxStyles[0]);
-    inflate_frame(&draw_workspace_rect_, -3, -3);
+    expand_rect(&draw_workspace_rect_, -3, -3);
     scroll_small();
     list = &listBox2_;
     list->close();
