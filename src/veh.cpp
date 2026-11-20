@@ -4254,7 +4254,7 @@ skip_empath4:
         for (int round = 0; round < 100; round++) {
             int next = weapon;
             BOOL upgraded = false;
-            for (int k = 1; k < 4 && next == weapon; k++) {
+            for (int k = 1; (k < 4 && next == weapon) != 0; k++) {
                 next = weapon_budget(faction_id, Weapon[weapon].offense_rating + k, 0);
             }
             if (next != weapon) {
