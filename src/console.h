@@ -315,7 +315,7 @@ class Console : public MapWin {
 
  public:
   // homed from 00514f50.cpp
-  void set_ai(int faction_id);
+  MEASURED void set_ai(int faction_id);
 
  public:
   // homed from 004e0ea0.cpp

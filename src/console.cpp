@@ -3787,7 +3787,10 @@ Purpose: Edit one faction's four AI priority toggles through the checkbox
 // callers   3   call targets   2
 // calls     0x00593310 0x005BF3F0
 */
-void Console::set_ai(int faction_id) {
+// menu_proc expands this body (0x514F50 under the AI-priorities rule) and
+// other callers call it: `inline` plus console.h's MEASURED declaration give
+// both, as for turn.cpp's ascent.
+inline void Console::set_ai(int faction_id) {
     // The pinned reads/writes at 96CDC0..96CDCC are the four named priority
     // fields at PlayersData + 0x3E0..0x3EC (VC6 CodeView offsets 992..1004).
     int *growth = &PlayersData[faction_id].ai_growth;
@@ -6692,36 +6695,7 @@ void Console::menu_proc(int command) {
     case 0x106:
         // 0x514F50 expanded under the AI-priorities rule.
         if ((GameDataStateStorage.fields_.game_rules_ & 0x200) != 0) {
-            // WORKAROUND(inline): set_ai written out; a call stays out of line here.
-            const int faction_id = ConsoleGlobal.faction_id_;
-            int *growth = &PlayersData[faction_id].ai_growth;
-            int *tech = &PlayersData[faction_id].ai_tech;
-            int *wealth = &PlayersData[faction_id].ai_wealth;
-            int *power = &PlayersData[faction_id].ai_power;
-            int flags = (*growth != 0) ? 1 : 0;
-            if (*tech != 0) {
-                flags |= 2;
-            } else {
-                flags &= ~2;
-            }
-            if (*wealth != 0) {
-                flags |= 4;
-            } else {
-                flags &= ~4;
-            }
-            if (*power != 0) {
-                flags |= 8;
-            } else {
-                flags &= ~8;
-            }
-            PopupWriteCheckState = static_cast<int>(flags);
-            if (x_pop_short(ConsoleStrTechRandom, 1, (NullCallback)0) >= 0) {
-                *growth = (char)PopupWriteCheckState & 1u;
-                *tech = ((char)PopupWriteCheckState & 2u) >> 1;
-                *wealth = ((char)PopupWriteCheckState & 4u) >> 2;
-                *power = ((char)PopupWriteCheckState & 8u) >> 3;
-                synch_ai(faction_id);
-            }
+            set_ai(ConsoleGlobal.faction_id_);
         }
         break;
     case 0x107:
