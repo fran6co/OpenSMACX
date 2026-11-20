@@ -1381,9 +1381,9 @@ void StatusWin::draw_active(int vehicle_id, int base_id, int add_spot) {
         }
         for (int ability = 0; ability < MaxAbilityNum; ++ability) {
             if (has_abil(Vehs[vehicle_id].proto_id, 1 << ability)
-                && strlen(table_text(Ability[ability].abbreviation))) {
+                && strlen(StringTable.get(Ability[ability].abbreviation))) {
                 say_comma();
-                strcat(StringTemp, StringTable.get(Ability[ability].abbreviation));
+                strcat(StringTemp, table_text(Ability[ability].abbreviation));
             }
         }
         say_close_paren();
@@ -1614,7 +1614,7 @@ void StatusWin::draw_active(int vehicle_id, int base_id, int add_spot) {
                 ? label_get(0x5c4 / 4)
                 : Bases[base_id].population_size <= 1 ? label_get(0x2f0 / 4)
                 : Bases[base_id].population_size <= Rules.pop_limit_sans_hab_complex
-                    ? StringTable.get(Labels.strings_ptr[0x2f4 / 4]) : label_get(0x570 / 4));
+                    ? table_text(Labels.strings_ptr[0x2f4 / 4]) : label_get(0x570 / 4));
             line_y = MainInterfaceGlobal.wrap_cent(StringTemp, content_x, line_y,
                                        area.right - area.left);
             StringTemp[0] = '\0';
