@@ -2599,12 +2599,7 @@ void BasePop::set_external_window(GraphicWin *external_window, int loc_x,
         // qualified member access walks the vbtable at +0x21d0, which is the
         // image's own addressing, and needs no pointer to the subobject.
         dialogs_.Dialog::field_2C_ = width;
-        if (external_window_ == 0 && (field_30A8_ & 0x400) == 0 &&
-            WinScreenWidth >= 0x400) {
-            dialogs_.Dialog::field_30_ = (height * 3) / 2;
-        } else {
-            dialogs_.Dialog::field_30_ = height;
-        }
+        set_height(height);
         if (loc_x != 0x2000) {
             loc_a_ = loc_x;
         }
