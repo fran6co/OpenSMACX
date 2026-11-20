@@ -2455,34 +2455,7 @@ Return Value: n/a
 Status: Complete
 */
 void Win::on_mouse_move(int x, int y, unsigned int keys, int from_parent) {
-    if ((iFlags_ & 0x200000U) != 0) {
-        return;
-    }
-    if ((iSomeFlag_ & 8U) != 0) {
-        return;
-    }
-    if (from_parent == 0) {
-        WinCallbackWindow = this;
-        WinMouseMoveHookFn const fn = mouse_move_hook_;
-        if (fn != 0) {
-            fn(x, y);
-        }
-        this->on_mouse_move(x, y);
-        Sound *const child = val_7_;
-        if (child != 0) {
-            if (child->is_playing() == 0) {
-                child->play();
-            }
-        }
-    } else {
-        this->on_nc_mouse_move(x, y);
-        Sound *const child = val_19_;
-        if (child != 0) {
-            if (child->is_playing() == 0) {
-                child->play();
-            }
-        }
-    }
+    dispatch_17(x, y, from_parent);
 }
 
 /*
@@ -4158,10 +4131,7 @@ inline void Win::hide() {
                 }
             }
             InvalidateRect(HandleMain, 0, 0);
-            Sound *other = val_4_;
-            if (other != 0 && other->is_playing() == 0) {
-                other->play();
-            }
+            play_if_idle(val_4_);
         }
     }
 }
@@ -4238,6 +4208,7 @@ void Win::on_l_button_down(long double_click, int x, int y, unsigned int, int fr
                 callback(x, y);
             }
             this->on_left_double_click(x, y);
+            // Written out: play_if_idle cannot expand under inline_depth(0).
             Sound *const sound = val_17_;
             if (sound != 0 && sound->is_playing() == 0) {
                 sound->play();
@@ -4286,52 +4257,13 @@ void Win::on_l_button_up(int x, int y, unsigned int keys, int dbl) {
     if (isSelf) {
         RECT r = outer_rect_;
         offset_rect(&r, -r.left, -r.top);
-        if (in_box(x, y, &r) != 0 &&
-            (iFlags_ & 0x200000) == 0 &&
-            (iSomeFlag_ & 8) == 0) {
-            if (dbl == 0) {
-                WinCallbackWindow = this;
-                WinMouseEventCallback cb = field_414_;
-                if (cb != 0) {
-                    cb(x, y);
-                }
-                this->on_left_click(x, y);
-                Sound *child = val_8_;
-                if (child != 0 && child->is_playing() == 0) {
-                    child->play();
-                }
-            } else {
-                this->vslot_32(x, y);
-                Sound *child = val_20_;
-                if (child != 0 && child->is_playing() == 0) {
-                    child->play();
-                }
-            }
+        if (in_box(x, y, &r) != 0) {
+            dispatch_19(x, y, dbl);
         }
     }
 
     if (is_visible()) {
-        if ((iFlags_ & 0x200000) == 0 &&
-            (iSomeFlag_ & 8) == 0) {
-            if (dbl == 0) {
-                WinCallbackWindow = this;
-                WinMouseEventCallback cb = field_41C_;
-                if (cb != 0) {
-                    cb(x, y);
-                }
-                this->on_left_up(x, y);
-                Sound *child = val_10_;
-                if (child != 0 && child->is_playing() == 0) {
-                    child->play();
-                }
-            } else {
-                this->on_nc_left_up(x, y);
-                Sound *child = val_22_;
-                if (child != 0 && child->is_playing() == 0) {
-                    child->play();
-                }
-            }
-        }
+        dispatch_21(x, y, dbl);
     }
 }
 
@@ -5259,57 +5191,11 @@ void Win::on_r_button_up(int x, int y, unsigned int keys, int dbl) {
         offset_rect(&testRect, -testRect.left, -testRect.top);
 
         if (in_box(x, y, &testRect)) {
-            if ((iFlags_ & 0x200000) != 0) {
-                return;
-            }
-            {
-                if ((iSomeFlag_ & 8) == 0) {
-
-                    if (dbl == 0) {
-                        WinCallbackWindow = this;
-                        WinMouseEventCallback callback = field_420_;
-                        if (callback != 0) {
-                            callback(x, y);
-                        }
-                        this->on_right_click(x, y);
-                        Sound *const sound = val_11_;
-            if (sound != 0 && sound->is_playing() == 0) {
-                sound->play();
-            }
-                    } else {
-                        this->vslot_35(x, y);
-                        Sound *const sound = val_23_;
-            if (sound != 0 && sound->is_playing() == 0) {
-                sound->play();
-            }
-                    }
-                }
-            }
+            dispatch_22(x, y, dbl);
         }
     }
 
-    if ((iFlags_ & 0x200000) == 0 &&
-        (iSomeFlag_ & 8) == 0) {
-
-        if (dbl == 0) {
-            WinCallbackWindow = this;
-            WinMouseEventCallback callback = field_428_;
-            if (callback != 0) {
-                callback(x, y);
-            }
-            this->on_right_up(x, y);
-            Sound *const sound = val_13_;
-            if (sound != 0 && sound->is_playing() == 0) {
-                sound->play();
-            }
-        } else {
-            this->vslot_37(x, y);
-            Sound *const sound = val_25_;
-            if (sound != 0 && sound->is_playing() == 0) {
-                sound->play();
-            }
-        }
-    }
+    dispatch_24(x, y, dbl);
 }
 
 // ===== homed from src/recovered/units/005f25c0.cpp =====
@@ -5450,10 +5336,11 @@ Win *Win::get_key_window() {
 // folds to nothing, but spends the budget the image had already used before
 // its rect block: nonclient_to_screen(RECT *) then calls client_to_screen(int *)
 // and client_to_screen(RECT *) calls offset_rect, as at 0x005EDB78/0x005EDC8D.
-// The window is 22-25 tests (27-30 while nonclient_to_screen(RECT *) had
-// nonclient_to_screen(int *, int *) written out by hand; calling it, as the
-// image's do_tracking shows at 0x005F7798, moved it on 2026-11-12); the
-// original spending is not identified.
+// The window is 8-12 tests since the closing play_if_idle(val_3_) is the real
+// call (2026-11-20). It was 22-25 while that tail was written out, and 27-30
+// while nonclient_to_screen(RECT *) had nonclient_to_screen(int *, int *)
+// written out by hand (calling it, as the image's do_tracking shows at
+// 0x005F7798, moved it on 2026-11-12); the original spending is not identified.
 static int show_budget_probe(int x) {
     if (x == 1) x = 2;
     if (x == 2) x = 3;
@@ -5465,19 +5352,6 @@ static int show_budget_probe(int x) {
     if (x == 8) x = 9;
     if (x == 9) x = 10;
     if (x == 10) x = 11;
-    if (x == 11) x = 12;
-    if (x == 12) x = 13;
-    if (x == 13) x = 14;
-    if (x == 14) x = 15;
-    if (x == 15) x = 16;
-    if (x == 16) x = 17;
-    if (x == 17) x = 18;
-    if (x == 18) x = 19;
-    if (x == 19) x = 20;
-    if (x == 20) x = 21;
-    if (x == 21) x = 22;
-    if (x == 22) x = 23;
-    if (x == 23) x = 24;
     return x;
 }
 
@@ -5535,12 +5409,7 @@ void Win::show(int visible) {
 
         InvalidateRect(HandleMain, &rect, 0);
 
-        Sound *obj2 = val_3_;
-        if (obj2 != 0) {
-            if (obj2->is_playing() == 0) {
-                obj2->play();
-            }
-        }
+        play_if_idle(val_3_);
     }
 }
 
@@ -5701,12 +5570,7 @@ int Win::key_up_event(int key) {
         result = callback(key);
     }
     result += this->on_key_up(key);
-    Sound *child = val_16_;
-    if (child != 0) {
-        if (child->is_playing() == 0) {
-            child->play();
-        }
-    }
+    play_if_idle(val_16_);
     return result;
 }
 
@@ -5791,12 +5655,7 @@ int Win::key_down_event(int key) {
         result = hook(key);
     }
     result += this->on_key_down(key);
-    Sound *child = val_15_;
-    if (child != 0) {
-        if (child->is_playing() == 0) {
-            child->play();
-        }
-    }
+    play_if_idle(val_15_);
     return result;
 }
 
@@ -6185,22 +6044,10 @@ void Win::left_down_event(int x, int y, int from_parent) {
 
     if (from_parent == 0) {
         this->on_left_down(x, y);
-        Sound *child = val_9_;
-        if (child != 0) {
-            int r = child->is_playing();
-            if (r == 0) {
-                child->play();
-            }
-        }
+        play_if_idle(val_9_);
     } else {
         this->on_nc_left_down(x, y);
-        Sound *child = val_21_;
-        if (child != 0) {
-            int r = child->is_playing();
-            if (r == 0) {
-                child->play();
-            }
-        }
+        play_if_idle(val_21_);
     }
 }
 
@@ -6642,12 +6489,7 @@ int Win::key_click_event(int key, int flags) {
         result = field_42C_(key, flags);
     }
     result += on_key_click(key, flags);
-    Sound *child = val_14_;
-    if (child != 0) {
-        if (child->is_playing() == 0) {
-            child->play();
-        }
-    }
+    play_if_idle(val_14_);
     return result;
 }
 
@@ -7142,14 +6984,7 @@ void Win::on_key(unsigned int key, long flags, int repeat, unsigned int scan) {
         }
         on_key_up(key);
 
-        Sound *next = val_16_;
-        if (next == 0) {
-            return;
-        }
-        if (next->is_playing() != 0) {
-            return;
-        }
-        next->play();
+        play_if_idle(val_16_);
         return;
     }
 
@@ -7343,62 +7178,11 @@ void Win::on_r_button_down(long flags, int x, int y, unsigned int keys, int dbl)
     }
     WinSizingFlag = 0;
 
-    if (flags != 0 &&
-        (iFlags_ & 0x200200) == 0 &&
-        (iSomeFlag_ & 8) == 0) {
-        if (dbl == 0) {
-            WinCallbackWindow = this;
-            WinMouseEventCallback fn = field_410_;
-            if (fn != 0) {
-                fn(x, y);
-            }
-            this->on_right_double_click(x, y);
-            Sound *child = val_18_;
-            if (child != 0) {
-                int r = child->is_playing();
-                if (r == 0) {
-                    child->play();
-                }
-            }
-        } else {
-            this->vslot_39(x, y);
-            Sound *child = val_27_;
-            if (child != 0) {
-                int r = child->is_playing();
-                if (r == 0) {
-                    child->play();
-                }
-            }
-        }
+    if (flags != 0 && (iFlags_ & 0x200) == 0) {
+        dispatch_29(x, y, dbl);
     }
 
-    if ((iFlags_ & 0x200000) == 0 &&
-        (iSomeFlag_ & 8) == 0) {
-        if (dbl == 0) {
-            WinCallbackWindow = this;
-            WinMouseEventCallback fn = field_424_;
-            if (fn != 0) {
-                fn(x, y);
-            }
-            this->on_right_down(x, y);
-            Sound *child = val_12_;
-            if (child != 0) {
-                int r = child->is_playing();
-                if (r == 0) {
-                    child->play();
-                }
-            }
-        } else {
-            this->vslot_36(x, y);
-            Sound *child = val_24_;
-            if (child != 0) {
-                int r = child->is_playing();
-                if (r == 0) {
-                    child->play();
-                }
-            }
-        }
-    }
+    dispatch_23(x, y, dbl);
 
 }
 
@@ -8322,12 +8106,7 @@ void Win::publish_callback_window() {
         callback();
     }
     on_sys_close();
-    Sound *second = val_6_;
-    if (second != 0) {
-        if (second->is_playing() == 0) {
-            second->play();
-        }
-    }
+    play_if_idle(val_6_);
 }
 
 // ===== homed from src/unrecovered/005ee4d0.cpp =====
@@ -8358,20 +8137,10 @@ void Win::dispatch_17(int a, int b, int alternate) {
             hook(a, b);
         }
         on_mouse_move(a, b);
-        Sound *child = val_7_;
-        if (child != 0) {
-            if (child->is_playing() == 0) {
-                child->play();
-            }
-        }
+        play_if_idle(val_7_);
     } else {
         on_nc_mouse_move(a, b);
-        Sound *child = val_19_;
-        if (child != 0) {
-            if (child->is_playing() == 0) {
-                child->play();
-            }
-        }
+        play_if_idle(val_19_);
     }
 }
 
@@ -8403,20 +8172,10 @@ void Win::dispatch_28(int a, int b, int alternate) {
             hook(a, b);
         }
         on_left_double_click(a, b);
-        Sound *child = val_17_;
-        if (child != 0) {
-            if (child->is_playing() == 0) {
-                child->play();
-            }
-        }
+        play_if_idle(val_17_);
     } else {
         vslot_38(a, b);
-        Sound *child = val_26_;
-        if (child != 0) {
-            if (child->is_playing() == 0) {
-                child->play();
-            }
-        }
+        play_if_idle(val_26_);
     }
 }
 
@@ -8451,20 +8210,10 @@ void Win::dispatch_29(int a, int b, int alternate) {
             hook(a, b);
         }
         on_right_double_click(a, b);
-        Sound *child = val_18_;
-        if (child != 0) {
-            if (child->is_playing() == 0) {
-                child->play();
-            }
-        }
+        play_if_idle(val_18_);
     } else {
         vslot_39(a, b);
-        Sound *child = val_27_;
-        if (child != 0) {
-            if (child->is_playing() == 0) {
-                child->play();
-            }
-        }
+        play_if_idle(val_27_);
     }
 }
 
@@ -8503,20 +8252,10 @@ void Win::dispatch_19(int a, int b, int alternate) {
             hook(a, b);
         }
         on_left_click(a, b);
-        Sound *child = val_8_;
-        if (child != 0) {
-            if (child->is_playing() == 0) {
-                child->play();
-            }
-        }
+        play_if_idle(val_8_);
     } else {
         vslot_32(a, b);
-        Sound *child = val_20_;
-        if (child != 0) {
-            if (child->is_playing() == 0) {
-                child->play();
-            }
-        }
+        play_if_idle(val_20_);
     }
 }
 
@@ -8548,20 +8287,10 @@ void Win::dispatch_21(int a, int b, int alternate) {
             hook(a, b);
         }
         on_left_up(a, b);
-        Sound *child = val_10_;
-        if (child != 0) {
-            if (child->is_playing() == 0) {
-                child->play();
-            }
-        }
+        play_if_idle(val_10_);
     } else {
         on_nc_left_up(a, b);
-        Sound *child = val_22_;
-        if (child != 0) {
-            if (child->is_playing() == 0) {
-                child->play();
-            }
-        }
+        play_if_idle(val_22_);
     }
 }
 
@@ -8594,20 +8323,10 @@ void Win::dispatch_22(int a, int b, int alternate) {
             hook(a, b);
         }
         on_right_click(a, b);
-        Sound *child = val_11_;
-        if (child != 0) {
-            if (child->is_playing() == 0) {
-                child->play();
-            }
-        }
+        play_if_idle(val_11_);
     } else {
         vslot_35(a, b);
-        Sound *child = val_23_;
-        if (child != 0) {
-            if (child->is_playing() == 0) {
-                child->play();
-            }
-        }
+        play_if_idle(val_23_);
     }
 }
 
@@ -8632,16 +8351,10 @@ void Win::dispatch_23(int x, int y, int alternate) {
             callback(x, y);
         }
         on_right_down(x, y);
-        Sound *child = val_12_;
-        if (child != 0 && child->is_playing() == 0) {
-            child->play();
-        }
+        play_if_idle(val_12_);
     } else {
         vslot_36(x, y);
-        Sound *child = val_24_;
-        if (child != 0 && child->is_playing() == 0) {
-            child->play();
-        }
+        play_if_idle(val_24_);
     }
 }
 
@@ -8663,16 +8376,10 @@ void Win::dispatch_24(int x, int y, int alternate) {
             callback(x, y);
         }
         on_right_up(x, y);
-        Sound *child = val_13_;
-        if (child != 0 && child->is_playing() == 0) {
-            child->play();
-        }
+        play_if_idle(val_13_);
     } else {
         vslot_37(x, y);
-        Sound *child = val_25_;
-        if (child != 0 && child->is_playing() == 0) {
-            child->play();
-        }
+        play_if_idle(val_25_);
     }
 }
 
@@ -9174,12 +8881,7 @@ void __cdecl Win::display_action(int action) {
         if (self->field_438_ != 0) {
             self->field_438_();
         }
-        Sound *child = self->val_35_;
-        if (child != 0) {
-            if (child->is_playing() == 0) {
-                child->play();
-            }
-        }
+        self->play_if_idle(self->val_35_);
         break;
     }
     case 1:
