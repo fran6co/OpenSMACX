@@ -5252,7 +5252,7 @@ void DesignWin::draw_flash() {
         const int line_left = rc.left;
         StringTemp[0] = '\0';
         say_open_paren();
-        say_stats_3(StringTemp, Vehs[unit_id].proto_id);
+        say_stats_3(Vehs[unit_id].proto_id);
         for (int i = 0; i < MaxAbilityNum; ++i) {
             if ((VehPrototypes[Vehs[unit_id].proto_id].ability_flags & (1 << i))
                 && strlen(StringTable.get(Ability[i].abbreviation)) != 0) {

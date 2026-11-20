@@ -1473,7 +1473,7 @@ void BaseWin::draw_flash(int redraw_mode) {
     const int line = font_line_advance(normal);
     StringTemp[0] = 0;
     say_open_paren();
-    say_stats_3(StringTemp, Vehs[vehicle_id].proto_id);
+    say_stats_3(Vehs[vehicle_id].proto_id);
     for (int ability = 0; ability < 29; ++ability) {
         if (has_abil(Vehs[vehicle_id].proto_id, 1 << ability)
             && strlen(StringTable.get(Ability[ability].abbreviation))) {
