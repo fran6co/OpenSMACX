@@ -592,7 +592,7 @@ void Datalink::init() {
     // a frame slot ([ebp-0x20]); height then width are computed before any
     // push, and left/top are reloaded for their own pushes.
     Win *parent = static_cast<Win *>(&ConsoleGlobal);
-    const int frame_height = entry_frame_rect_.bottom - entry_frame_rect_.top;
+    const int frame_height = rect_height(&entry_frame_rect_);
     const int frame_width = entry_frame_rect_.right - entry_frame_rect_.left;
     GraphicWin::init(entry_frame_rect_.left, entry_frame_rect_.top,
                      frame_width, frame_height, 0x1000000, parent);
