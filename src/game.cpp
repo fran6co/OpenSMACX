@@ -707,12 +707,13 @@ static void game_data_migrate_legacy_header(
     }
     GameDataStateStorage.fields_.climate_rise_step_ = header->climate_rise_step_;
     GameDataStateStorage.fields_.climate_rise_limit_ = header->climate_rise_limit_;
-    // Preserve the original target write order: +0x34C, +0x344, then +0x348.
-    GameDataStateStorage.fields_.transcendence_score_bonus_ =
-        header->transcendence_score_bonus_;
+    // Copied in field order with the score bonus last; the image's stores
+    // (+0x34C, +0x344, +0x348) are the scheduler's, not the statements'.
     GameDataStateStorage.fields_.climate_rise_accum_ = header->climate_rise_accum_;
     GameDataStateStorage.fields_.climate_sea_level_delta_ =
         header->climate_sea_level_delta_;
+    GameDataStateStorage.fields_.transcendence_score_bonus_ =
+        header->transcendence_score_bonus_;
     for (k = 0; k < int(sizeof(header->transcendence_score_weights_) / sizeof(header->transcendence_score_weights_[0])); ++k) {
         GameDataStateStorage.fields_.transcendence_score_weights_[k] = header->transcendence_score_weights_[k];
     }
