@@ -337,7 +337,7 @@ int MainInterface::init(int) {
     const int screen_height_on_entry = WinScreenHeight;
     const int screen_width_on_entry = WinScreenWidth;
     RECT r;
-    int i, j, k, tool, x, y;
+    int j, k, tool, x, y;
     field_1EAC8_ = 0;
     for (int slot = 0; slot < 12; slot++) {
         InterfaceRegistry[slot] = 0;
@@ -486,12 +486,14 @@ int MainInterface::init(int) {
     // stepped coordinate, sets both coordinates before the outer loop and
     // resets the inner one at the outer loop's end (0x0045A03A/3D and
     // 0x0045A09E/A1 here; 0x0045A686..6F6, 0x0045A78E..7FE below). A
-    // coordinate computed from the counter (1 + i * 52) or stepped in the
+    // coordinate computed from the counter (1 + k * 52) or stepped in the
     // for header lets VC6 drop the counter and test the coordinate.
     y = 1;
-    for (i = 0; i < 2; i++) {
+    // All counters below are k: the image has no separate i (one counter
+    // home for every sprite and button loop; loopreuse 290 -> 232 rows).
+    for (k = 0; k < 2; k++) {
         for (j = 0; j < 5; j++) {
-            sprites6_[i * 5 + j].extract(&assets, WinFillColour, x, y, 190, 26, 0);
+            sprites6_[k * 5 + j].extract(&assets, WinFillColour, x, y, 190, 26, 0);
             y += 27;
         }
         x += 191;
@@ -503,13 +505,13 @@ int MainInterface::init(int) {
         sprites3_[0].extract(&assets, WinFillColour, 194, 237, 131, 51, 0);
         sprites3_[1].extract(&assets, WinFillColour, 194, 289, 166, 48, 0);
         y = 1;
-        for (i = 0; i < 5; ++i) {
-            sprites5_[2*i].extract(&assets, WinFillColour, 384, y, 131, 51, 0);
+        for (k = 0; k < 5; ++k) {
+            sprites5_[2*k].extract(&assets, WinFillColour, 384, y, 131, 51, 0);
             y += 52;
         }
         y = 1;
-        for (i = 0; i < 5; ++i) {
-            sprites5_[2*i+1].extract(&assets, WinFillColour, 516, y, 166, 48, 0);
+        for (k = 0; k < 5; ++k) {
+            sprites5_[2*k+1].extract(&assets, WinFillColour, 516, y, 166, 48, 0);
             y += 49;
         }
     } else {
@@ -518,21 +520,21 @@ int MainInterface::init(int) {
         sprites3_[0].extract(&assets, WinFillColour, 194, 262, 164, 60, 0);
         sprites3_[1].extract(&assets, WinFillColour, 194, 323, 164, 64, 0);
         y = 1;
-        for (i = 0; i < 5; ++i) {
-            sprites5_[2*i].extract(&assets, WinFillColour, 384, y, 164, 60, 0);
+        for (k = 0; k < 5; ++k) {
+            sprites5_[2*k].extract(&assets, WinFillColour, 384, y, 164, 60, 0);
             y += 61;
         }
         y = 1;
-        for (i = 0; i < 5; ++i) {
-            sprites5_[2*i+1].extract(&assets, WinFillColour, 549, y, 164, 64, 0);
+        for (k = 0; k < 5; ++k) {
+            sprites5_[2*k+1].extract(&assets, WinFillColour, 549, y, 164, 64, 0);
             y += 65;
         }
     }
     // 0x0045A36F..3D6 steps r.top/r.bottom (ebp-0x24/-0x1C) by the height + 1.
     r.top = 217;
     r.bottom = 231;
-    for (i = 0; i < 3; i++) {
-        sprites8_[i].extract(&assets, WinFillColour, 1, r.top, 106,
+    for (k = 0; k < 3; k++) {
+        sprites8_[k].extract(&assets, WinFillColour, 1, r.top, 106,
                              r.bottom - r.top, 0);
         offset_rect(&r, 0, r.bottom - r.top + 1);
     }
@@ -553,17 +555,17 @@ int MainInterface::init(int) {
     sprites1_[3].extract(&assets, WinFillColour, 1, 367, 32, 34, 0);
     assets.load_pcx("interface.pcx", 0, 10, 236);
     y = 143;
-    for (i = 0; i < 3; i++) {
-        sprites7_[i].extract(&assets, WinFillColour, 532, y, 54, 32, 0);
-        sprites7_[i + 3].extract(&assets, WinFillColour, 587, y, 54, 32, 0);
+    for (k = 0; k < 3; k++) {
+        sprites7_[k].extract(&assets, WinFillColour, 532, y, 54, 32, 0);
+        sprites7_[k + 3].extract(&assets, WinFillColour, 587, y, 54, 32, 0);
         y += 33;
     }
     sprite11_.extract(&assets, WinFillColour, 212, 1, 9, 147, 0);
     x = 397;
     y = 153;
-    for (i = 0; i < 2; i++) {
+    for (k = 0; k < 2; k++) {
         for (j = 0; j < 3; j++) {
-            sprites12_[i * 3 + j].extract(&assets, WinFillColour, x, y, 12, 42, 0);
+            sprites12_[k * 3 + j].extract(&assets, WinFillColour, x, y, 12, 42, 0);
             x += 13;
         }
         x = 397;
@@ -571,9 +573,9 @@ int MainInterface::init(int) {
     }
     x = 350;
     y = 245;
-    for (i = 0; i < 25; i++) {
-        if (i) {
-            if (i % 8 == 0) {
+    for (k = 0; k < 25; k++) {
+        if (k) {
+            if (k % 8 == 0) {
                 x = 350;
                 y += 57;
             } else {
@@ -581,14 +583,14 @@ int MainInterface::init(int) {
             }
         }
         for (j = 0; j < 3; j++)
-            sprites9_[i * 3 + j].extract(&assets, WinFillColour, x, y + j * 19,
+            sprites9_[k * 3 + j].extract(&assets, WinFillColour, x, y + j * 19,
                                          43, 18, 0);
     }
     x = 465;
     y = 438;
-    for (i = 0; i < 6; i++) {
+    for (k = 0; k < 6; k++) {
         for (j = 0; j < 3; j++) {
-            sprites10_[i * 3 + j].extract(&assets, WinFillColour, x, y, 24, 24, 0);
+            sprites10_[k * 3 + j].extract(&assets, WinFillColour, x, y, 24, 24, 0);
             y += 25;
         }
         y = 438;
@@ -636,11 +638,11 @@ int MainInterface::init(int) {
                                       &InterfaceBoxStyles[29]);
     flat_button_[2].set_bubble_text(StringTable.get(Labels.strings_ptr[0xDC0 / 4]));
     flat_button_[2].hide();
-    for (i = 0; i < 3; i++) {
-        button_group_[0].add(&flat_button_[i]);
-        flat_button_[i].Buffer::set_font(&font1_, 0, 0, 0);
-        flat_button_[i].redraw();
-        flat_button_[i].redraw();
+    for (k = 0; k < 3; k++) {
+        button_group_[0].add(&flat_button_[k]);
+        flat_button_[k].Buffer::set_font(&font1_, 0, 0, 0);
+        flat_button_[k].redraw();
+        flat_button_[k].redraw();
     }
     button_group_[0].set(1, 1);
     flat_button_[3].init(StringTable.get(Labels.strings_ptr[0x9C0 / 4]), 1003, &menu_button_rect_, this, 0);
@@ -668,9 +670,9 @@ int MainInterface::init(int) {
     flat_button_[7].init(0, 1007, &rect3_, this, 0);
     flat_button_[7].set_bubble_text(StringTable.get(Labels.strings_ptr[0xF20 / 4]));
     flat_button_[7].set_report_icons(&sprites7_[3], &sprites7_[4], &sprites7_[5]);
-    for (i = 6; i < 8; i++) {
-        button_group_[1].add(&flat_button_[i]);
-        flat_button_[i].redraw();
+    for (k = 6; k < 8; k++) {
+        button_group_[1].add(&flat_button_[k]);
+        flat_button_[k].redraw();
     }
     button_group_[1].set(1006, 1);
     flat_button_[8].init(0, 1008, &stack_button_rect_, this, 0);
