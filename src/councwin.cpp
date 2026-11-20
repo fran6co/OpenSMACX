@@ -378,22 +378,6 @@ void CouncWin::set_vote(int faction_id, int vote) {
     }
 }
 
-// Totals-line writes with the image's null test on the text.
-static inline void council_write_cent(char *text, RECT *rect) {
-    if (text != 0) {
-        MainInterfaceGlobal.Buffer::write_cent_l(text, rect, strlen(text));
-    }
-}
-static inline void council_write_l(char *text, RECT *rect) {
-    if (text != 0) {
-        MainInterfaceGlobal.Buffer::write_l(text, rect, strlen(text));
-    }
-}
-static inline void council_write_right(char *text, RECT *rect) {
-    if (text != 0) {
-        MainInterfaceGlobal.Buffer::write_right_l(text, rect, strlen(text));
-    }
-}
 
 // ORIGINAL: 0x00426470 ?draw_info@CouncWin@@QAEXXZ 0x00426470-0x00426A95 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["git:276d612614085e5d57743cf8cc92903d9468e346:src/unrecovered/00426470.cpp", "image:terranx_original.exe:0x00426470", "Council interface/window declarations identify embedded fonts/buttons, voting arrays and existing MainInterface/Console owners; original instructions determine call and state order."], "reason": "Recover the original in its genuine UI owner using typed members, real globals and declared operations. Retain seed spans and evidence; no current matching or runtime claim."}
@@ -415,7 +399,7 @@ redraw:
     StringTemp[0] = '\0';
     strcat(StringTemp, label_get(0x7c8 / 4));
     CharUpperA(StringTemp);
-    council_write_cent(StringTemp, &line);
+    MainInterfaceGlobal.Buffer::write_cent_l(StringTemp, &line);
 
     inner.top = line.bottom + 2;
     MainInterfaceGlobal.Buffer::box_sprite(&inner, &InterfaceBoxStyles[0]);
@@ -482,11 +466,11 @@ redraw:
                         column = 20;
                         goto redraw;
                     }
-                    council_write_cent(StringTemp, &line);
+                    MainInterfaceGlobal.Buffer::write_cent_l(StringTemp, &line);
                 } else if (column != 0) {
-                    council_write_right(StringTemp, &line);
+                    MainInterfaceGlobal.Buffer::write_right_l(StringTemp, &line);
                 } else {
-                    council_write_l(StringTemp, &line);
+                    MainInterfaceGlobal.Buffer::write_l(StringTemp, &line);
                 }
             }
             ++column;
@@ -504,7 +488,7 @@ redraw:
         strcat(StringTemp, label_get(0x7bc / 4));
         say_colon();
         say_num(votes);
-        council_write_l(StringTemp, &line);
+        MainInterfaceGlobal.Buffer::write_l(StringTemp, &line);
 
         votes = 0;
         for (voter = 1; voter < MaxPlayerNum; ++voter) {
@@ -518,7 +502,7 @@ redraw:
         strcat(StringTemp, label_get(0x7c0 / 4));
         say_colon();
         say_num(votes);
-        council_write_right(StringTemp, &line);
+        MainInterfaceGlobal.Buffer::write_right_l(StringTemp, &line);
     }
 
     MainInterfaceGlobal.soft_update(&panel_rect_);
