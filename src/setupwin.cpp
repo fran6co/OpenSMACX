@@ -442,7 +442,7 @@ static inline char *setupwin_current_text(StringList *list) {
     return list->head_ ? list->current_entry()->text : 0;
 }
 
-// ORIGINAL: 0x004AE4D0 ?draw_item@SetupWin@@QAEHHH@Z 0x004AE4D0-0x004AE757
+// ORIGINAL: 0x004AE4D0 ?draw_item@SetupWin@@QAEHHH@Z 0x004AE4D0-0x004AE757 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["git:276d612614085e5d57743cf8cc92903d9468e346:src/unrecovered/004ae4d0.cpp", "source:src/setupwin.h:SetupWin", "source:src/stringstruct.h:StringList", "source:src/game.h:opening_window"], "reason": "Restore the item-row painter, text cursor, and selected overlay through typed SetupWin members and a real StringList; the opening-window producer remains a separate storage migration."}
 // symbol    ?draw_item@SetupWin@@QAEXHH@Z
 // TRIED: void return (no eax set anywhere in 647 bytes, so int->void); matches to #29/647 bytes. neg/sbb/and guard for the `this!=0` select before the first copy() call got closest; inlining the set_text_color color ternary into the call vs. a named local made no difference to where it first diverges.
