@@ -939,7 +939,7 @@ static void vehdraw_add_reactor(int faction_id, int reactor,
 
 // RECOVERY_ASSOCIATED: v1 switch_targets 0x004C2470 0x004C2C88 0x004C2CC0 0x004C24A7
 // RECOVERY_ASSOCIATED: v1 switch_targets 0x004C2470 0x004C2CC0 0x004C2CE4 0x004C25AD
-// ORIGINAL: 0x004C2470 ?vehdraw_construct_chassis@@YAHHHHHHPAUCaviar@@@Z 0x004C2470-0x004C2C87
+// ORIGINAL: 0x004C2470 ?vehdraw_construct_chassis@@YAHHHHHHPAUCaviar@@@Z 0x004C2470-0x004C2C87 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Original bounds faction only for chassis tint selection, uses signed armor defense, and selects real reactor-minus-one model arrays. Utility infantry falls through the shared add at4C27AA and also adds VLIGHTS at4C27B8, omitted by the seed.", "Original rover steps and aircraft faction flags are reloaded at call boundaries. Crawler assembly uses signed step remainder then queries the genuine DesignWin Win base at4C2BE9 and increments the current animation storage."], "reason": "Recover chassis model ownership, tint selection and animation through genuine renderer operations."}
 // symbol    ?vehdraw_construct_chassis@@YAXHHHHHPAVCaviar@@@Z
 void __cdecl vehdraw_construct_chassis(int faction_id, int chassis, int weapon,
