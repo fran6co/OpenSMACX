@@ -2408,16 +2408,11 @@ int __cdecl energy_yield(int faction_id, int base_id, int x, int y,
     // Bonus id 3 is the energy bonus.
     BOOL has_energy_bonus = bonus_at(x, y, 0) == 3;
     tile = map_loc(x, y);
-    BOOL landmark_bonus = false;
-    if ((((tile->bit2 & (BIT2_UNK_80000000 | BIT2_VOLCANO)) == BIT2_VOLCANO)
+    BOOL landmark_bonus = (((tile->bit2 & (BIT2_UNK_80000000 | BIT2_VOLCANO)) == BIT2_VOLCANO)
             && code < 9)
         || ((tile->bit2 & (BIT2_UNK_80000000 | BIT2_URANIUM)) == BIT2_URANIUM)
         || ((tile->bit2 & (BIT2_UNK_80000000 | BIT2_GEOTHERMAL)) == BIT2_GEOTHERMAL)
-        || ((tile->bit2 & (BIT2_UNK_80000000 | BIT2_RIDGE)) == BIT2_RIDGE)) {
-        landmark_bonus = true;
-    }
-    BOOL skip_shared_tail = false;
-
+        || ((tile->bit2 & (BIT2_UNK_80000000 | BIT2_RIDGE)) == BIT2_RIDGE);
     if (has_base_in_tile) {
         energy = ResourceInfo[RSCINFO_BASE_SQ].energy;
         // Legacy: read BEFORE the base_id sign check at 0x004E7896, so a base_id
@@ -2475,7 +2470,7 @@ int __cdecl energy_yield(int faction_id, int base_id, int x, int y,
                 energy++;
             }
         }
-        skip_shared_tail = true;
+        goto event_tail;
     } else if (is_ocean_tile) {
         if ((tile->climate & ~0x1F) == ALT_BIT_OCEAN_SHELF || ExpansionEnabled) {
             energy = ResourceInfo[RSCINFO_OCEAN_SQ].energy;
@@ -2497,15 +2492,15 @@ int __cdecl energy_yield(int faction_id, int base_id, int x, int y,
         }
     } else {
         // Altitude levels above 2.
-        int solar = (tile->climate >> 5) - 2;
-        solar = (solar < 0) ? 0 : solar;
+        int alt = tile->climate >> 5;
+        int solar = (alt - 2 < 0) ? 0 : alt - 2;
         energy = ((bit & (BIT_SOLAR_TIDAL | BIT_ECH_MIRROR | BIT_THERMAL_BORE))
                   || assume_improved) ? solar : 0;
         if (bit & BIT_SOLAR_TIDAL) {
             // Each adjacent echelon mirror belonging to the current base's
             // faction reflects one more energy onto this collector.
             for (int i = 0; i < 8; i++) {
-                int x_adj = wrap_map_x(x + VehMoveDeltaX[i]);
+                int x_adj = xrange_inline(x + VehMoveDeltaX[i]);
                 int y_adj = y + VehMoveDeltaY[i];
                 if (!on_map(x_adj, y_adj)) {
                     continue;
@@ -2523,36 +2518,34 @@ int __cdecl energy_yield(int faction_id, int base_id, int x, int y,
         }
     }
 
-    if (!skip_shared_tail) {
-        if ((bit & BIT_RIVER) && !is_ocean_tile) {
-            energy++;
-        }
-        if (has_energy_bonus) {
-            energy += ResourceInfo[RSCINFO_BONUS_SQ].energy;
-        }
-        if (landmark_bonus) {
-            energy++;
-        }
-        if (base_id >= 0
-            && GameDataStateStorage.fields_.secret_project_.merchant_exchange() == base_id) {
-            energy++;
-        }
-        if (PlayersData[faction_id].soc_effect_pending.values_[SocialEffect::ECONOMY]
-                + ((base_id >= 0 && (Bases[base_id].state & BSTATE_GOLDEN_AGE_ACTIVE)) ? 1 : 0)
-            >= 2) {
-            energy++;
-        }
-        if (has_base_in_tile) {
-            energy = range(energy, 0, 99);
-            BaseSquareEnergy = energy;
-        } else if (energy > 2
-                   && !has_tech(Rules.tech_three_energy_sqr, faction_id)
-                   && !has_energy_bonus) {
-            TileYieldRestricted += energy - 2;
-            energy = 2;
-        }
+    if ((bit & BIT_RIVER) && !is_ocean_tile) {
+        energy++;
     }
-
+    if (has_energy_bonus) {
+        energy += ResourceInfo[RSCINFO_BONUS_SQ].energy;
+    }
+    if (landmark_bonus) {
+        energy++;
+    }
+    if (base_id >= 0
+        && GameDataStateStorage.fields_.secret_project_.merchant_exchange() == base_id) {
+        energy++;
+    }
+    if (PlayersData[faction_id].soc_effect_pending.values_[SocialEffect::ECONOMY]
+            + ((base_id >= 0 && (Bases[base_id].state & BSTATE_GOLDEN_AGE_ACTIVE)) ? 1 : 0)
+        >= 2) {
+        energy++;
+    }
+    if (has_base_in_tile) {
+        energy = range(energy, 0, 99);
+        BaseSquareEnergy = energy;
+    } else if (energy > 2
+               && !has_tech(Rules.tech_three_energy_sqr, faction_id)
+               && !has_energy_bonus) {
+        TileYieldRestricted += energy - 2;
+        energy = 2;
+    }
+event_tail:
     if (base_id >= 0) {
         uint32_t event = Bases[base_id].event;
         if (event & BEVENT_HEAT_WAVE) {
