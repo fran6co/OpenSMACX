@@ -79,8 +79,13 @@ def splitvar(r, O, C):
     ci, co = copies(O), copies(C)
     si = {O[k][0] for k, _, _ in ci}; so = {C[k][0] for k, _, _ in co}
     ui, uo = [], []
+    st = re.compile(r'mov dword ptr \[e[bs]p[^\]]*\], e(?:[sd]i|bx|bp)$')
     for tag, o, c in r['rows']:
         io = o is not None and o[0] in si; ic = c is not None and c[0] in so
+        # the other side stores a callee-saved register into a slot too (another slot, or one it
+        # does not read back): a renumbered copy, not a missing one
+        if io and c is not None and st.match(c[1]): continue
+        if ic and o is not None and st.match(o[1]): continue
         if io and not ic: ui.append('%x %s   | ours %s' % (r['lo'] + o[0], o[1], c[1] if c else '-'))
         if ic and not io: uo.append('+%x %s   | img %s' % (c[0], c[1], o[1] if o else '-'))
     if not ui and not uo: return None
@@ -138,6 +143,8 @@ def blocks(ins):
 
 def bsig(ins, a, e, n=4):
     body = [norm(x[1]) for x in ins[a:e] if not x[1].startswith('j')]
+    # an epilogue (a merged `return K`) is a return merge, not an arm copy
+    if any(x.startswith('ret') for x in body[:6]) or (body and body[0].startswith(('pop ', 'mov esp'))): return None
     if len(body) < 2 and not any(x.startswith('call') for x in body): return None
     return tuple(body[:n])
 

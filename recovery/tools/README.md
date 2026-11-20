@@ -74,6 +74,16 @@ an explicit `--pfx` is only needed to pick another lane.
   register/slot-normalized first instructions; `MISSING` = ours reaches its copy by forward jumps only (write the
   block in every arm, VC6 cross-jumps them with the image's fall-in arm kept), `FALLIN` = ours cross-jumps too but
   another arm falls in. Validated on config_game before b9e49b888b (MISSING at 0x58B4BD/0x58B4C3, gone after).
+  Epilogue blocks (merged `return K`) are skipped; splitvar skips rows where the other side also stores a
+  callee-saved register into a slot (renumbered copies). 2026-11-20 tree pass: armcopy 22 functions (14 MISSING),
+  splitvar 80 (32 SIG). Hand-checked MISSING hits that are NOT the per-arm reset form (source spellings tried are
+  byte-identical, so the layout is decided after the front end): save_game (image keeps the then-arm's `push dest;
+  call strcpy` and lays the else arm out of line; inverted test, `== 0`, goto form all identical), enemy_diplomacy
+  (the merged `attack_type = 3` block sits after the epilogue; inverted/De Morgan/goto/hoisted forms identical or
+  worse), pop_click and drone_riot (a threaded loop exit: the block after the loop is reached from the loop's exit
+  and from the re-test; ours lays it elsewhere), ReportWin::on_key_click (two report_security expansions
+  cross-jump with the opposite host), upgrade_prototype (return merge; now filtered). The remaining splitvar SIG rows
+  checked (net_upkeep, base_yield, base_growth) were temporaries or store order, not split variables.
 - `analysis/latchscan.py [unit ..] [--addr A] [--src ALT.cpp] [--show] [--json F]` preheader/latch clear screen
   (MATCHING_GUIDE 3.7 "A loop-local zeroed in the preheader AND in the latch"): per loop, destinations zeroed in
   the preheader and the latch (PL) against those zeroed only at the body top (TOP), image against ours; `SIG` =
