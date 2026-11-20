@@ -3576,6 +3576,21 @@ What the model does not predict (2026-11-19)
   size pad at the end of the body in steps of one block; the window is
   a few blocks wide, and the real fix is the original's longer tail
   (the missing statements), which the pad marks.
+- **A header change that shortens member paths shrinks every caller; restore
+  its decisions with caller statements, not new probes** (high; 2026-11-20
+  par-5, the lock-mask batch: call_council 1018b42c1e, order_veh
+  ecbf2ffe8f, probe a5da0294c2). Removing one member level at each mask
+  test lowers the caller's own size, so B (rule 2) drops and pass 2 refuses
+  sites the image expands (call_council's ~Scroll at the SIMULNO return) or
+  a ceiling-bound giant's closing teardown flips (order_veh). Before
+  re-tuning probes, add plain caller statements: ANY statement counts the
+  same wherever it stands (top or end of the body), including `if (0) {}`,
+  a dead store or a dead call; splitting a declaration into declaration +
+  assignment and empty statements (`;`) count nothing. The window is
+  narrow: call_council needs exactly one (two leave three ~FlatButton
+  expansions against four), probe 6..9 blocks with its three probes, order_veh
+  24..26 with three probes. Mark the blocks WORKAROUND(inline) `<fn>_size_pad`;
+  they stand for the original's statements that our recovery lacks.
 - The units are approximate. Costs come from fitted counts, not node
   counts, so a prediction is good to about one expansion. Use it to choose
   the *kind* and *place* of a missing spend, then confirm with fe.
