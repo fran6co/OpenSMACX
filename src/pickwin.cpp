@@ -271,7 +271,10 @@ void PickWin::init(void (__cdecl *callback)(int), int mode, int faction) {
   cursor_.height = h = 0x10;
   cursor_.y = 0x139;
   for (i = 0; i < 3; ++i) {
-    set_rectangle_dimensions(&area, cursor_.x, cursor_.y, cursor_.width, h);
+    // Four-edge set_rect, not the x/y/w/h form: the image loads y, width,
+    // then x (0x00488B15..0x00488B21), the right-to-left order of these
+    // arguments, and forms the right edge as width + x.
+    set_rect(&area, cursor_.x, cursor_.y, cursor_.width + cursor_.x, cursor_.y + h);
     sprites4_[i].extract(&source, WinFillColour, &area, 0);
     h = cursor_.height;
     cursor_.y += h + 1;
