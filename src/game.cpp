@@ -15,6 +15,7 @@
  * You should have received a copy of the GNU General Public License
  * along with OpenSMACX. If not, see <http://www.gnu.org/licenses/>.
  */
+#define STRINGSTRUCT_CURRENT_ENTRY_INLINE
 #include "stdafx.h"
 
 #include <shellapi.h>
@@ -1417,8 +1418,7 @@ int __cdecl game_data(FILE *file, int write_mode) {
                     string_id = MessageWinDeferredBaseMessages[faction].current_id();
                     if (fwrite(&string_id, 4, 1, file) == 0)
                         return 1;
-                    strcpy(StringTemp, MessageWinDeferredBaseMessages[faction].head_
-                        ? MessageWinDeferredBaseMessages[faction].current_->string_payload()->text : 0);
+                    strcpy(StringTemp, MessageWinDeferredBaseMessages[faction].current_text());
                     string_length = static_cast<int>(strlen(StringTemp));
                     if (fwrite(&string_length, 4, 1, file) == 0)
                         return 1;
@@ -1462,8 +1462,7 @@ int __cdecl game_data(FILE *file, int write_mode) {
                         string_id = DiplomacyTranscriptLists[row][column].current_id();
                         if (fwrite(&string_id, 4, 1, file) == 0)
                             return 1;
-                        strcpy(StringTemp, DiplomacyTranscriptLists[row][column].head_
-                            ? DiplomacyTranscriptLists[row][column].current_->string_payload()->text : 0);
+                        strcpy(StringTemp, DiplomacyTranscriptLists[row][column].current_text());
                         string_length = static_cast<int>(strlen(StringTemp));
                         if (fwrite(&string_length, 4, 1, file) == 0)
                             return 1;
