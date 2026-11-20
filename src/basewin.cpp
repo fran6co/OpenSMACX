@@ -5803,11 +5803,11 @@ again:
 // away). The image's first cancel return calls ~Scroll and ~BasePop out of
 // line (0x0041BD5D, 0x0041BD6F) while the second expands ~BasePop fully.
 // With the PICKAPLACE labels read through label_get (as base_editor_copy
-// does) and the owner store written on project_base, four one-test
-// expansions after the first return give the image's unwind map exactly; the
-// closing teardown still expands ??_DDialogs (0x0041C1AF calls it) and three
-// ??_DStringList sites expand where the image calls 0x00406820. The
-// original's spend is not identified.
+// does) and passed straight to popup.item, and the owner store written on
+// project_base, four one-test expansions after the first return give the
+// image's unwind map exactly; the closing teardown still expands ??_DDialogs
+// (0x0041C1AF calls it) and two ??_DStringList sites expand where the image
+// calls 0x00406820. The original's spend is not identified.
 static inline int base_editor_proj_budget_probe(int x) {
     if (x == 0) x = 7;
     return x;
@@ -5862,14 +5862,8 @@ void BaseWin::base_editor_proj() {
     parse_say(0, Facility[facility_id].name, -1, -1);
     PopupModalState = 6;
     popup.start("PICKAPLACE", 0x42);
-    {
-        char *text = label_get(0xD64 / 4);
-        popup.item(text, 9999);
-    }
-    {
-        char *text = label_get(0xD68 / 4);
-        popup.item(text, 9998);
-    }
+    popup.item(label_get(0xD64 / 4), 9999);
+    popup.item(label_get(0xD68 / 4), 9998);
     // Current-faction bases precede other bases, preserving original index IDs.
     // Re-read BaseCurrent and the live base count after each item call, as
     // original41BEBA..41EC2 does; neither is captured as immutable UI state.
