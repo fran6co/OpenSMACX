@@ -366,7 +366,13 @@ def role_of(code, w, names, lst, this_reg, srclines):
     return re.sub(r'\s+', '', src)[:20] or mn, 'var'
 
 
-OPT = dict(penalty=True, slotmin=2, scratch=False, constimm=0, constw=100, constdef=1, bytepref=1)
+OPT = dict(penalty=True, slotmin=2, scratch=False, constimm=0, constw=100, constdef=1, bytepref=1, callfirst=1, cfrefs=1,
+           skipasm=1)
+# callfirst (MATCHING_GUIDE 2.7 G1-G3): a web that crosses no call can live in a scratch register, so it is allocated
+#   after every call-crossing web; a call-crossing web outranks a call-free one whatever their scores.
+# cfrefs: between two call-free webs the one with more raw references (instructions) ranks higher, then the longer
+#   range; the scores decide only exact ties.
+# skipasm: the census leaves out markers whose body holds an __asm block (their registers are hand-written).
 
 
 def score_webs(code, webs, slots_n, scratch_webs, penalty=None):
@@ -532,6 +538,8 @@ def side_analysis(code, regs, names, lst, srclines, scratch=False):
                     w['refs'].add(i)
     score_webs(code, webs, slots_n, sw)
     for w in webs:
+        # crosses a call: live into the call and out of it (G1: a call-free web may take a scratch register)
+        w['xcall'] = any(mnem(code.ins[i][1]) == 'call' and (i + 1) in w['live'] for i in w['live'])
         w['byte'] = w['reg'] == 'ebx' and any(re.search(r'\b(bl|bh)\b', code.ins[i][1]) for i in w['refs'])
         # registers an instruction inside the web's range clobbers implicitly (rep movs/stos: esi, edi)
         w['excl'] = set()
@@ -585,6 +593,13 @@ def byte_losers(code):
 def better(a, b):
     """does the model rank a above b (4c: exact tie -> later first block, then earlier first reference;
     two constants in one block: the LATER first reference, MATCHING_GUIDE 2.7 4e)"""
+    if OPT['callfirst'] and a.get('xcall') is not None and a['xcall'] != b['xcall']:
+        return a['xcall']
+    if OPT['cfrefs'] and a.get('xcall') is False and b.get('xcall') is False:
+        if len(a['refs']) != len(b['refs']):
+            return len(a['refs']) > len(b['refs'])
+        if len(a['live']) != len(b['live']):
+            return len(a['live']) > len(b['live'])
     if a['score'] != b['score']:
         return a['score'] > b['score']
     if a['firstb'] != b['firstb']:
@@ -630,6 +645,73 @@ def consistency(webs, regs):
     return ok, tot, bad
 
 
+def scratch_busy(code):
+    """{scratch reg: instruction indices where it is live in, live out or written}"""
+    n = len(code.ins)
+    out = {}
+    for r in SCR:
+        rw = [(False, False) if i in code.skip else reads_writes(t, r) for i, (o, t, g) in enumerate(code.ins)]
+        LIN = [False] * n
+        ch = True
+        while ch:
+            ch = False
+            for i in range(n - 1, -1, -1):
+                lo = any(LIN[s_] for s_ in code.isucc[i])
+                li = rw[i][0] or (lo and not rw[i][1])
+                if li != LIN[i]:
+                    LIN[i] = li
+                    ch = True
+        out[r] = {i for i in range(n) if LIN[i] or rw[i][1] or any(LIN[s_] for s_ in code.isucc[i])}
+    return out
+
+
+def g1_check(code, webs):
+    """MATCHING_GUIDE 2.7 G1/G3: a call-free web lands in a callee-saved register only when no scratch register is
+    free over its whole range. -> (webs where every scratch register is busy, call-free callee-saved webs, list of
+    (web, free scratch registers) for the others)"""
+    busy = None
+    ok = tot = 0
+    bad = []
+    for w in webs:
+        if w.get('xcall'):
+            continue
+        busy = busy or scratch_busy(code)
+        free = [r for r in SCR if not (busy[r] & w['live'])]
+        tot += 1
+        ok += not free
+        if free:
+            bad.append((w, free))
+    return ok, tot, bad
+
+
+def z10_check(webs, nregs):
+    """MATCHING_GUIDE 2.7 Z10: two disjoint constant-zero webs (a split zero) need every register taken by other webs
+    somewhere between them. -> (split pairs with that pressure, split pairs)"""
+    z = sorted([w for w in webs if w.get('role') == '#0'], key=lambda w: min(w['live']))
+    ok = tot = 0
+    for a, b in zip(z, z[1:]):
+        if a['live'] & b['live']:
+            continue
+        lo, hi = max(a['live']), min(b['live'])
+        if hi <= lo + 1:
+            continue
+        p = max(sum(1 for w in webs if w is not a and w is not b and i in w['live']) for i in range(lo + 1, hi))
+        tot += 1
+        ok += p >= nregs
+    return ok, tot
+
+
+def asm_markers(text):
+    """addresses of markers whose body holds an __asm block"""
+    ms = [(m.start(), int(m.group(1), 16)) for m in re.finditer(r'// ORIGINAL: 0x([0-9A-F]{8}) ', text)]
+    out = set()
+    for k, (p, a) in enumerate(ms):
+        e = ms[k + 1][0] if k + 1 < len(ms) else len(text)
+        if re.search(r'\b_?_asm\b', text[p:e]):
+            out.add(a)
+    return out
+
+
 def census_unit(unit, pfx, opts_list, only_oy=False):
     """image-side rank constraints explained over the fe-exact functions of one unit, for each option set"""
     src = fe.R + '/' + unit
@@ -639,8 +721,11 @@ def census_unit(unit, pfx, opts_list, only_oy=False):
         return unit, None
     srclines = text.split('\n')
     res = []
+    skip = asm_markers(text) if OPT['skipasm'] else set()
     for m in re.finditer(r'// ORIGINAL: 0x([0-9A-F]{8}) ', text):
         addr = int(m.group(1), 16)
+        if addr in skip:
+            continue
         try:
             r = fe.evaluate(c, text, addr)
         except Exception:
@@ -668,7 +753,8 @@ def census_unit(unit, pfx, opts_list, only_oy=False):
             ok, tot, bad = consistency(iw, regs)
             per.append((ok, tot, [(w['reg'], rj) for w, rj, h in bad], bytepref_check(iw, regs)))
         OPT.update(saved)
-        res.append((addr, r['sym'], oy, per))
+        g1 = g1_check(icode, iw)[:2]
+        res.append((addr, r['sym'], oy, per, g1, z10_check(iw, len(regs))))
     return unit, res
 
 
@@ -688,12 +774,17 @@ def census(units, pfx_base, jobs, opts_list, only_oy=False, show=0):
             out += o
     tot = [[0, 0] for _ in opts_list]
     bpt = [0, 0]
+    g1t = [0, 0]
+    z10t = [0, 0]
     neg = []
     nf = 0
     diff = []
     for unit, res in out:
-        for addr, sym, oy, per in res or ():
+        for addr, sym, oy, per, g1, z10 in res or ():
             nf += 1
+            for k in (0, 1):
+                g1t[k] += g1[k]
+                z10t[k] += z10[k]
             for k, (ok, t_, bad, bp) in enumerate(per):
                 tot[k][0] += ok
                 tot[k][1] += t_
@@ -708,6 +799,8 @@ def census(units, pfx_base, jobs, opts_list, only_oy=False, show=0):
     for opts, (ok, t_) in zip(opts_list, tot):
         print('  %-40s explained %d/%d' % (','.join('%s=%s' % kv for kv in opts.items()) or 'default', ok, t_))
     print('  4j (/Oy): ebp webs it explains %d, non-byte ebx webs it says should be in ebp %d' % tuple(bpt))
+    print('  G1/G3: call-free callee-saved webs with every scratch register busy over their range %d/%d' % tuple(g1t))
+    print('  Z10: split zero webs with every register taken between the pieces %d/%d' % tuple(z10t))
     for unit, addr, sym, n in neg[:show]:
         print('  4j against %-26s %08X %-40s %d' % (unit[4:], addr, sym[:40], n))
     for unit, addr, sym, oks, t_ in diff[:show]:
@@ -925,6 +1018,13 @@ def report(r, text, items, addr, quiet=False, minrefs=2, scratch=False, sections
         print('    ours lea:idx webs: %s' % (', '.join(sorted({key(w) for w in ow if w['kind'] == 'lea:idx'})) or 'none')
               + '  -> an index read inside an inner loop blocks strength reduction; step a pointer beside the index '
                 'in the for-increment (setup_game 0x005B3920)')
+    for tag, code, ws in (('image', icode, iw), ('ours', ocode, ow)):
+        g_ok, g_tot, g_bad = g1_check(code, ws)
+        if g_bad and 'unexplained' in sections:
+            print('--- %s: call-free callee-saved webs with a scratch register free over their range (G1/G3: %d/%d busy)' % (
+                tag, g_ok, g_tot))
+            for w, free in g_bad[:8]:
+                print('  %-34s %s free %s' % (w['role'][:34], w['reg'], ','.join(free)))
     for tag, bad in (('image', ic[2]), ('ours', oc[2])):
         if bad and 'unexplained' in sections:
             print('--- %s webs its own instruction-level scores do not explain' % tag)

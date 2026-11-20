@@ -122,6 +122,20 @@ an explicit `--pfx` is only needed to pick another lane.
   the fe-exact functions per option set (70 s tree-wide; 4j `bytepref` validated this way).
   `CANDSET_SITES=K candset.py ...` prints every store of constant K counted in that block (image first, then ours):
   diff the two lists to find the extra store (make_gift's `gift_value = 0` before the mode-7 test).
+  Since 2026-11-20 (G1-G3, Z10) the rank model puts call-crossing webs above call-free ones (`callfirst`), orders two
+  call-free webs by raw references then range length (`cfrefs`), and the census skips `__asm` bodies (`skipasm`):
+  9313 -> 9578 of 11402 constraints over 5059 functions (10066/13126 with the asm bodies and the old model). The census
+  also prints the G1/G3 check (call-free callee-saved webs with every scratch register busy over their range,
+  3733/4287) and the Z10 check (split zero webs with every register taken between the pieces, 29/45); the per-function
+  report lists the call-free callee-saved webs that had a scratch register free.
+- `analysis/ctrscan.py <unit> <addr[,..]> [--src ALT] | --tree [unit ..] [--from FEALL.json] [--all] [--json F]` loop-counter
+  and hoisted-global screen (MATCHING_GUIDE 2.7 G1-G3; 2 min tree-wide with FE_JOBS=5): pairs the natural loops of both
+  sides through the fe alignment, classifies each counter (`S:`/`C:` scratch or callee-saved, `own` init, `zero` = the
+  initial `xor` also feeds zero stores before the loop, `shared`, `M` memory), lists globals loaded before the loop and
+  read in it (hoisted) and, for call-free loops, the scratch registers live across the back edge with their defining
+  instruction and our source line (the values that keep a scratch register busy). Flags loops whose counter class or
+  hoist count differs; validated with `--all`: no BYTE_EXACT function flags. Loops whose sizes differ much are paired
+  wrongly (a different loop structure): read only pairs with similar `n`.
 - `analysis/rotscan.py <unit> <addr[,..]> [--src ALT] [--track] | --tree [unit ..] [--from FEALL.json] [--all] [--json F]`
   scratch-rotation scan (MATCHING_GUIDE 3.2 S1/S7, 3.7 "Cross-jumping ground truth"; 40 s tree-wide with FE_JOBS=5):
   aligns both listings with eax/ecx/edx abstracted, pairs every scratch load (return-value `mov eax, K` excluded) and
