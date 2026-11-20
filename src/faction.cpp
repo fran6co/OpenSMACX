@@ -4952,9 +4952,11 @@ void __cdecl battle_plans(int faction_a, int faction_b) {
 
     if (X_pops(BattlePlansLabel, 0x100000,
                FactionDiplomacyPortraits[faction_b], pop_wait)) {
-        parse_set(Players[faction_a].is_leader_female, 0);
+        GenderDefault = Players[faction_a].is_leader_female;
+        PluralityDefault = 0;
         parse_says(0, Players[faction_a].title_leader, -1, -1);
-        parse_set(Players[faction_a].is_leader_female, 0);
+        GenderDefault = Players[faction_a].is_leader_female;
+        PluralityDefault = 0;
         parse_says(1, Players[faction_a].name_leader, -1, -1);
 
         popup.start(PopupStartCaption, BattlePlanLabel, -1, 0, 0x100042, 0);
