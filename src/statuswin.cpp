@@ -121,11 +121,11 @@ void StatusWin::on_right_click(int x, int y, int) {
     if (spot_.check(x, y, &object_index, &menu_id) >= 0) {
         if (menu_id == 3) {
             display_menu.init();
-            char *text = label_get(0xFEC / 4);
+            char *text = StringTable.get(Labels.strings_ptr[0xFEC / 4]);
             display_menu.dialogs().item(text, 0);
-            text = label_get(0xFF0 / 4);
+            text = StringTable.get(Labels.strings_ptr[0xFF0 / 4]);
             display_menu.dialogs().item(text, 1);
-            text = label_get(0xFF4 / 4);
+            text = StringTable.get(Labels.strings_ptr[0xFF4 / 4]);
             display_menu.dialogs().item(text, 2);
             MainInterfaceGlobal.get_mouse_pos(&screen_x, &screen_y);
             MainInterfaceGlobal.client_to_screen(&screen_x, &screen_y);
@@ -151,9 +151,9 @@ void StatusWin::on_right_click(int x, int y, int) {
             if (menu_id == 0 || menu_id == 10) {
                 if (menu_id == 10) object_index = ConsoleGlobal.selected_vehicle_;
                 menu.add_item(6, StringTable.get(Labels.strings_ptr[0x958 / 4]));
-                menu.add_item(7, label_get(0x112C / 4));
+                menu.add_item(7, StringTable.get(Labels.strings_ptr[0x112C / 4]));
                 if (GameDataStateStorage.fields_.game_state_ & STATE_SCENARIO_EDITOR) {
-                    menu.add_item(90, label_get(0xDFC / 4));
+                    menu.add_item(90, StringTable.get(Labels.strings_ptr[0xDFC / 4]));
                 }
                 menu.add_separator(99);
             } else {
@@ -203,7 +203,7 @@ void StatusWin::on_right_click(int x, int y, int) {
             }
         }
     }
-    menu.add_item(20, label_get(0x8FC / 4));
+    menu.add_item(20, StringTable.get(Labels.strings_ptr[0x8FC / 4]));
     MainInterfaceGlobal.client_to_screen(&x, &y);
     menu.show(x, y, 0);
     // Only the signed upper bound is tested, as in the image (0x004B95EB).
