@@ -27,6 +27,7 @@ teardowns: `at(i)` before each return; an inline destructor calls `dm()`/`dm2()`
 | popup_chain.py M... | Popup-like chain: P : Bs { S s; }, S { FB f1, f2; } (4, 5) |
 | probe_position.py M n if1/if4 | dead probes after return site k: reservation for earlier sites only (4) |
 | real_popup.py M... | real `Popup` (popup.h, probe.cpp's command) at M returns (6) |
+| chain.py | `level()`, `compile_()`, `decisions()`: nested chains A -> B -> (C1, C2) with later/earlier sites: per-level E/c of one site (8) |
 | realdeck.py | `run(unit, addr, [(key, text)])`: whole-file variants of a real unit, call-count differences |
 | costknob.py TAG FILE OLD NEW --base B | tree-wide: which functions' decisions move when one callee's body gets a dead statement (2.8 "Callee costs") |
 | ../inlinetree.py [--all] | inlinemap over every function of every unit; per-callee E/c aggregate (baseline for costknob) |

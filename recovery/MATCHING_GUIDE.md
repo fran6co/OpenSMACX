@@ -2975,7 +2975,7 @@ we cannot see, so the numbers are fitted within about 0.3 unit.
 5. **Deeper levels** (medium). A third level, such as ~FlatButton inside an
    expanded ~Scroll, is decided after pass 2 and gets what is left. In
    PickTech::pick, each added dead probe removes one ~FlatButton expansion
-   before any ~Scroll changes. Its order within the level was not measured.
+   before any ~Scroll changes. Order and budget of nested levels: rule 8.
    **Depth cap 8** (high; turn_upkeep 2026-11-20 par-1): a chain of free
    one-line forwarders expands up to depth 8 and the depth-9 call stays out
    of line, wherever the chain sits (no leak between sites). Arguments nest
@@ -3034,6 +3034,62 @@ we cannot see, so the numbers are fitted within about 0.3 unit.
      order_veh 0x005947C0 (after the vehicle-count return since its two
      probes were retired) and probe 0x0059F120. No exact function is
      ceiling-bound (Win::on_l_button_down's `cc` is a no-inline unit).
+8. **Nested sites: one depth-first pass, each subtree gets an equal share
+   of what is left** (high; `inline/chain.py`, 2026-11-20 par-4). This
+   replaces rule 4's reservation fit and gives the order rule 5 left open.
+   VC6 walks the caller once, in source order, and expands depth-first.
+   For a body with budget S (the caller's own body: S = B of rule 2) and
+   its inline call sites j = 1..m in source order:
+
+       own decision of site j:   cost_j <= S - spent        (greedy, no division)
+       budget of j's body:       S_j = (S - spent) / (1 + later_j)
+
+   - `spent` is everything charged so far inside this body: the earlier
+     sites' own charges, their whole subtrees, and site j's own charge.
+   - `later_j` counts the inline sites after j *in the same body*, whatever
+     their cost or decision: free ones, refused ones, too-large ones and
+     scope-exit destructor calls all count one each (a later `~D()` at
+     each return counts per return). Calls to non-inline functions do not
+     count, nor do the sites inside a later sibling's body.
+   - Fits (B0 floor, so S = 53.5 +- 1): a free A at the top with K later
+     inline sites gives its child a budget of 53.5/(1+K) (K = 0, 1, 2, 3,
+     4, 8, 16: the largest child that expands is 52, 24, 16, 12, 8, 4, 0
+     ifs), identical for later sites of 0, 4 or 8 ifs; the same K sites
+     *before* A instead take their charge (4.74 each) and nothing more.
+     A level-1 site's own decision never moves with K (54 ifs).
+     Inside A, a child B1 followed by NB siblings: B1's child gets
+     (S_A - c(B1)) / (1 + NB) (slope 1/(1+NB) in c(B1) measured for NB =
+     0..5), and a top-level K divides before c(B1) is taken (slope 1).
+   - The depth-first order is visible: A -> (B1 -> C, B2) with C before
+     B2 in budget order: C (8 ifs) expands and then B2 (14 ifs) is refused
+     where breadth-first would give the reverse; a later top-level charged
+     site is refused once an earlier subtree has spent the room
+     (`fc` 8-if x6 after an expanded 6-if level 2: the sixth is called).
+   - The regimes of rule 4 follow from it. N sites of a free outer
+     holding a 4-if inner: site i gets (S - spent)/(N - i + 1), so the
+     first N - 11 refuse and the last 10-11 expand whatever N (suffix);
+     a charged outer (12 `use()` calls, c_o about 5.5) gives fam1's
+     `OOOOOOOooo IIIIiii---` at N = 10 exactly.
+   - Sibling sites inside one body share the same budget greedily: in
+     probe, vector_dist(4) -> x_dist then vector_dist(2) expands the first
+     and calls the second (`chain.py`: C1 E, C2 c whenever c(C1) <= S_j <
+     c(C1) + c(C2)).
+   Consequences:
+   - **A level-3 site is refused when its level-2 parent is dear**, not
+     when the caller lacks room: the parent's own charge is subtracted
+     before its children get the rest. probe's x_dist (probe -> vulnerable
+     -> vector_dist(4) -> x_dist) stayed a call at every pad count and
+     with whole arms deleted (a deletion shrinks B and later_j together);
+     vector_dist(4) without named locals (`return vector_dist(x_dist(a,
+     b), abs(c - d));`) expands it with the image's code and order, and
+     its other callers are unchanged (2026-11-20, map.h).
+   - **More sites after a nested site refuse it; more sites before do
+     not**, unless they spend. This is "late free helpers reserve by
+     count" below, and why a site moved into a helper (its own body)
+     stops counting in the caller.
+   - In probe, demoting 58 later inline sites (has_treaty, says, clear
+     after the vulnerable call) to non-inline twins also expands x_dist:
+     the division by later_j is the lever, not B.
 
 Using it
 - Run inlinemap. For each callee row:
@@ -3570,6 +3626,43 @@ What the model does not predict (2026-11-19)
   tails merge (jmp 0x4D64CE) with no special source shape. No effect in
   terraform, config_game, queue_click, pick_player, base_editor_proj,
   popb or save_game (all single-site and ALL rows equal or worse).
+- **Late free helpers reserve by count, and in a ceiling-bound caller they
+  must be paired with a size pad** (high; probe 0x0059F120, 2026-11-20
+  par-4, ce5ae6b8ee). The reservation that refuses the early level-2 sites
+  grows with the number of free expansions laid after them, not with
+  their size or kind: probe's 52 human/alive/treaty tests (each a few
+  bytes) refuse ~Scroll at the first nine ~Popup teardowns (EH 27 -> 0,
+  named calls 52 -> 16), where dead spend at the top, after site 9, mid
+  or end (2-16 charged or free probes) and 20-800 size statements moved
+  none of those sites. Second effect: a free helper in place of a raw
+  test makes the caller *smaller* (its body is not counted as caller
+  statements), so in a function that hits the /Ob2 total-size ceiling
+  (rule 7, `analysis/ceilscan.py` `Ec`) the ceiling stop moves later and
+  one more late site expands (probe: the return 1 after the FRAME block
+  kept an expanded ~Popup). Restore the stop with a caller-size pad (dead
+  `if (0) { g = k; }` blocks after the declarations, WORKAROUND(inline);
+  probe went from 6 to 40 blocks; sweep the count, 36-48 all worked).
+  So: respell the family first, then re-sweep the pad, and judge by the
+  EH map and call multiset, never by the rows of the intermediate step.
+  Open residue in probe after that (2026-11-20 par-4, all screens negative):
+  - *x_dist at level 3 (vulnerable -> vector_dist -> x_dist):* solved by
+    rule 8 (the parent's own charge comes off the child's share):
+    vector_dist(4) without named locals expands it (2026-11-20).
+  - *The six NetMsg::pop tails ours merges are a layout question.* The
+    action dispatch's join (the prb_defense ternary head, 0x5A36EE) has no
+    fall-through predecessor at its source position (the -1 arm ends in
+    `goto`), so VC6 lays it after one arm that jumps to it: the image after
+    action 2 (check_base/draw_tile), ours after action 3 (the TOOKENERGY
+    pop). Cross-jumping then merges identical `call pop; add esp,8` tails
+    into the block that falls into the join, so ours folds six pops into
+    action 3's while the image (join behind draw_tile) keeps each with its
+    own `jmp`. Fix the join's placement, not the tails; action 3 nested,
+    inverted, or an explicit `goto` join after action 2 did not move it.
+  - *veh_at < 0 return 1:* `if (v >= 0) { loop } else return 1;` makes that
+    site jump to the shared 0x5A5509 block as the image does, but moves the
+    action_mode block and shifts the early frame slots (708 -> 752 rows);
+    `<= -1`, `!(>= 0)`, if/else with the return first and a goto to a label
+    on the FRAMED return keep the copy or worsen layout.
 - **A helper with a literal inside its body is refuted by per-site
   literals** (high; 2026-11-19 par-4). An argument-free inline such as
   `say_plus() { strcat(StringTemp, "+"); }` emits ONE literal
