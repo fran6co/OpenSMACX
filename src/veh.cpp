@@ -2447,7 +2447,7 @@ void __cdecl name_proto(char *output, int prototype_id, int faction_id,
             if (VehPrototypes[id].flags & PROTO_ACTIVE
                 && VehPrototypes[id].plan == VehPrototypes[prototype_id].plan
                 && VehPrototypes[id].chassis_id == VehPrototypes[prototype_id].chassis_id) {
-                if (VehPrototypes[prototype_id].reactor_id <= VehPrototypes[id].reactor_id) {
+                if (VehPrototypes[id].reactor_id >= VehPrototypes[prototype_id].reactor_id) {
                     lower = 0;
                     break;
                 }
