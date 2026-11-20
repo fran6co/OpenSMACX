@@ -4089,8 +4089,8 @@ void __cdecl make_gift(int giver, int receiver) {
         int remaining;
         accumulated = 0;
         value = 2;
-        remaining = amount / 5;
         int bucket = 10;
+        remaining = amount / 5;
         while (remaining > 0) {
             accumulated += range(remaining, 0, bucket) / value;
             remaining -= bucket;
