@@ -1526,9 +1526,9 @@ L_4fb650:
                 || BaseCurrent->nutrient_surplus < 1)) {
             w *= 2;
         } else if (l_c > 2 && !(BaseCurrent->state & 0x1000000)) {
-            if (!(GameDataStateStorage.fields_.lock_masks_.human_mask_ & l_1c) || l_c != 7
+            if ((!(GameDataStateStorage.fields_.lock_masks_.human_mask_ & l_1c) || l_c != 7
                 || PlayersData[l_8].current_num_bases < GameDataStateStorage.fields_.base_current_count_ / 5
-                || PlayersData[l_8].current_num_bases < 10) {
+                || PlayersData[l_8].current_num_bases < 10) != 0) {
                 if ((GameDataStateStorage.fields_.lock_masks_.human_mask_ & l_1c)
                     && (BaseCurrent->governor & 0x80000000)) {
                     if (l_64) {
