@@ -8721,6 +8721,41 @@ Counters and tie arms (par-5 2026-11-20, councwin)
   image's placement is not a spelling of the fail path or the scan; the
   remaining candidates are whole-function. Do not retry fail-path
   spellings without new evidence.
+- **Label block placement: the LAST site in source that reaches a label
+  decides where VC6 lays it out, and only some site forms move it** (probe
+  `analysis/probes/failplace/run.py`, par-6 2026-11-20, on upgrade_prototype
+  0x004EFE80's and proposal_menu 0x0054DCF0's skeletons). A label block
+  (`fail: return 0;`, `fail: x = 0; done: ...`) with a fall-through
+  predecessor and later gotos is laid at its fall-through predecessor (its
+  source position) unless the last site in source is a *claiming* form, in
+  which case VC6 inverts that site's last test and lays the label right
+  after it; a structural predecessor that then has to jump to it gets a
+  private copy of a pure return block (tail duplication: one extra `ret`).
+  Claiming: `if (c) goto L;`, `if (A && B) goto L;`, `{ S; goto L; }`,
+  `if (A || B) { S } else goto L;`, a bare `L2: goto L;` label block, and
+  backward gotos of these forms (written after L). Not claiming: `if (c) {
+  S } else goto L;` with a single test and an `S` that falls on, `if (A ||
+  B) goto L;` (every term jumps), and an if/else join that falls into L.
+  Only the last site counts: earlier claiming sites keep direct jumps when
+  the last one does not claim (q10/q11/gfail), and `if (c) return 0;` copies
+  never merge into the label (the `r*` variants keep one epilogue each).
+  A chain `fail: ...; done: ...` moves as one unit with fail's claim; a
+  later claiming site for `done` splits it (q9: `fail: ... jmp done`).
+  Reading the image: when every site jumps straight to a label that sits at
+  its fall-through predecessor, the original's last site was a non-claiming
+  form; when ours lays the label after its last site, rewrite that site
+  (e.g. `if (x < 0) goto fail; S` -> `if (x >= 0) { S } else goto fail;`).
+  Applied: proposal_menu's commlink `FA5C < 0` site (85 -> 78 rows, `fail:`
+  back at the ATTACK fall-through). Open: there `done:` then goes to the end
+  of the function (after the final return) although its last site is a
+  non-claiming `||` goto; the probe reproduces it (d2, e1-e7) only when the
+  fail site is nested in an `if (c == 13) { ... }` whose false edge joins at
+  the done site (k1/k3, without that nesting or without fail:, keep it).
+  upgrade_prototype: our last site is the no_energy `if (set_flag && ...)
+  goto fail;` (claims; 27 rows, one extra `ret`); every rewrite of those
+  sites tried (else-goto, `||` else, nested, returns, no_energy inline or
+  before fail:) still claims or worsens the function, so the image's
+  source order around no_energy is not known yet.
 - **The loop counter VC6 keeps is the variable the body's tests read.**
   load_vehicles 0x00454270 loops `chassis` 0..18 with `row = chassis - 9`;
   the image counts `row` (edx from -9, skip test `lea eax,[edx+9]; cmp

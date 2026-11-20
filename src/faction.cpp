@@ -6502,22 +6502,27 @@ commlink:
             }
         }
         DiploScratchFA5C = popup.exec(pop_wait);
-        if (DiploScratchFA5C < 0) {
+        // The last fail site is an else arm, not `if (< 0) goto fail;`: a
+        // conditional goto as the last site pulls fail: (and done:) after it
+        // (MATCHING_GUIDE 3.7 "Label block placement"); the image keeps them
+        // at the ATTACK block's fall-through.
+        if (DiploScratchFA5C >= 0) {
+            if (!(PlayersData[faction_id_with].diplo_treaties[DiploScratchFA5C] & DTREATY_COMMLINK)
+                && !has_project(SP_EMPATH_GUILD, faction_id_with)) {
+                // WORKAROUND(inline): the three getters written out (same bytes);
+                // as get_title/get_name/get_noun they spend the budget the image's
+                // ATTACKSTRING exit (done) needs for its expanded ~Scroll teardown.
+                parse_says(0, get_title(DiploScratchFA5C), -1, -1);
+                parse_says(1, get_name(DiploScratchFA5C), -1, -1);
+                parse_set(Players[DiploScratchFA5C].noun_gender,
+                          Players[DiploScratchFA5C].is_noun_plural);
+                parse_says(2, Players[DiploScratchFA5C].noun_faction, -1, -1);
+                DiploScratchFA34 = 0;
+                x_pops_minimal("NOCOMMLINK", FactionDiplomacyPortraits[faction_id_with],
+                               pop_wait);
+            }
+        } else {
             goto fail;
-        }
-        if (!(PlayersData[faction_id_with].diplo_treaties[DiploScratchFA5C] & DTREATY_COMMLINK)
-            && !has_project(SP_EMPATH_GUILD, faction_id_with)) {
-            // WORKAROUND(inline): the three getters written out (same bytes);
-            // as get_title/get_name/get_noun they spend the budget the image's
-            // ATTACKSTRING exit (done) needs for its expanded ~Scroll teardown.
-            parse_says(0, get_title(DiploScratchFA5C), -1, -1);
-            parse_says(1, get_name(DiploScratchFA5C), -1, -1);
-            parse_set(Players[DiploScratchFA5C].noun_gender,
-                      Players[DiploScratchFA5C].is_noun_plural);
-            parse_says(2, Players[DiploScratchFA5C].noun_faction, -1, -1);
-            DiploScratchFA34 = 0;
-            x_pops_minimal("NOCOMMLINK", FactionDiplomacyPortraits[faction_id_with],
-                           pop_wait);
         }
     }
     if (DiploScratchFA34 == 9) {
