@@ -640,7 +640,7 @@ int MainInterface::init(int) {
         flat_button_[i].redraw();
     }
     button_group_[0].set(1, 1);
-    flat_button_[3].init(label_get(0x9C0 / 4), 1003, &menu_button_rect_, this, 0);
+    flat_button_[3].init(StringTable.get(Labels.strings_ptr[0x9C0 / 4]), 1003, &menu_button_rect_, this, 0);
     flat_button_[3].set_report_icons(&sprites8_[0], &sprites8_[1], &sprites8_[2]);
     flat_button_[3].set_font_redraw(&font1_);
     flat_button_[3].set_text_color(64, -1, 1, 1);
@@ -649,7 +649,7 @@ int MainInterface::init(int) {
     flat_button_[3].field_ABC_[2] = 65;
     flat_button_[3].redraw();
     flat_button_[3].set_bubble_text(StringTable.get(Labels.strings_ptr[0xC3C / 4]));
-    flat_button_[4].init(label_get(0x83C / 4), 1004, &multiplayer_button_rect_,
+    flat_button_[4].init(StringTable.get(Labels.strings_ptr[0x83C / 4]), 1004, &multiplayer_button_rect_,
                          this, 0);
     flat_button_[4].set_report_icons(&sprites8_[0], &sprites8_[1], &sprites8_[2]);
     flat_button_[4].set_font_redraw(&font1_);
