@@ -319,6 +319,26 @@ int SpriteBox::init(RECT *rect, Heap *heap) {
     return Dialog::init(rect, heap);
 }
 
+// The current entry's payload, or null without a list head.
+static inline SpriteStruct *current_sprite_payload(SpriteList &list) {
+    return list.head_ ? list.current_->sprite_payload() : 0;
+}
+
+// WORKAROUND(decl): the image expands StringStruct::next_entry (0x00402500)
+// on SpriteBox's list_; SpriteListBase is modelled as a sibling ring owner
+// without that member, so this copies its body for the sprite list.
+static inline SpriteStruct *sprite_list_next_entry(SpriteList &list) {
+    if (!list.head_) {
+        return 0;
+    }
+
+    list.current_ = list.current_->next;
+    if (++list.current_position_ == list.entry_count_) {
+        list.current_position_ = 0;
+    }
+    return list.current_->sprite_payload();
+}
+
 // Superseded seed deleted; seed paths below are historical Git provenance.
 // Historical seed observations (not fresh measurements or acceptance):
 // TRIED: no Ghidra hypothesis was provided for this address; body is a direct register-to-variable transcription of the disassembly (no vtable shim - all callees are direct calls; `T[1]`/`T[2]` model a per-class layout-offset table read through ebx= this-0xaa4). Compiles and matches through instr #1; diverges at #2 (push vs mov, prologue-adjacent). Landed at MISMATCH.
@@ -342,11 +362,11 @@ int SpriteBox::attach(GraphicWin *parent, int x, int y, int flags) {
     // field_54_ is read before abs and parked in a dead parameter home
     // (0x00610613), then stored to rect.right after the call (0x00610650).
     RECT rect;
-    const int right = field_54_;
     const int cell_height = Dialog::field_68_;
+    const int right = field_54_;
     const int top = abs(cell_height - field_58_) >> 1;
-    rect.left = 0;
     rect.top = top;
+    rect.left = 0;
     rect.right = right;
     rect.bottom = cell_height + top;
     // Park the cursor on the last entry; each item below advances first.
@@ -357,10 +377,7 @@ int SpriteBox::attach(GraphicWin *parent, int x, int y, int flags) {
             if (!list_.head_) {
                 id = 0;
             } else {
-                list_.current_ = list_.current_->next;
-                if (++list_.current_position_ == list_.entry_count_) {
-                    list_.current_position_ = 0;
-                }
+                sprite_list_next_entry(list_);
                 id = list_.current_->id;
             }
             spots_.add(id, 0, &rect);
@@ -409,26 +426,6 @@ int SpriteBox::sprite(Sprite *row_sprite, char *text, int id) {
         if (items.add(id) != 0) return 4;
     }
     return 0;
-}
-
-// The current entry's payload, or null without a list head.
-static inline SpriteStruct *current_sprite_payload(SpriteList &list) {
-    return list.head_ ? list.current_->sprite_payload() : 0;
-}
-
-// WORKAROUND(decl): the image expands StringStruct::next_entry (0x00402500)
-// on SpriteBox's list_; SpriteListBase is modelled as a sibling ring owner
-// without that member, so this copies its body for the sprite list.
-static inline SpriteStruct *sprite_list_next_entry(SpriteList &list) {
-    if (!list.head_) {
-        return 0;
-    }
-
-    list.current_ = list.current_->next;
-    if (++list.current_position_ == list.entry_count_) {
-        list.current_position_ = 0;
-    }
-    return list.current_->sprite_payload();
 }
 
 static inline Sprite *next_sprite(SpriteList &list) {
