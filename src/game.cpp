@@ -1428,8 +1428,8 @@ int __cdecl game_data(FILE *file, int write_mode) {
                         return 1;
                 }
             } else {
-                MessageWinDeferredBaseMessages[faction].remove_all();
                 StringList *list = &MessageWinDeferredBaseMessages[faction];
+                MessageWinDeferredBaseMessages[faction].remove_all();
                 list->current_position_ = 0;
                 list->allocator_ = 0;
                 if (fread(&string_count, 4, 1, file) == 0)
@@ -1442,9 +1442,9 @@ int __cdecl game_data(FILE *file, int write_mode) {
                     if (fread(StringTemp, string_length, 1, file) == 0)
                         return 1;
                     StringTemp[string_length] = '\0';
-                    list->field_20_ = 0;
-                    list->field_24_ = 0;
-                    list->pending_text_ = StringTemp;
+                    MessageWinDeferredBaseMessages[faction].field_20_ = 0;
+                    MessageWinDeferredBaseMessages[faction].field_24_ = 0;
+                    MessageWinDeferredBaseMessages[faction].pending_text_ = StringTemp;
                     list->add(string_id);
                 }
             }
