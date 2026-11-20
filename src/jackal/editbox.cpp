@@ -403,7 +403,7 @@ int EditBox::on_key_click(int character, int) {
 int EditBox::on_key_down(int key) {
     if (key == 9) return 0;
     field_B38_ = 0;
-    if (key & 0x10000) field_B38_ = 1;
+    if (key & 0x10000) field_B38_ |= 1;
     if (key & 0x20000) field_B38_ |= 2;
     switch (key & 0xffff) {
     case 0x27:
