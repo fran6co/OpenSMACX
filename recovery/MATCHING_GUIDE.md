@@ -8100,6 +8100,33 @@ Accessors, ternaries, accumulation, shared exits (par-5 2026-11-19, library)
   after a `done:` (or a common fall-through), not once per branch: two
   calls give two expansions (Buffer::line 0x005E15F0 free_data(1), jseq
   hunks 2 -> 0).
+Counters and tie arms (par-5 2026-11-20, councwin)
+- **The operand order of `lea r,[a+b+K]` over two register locals follows
+  variable identity, not the source operand order.** CouncWin::draw_leader
+  0x00425DB0 printed `lea [edi+eax+1]` where the image has `[eax+edi+1]`
+  (rankBase + count) under all six operand orders, groupings, member
+  stand-ins and every pad count; writing the three sequential faction-count
+  loops with one reused counter variable and one reused loop index (instead
+  of a fresh local per loop) gave the image order and made it exact
+  (1f82d2697e). When a `lea` or `add` over two locals is mirrored and
+  reordering the expression does nothing, merge sequential same-role locals.
+- **A `do { } while (++i < N)` array clear supplies the 3.4 node counter.**
+  CouncWin::make_resolution 0x00424410's remaining PlayersData loop printed
+  the add order of `[a1c] + i*0x833` mirrored; any member stand-in before
+  the earlier `option_votes` clear fixed it, and the original-looking fix is
+  that clear written `i = 0; do { votes[i] = 0; } while (++i < MaxPlayerNum);`
+  instead of a `for` (5f28ecbb58). Before adding a stand-in node, try the
+  do-while form of a nearby constant-count loop.
+- **A tie arm that jumps into the middle of the other arm's store is nested
+  under `count == greatest` and stores the same value.** make_resolution's
+  `governor == candidate` test jumps to `mov edx,ecx | mov [a20],eax` inside
+  the new-leader arm: VC6 cross-jumped two identical `field_A20_ =
+  candidate` stores. It needs `if (count == greatest) { if (gov ==
+  candidate) A20 = candidate; else if (gov != A20) A20 = 0; } else {
+  greatest = count; A20 = candidate; }` (21 -> 8 rows); a flat chain
+  (`count > greatest` first, tie as `else if`) stores a different value and
+  keeps two copies. Read a cross-jump into an arm's tail as a statement the
+  source repeated, and arrange the arms so the repeated stores end both.
 
 ### 3.8 VC5 (Caviar/VOX) x87 rules (2026-11-19 par-5)
 
