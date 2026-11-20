@@ -686,12 +686,28 @@ void Console::unload(int veh_id) {
 }
 
 
+// WORKAROUND(inline): the separator appends of Console::upgrade and
+// Console::editor_edit_veh push the shared header-inline COMDAT texts
+// (" " 0x00682820, ": " 0x00682E94, ")" 0x00682E98, "(" 0x00682E9C), so each
+// site is an inline expansion; the destination-taking strcat_X/say_X forms
+// overspend against the image (upgrade sdeck EH 12 / calls 16 with the
+// reservation probes re-swept, editor_edit_veh EH 1 / calls 7), while a
+// text-returning inline inside the caller's own strcat gives the raw-literal
+// structure (MATCHING_GUIDE 2.8, as DesignWin::select_special). The original
+// helper names and home are unknown; cleanup: replace with the original
+// header helpers once a call shape names them.
+inline const char *__cdecl console_space_text() { return " "; }
+inline const char *__cdecl console_colon_text() { return ": "; }
+inline const char *__cdecl console_open_paren_text() { return "("; }
+inline const char *__cdecl console_close_paren_text() { return ")"; }
+
 // WORKAROUND(inline): dead /Ob2 reservation probes for Console::upgrade (fold
 // to no code). Returns 7-9 (!is_human, !count, choice < 0) expanded one
 // ~FlatButton more than the image (EH runs 6,6,6 against 5,5,5) and the
 // image's ~FlatButton call multiset needs pass-2 room held past them. A free
-// outer inline around a one-test inner, ten times after return 9, gives the
-// image's depths at returns 1-9; flat one-test probes refuse only two. The
+// outer inline around a one-test inner, four times after return 9 (any of
+// 1-7 with the text-returning separators; 10 before them), gives the image's
+// depths at returns 1-9; flat one-test probes refuse only two. The
 // original's reservation-holding inlines in that stretch are not identified
 // (probes/upgrade_eh). With the failure arm's triad read once (below), the
 // return-1 teardown expands both ~StringList stages as the image does.
@@ -735,18 +751,18 @@ int Console::upgrade(int veh_id) { // 0x004D06C0
         }
         StringTemp[0] = '\0';
         strcat(StringTemp, VehPrototypes[Vehs[veh_id].proto_id].veh_name);
-        strcat_space(StringTemp);
-        strcat_open_paren(StringTemp);
+        strcat(StringTemp, console_space_text());
+        strcat(StringTemp, console_open_paren_text());
         say_stats_2(StringTemp, Vehs[veh_id].proto_id);
         if (VehPrototypes[Vehs[veh_id].proto_id].ability_flags) {
-            strcat_space(StringTemp);
+            strcat(StringTemp, console_space_text());
             for (int i = 0; i < MaxAbilityNum; i++) {
                 if (has_abil(Vehs[veh_id].proto_id, 1 << i)) {
                     strcat(StringTemp, table_text(Ability[i].abbreviation));
                 }
             }
         }
-        strcat_close_paren(StringTemp);
+        strcat(StringTemp, console_close_paren_text());
         parse_says(0, StringTemp, -1, -1);
         popup.start("WHICHUPGRADE", 0x40);
 
@@ -875,21 +891,21 @@ int Console::upgrade(int veh_id) { // 0x004D06C0
             }
             StringTemp[0] = '\0';
             strcat(StringTemp, VehPrototypes[proto_id].veh_name);
-            strcat_space(StringTemp);
-            strcat_open_paren(StringTemp);
+            strcat(StringTemp, console_space_text());
+            strcat(StringTemp, console_open_paren_text());
             say_stats_2(StringTemp, proto_id);
             if (VehPrototypes[proto_id].ability_flags) {
-                strcat_space(StringTemp);
+                strcat(StringTemp, console_space_text());
                 for (int j = 0; j < MaxAbilityNum; j++) {
                     if (has_abil(proto_id, 1 << j)) {
                         strcat(StringTemp, table_text(Ability[j].abbreviation));
                     }
                 }
             }
-            strcat_close_paren(StringTemp);
+            strcat(StringTemp, console_close_paren_text());
             strcat(StringTemp, "|");
             strcat(StringTemp, label_get(88));
-            strcat_colon(StringTemp);
+            strcat(StringTemp, console_colon_text());
             char cost_text[80];
             _itoa(choice, cost_text, 10);
             strcat(StringTemp, cost_text);
@@ -920,46 +936,40 @@ int Console::upgrade(int veh_id) { // 0x004D06C0
 
     StringTemp[0] = '\0';
     strcat(StringTemp, VehPrototypes[Vehs[veh_id].proto_id].veh_name);
-    strcat_space(StringTemp);
-    strcat_open_paren(StringTemp);
+    strcat(StringTemp, console_space_text());
+    strcat(StringTemp, console_open_paren_text());
     say_stats_2(StringTemp, Vehs[veh_id].proto_id);
     if (VehPrototypes[Vehs[veh_id].proto_id].ability_flags) {
-        strcat_space(StringTemp);
+        strcat(StringTemp, console_space_text());
         for (int i = 0; i < MaxAbilityNum; i++) {
             if (has_abil(Vehs[veh_id].proto_id, 1 << i)) {
                 strcat(StringTemp, table_text(Ability[i].abbreviation));
             }
         }
     }
-    strcat_close_paren(StringTemp);
+    strcat(StringTemp, console_close_paren_text());
     parse_says(0, StringTemp, -1, -1);
 
     StringTemp[0] = '\0';
     strcat(StringTemp, VehPrototypes[choice].veh_name);
-    strcat_space(StringTemp);
-    strcat_open_paren(StringTemp);
+    strcat(StringTemp, console_space_text());
+    strcat(StringTemp, console_open_paren_text());
     say_stats_2(StringTemp, choice);
     if (VehPrototypes[choice].ability_flags) {
-        strcat_space(StringTemp);
+        strcat(StringTemp, console_space_text());
         for (int i = 0; i < MaxAbilityNum; i++) {
             if (has_abil(choice, 1 << i)) {
                 strcat(StringTemp, table_text(Ability[i].abbreviation));
             }
         }
     }
-    strcat_close_paren(StringTemp);
+    strcat(StringTemp, console_close_paren_text());
     parse_says(1, StringTemp, -1, -1);
 
     upgrade_reserve_probe(1000);  // WORKAROUND(inline)
     upgrade_reserve_probe(1001);  // WORKAROUND(inline)
     upgrade_reserve_probe(1002);  // WORKAROUND(inline)
     upgrade_reserve_probe(1003);  // WORKAROUND(inline)
-    upgrade_reserve_probe(1004);  // WORKAROUND(inline)
-    upgrade_reserve_probe(1005);  // WORKAROUND(inline)
-    upgrade_reserve_probe(1006);  // WORKAROUND(inline)
-    upgrade_reserve_probe(1007);  // WORKAROUND(inline)
-    upgrade_reserve_probe(1008);  // WORKAROUND(inline)
-    upgrade_reserve_probe(1009);  // WORKAROUND(inline)
     int cost = upgrade_cost(faction_id, choice, Vehs[veh_id].proto_id) * 10;
     parse_num(0, cost);
     parse_num(1, PlayersData[faction_id].energy_reserves);
@@ -5086,11 +5096,11 @@ void Console::editor_edit_veh(int vehicle_id) {
 
     StringTemp[0] = '\0';
     strcat(StringTemp, VehPrototypes[Vehs[vehicle_id].proto_id].veh_name);
-    space();
+    strcat(StringTemp, console_space_text());
     editor_edit_veh_budget_probe4(5);  // WORKAROUND(inline): see editor_edit_veh_budget_probe4
-    say_open_paren();
+    strcat(StringTemp, console_open_paren_text());
     append_decimal(StringTemp, vehicle_id);
-    say_close_paren();
+    strcat(StringTemp, console_close_paren_text());
     if (x_pop_short("EDITVEH", 0x41, nullptr) < 0) {
         return;
     }
