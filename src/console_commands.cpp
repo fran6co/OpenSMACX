@@ -722,9 +722,10 @@ inline const char *__cdecl console_close_paren_text() { return ")"; }
 // to no code). Returns 7-9 (!is_human, !count, choice < 0) expanded one
 // ~FlatButton more than the image (EH runs 6,6,6 against 5,5,5) and the
 // image's ~FlatButton call multiset needs pass-2 room held past them. A free
-// outer inline around a one-test inner, four times after return 9 (any of
-// 1-7 with the text-returning separators; 10 before them), gives the image's
-// depths at returns 1-9; flat one-test probes refuse only two. The
+// outer inline around a one-test inner after return 9 gives the image's
+// depths at returns 1-9 (2026-11-20: one probe, 317 rows; two or three also
+// 317, four 336, none 419 with EH distance 1); flat one-test probes refuse
+// only two. The
 // original's reservation-holding inlines in that stretch are not identified
 // (probes/upgrade_eh). With the failure arm's triad read once (below), the
 // return-1 teardown expands both ~StringList stages as the image does.
@@ -980,9 +981,6 @@ int Console::upgrade(int veh_id) { // 0x004D06C0
     parse_says(1, StringTemp, -1, -1);
 
     upgrade_reserve_probe(1000);  // WORKAROUND(inline)
-    upgrade_reserve_probe(1001);  // WORKAROUND(inline)
-    upgrade_reserve_probe(1002);  // WORKAROUND(inline)
-    upgrade_reserve_probe(1003);  // WORKAROUND(inline)
     int cost = upgrade_cost(faction_id, choice, Vehs[veh_id].proto_id) * 10;
     parse_num(0, cost);
     parse_num(1, PlayersData[faction_id].energy_reserves);
