@@ -5384,7 +5384,7 @@ move_veh_ack:
             && packet->payload_18_ == ConsoleGlobal.faction_id_) {
             parse_says(0, get_noun(packet->payload_10_), -1, -1);
             StringTemp[0] = 0;
-            say_tech(StringTemp, packet->payload_14_, 0);
+            say_tech(packet->payload_14_, 0);
             parse_says(1, StringTemp, -1, -1);
             NetMsgPrimary.pop("STOLETECH", 0, 0, 0);
         }
