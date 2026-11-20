@@ -8442,6 +8442,46 @@ Counters and tie arms (par-5 2026-11-20, councwin)
   lays the success block after close() moves the return-0 host to the
   first unconditional return 0, the Open failure) look like the same
   family. Open.
+- **A loop whose test failure and whose last arm end in the same tail:
+  `for (;;) { if (!c) { T } ... T }` and `while (c) { ... break; } T` give
+  different cross-jump hosts** (par-5 2026-11-20, Net::send_packet_type
+  0x0062F8A0, 615ec1a082). With `while (c)` and `break` there is one copy
+  of T after the loop, every exit jumps to it and it hosts. The image's
+  `free(packet); return 0;` is hosted in the MIDDLE copy (the retry
+  failure inside the loop) and the loop-top `NetDirectPlay` test jumps to
+  the post-switch copy: the source wrote T at the top test and again at
+  the bottom of the body, `for (;;) { if (NetDirectPlay == 0) { free;
+  return 0; } ...; switch; free; return 0; }`, as in the exact sibling
+  sub_62F390. 42 -> 0 (exact); Net::send 0x00630080 107 -> 35 with the
+  same form plus the sibling's `case 0: continue; case 1: ...; break;`
+  switch with one shared tail after it. Read an image whose loop test
+  jumps forward into a copy of the tail that also ends the loop body as
+  T written twice inside `for (;;)`, not a `while` exit.
+- **A jcc-target arm after an exiting arm, when a `goto` target follows
+  it in source, is laid out LAST** (probe `analysis/probes/fwdjmp/run.py`,
+  par-5 2026-11-20). `for (...) { if (hit) goto found; } A0; if (f) { A;
+  goto fin; } NA; goto fin; found: F; if (x) {T} else if (y) {E1} else
+  {E2}; ...; fin: ...`: VC6 emits `A0 | A | F T jmp E1 E2 ... | NA | fin`
+  (found is pulled to the first unconditional jump after the loop, the
+  queued NA waits for the end). It does so in all 45 shapes tried: NA as
+  `else`, `else if`, negated, nested or `goto`-inverted test; NA and A
+  ending in `return` with distinct values (no shared join); found's
+  then-arm ending in an explicit `goto j`; the scan as `break` + `if (i >=
+  19)`/`i == 19` (fail first or found first), as a flag, with found inside
+  the loop, or written after the final return; extra `goto fin` sites
+  before and after; no loop (`if (g) goto found;`); one or two bare `if
+  (A || B) return 0;` toggles in front (tg1..tg5; an `||` in the flag test
+  itself, `if (a || g8)`, only swaps A and NA). action_destroy
+  0x004CAA50's image instead lays its NA (`triad == AIR && faction ==
+  player` BOMBFAILED, 0x4CAF94) right after found's FIRST `jmp` (the
+  world_climate/draw_map arm, 0x4CAF8F) and before that if's else-if, and
+  its ATESTUFF arm, not NA, falls into `finish_destroy`; the ten real-source
+  spellings of the same list keep NA at the end (50 rows best, the
+  current source). The unpooled literal order (Arty Failed, ARTYBOMBFAILED,
+  BOMBFAILED, BOMBSUCCEEDED) confirms NA precedes found in source. So the
+  image's placement is not a spelling of the fail path or the scan; the
+  remaining candidates are whole-function. Do not retry fail-path
+  spellings without new evidence.
 
 ### 3.8 VC5 (Caviar/VOX) x87 rules (2026-11-19 par-5)
 
