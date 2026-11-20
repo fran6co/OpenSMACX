@@ -566,7 +566,7 @@ struct GameDataHeaderWire {
     int vehicle_current_count_;                 // +0x038, legacy row bound
     int base_current_count_;                    // +0x03C, legacy row bound
     unsigned char opaque_040_[0x18];
-    GameDataLockMaskView lock_masks_;            // +0x058, copied then read
+    GameDataLockMaskBytes lock_masks_;           // +0x058, copied then read
     unsigned char opaque_05C_[0x28];
     int legacy_secret_project_prefix_[33];       // +0x084, copied as 33 dwords
     int governor_faction_;                      // +0x108
@@ -1146,11 +1146,11 @@ int __cdecl game_data(FILE *file, int write_mode) {
     if (GameDataWriteMode == 0 && GameDataLoadRequest == 0
         && (GameDataStateStorage.fields_.game_state_ & 1u) == 0) {
         // 0x005A7978 counts the alive human factions with bit_count.
-        if (bit_count(GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_
-                      & GameDataStateStorage.fields_.lock_masks_.bytes_.alive_mask_) > 1) {
+        if (bit_count(GameDataStateStorage.fields_.lock_masks_.human_mask_
+                      & GameDataStateStorage.fields_.lock_masks_.alive_mask_) > 1) {
             for (int faction = 1; faction < 8; ++faction) {
-                if ((GameDataStateStorage.fields_.lock_masks_.bytes_.alive_mask_ & (1 << faction)) != 0
-                    && (GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & (1 << faction)) != 0
+                if ((GameDataStateStorage.fields_.lock_masks_.alive_mask_ & (1 << faction)) != 0
+                    && (GameDataStateStorage.fields_.lock_masks_.human_mask_ & (1 << faction)) != 0
                     && PlayersData[faction].unk_102 != 0) {
                     GameDataLoadStatusWord = 1;
                     return 1;
@@ -1774,9 +1774,9 @@ int __cdecl load_daemon(LPCSTR path, int linearize_contours) {
                         }
                     }
                     if (!has_presence) {
-                        GameDataStateStorage.fields_.lock_masks_.bytes_.alive_mask_ &= ~(1 << alive_faction);
+                        GameDataStateStorage.fields_.lock_masks_.alive_mask_ &= ~(1 << alive_faction);
                     } else {
-                        GameDataStateStorage.fields_.lock_masks_.bytes_.alive_mask_ |= 1 << alive_faction;
+                        GameDataStateStorage.fields_.lock_masks_.alive_mask_ |= 1 << alive_faction;
                     }
                 }
 
@@ -1808,7 +1808,7 @@ int __cdecl load_daemon(LPCSTR path, int linearize_contours) {
                 if (IsMultiplayerNet != 0) {
                     IsMultiplayerPBEM = 0;
                 } else if ((GameDataStateStorage.fields_.net_turn_flags_ & 0x20) == 0
-                    && bit_count(GameDataStateStorage.fields_.lock_masks_.enable_mask_ & 0xFFu) <= 1) {
+                    && bit_count(GameDataStateStorage.fields_.lock_masks_.human_mask_) <= 1) {
                     IsMultiplayerPBEM = 0;
                 } else {
                     IsMultiplayerPBEM = 1;

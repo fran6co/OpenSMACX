@@ -146,7 +146,7 @@ BOOL __cdecl eligible(int faction_id) {
 // fewer than two living factions outvote. The image keeps the count in the
 // caller's frame (a dead parameter slot) and materialises the final test.
 static inline int wants_prop_candidate(int option, int &count) {
-    if (!(GameDataStateStorage.fields_.lock_masks_.bytes_.alive_mask_ & (1 << option))) {
+    if (!(GameDataStateStorage.fields_.lock_masks_.alive_mask_ & (1 << option))) {
         return 0;
     }
     count = 0;
@@ -156,7 +156,7 @@ static inline int wants_prop_candidate(int option, int &count) {
     const int votes = council_votes(option);
     for (int other = 1; other < MaxPlayerNum; ++other) {
         if (option != other
-            && (GameDataStateStorage.fields_.lock_masks_.bytes_.alive_mask_ & (1 << other))
+            && (GameDataStateStorage.fields_.lock_masks_.alive_mask_ & (1 << other))
             && council_votes(other) > votes) {
             count++;
         }
@@ -298,7 +298,7 @@ int __cdecl wants_prop(int faction, int proposal, int option) {
                         if (great_satan(option, 0)) {
                             score--;
                         } else {
-                            int humans = GameDataStateStorage.fields_.lock_masks_.enable_mask_ & 0xFF;  // [ebp-0x14]
+                            int humans = GameDataStateStorage.fields_.lock_masks_.human_mask_;  // [ebp-0x14]
                             if (humans & option_bit) {
                                 if (IsMultiplayerNet != 0 &&
                                     option == GameDataStateStorage.fields_.ranking_faction_id_unk1_ &&
@@ -351,11 +351,11 @@ int __cdecl wants_prop(int faction, int proposal, int option) {
                         }
                     }
                     if ((PlayersData[faction].diplo_treaties[option] & DTREATY_PACT) == 0) {
-                        if (((uint8_t)GameDataStateStorage.fields_.lock_masks_.enable_mask_ & option_bit)
+                        if ((GameDataStateStorage.fields_.lock_masks_.human_mask_ & option_bit)
                             && PlayersData[option].diff_level >= 3 && score > -2) {
                             score--;
                         }
-                        if (((uint8_t)GameDataStateStorage.fields_.lock_masks_.enable_mask_ & option_bit)
+                        if ((GameDataStateStorage.fields_.lock_masks_.human_mask_ & option_bit)
                             && (GameDataStateStorage.fields_.game_rules_ & 0x40) != 0 && score > -2) {
                             score--;
                         }
@@ -372,7 +372,7 @@ int __cdecl wants_prop(int faction, int proposal, int option) {
             CouncilWindow.leader_label_kind_[option] != static_cast<uint32_t>(option) &&
             option != faction) {
             score--;
-            if ((GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & option_bit) == 0) {
+            if ((GameDataStateStorage.fields_.lock_masks_.human_mask_ & option_bit) == 0) {
                 score /= 2;
             }
         }
@@ -380,7 +380,7 @@ int __cdecl wants_prop(int faction, int proposal, int option) {
             if (flag && (PlayersData[faction].diplo_treaties[option] & DTREATY_PACT) == 0) {
                 score = score > 0 ? 0 : score;  // setg/dec/and
             }
-            if (!((uint8_t)GameDataStateStorage.fields_.lock_masks_.enable_mask_ & 1 << faction) && !((uint8_t)GameDataStateStorage.fields_.lock_masks_.enable_mask_ & option_bit)) {
+            if (!(GameDataStateStorage.fields_.lock_masks_.human_mask_ & 1 << faction) && !(GameDataStateStorage.fields_.lock_masks_.human_mask_ & option_bit)) {
                 break;
             }
             if (PlayersData[faction].diplo_treaties[option] & 0x08000000u) {
@@ -997,7 +997,7 @@ Purpose: Say whether a faction may call the planetary council this turn:
          treaty-or-vendetta status bit with the caller.
 
 // ORIGINAL: 0x0052C670 ?can_call_council@@YAHHH@Z 0x0052C670-0x0052C87D BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["pinned 0x52C670..0x52C87D council caller and message paths", "source:src/council.h already declares can_call_council and src/council.cpp owns CouncilPbemGate", "0x009A64E9 is byte 1 of GameDataStateStorage.fields_.lock_masks_.enable_mask_; use its named alive_mask_ view", "0x00939284 is ConsoleGlobal.faction_id_ at member offset 0x23BD4", "pinned PE .data bounded literals including NUL: 0x68C020 solar_sm.pcx through 0x68C02D; 0x68C030 SUNSPOTSNO2 through 0x68C03B; 0x68C03C COUNCILHOT through 0x68C046; 0x68C048 council_sm.pcx through 0x68C056; 0x68C058 COUNCILNEEDALL through 0x68C066. No emitted C++ data symbol is asserted before root's fresh physical-symbol observation."], "reason": "council admission query in the existing council owner"}
+// RECOVERY_BINDING: v1 {"evidence": ["pinned 0x52C670..0x52C87D council caller and message paths", "source:src/council.h already declares can_call_council and src/council.cpp owns CouncilPbemGate", "0x009A64E9 is GameDataStateStorage.fields_.lock_masks_.alive_mask_ (byte 1 of the two status bytes)", "0x00939284 is ConsoleGlobal.faction_id_ at member offset 0x23BD4", "pinned PE .data bounded literals including NUL: 0x68C020 solar_sm.pcx through 0x68C02D; 0x68C030 SUNSPOTSNO2 through 0x68C03B; 0x68C03C COUNCILHOT through 0x68C046; 0x68C048 council_sm.pcx through 0x68C056; 0x68C058 COUNCILNEEDALL through 0x68C066. No emitted C++ data symbol is asserted before root's fresh physical-symbol observation."], "reason": "council admission query in the existing council owner"}
 // TRIED: MISMATCH #41 'mov' vs 'and', not chased further. The loop's triple early-exit (0x93f660==0 / two bit-mask misses) is a `goto blocked;` out of the for-loop rather than a `continue`, matching that all three targets jump clean out of the scan (not to its per-iteration increment).
 // size      525 bytes
 // prototype int (__cdecl ?can_call_council@@YAHHH@Z)(int32 factionID, int32 announce)
@@ -1029,7 +1029,7 @@ int __cdecl can_call_council(int faction_id, int announce) {
     if (GameDataStateStorage.fields_.sunspot_duration_ > 0) {
         if (announce != 0 && faction_id == ConsoleGlobal.faction_id_ &&
             ((1 << faction_id) &
-             GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_) != 0) {
+             GameDataStateStorage.fields_.lock_masks_.human_mask_) != 0) {
             NetMsgPrimary.pop("SUNSPOTSNO2", "solar_sm.pcx");
         }
         return 0;
@@ -1038,7 +1038,7 @@ int __cdecl can_call_council(int faction_id, int announce) {
     if (IsMultiplayerPBEM != 0 && CouncilPbemGate != 0) {
         if (announce != 0 && faction_id == ConsoleGlobal.faction_id_ &&
             ((1 << faction_id) &
-             GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_) != 0) {
+             GameDataStateStorage.fields_.lock_masks_.human_mask_) != 0) {
             NetMsgPrimary.pop("COUNCILHOT", static_cast<const char *>(0));
         }
         return 0;
@@ -1056,7 +1056,7 @@ int __cdecl can_call_council(int faction_id, int announce) {
     {
         for (int i = 1; i < 8; ++i) {
             if ((Players[i].rule_flags & 0x80) == 0) {
-                if ((GameDataStateStorage.fields_.lock_masks_.bytes_.alive_mask_ &
+                if ((GameDataStateStorage.fields_.lock_masks_.alive_mask_ &
                      (1 << i)) != 0 &&
                     i != faction_id) {
                     if ((PlayersData[faction_id].diplo_treaties[i] & 0x8000008) == 0) {
@@ -1064,7 +1064,7 @@ int __cdecl can_call_council(int faction_id, int announce) {
                         if ((static_cast<unsigned char>(GameDataStateStorage.fields_.game_state_) & 0x80) !=
                             0) {
                             const unsigned int bit_a1 = 1u << faction_id;
-                            if ((GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ &
+                            if ((GameDataStateStorage.fields_.lock_masks_.human_mask_ &
                                  bit_a1) != 0) {
                                 if (faction_id == ConsoleGlobal.faction_id_) {
                                     check_more = false;
@@ -1076,7 +1076,7 @@ int __cdecl can_call_council(int faction_id, int announce) {
                                 goto blocked;
                             }
                             const unsigned int mask =
-                                GameDataStateStorage.fields_.lock_masks_.enable_mask_ & 0xFF;
+                                GameDataStateStorage.fields_.lock_masks_.human_mask_;
                             const unsigned int bit_a1b =
                                 1u << faction_id;
                             if ((mask & bit_a1b) == 0) {
@@ -1093,7 +1093,7 @@ int __cdecl can_call_council(int faction_id, int announce) {
         return 1;
     blocked:
         if (announce != 0 && faction_id == ConsoleGlobal.faction_id_ &&
-            (GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ &
+            (GameDataStateStorage.fields_.lock_masks_.human_mask_ &
              (1 << faction_id)) != 0) {
             NetMsgPrimary.pop("COUNCILNEEDALL", "council_sm.pcx");
         }
@@ -1137,7 +1137,7 @@ void __cdecl call_council(int faction_id) {
     if (!faction_id) {
         return;
     }
-    if (ConsoleControlTurnActive && ((GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & (1 << faction_id)) || IsMultiplayerNet)) {
+    if (ConsoleControlTurnActive && ((GameDataStateStorage.fields_.lock_masks_.human_mask_ & (1 << faction_id)) || IsMultiplayerNet)) {
         return;
     }
     if (!can_call_council(faction_id,
@@ -1146,17 +1146,17 @@ void __cdecl call_council(int faction_id) {
     }
 
     int faction_bit = 1 << faction_id;
-    if (!(GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & faction_bit)
+    if (!(GameDataStateStorage.fields_.lock_masks_.human_mask_ & faction_bit)
             && GameDataStateStorage.fields_.governor_faction_ > 0
             && ((GameDataStateStorage.fields_.turn_current_num_ + faction_id * 2) & 0xF)) {
         return;
     }
-    if (!(GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & faction_bit)
+    if (!(GameDataStateStorage.fields_.lock_masks_.human_mask_ & faction_bit)
             && (GameDataStateStorage.fields_.game_state_ & 1)) {
         return;
     }
     if (IsMultiplayerNet && (GameDataStateStorage.fields_.net_turn_flags_ & 0x10)
-            && (GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & faction_bit)
+            && (GameDataStateStorage.fields_.lock_masks_.human_mask_ & faction_bit)
             && GameDataStateStorage.fields_.net_turn_faction_ != faction_id) {
         NetMsgPrimary.pop("SIMULNO", 0x1388, 0, 0);
         return;
@@ -1165,7 +1165,7 @@ void __cdecl call_council(int faction_id) {
     // faction is in the game.
     int i;
     for (i = 1; i < MaxPlayerNum; i++) {
-        if (!(GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & faction_bit)
+        if (!(GameDataStateStorage.fields_.lock_masks_.human_mask_ & faction_bit)
                 && is_human(i) && (Players[i].rule_flags & RFLAG_ALIEN)) {
             return;
         }
@@ -1198,16 +1198,16 @@ void __cdecl call_council(int faction_id) {
         switch (proposal) {
         case PROP_ELECT_PLANETARY_GOVERNOR: {
             if (!eligible(faction_id)
-                    && !(GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & faction_bit)
+                    && !(GameDataStateStorage.fields_.lock_masks_.human_mask_ & faction_bit)
                     && GameDataStateStorage.fields_.governor_faction_ > 0) {
                 continue;
             }
             int governor = GameDataStateStorage.fields_.governor_faction_;
             if (governor == faction_id
-                    && !(GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & faction_bit)) {
+                    && !(GameDataStateStorage.fields_.lock_masks_.human_mask_ & faction_bit)) {
                 continue;
             }
-            if (!(GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & faction_bit)) {
+            if (!(GameDataStateStorage.fields_.lock_masks_.human_mask_ & faction_bit)) {
                 if (governor > 0) {
                     uint32_t treaty = PlayersData[faction_id].diplo_treaties[governor];
                     if (treaty & DTREATY_PACT) {

@@ -606,7 +606,7 @@ BOOL __cdecl wants_to_attack(int faction_id, int faction_id_tgt, int faction_id_
 // ORIGINAL: 0x0055C430 ?comm_check@@YAXHH@Z 0x0055C430-0x0055C726 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["original:0x0055C430:complete-mapped-spans", "git:2ab1312e:src/recovered/units/0055c430.cpp", "source:src/faction.h:PlayersData-and-diplomacy-interfaces"], "reason": "Retain the original multiplayer and PBEM paths, asymmetric pending row and treaty writers. Recheck the local console and treaty state after modal notifications; forward the original actor, peer and zero mode to the separately unfinished communicate owner."}
 void __cdecl comm_check(int faction_id, int faction_id_with) {
-    int human_mask = GameDataStateStorage.fields_.lock_masks_.enable_mask_ & 0xFF;
+    int human_mask = GameDataStateStorage.fields_.lock_masks_.human_mask_;
     if (!(human_mask & (1 << faction_id))) {
         return;
     }
@@ -911,7 +911,7 @@ void __cdecl enemies_team_up(int faction_id, int faction_id_with,
     // computes, so these are assignments to the parameters' own locals.
     int index = turncoat_faction;
     if (!(PlayersData[faction_id].diplo_treaties[index] & 0x10)
-        && ((1 << turncoat_faction) & GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_) != 0) {
+        && ((1 << turncoat_faction) & GameDataStateStorage.fields_.lock_masks_.human_mask_) != 0) {
         int index_with = turncoat_faction;
         if (PlayersData[faction_id_with].diplo_treaties[index_with] & 0x10) {
             if (great_satan(turncoat_faction, 0) == 0 && !(PlayersData[faction_id].diplo_treaties[index] & 0x20)) {
@@ -1318,7 +1318,7 @@ void __cdecl encounter(int faction_id, int faction_id_with, int x, int y,
         x >= 0 && x < MapLongitudeBounds)
         treaty_on(faction_id, faction_id_with, 0x40000000u);
 
-    const uint32_t human_mask = GameDataStateStorage.fields_.lock_masks_.enable_mask_ & 0xFFu;
+    const uint32_t human_mask = GameDataStateStorage.fields_.lock_masks_.human_mask_;
     if ((human_mask & (1 << faction_id)) != 0 || (human_mask & (1 << faction_id_with)) != 0) {
         return;
     }
@@ -1563,7 +1563,7 @@ void __cdecl atrocity(int actor_id, int victim_id, int kind, int unknown) {
         }
         if (treaty & DTREATY_UNK_200000) {
             cause_friction(other_id, actor_id, 5);
-            int humans = GameDataStateStorage.fields_.lock_masks_.enable_mask_ & 0xFF;
+            int humans = GameDataStateStorage.fields_.lock_masks_.human_mask_;
             if (!(humans & (1 << other_id)) && humans & (1 << actor_id)
                 && PlayersData[actor_id].diplo_treaties[other_id] & DTREATY_COMMLINK
                 && !(PlayersData[actor_id].diplo_treaties[other_id] & (DTREATY_PACT | DTREATY_VENDETTA))
@@ -1606,7 +1606,7 @@ void __cdecl atrocity(int actor_id, int victim_id, int kind, int unknown) {
     int atrocities = PlayersData[actor_id].atrocities;
     int sanction_turns = atrocities * 10;
     // other_id is the VC6-scoped loop counter, MaxPlayerNum after the loop.
-    int humans = GameDataStateStorage.fields_.lock_masks_.enable_mask_ & 0xFF;
+    int humans = GameDataStateStorage.fields_.lock_masks_.human_mask_;
     if (humans & (1 << actor_id) && !(humans & (1 << other_id)) && !was_victim && atrocities >= 5) {
         PlayersData[victim_id].flags |= PFLAG_COMMIT_ATROCIT_WANTONLY;
     }

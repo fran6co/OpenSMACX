@@ -690,7 +690,7 @@ void BaseWin::farm_click(int x, int y, int) {
             }
             if (BaseCurrent->specialist_total == 0) {
                 int fight, growth, tech, wealth, power;
-                if ((GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & (1u << faction))
+                if ((GameDataStateStorage.fields_.lock_masks_.human_mask_ & (1u << faction))
                     && (BaseCurrent->governor & 0x80000000u)) {
                     growth = (BaseCurrent->governor >> 24) & 1;
                     tech = (BaseCurrent->governor >> 25) & 1;
@@ -4050,7 +4050,7 @@ void BaseWin::gov_on(int priorities) {
     } else {
         BaseCurrent->governor |= GOV_ACTIVE;
     }
-    if ((GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & (1 << BaseCurrent->faction_id_current)) == 0) {
+    if ((GameDataStateStorage.fields_.lock_masks_.human_mask_ & (1 << BaseCurrent->faction_id_current)) == 0) {
         BaseCurrent->governor &= ~GOV_ACTIVE;
     }
     BaseCurrent->governor &= ~GOV_UNK_40000000;
@@ -5012,7 +5012,7 @@ void BaseWin::rename() {
     strcpy(BaseCurrent->name_string, ParseStrBuffer[0].str);
     if (BaseCurrent->faction_id_current == ConsoleGlobal.faction_id_) {
         const int former = BaseCurrent->faction_id_former;
-        if (former != ConsoleGlobal.faction_id_ && !((1 << former) & GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_)
+        if (former != ConsoleGlobal.faction_id_ && !((1 << former) & GameDataStateStorage.fields_.lock_masks_.human_mask_)
             && !IsMultiplayerNet) {
             cause_friction(former, ConsoleGlobal.faction_id_, 3);
             const uint32_t treaty = PlayersData[BaseCurrent->faction_id_former]
@@ -6859,7 +6859,7 @@ void BaseWin::update_gov_buttons() {
     const int faction = BaseCurrent->faction_id_current;
     flatButtons_[8].set(BaseCurrent->governor >> 31);
     const int mask = 1 << faction;
-    if (GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & mask
+    if (GameDataStateStorage.fields_.lock_masks_.human_mask_ & mask
             ? (BaseCurrent->governor & GOV_PRIORITY_EXPLORE) && (BaseCurrent->governor & GOV_ACTIVE)
             : PlayersData[faction].ai_growth) {
         flatButtons_[4].set(1);
@@ -6870,7 +6870,7 @@ void BaseWin::update_gov_buttons() {
             flatButtons_[4].redraw();
         }
     }
-    if (GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & mask
+    if (GameDataStateStorage.fields_.lock_masks_.human_mask_ & mask
             ? (BaseCurrent->governor & GOV_PRIORITY_DISCOVER) && (BaseCurrent->governor & GOV_ACTIVE)
             : PlayersData[faction].ai_tech) {
         flatButtons_[5].set(1);
@@ -6881,7 +6881,7 @@ void BaseWin::update_gov_buttons() {
             flatButtons_[5].redraw();
         }
     }
-    if (GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & mask
+    if (GameDataStateStorage.fields_.lock_masks_.human_mask_ & mask
             ? (BaseCurrent->governor & GOV_PRIORITY_BUILD) && (BaseCurrent->governor & GOV_ACTIVE)
             : PlayersData[faction].ai_wealth) {
         flatButtons_[6].set(1);
@@ -6892,7 +6892,7 @@ void BaseWin::update_gov_buttons() {
             flatButtons_[6].redraw();
         }
     }
-    if (GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & mask
+    if (GameDataStateStorage.fields_.lock_masks_.human_mask_ & mask
             ? (BaseCurrent->governor & GOV_PRIORITY_CONQUER) && (BaseCurrent->governor & GOV_ACTIVE)
             : PlayersData[faction].ai_power) {
         flatButtons_[7].set(1);

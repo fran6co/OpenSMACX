@@ -854,7 +854,7 @@ int ProdPicker::exec(Base *base, int factionId, GraphicWin *owner, int modal) {
         } else {
             field_B6C_ = 4;
             if (!((1 << factionId)
-                    & static_cast<uint8_t>(GameDataStateStorage.fields_.lock_masks_.enable_mask_))
+                    & GameDataStateStorage.fields_.lock_masks_.human_mask_)
                 || (GameDataStateStorage.fields_.game_state_ & 0x40
                     && BaseCurrent->governor & 0x80000000U
                     && BaseCurrent->governor & 1U)) {
@@ -908,7 +908,7 @@ int ProdPicker::exec(Base *base, int factionId, GraphicWin *owner, int modal) {
                                  this, 0);
             x += -3 - static_cast<int>(field_B70_);
         } else {
-            if (!(static_cast<uint8_t>(GameDataStateStorage.fields_.lock_masks_.enable_mask_)
+            if (!(GameDataStateStorage.fields_.lock_masks_.human_mask_
                     & (1 << BaseCurrent->faction_id_current))
                 || (BaseCurrent->governor & 1U
                     && BaseCurrent->governor & 0x80000000U

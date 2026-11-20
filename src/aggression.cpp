@@ -73,7 +73,7 @@ void __cdecl intervention(int target_faction, int actor_faction) {
         if (candidate == target_faction || candidate == actor_faction) continue;
 
         // LockEnableMask byte +1 (native 0x009A64E9) is the faction-alive mask.
-        if ((GameDataStateStorage.fields_.lock_masks_.bytes_.alive_mask_ & (1 << candidate)) == 0) continue;
+        if ((GameDataStateStorage.fields_.lock_masks_.alive_mask_ & (1 << candidate)) == 0) continue;
         if ((PlayersData[candidate].diplo_treaties[target_faction] & 1u) == 0) continue;
         if ((PlayersData[candidate].diplo_treaties[actor_faction] & 0x11u) != 0) continue;
 
@@ -105,9 +105,9 @@ void __cdecl intervention(int target_faction, int actor_faction) {
         PluralityDefault = Players[actor_faction].is_noun_plural;
         parse_says(6, Players[actor_faction].noun_faction, -1, -1);
 
-        if (((1 << actor_faction) & static_cast<uint8_t>(GameDataStateStorage.fields_.lock_masks_.enable_mask_)) != 0 ||
-            (static_cast<uint8_t>(GameDataStateStorage.fields_.lock_masks_.enable_mask_) & (1 << target_faction)) != 0) {
-            if (((1 << actor_faction) & static_cast<uint8_t>(GameDataStateStorage.fields_.lock_masks_.enable_mask_)) != 0) {
+        if (((1 << actor_faction) & GameDataStateStorage.fields_.lock_masks_.human_mask_) != 0 ||
+            (GameDataStateStorage.fields_.lock_masks_.human_mask_ & (1 << target_faction)) != 0) {
+            if (((1 << actor_faction) & GameDataStateStorage.fields_.lock_masks_.human_mask_) != 0) {
                 PlayersData[actor_faction].diplo_spoke[candidate] = GameDataStateStorage.fields_.turn_current_num_;
             }
             treaty_on(candidate, actor_faction, 0x80000018);
@@ -279,7 +279,7 @@ int __cdecl steal_tech(int faction_id, int faction_id_with,
     }
 
     if (IsMultiplayerNet != 0 &&
-        (GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & (1 << faction_id)) != 0 &&
+        (GameDataStateStorage.fields_.lock_masks_.human_mask_ & (1 << faction_id)) != 0 &&
         faction_id != ConsoleGlobal.faction_id_) {
         return 0;
     }
@@ -317,7 +317,7 @@ int __cdecl steal_tech(int faction_id, int faction_id_with,
 
     tech_achieved(faction_id, cost, faction_id_with, 0);
 
-    if ((GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & (1 << faction_id)) == 0 && cost != 9999) {
+    if ((GameDataStateStorage.fields_.lock_masks_.human_mask_ & (1 << faction_id)) == 0 && cost != 9999) {
         bases_reset(-1, faction_id, 0);
     }
     return cost == 9999;
@@ -362,7 +362,7 @@ void __cdecl capture_base(int base_id, int faction_id, int mode) {
     PlayersData[faction_id].diplo_unk3[faction_id_def] += Bases[base_id].population_size * 2;
     strcpy(base_name, Bases[base_id].name_string);
     treaty_off(faction_id, faction_id_def, DTREATY_UNK_40);
-    if ((GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & (1 << faction_id)) || (GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & (1 << faction_id_def))) {
+    if ((GameDataStateStorage.fields_.lock_masks_.human_mask_ & (1 << faction_id)) || (GameDataStateStorage.fields_.lock_masks_.human_mask_ & (1 << faction_id_def))) {
         treaty_on(faction_id, faction_id_def, DTREATY_WANT_TO_TALK);
     }
     for (int player_id = 1; player_id < MaxPlayerNum; player_id++) {
@@ -473,7 +473,7 @@ void __cdecl capture_base(int base_id, int faction_id, int mode) {
                 } else if (IsMultiplayerNet) {
                     NetMsgPrimary.pop("ESCAPED2", 5000, 0, 0);
                 }
-                if (!(GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & (1 << faction_id_def))) {
+                if (!(GameDataStateStorage.fields_.lock_masks_.human_mask_ & (1 << faction_id_def))) {
                     base_reset(best_base, 0);
                 }
             }
@@ -503,7 +503,7 @@ void __cdecl capture_base(int base_id, int faction_id, int mode) {
         && !(Bases[base_id].state & BSTATE_ASSISTANT_KILLER_HOME)
         && !is_objective(base_id)
         && (Bases[base_id].population_size > 1
-            || (Bases[base_id].visibility & GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_)
+            || (Bases[base_id].visibility & GameDataStateStorage.fields_.lock_masks_.human_mask_)
             || IsMultiplayerNet)) {
         if (!--Bases[base_id].population_size) {
             base_kill(base_id);
@@ -640,7 +640,7 @@ void __cdecl capture_base(int base_id, int faction_id, int mode) {
     label[0] = '\0';
     strcat(label, liberated ? "LIBERATE" : "SEIZE");
     strcat(label, "BASE");
-    if ((GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & (1 << faction_id_def)) && !(GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & (1 << faction_id)) && base_id >= 0
+    if ((GameDataStateStorage.fields_.lock_masks_.human_mask_ & (1 << faction_id_def)) && !(GameDataStateStorage.fields_.lock_masks_.human_mask_ & (1 << faction_id)) && base_id >= 0
         && !(Bases[base_id].state & BSTATE_UNK_80) && !liberated) {
         Bases[base_id].state |= BSTATE_UNK_10000;
     }
@@ -753,7 +753,7 @@ void __cdecl capture_base(int base_id, int faction_id, int mode) {
         }
     }
 
-    if (!(GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & (1 << faction_id_def))) {
+    if (!(GameDataStateStorage.fields_.lock_masks_.human_mask_ & (1 << faction_id_def))) {
         bases_reset(faction_id_def, region, 0);
     }
     mon_conquer_base(faction_id, base_name);

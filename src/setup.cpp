@@ -858,7 +858,7 @@ void __cdecl balance() {
         if (GameDataStateStorage.fields_.diff_level_current_ > 1 &&
             (deficit >= 3 ||
              GameDataStateStorage.fields_.diff_level_current_ >=
-                 ((1 << faction_id) & GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ ? 4 : 5))) {
+                 ((1 << faction_id) & GameDataStateStorage.fields_.lock_masks_.human_mask_ ? 4 : 5))) {
             deficit -= 3;
             if (!(Players[faction_id].rule_flags & RFLAG_AQUATIC)) {
                 vehicle_id = veh_init(0, faction_id, x, y);
@@ -1193,7 +1193,7 @@ int __cdecl setup_player(int faction, int conqueror, int retry) {
     if (!faction) return 0;
     if (!is_alive(faction)) return 0;
     if (conqueror < -1 && conqueror != -282) {
-        GameDataStateStorage.fields_.lock_masks_.bytes_.alive_mask_ &= ~(1 << faction);
+        GameDataStateStorage.fields_.lock_masks_.alive_mask_ &= ~(1 << faction);
         return 0;
     }
 
@@ -1356,12 +1356,12 @@ search:
         || GameDataStateStorage.fields_.turn_current_num_ > 100) && !retry) {
         if (is_human(faction) && !IsMultiplayerNet) {
             EndgameExitReason = 7;
-            GameDataStateStorage.fields_.lock_masks_.bytes_.alive_mask_ &= ~(1 << faction);
+            GameDataStateStorage.fields_.lock_masks_.alive_mask_ &= ~(1 << faction);
             GameDataStateStorage.fields_.game_state_ |= 1;
             return 0;
         }
         PlayersData[faction].unk_102 = 0;
-        GameDataStateStorage.fields_.lock_masks_.bytes_.alive_mask_ &= ~(1 << faction);
+        GameDataStateStorage.fields_.lock_masks_.alive_mask_ &= ~(1 << faction);
         duplicate = faction == static_cast<int>(GameDataStateStorage.fields_.faction_rankings_[7])
             ? static_cast<int>(GameDataStateStorage.fields_.faction_rankings_[6])
             : static_cast<int>(GameDataStateStorage.fields_.faction_rankings_[7]);
@@ -1810,7 +1810,7 @@ void __cdecl setup_game(int reload) {
     GameDataStateStorage.fields_.terraform_announced_mask_[1] = 0;
     GameDataStateStorage.fields_.tutwin_flags_9a64bc_ = 0;
     GameDataStateStorage.fields_.turn_current_num_ = 0;
-    GameDataStateStorage.fields_.lock_masks_.bytes_.alive_mask_ = 0xFF;
+    GameDataStateStorage.fields_.lock_masks_.alive_mask_ = 0xFF;
     GameDataStateStorage.fields_.base_current_count_ = 0;
     GameDataStateStorage.fields_.game_setup_reset_word_ = 0;
     clear_all_offers();
@@ -1926,8 +1926,8 @@ void __cdecl setup_game(int reload) {
                 } while ((setup_results[other] != 0 &&
                           (tries < 200 ||
                            (tries < 400 && !(Players[other].rule_flags & 0x1000)))) ||
-                         (((uint8_t)GameDataStateStorage.fields_.lock_masks_.enable_mask_ & (1 << pair_faction)) &&
-                          ((uint8_t)GameDataStateStorage.fields_.lock_masks_.enable_mask_ & (1 << other)) &&
+                         ((GameDataStateStorage.fields_.lock_masks_.human_mask_ & (1 << pair_faction)) &&
+                          (GameDataStateStorage.fields_.lock_masks_.human_mask_ & (1 << other)) &&
                           tries < 100));
                 setup_results[pair_faction]++;
                 setup_results[other]++;
@@ -1943,8 +1943,8 @@ void __cdecl setup_game(int reload) {
                     do {
                         other = rand() % 7 + 1;
                     } while (other == extra_faction);
-                } while (((uint8_t)GameDataStateStorage.fields_.lock_masks_.enable_mask_ & (1 << extra_faction)) &&
-                         ((uint8_t)GameDataStateStorage.fields_.lock_masks_.enable_mask_ & (1 << other)) &&
+                } while ((GameDataStateStorage.fields_.lock_masks_.human_mask_ & (1 << extra_faction)) &&
+                         (GameDataStateStorage.fields_.lock_masks_.human_mask_ & (1 << other)) &&
                          ++rejected < 200);
                 setup_results[extra_faction]++;
                 setup_results[other]++;
@@ -1987,7 +1987,7 @@ void __cdecl setup_game(int reload) {
                 }
             } else {
                 for (int network_faction = 1; network_faction < MaxPlayerNum; network_faction++) {
-                    if (GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & (1 << network_faction)) {
+                    if (GameDataStateStorage.fields_.lock_masks_.human_mask_ & (1 << network_faction)) {
                         for (int assigned = 0; assigned < (int)((GameDataStateStorage.fields_.game_rules_ >> 6) & 1)
                                  + (PlayersData[network_faction].diff_level >= 3); assigned++) {
                             int tries = 0;
@@ -2205,7 +2205,7 @@ void __cdecl social_set(int faction_id) {
         }
 
         if (IsMultiplayerNet == 0 &&
-            (GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & (1u << faction_id)) != 0) {
+            (GameDataStateStorage.fields_.lock_masks_.human_mask_ & (1u << faction_id)) != 0) {
             set_base(base_id);
             base_compute(1);
         }

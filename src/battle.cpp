@@ -2306,7 +2306,7 @@ void __cdecl promote(int veh_id) {
     if (Vehs[veh_id].faction_id != ConsoleGlobal.faction_id_) {
         return;
     }
-    if (!((1 << Vehs[veh_id].faction_id) & GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_)) {
+    if (!((1 << Vehs[veh_id].faction_id) & GameDataStateStorage.fields_.lock_masks_.human_mask_)) {
         return;
     }
     if (morale_before == morale_veh(veh_id, 1, 0)) {
@@ -2528,7 +2528,7 @@ inline void battle_nerve_gas_choice(int &att_faction, int &att_bit, int &veh_id,
                                     int &def_faction, uint32_t &nerve_state,
                                     const char *label, const char *picture) {
     if (att_faction == ConsoleGlobal.faction_id_ &&
-        (GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & att_bit)) {
+        (GameDataStateStorage.fields_.lock_masks_.human_mask_ & att_bit)) {
         // 0x5071F0
         parse_says(0, VehPrototypes[Vehs[veh_id].proto_id].veh_name, -1, -1);
         parse_say(1, Ability[abil_index(ABL_NERVE_GAS)].name, -1, -1);
@@ -2537,18 +2537,18 @@ inline void battle_nerve_gas_choice(int &att_faction, int &att_bit, int &veh_id,
             Vehs[veh_id].state |= VSTATE_USED_NERVE_GAS;
         }
         g_BattleWin.pulse_timer();
-    } else if (!(att_bit & GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_)) {
+    } else if (!(att_bit & GameDataStateStorage.fields_.lock_masks_.human_mask_)) {
         // 0x507295: AI attacker policy
         // 0x507295: one combined test, one store at 0x507399. The
         // defender-human test runs after the first two.
         if (has_treaty(att_faction, def_faction, DTREATY_ATROCITY_VICTIM) ||
             (PlayersData[att_faction].flags & PFLAG_COMMIT_ATROCIT_WANTONLY) ||
             (((1 << def_faction) &
-              GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_) &&
+              GameDataStateStorage.fields_.lock_masks_.human_mask_) &&
              GameDataStateStorage.fields_.council_resolution_count_[PROP_REPEAL_UN_CHARTER] >
                  GameDataStateStorage.fields_.council_resolution_count_[PROP_REINSTATE_UN_CHARTER]) ||
             (((1 << def_faction) &
-              GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_) &&
+              GameDataStateStorage.fields_.lock_masks_.human_mask_) &&
              has_treaty(att_faction, def_faction, DTREATY_WANT_REVENGE) &&
              PlayersData[def_faction].integrity_blemishes +
                      (((GameDataStateStorage.fields_.game_rules_ & RULES_INTENSE_RIVALRY) &&
@@ -2740,7 +2740,7 @@ int __cdecl battle_fight(int veh_id, int dir, int target_x, int target_y,
 
     // 0x5070C6: automatic war declaration
     att_bit = 1 << att_faction;
-    if ((GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & att_bit) &&
+    if ((GameDataStateStorage.fields_.lock_masks_.human_mask_ & att_bit) &&
         VehPrototypes[Vehs[veh_id].proto_id].plan != PLAN_INFO_WARFARE &&
         (VehPrototypes[Vehs[def_id].proto_id].plan != PLAN_ALIEN_ARTIFACT || base_id >= 0) &&
         (NetDaemonNet.action_mode_ & 1) &&
@@ -2812,7 +2812,7 @@ int __cdecl battle_fight(int veh_id, int dir, int target_x, int target_y,
     if (VehPrototypes[Vehs[veh_id].proto_id].plan != PLAN_INFO_WARFARE &&
         VehPrototypes[Vehs[def_id].proto_id].plan != PLAN_ALIEN_ARTIFACT) {
         bool notify = false;
-        if ((1 << def_faction) & GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_) {
+        if ((1 << def_faction) & GameDataStateStorage.fields_.lock_masks_.human_mask_) {
             // 0x507583: the DEFENDER's view of the attacker
             if (PlayersData[def_faction].diplo_treaties[att_faction] & (DTREATY_TREATY | DTREATY_TRUCE)) {
                 notify = true;
@@ -2916,20 +2916,20 @@ int __cdecl battle_fight(int veh_id, int dir, int target_x, int target_y,
     {
         int diff_floor = att_faction ? 2 : 3;   // esi
         if (PlayersData[def_faction].diff_level < diff_floor &&
-            (GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & (1 << def_faction)) &&
-            !(att_bit & GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_)) {
+            (GameDataStateStorage.fields_.lock_masks_.human_mask_ & (1 << def_faction)) &&
+            !(att_bit & GameDataStateStorage.fields_.lock_masks_.human_mask_)) {
             att_strength = (PlayersData[def_faction].diff_level + 1) * att_strength / 4;
         }
         if (PlayersData[att_faction].diff_level < diff_floor &&
-            (att_bit & GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_) &&
-            !(GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & (1 << def_faction))) {
+            (att_bit & GameDataStateStorage.fields_.lock_masks_.human_mask_) &&
+            !(GameDataStateStorage.fields_.lock_masks_.human_mask_ & (1 << def_faction))) {
             att_strength = (4 - PlayersData[att_faction].diff_level) * att_strength / 2;
         }
     }
 
     // 0x507AD3: alien attacker
     if (att_faction == 0) {
-        if (!(GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & (1 << def_faction))) {
+        if (!(GameDataStateStorage.fields_.lock_masks_.human_mask_ & (1 << def_faction))) {
             if (VehPrototypes[Vehs[def_id].proto_id].plan == PLAN_TERRAFORMING) {
                 att_strength /= 2;
                 if (!(GameDataStateStorage.fields_.game_state_ & STATE_OMNISCIENT_VIEW) &&
@@ -2982,7 +2982,7 @@ int __cdecl battle_fight(int veh_id, int dir, int target_x, int target_y,
 
     // 0x507CA4: local human odds prompts
     if ((NetDaemonNet.action_mode_ & 1) && !intercepted &&
-        (static_cast<uint8_t>(att_bit) & GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_) &&
+        (static_cast<uint8_t>(att_bit) & GameDataStateStorage.fields_.lock_masks_.human_mask_) &&
         att_faction == ConsoleGlobal.faction_id_ && mode == 0 &&
         !Chassis[VehPrototypes[Vehs[veh_id].proto_id].chassis_id].missile &&
         !(Vehs[veh_id].state & (VSTATE_UNK_200 | VSTATE_EXPLORE))) {
@@ -3258,7 +3258,7 @@ L_50835D:
         // 0x508B12
         draw_tile_fixup(target_x, target_y, 1, 2);
         if (base_id >= 0 &&
-            !(GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & (1 << def_faction))) {
+            !(GameDataStateStorage.fields_.lock_masks_.human_mask_ & (1 << def_faction))) {
             base_reset(base_id, 0);
         }
         return 0;   // 0x508B47
@@ -3663,7 +3663,7 @@ L_509980:
             }
             veh_battle_msg("COMBATLOSS", 0);
         } else if (IsMultiplayerPBEM &&
-                   (GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & (1 << def_faction))) {
+                   (GameDataStateStorage.fields_.lock_masks_.human_mask_ & (1 << def_faction))) {
             // 0x50A61D
             parse_says(0, VehPrototypes[Vehs[def_id].proto_id].veh_name, -1, -1);
             clear();
@@ -3762,7 +3762,7 @@ L_509980:
                 && att_faction != 0
                 && veh_who(target_x, target_y) < 0
                 && (PlayersData[def_faction].diff_level != 0
-                    || !(GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & (1 << def_faction)))) {
+                    || !(GameDataStateStorage.fields_.lock_masks_.human_mask_ & (1 << def_faction)))) {
                 // 0x50AD8E
                 if (--Bases[base_id].population_size <= 0) {
                     nerve_gas = 0;
@@ -3782,7 +3782,7 @@ L_509980:
                 Bases[base_id].faction_pop_size_intel[att_faction] = Bases[base_id].population_size;
             }
             // 0x50AE02
-            if (!(GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & (1 << def_faction))) {
+            if (!(GameDataStateStorage.fields_.lock_masks_.human_mask_ & (1 << def_faction))) {
                 base_reset(base_id, 0);
             }
             if (nerve_gas != 0) {
@@ -3815,7 +3815,7 @@ L_509980:
 L_50aebf:
             // 0x50AEBF
             if (veh_who(target_x, target_y) < 0
-                && (GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & (1 << def_faction))
+                && (GameDataStateStorage.fields_.lock_masks_.human_mask_ & (1 << def_faction))
                 && base_id >= 0) {
                 invasions(base_id);
             }
@@ -3845,7 +3845,7 @@ L_50aebf:
             }
             veh_battle_msg("COMBATWIN", 0);
         } else if (IsMultiplayerPBEM &&
-                   (GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & (1 << def_faction))) {
+                   (GameDataStateStorage.fields_.lock_masks_.human_mask_ & (1 << def_faction))) {
             // 0x50B068
             parse_says(0, VehPrototypes[Vehs[def_id].proto_id].veh_name, -1, -1);
             clear();
@@ -3874,7 +3874,7 @@ L_50aebf:
 
     // 0x50B1BC
     if (booty_count != 0
-        && !(GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & (1 << def_faction))
+        && !(GameDataStateStorage.fields_.lock_masks_.human_mask_ & (1 << def_faction))
         && !has_treaty(att_faction, def_faction, DTREATY_VENDETTA)) {   // called (0x5002F0)
         cause_friction(def_faction, att_faction, 5);
         treaty_on(att_faction, def_faction, DTREATY_WANT_TO_TALK);
@@ -4045,7 +4045,7 @@ L_50b203:
             result = 0;
         }
         // 0x50B81C
-        if (!(static_cast<uint8_t>(att_bit) & GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_) &&
+        if (!(static_cast<uint8_t>(att_bit) & GameDataStateStorage.fields_.lock_masks_.human_mask_) &&
             base_id >= 0 && veh_who(target_x, target_y) < 0) {
             int c = VehPrototypes[Vehs[cur].proto_id].chassis_id;
             if (Chassis[c].triad == TRIAD_AIR && Chassis[c].range != 0

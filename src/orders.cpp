@@ -1043,7 +1043,7 @@ L_595734:
                         Vehs[target_veh].visibility = 0;
                         parse_says(2, Bases[best_base].name_string, -1, -1);
                     } else if (((1 << owner)
-                                & static_cast<uint8_t>(GameDataStateStorage.fields_.lock_masks_.enable_mask_)) == 0) {
+                                & GameDataStateStorage.fields_.lock_masks_.human_mask_) == 0) {
                         veh_kill(target_veh);
                     }
                 }
@@ -1364,7 +1364,7 @@ L_597350:
                             && VehPrototypes[Vehs[veh_id].proto_id].plan != PLAN_ALIEN_ARTIFACT
                             && target_veh < 0))
                     && ((NetDaemonNet.action_mode_ & 1)
-                        || !(GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & faction_bit))) {
+                        || !(GameDataStateStorage.fields_.lock_masks_.human_mask_ & faction_bit))) {
                 // 5977c7
                 int roll;
                 if (ConsoleControlTurnActive) {
@@ -1777,7 +1777,7 @@ L_598cb9:
         spot_all(veh_id, 1);
         if (faction != ConsoleGlobal.faction_id_
                 && !(static_cast<uint8_t>(faction_bit)
-                     & static_cast<uint8_t>(GameDataStateStorage.fields_.lock_masks_.enable_mask_))
+                     & GameDataStateStorage.fields_.lock_masks_.human_mask_)
                 && !(GameDataStateStorage.fields_.game_state_ & STATE_OMNISCIENT_VIEW)
                 && spotted
                 && !ConsoleGlobal.vehicle_order_ui_state()
@@ -1801,7 +1801,7 @@ L_598cb9:
                     stranded = 0;
             }
             if (static_cast<uint8_t>(faction_bit)
-                    & static_cast<uint8_t>(GameDataStateStorage.fields_.lock_masks_.enable_mask_)) {
+                    & GameDataStateStorage.fields_.lock_masks_.human_mask_) {
                 if (!stranded
                         && (Chassis[VehPrototypes[Vehs[veh_id].proto_id].chassis_id].range != 1
                             || !veh_moves(veh_id) || !flag_74)
@@ -1817,7 +1817,7 @@ L_598cb9:
             // 598f9e
             if (Chassis[VehPrototypes[Vehs[veh_id].proto_id].chassis_id].range) {
                 if (!(static_cast<uint8_t>(faction_bit)
-                      & static_cast<uint8_t>(GameDataStateStorage.fields_.lock_masks_.enable_mask_))
+                      & GameDataStateStorage.fields_.lock_masks_.human_mask_)
                         || (faction == ConsoleGlobal.faction_id_
                             && ((GameDataStateStorage.fields_.game_preferences_ & 0x10000)
                                 || (Vehs[veh_id].state & 0x4200))
@@ -1855,7 +1855,7 @@ L_598cb9:
                         if (Vehs[veh_id].terraforming_turns + 1
                                     >= Chassis[VehPrototypes[Vehs[veh_id].proto_id].chassis_id].range / 2
                                 && (!(static_cast<uint8_t>(faction_bit)
-                                      & static_cast<uint8_t>(GameDataStateStorage.fields_.lock_masks_.enable_mask_))
+                                      & GameDataStateStorage.fields_.lock_masks_.human_mask_)
                                     || (faction == ConsoleGlobal.faction_id_
                                         && ((GameDataStateStorage.fields_.game_preferences_ & 0x10000)
                                             || (Vehs[veh_id].state & 0x4200))
@@ -1973,13 +1973,13 @@ L_599154:
 
         // 59985a: an AI transport out of moves at sea sets a transport goal.
         if (!(static_cast<uint8_t>(1 << faction)
-              & static_cast<uint8_t>(GameDataStateStorage.fields_.lock_masks_.enable_mask_))
+              & GameDataStateStorage.fields_.lock_masks_.human_mask_)
                 && VehPrototypes[Vehs[veh_id].proto_id].plan == PLAN_NAVAL_TRANSPORT
                 && is_ocean(dest_x, dest_y)
                 && base_id < 0
                 && !veh_moves(veh_id)) {
             if (zoc_any(Vehs[veh_id].x, Vehs[veh_id].y, faction)
-                    || (GameDataStateStorage.fields_.lock_masks_.enable_mask_ & Vehs[veh_id].visibility)
+                    || (GameDataStateStorage.fields_.lock_masks_.human_mask_ & Vehs[veh_id].visibility)
                     || Vehs[veh_id].move_to_ai_type == 0x75) {
                 for (v = veh_top(veh_id); v >= 0; v = veh_next_stack_id(v)) {
                     if (Vehs[v].order == ORDER_SENTRY_BOARD && Vehs[v].waypoint_x[0] == veh_id)
@@ -2035,7 +2035,7 @@ L_599b2a:
     if (selector == 0) {
         Vehs[veh_id].order = ORDER_NONE;
         const int locked = (1 << faction) &
-            static_cast<uint8_t>(GameDataStateStorage.fields_.lock_masks_.enable_mask_);
+            GameDataStateStorage.fields_.lock_masks_.human_mask_;
         if (!locked || (Vehs[veh_id].state & 0x4200) != 0) {
             if (++Vehs[veh_id].unk_6 >= 24 || locked) {
                 Vehs[veh_id].unk_6 = 0;

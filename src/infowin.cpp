@@ -322,7 +322,7 @@ void InfoWin::setup_text() {
             line_height = 0;
             value = 0;
             best = ConsoleGlobal.faction_id_;
-            i = GameDataStateStorage.fields_.lock_masks_.bytes_.alive_mask_;
+            i = GameDataStateStorage.fields_.lock_masks_.alive_mask_;
             for (j = 1; j < MaxPlayerNum; j++) {
                 if (i & (1 << j) && PlayersData[j].tech_ranking >= value) {
                     value = PlayersData[j].tech_ranking;
@@ -341,7 +341,7 @@ void InfoWin::setup_text() {
 
             value = 0;
             best = ConsoleGlobal.faction_id_;
-            i = GameDataStateStorage.fields_.lock_masks_.bytes_.alive_mask_;
+            i = GameDataStateStorage.fields_.lock_masks_.alive_mask_;
             for (j = 1; j < MaxPlayerNum; j++) {
                 if (i & (1 << j) && PlayersData[j].mil_strength_1 >= value) {
                     value = PlayersData[j].mil_strength_1;
@@ -360,7 +360,7 @@ void InfoWin::setup_text() {
 
             value = 0;
             best = ConsoleGlobal.faction_id_;
-            i = GameDataStateStorage.fields_.lock_masks_.bytes_.alive_mask_;
+            i = GameDataStateStorage.fields_.lock_masks_.alive_mask_;
             for (j = 1; j < MaxPlayerNum; j++) {
                 if (i & (1 << j) && PlayersData[j].pop_total >= value) {
                     value = PlayersData[j].pop_total;
@@ -379,7 +379,7 @@ void InfoWin::setup_text() {
 
             value = 0;
             best = ConsoleGlobal.faction_id_;
-            i = GameDataStateStorage.fields_.lock_masks_.bytes_.alive_mask_;
+            i = GameDataStateStorage.fields_.lock_masks_.alive_mask_;
             for (j = 1; j < MaxPlayerNum; j++) {
                 if (i & (1 << j) && PlayersData[j].energy_reserves >= value) {
                     value = PlayersData[j].energy_reserves;
@@ -398,7 +398,7 @@ void InfoWin::setup_text() {
 
             value = 0;
             best = ConsoleGlobal.faction_id_;
-            i = GameDataStateStorage.fields_.lock_masks_.bytes_.alive_mask_;
+            i = GameDataStateStorage.fields_.lock_masks_.alive_mask_;
             for (faction = 1; faction < MaxPlayerNum; faction++) {
                 if (i & (1 << faction)) {
                     int sum = 0;

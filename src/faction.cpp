@@ -2275,7 +2275,7 @@ void __cdecl diplomacy_check(int faction, int other, int update) {
         maximum_bases[i] = 1;
     }
     for (int allied_faction = 1; allied_faction < 8; allied_faction++) {
-        if (GameDataStateStorage.fields_.lock_masks_.bytes_.alive_mask_ & (1 << allied_faction)) {
+        if (GameDataStateStorage.fields_.lock_masks_.alive_mask_ & (1 << allied_faction)) {
             if (has_treaty(faction, allied_faction, 1) && !has_treaty(allied_faction, faction, 0x2000000)) {
                 DiploScratchFA54++;
             }
@@ -2535,7 +2535,7 @@ void __cdecl diplomacy_check(int faction, int other, int update) {
     DiploScratchF7B8 = DiploScratchFA4C = 0;
     if (!pact || !has_treaty(other, faction, 0x2000000)) {
         for (int ally = 1; ally < 8; ally++) {
-            if ((GameDataStateStorage.fields_.lock_masks_.bytes_.alive_mask_ & (1 << ally))
+            if ((GameDataStateStorage.fields_.lock_masks_.alive_mask_ & (1 << ally))
                 && ally != faction && ally != other
                 && has_treaty(other, ally, 0x10)
                 && (!has_treaty(ally, faction, 1) || !has_treaty(ally, faction, 0x2000000))
@@ -2661,7 +2661,7 @@ void __cdecl diplomacy_check(int faction, int other, int update) {
     DiploScratchF808 = 0;
     for (int ally = 1; ally < 8; ally++) {
         int bit = 1 << ally;
-        if (!(GameDataStateStorage.fields_.lock_masks_.bytes_.alive_mask_ & bit)
+        if (!(GameDataStateStorage.fields_.lock_masks_.alive_mask_ & bit)
             || ally == faction || ally == other) {
             continue;
         }
@@ -2686,7 +2686,7 @@ void __cdecl diplomacy_check(int faction, int other, int update) {
                 }
             }
         } else if (!(other_treaty & 0x10)) {
-            if (update && !(GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & bit)) {
+            if (update && !(GameDataStateStorage.fields_.lock_masks_.human_mask_ & bit)) {
                 if (!has_treaty(faction, ally, 8)) {
                     if ((!DiploScratchFA38 || contiguous(faction, ally, 0, 0))
                         && (has_treaty(other, ally, 2) || !DiploScratchFA38)) {
@@ -2709,7 +2709,7 @@ void __cdecl diplomacy_check(int faction, int other, int update) {
                 && (!has_treaty(ally, faction, 1) || !has_treaty(ally, faction, 0x2000000))) {
                 DiploScratchF7E8 = ally;
             } else if (!DiploScratchF7E8 && update && !(PlayersData[faction].diplo_treaties[ally] & 8)
-                && !(GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & bit)) {
+                && !(GameDataStateStorage.fields_.lock_masks_.human_mask_ & bit)) {
                 if (PlayersData[ally].mil_strength_1 > strength || !wants_to_attack(other, ally, 0) || DiploScratchFA98) {
                     DiploScratchF7D4 = ally;
                 }
@@ -4697,7 +4697,7 @@ void __cdecl commlink_attempt(int target_faction) {
         return;
     }
     int target_bit = 1 << target_faction;
-    if (!(GameDataStateStorage.fields_.lock_masks_.bytes_.alive_mask_ & target_bit)) {
+    if (!(GameDataStateStorage.fields_.lock_masks_.alive_mask_ & target_bit)) {
         return;
     }
     if (GameDataStateStorage.fields_.sunspot_duration_ > 0) {
@@ -4727,7 +4727,7 @@ void __cdecl commlink_attempt(int target_faction) {
         return;
     }
     if (IsMultiplayerNet) {
-        if ((uint8_t)target_bit & GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_) {
+        if ((uint8_t)target_bit & GameDataStateStorage.fields_.lock_masks_.human_mask_) {
             CommlinkPending = 1;
             CommlinkFaction = target_faction;
             message_data(0x1501, target_faction, local_faction, target_faction, 0, 0);
@@ -4753,7 +4753,7 @@ void __cdecl commlink_attempt(int target_faction) {
             return;
         }
     }
-    if (IsMultiplayerPBEM && (uint8_t)target_bit & GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_) {
+    if (IsMultiplayerPBEM && (uint8_t)target_bit & GameDataStateStorage.fields_.lock_masks_.human_mask_) {
         diplo(local_faction, target_faction);
         return;
     }
@@ -5070,7 +5070,7 @@ void __cdecl demands_withdrawal(int faction_id, int faction_id_with) {
         return;
     }
     if (IsMultiplayerNet != 0 &&
-        (GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & (1u << faction_id_with)) != 0) {
+        (GameDataStateStorage.fields_.lock_masks_.human_mask_ & (1u << faction_id_with)) != 0) {
         return;
     }
 
@@ -5118,7 +5118,7 @@ int __cdecl commlink_attempter(int faction_id, int contact_flags) {
         GenderDefault = Players[contact_flags].noun_gender;
         PluralityDefault = Players[contact_flags].is_noun_plural;
         parse_says(2, Players[contact_flags].noun_faction, -1, -1);
-        if ((GameDataStateStorage.fields_.lock_masks_.bytes_.alive_mask_ & (1 << contact_flags)) == 0) {
+        if ((GameDataStateStorage.fields_.lock_masks_.alive_mask_ & (1 << contact_flags)) == 0) {
             NetMsgPrimary.pop("ERADICATED", 5000, 0, NULL);
             return 1;
         }
@@ -6352,7 +6352,7 @@ int __cdecl proposal_menu(int faction_id, int faction_id_with) {
         }
     }
     for (i = 1; i < MaxPlayerNum; i++) {
-        if (GameDataStateStorage.fields_.lock_masks_.bytes_.alive_mask_ & (1 << i)
+        if (GameDataStateStorage.fields_.lock_masks_.alive_mask_ & (1 << i)
             && i != faction_id && i != faction_id_with) {
             if ((PlayersData[faction_id].diplo_treaties[i] & DTREATY_COMMLINK)) {
                 contact_count++;
@@ -6449,10 +6449,10 @@ int __cdecl proposal_menu(int faction_id, int faction_id_with) {
         if (!X_text_open(ScriptPopupFile, "ATTACKSTRING")) {
             text_get();
             for (i = 1; i < MaxPlayerNum; i++) {
-                if (GameDataStateStorage.fields_.lock_masks_.bytes_.alive_mask_ & (1 << i)
+                if (GameDataStateStorage.fields_.lock_masks_.alive_mask_ & (1 << i)
                     && i != faction_id && i != faction_id_with
                     && ((PlayersData[faction_id].diplo_treaties[i] & DTREATY_COMMLINK)
-                        || GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & (1 << i))) {
+                        || GameDataStateStorage.fields_.lock_masks_.human_mask_ & (1 << i))) {
                     parse_says(0, get_title(i), -1, -1);
                     parse_says(1, get_name(i), -1, -1);
                     parse_says(2, get_noun(i), -1, -1);
@@ -6489,7 +6489,7 @@ commlink:
         }
         text_get();
         for (i = 1; i < MaxPlayerNum; i++) {
-            if (GameDataStateStorage.fields_.lock_masks_.bytes_.alive_mask_ & (1 << i)
+            if (GameDataStateStorage.fields_.lock_masks_.alive_mask_ & (1 << i)
                 && i != faction_id && i != faction_id_with
                 && !(PlayersData[faction_id].diplo_treaties[i] & DTREATY_COMMLINK)) {
                 parse_says(0, get_title(i), -1, -1);
@@ -8505,7 +8505,7 @@ if (DiploScratchFA60 || DiploScratchFA70) {
 
 if (DiploScratchF7D4 &&
     !(PlayersData[faction_id].diplo_treaties[DiploScratchF7D4] & 0x8000008) &&
-    (!(GameDataStateStorage.fields_.lock_masks_.enable_mask_ & (1 << DiploScratchF7D4)) ||
+    (!(GameDataStateStorage.fields_.lock_masks_.human_mask_ & (1 << DiploScratchF7D4)) ||
      ((!IsMultiplayerNet || !Rules.tgl_human_always_contact_net) &&
       (!IsMultiplayerPBEM || !Rules.tgl_humans_always_contact_pbem))) &&
     !(PlayersData[faction_id].diplo_treaties[faction_id_with] & 0x31) &&
@@ -8574,7 +8574,7 @@ if (DiploScratchF7D4 &&
 if (DiploScratchFA38 && !has_treaty(faction_id, faction_id_with, 0x31) &&
     !has_treaty(faction_id, DiploScratchFA38, 0x10) &&
     (DiploScratchFA54 < 2 || great_satan(DiploScratchFA38, 0) ||
-     (GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & (1 << DiploScratchFA38))) &&
+     (GameDataStateStorage.fields_.lock_masks_.human_mask_ & (1 << DiploScratchFA38))) &&
     wants_to_attack(faction_id_with, DiploScratchFA38, faction_id) &&
     (PlayersData[faction_id].ranking <= 5 || PlayersData[faction_id_with].ranking <= 4 ||
      great_satan(DiploScratchFA38, 0)) &&
@@ -8611,7 +8611,7 @@ if (DiploScratchFA38 && !has_treaty(faction_id, faction_id_with, 0x31) &&
 if (DiploScratchF7C8 && !has_treaty(faction_id, faction_id_with, 0x31) &&
     !has_treaty(faction_id, DiploScratchF7C8, 0x10) &&
     (DiploScratchFA54 < 2 || great_satan(DiploScratchF7C8, 0) ||
-     (GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & (1 << DiploScratchF7C8))) &&
+     (GameDataStateStorage.fields_.lock_masks_.human_mask_ & (1 << DiploScratchF7C8))) &&
     wants_to_attack(faction_id_with, DiploScratchF7C8, faction_id) &&
     (PlayersData[faction_id].ranking <= 5 || PlayersData[faction_id_with].ranking <= 4 ||
      great_satan(DiploScratchF7C8, 0)) &&
@@ -8648,7 +8648,7 @@ if (DiploScratchF7C8 && !has_treaty(faction_id, faction_id_with, 0x31) &&
 if (DiploScratchF7D8 && !has_treaty(faction_id, faction_id_with, 0x31) &&
     !has_treaty(faction_id, DiploScratchF7D8, 0x10000001) &&
     !(PlayersData[faction_id].traded_maps & (1 << DiploScratchF7D8)) &&
-    (!(GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & (1 << DiploScratchF7D8)) ||
+    (!(GameDataStateStorage.fields_.lock_masks_.human_mask_ & (1 << DiploScratchF7D8)) ||
      (PlayersData[faction_id_with].traded_maps & (1 << DiploScratchF7D8))) &&
     ((DiploScratchFAA8 >= 0 &&
       !(GameDataStateStorage.fields_.game_rules_ & 0x2000000)) ||
@@ -8692,7 +8692,7 @@ if (DiploScratchF7D8 && !has_treaty(faction_id, faction_id_with, 0x31) &&
 if (DiploScratchFA38 && !has_treaty(faction_id, faction_id_with, 0x30) &&
     !has_project(4, faction_id) &&
     !has_treaty(faction_id, DiploScratchFA38, 8) &&
-    (!(GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & (1 << DiploScratchFA38)) ||
+    (!(GameDataStateStorage.fields_.lock_masks_.human_mask_ & (1 << DiploScratchFA38)) ||
      !auto_contact()) &&
     wants_to_speak(faction_id, faction_id_with)) {
     communicate_gift_kind = 0;
@@ -8772,7 +8772,7 @@ if (DiploScratchFA38 && !has_treaty(faction_id, faction_id_with, 0x30) &&
 if (DiploScratchF7C8 && !has_treaty(faction_id, faction_id_with, 0x30) &&
     !has_treaty(faction_id, DiploScratchF7C8, 0x10000001) &&
     !(PlayersData[faction_id].traded_maps & (1 << DiploScratchF7C8)) &&
-    (!(GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & (1 << DiploScratchF7C8)) ||
+    (!(GameDataStateStorage.fields_.lock_masks_.human_mask_ & (1 << DiploScratchF7C8)) ||
      (PlayersData[faction_id_with].traded_maps & (1 << DiploScratchF7C8))) &&
     has_treaty(faction_id, DiploScratchF7C8, 0x8000000) &&
     DiploScratchFAA8 >= 0 && wants_to_speak(faction_id, faction_id_with)) {
@@ -8803,7 +8803,7 @@ if (!has_treaty(faction_id, faction_id_with, 0x30) && !has_project(4, faction_id
     PlayersData[faction_id_with].energy_reserves >=
         (GameDataStateStorage.fields_.turn_current_num_ / 25 + 1) * 10) {
     for (communicate_news_faction = 1; communicate_news_faction < 8; communicate_news_faction++) {
-        if ((GameDataStateStorage.fields_.lock_masks_.bytes_.alive_mask_ & (1 << communicate_news_faction)) &&
+        if ((GameDataStateStorage.fields_.lock_masks_.alive_mask_ & (1 << communicate_news_faction)) &&
             communicate_news_faction != faction_id &&
             communicate_news_faction != faction_id_with &&
             has_treaty(faction_id, communicate_news_faction, 8) &&
@@ -9730,7 +9730,7 @@ communicate_stack_1c = 0;
 communicate_stack_14 = 0;
 communicate_rival_faction = 1;
 do {
-    if ((GameDataStateStorage.fields_.lock_masks_.bytes_.alive_mask_ & (1u << (communicate_rival_faction))) &&
+    if ((GameDataStateStorage.fields_.lock_masks_.alive_mask_ & (1u << (communicate_rival_faction))) &&
         has_treaty(faction_id_with, communicate_rival_faction,
                    0x00000010) != 0) {
         if (has_treaty(faction_id, communicate_rival_faction,
@@ -10060,7 +10060,7 @@ communicate_late_truce_tech_complete:
                     communicate_truce_shared = 0;
                     for (communicate_truce_other = 1; communicate_truce_other < 8;
                          communicate_truce_other++) {
-                        if (GameDataStateStorage.fields_.lock_masks_.bytes_.alive_mask_ &
+                        if (GameDataStateStorage.fields_.lock_masks_.alive_mask_ &
                             (1 << communicate_truce_other)) {
                             communicate_stack_c++;
                             if (has_treaty(communicate_truce_other, ConsoleGlobal.faction_id_, 1) &&
@@ -10541,7 +10541,7 @@ if ((has_treaty(faction_id, faction_id_with, 1) || has_treaty(faction_id_with, f
     communicate_stack_48 = 0;
     communicate_report_rival = 0;
     for (communicate_stack_c = 1; communicate_stack_c < 8; communicate_stack_c++) {
-        if ((GameDataStateStorage.fields_.lock_masks_.bytes_.alive_mask_ & (1 << communicate_stack_c)) &&
+        if ((GameDataStateStorage.fields_.lock_masks_.alive_mask_ & (1 << communicate_stack_c)) &&
             communicate_stack_c != faction_id && communicate_stack_c != faction_id_with &&
             has_treaty(faction_id_with, communicate_stack_c, 0x10) &&
             has_treaty(faction_id_with, communicate_stack_c, 8) &&
@@ -10750,7 +10750,7 @@ DiploScratchF7DC = -1;
 for (communicate_late_contact_rank = 1;
      communicate_late_contact_rank < MaxPlayerNum;
      ++communicate_late_contact_rank) {
-    if ((GameDataStateStorage.fields_.lock_masks_.bytes_.alive_mask_ & (1u << (communicate_late_contact_rank))) == 0 ||
+    if ((GameDataStateStorage.fields_.lock_masks_.alive_mask_ & (1u << (communicate_late_contact_rank))) == 0 ||
         communicate_late_contact_rank == faction_id ||
         communicate_late_contact_rank == faction_id_with) {
         continue;

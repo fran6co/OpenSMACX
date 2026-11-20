@@ -162,10 +162,8 @@ void __cdecl clear_council_notify() {
 
 // Every living human faction is seated in the council (field_A44_ bits).
 static int council_humans_present(uint32_t seated) {
-    const uint32_t masks = GameDataStateStorage.fields_.lock_masks_.enable_mask_;
-    const int humans = masks & 0xFF;
-    const int alive = (masks >> 8) & 0xFF;
-    return (static_cast<int>(seated) & alive & humans) == humans;
+    return (static_cast<int>(seated) & GameDataStateStorage.fields_.lock_masks_.alive_mask_ & GameDataStateStorage.fields_.lock_masks_.human_mask_)
+        == GameDataStateStorage.fields_.lock_masks_.human_mask_;
 }
 
 // WORKAROUND(inline): dead /Ob2 budget stand-in (folds to no code). A
@@ -274,7 +272,7 @@ check_selection:
             field_A40_ = 1;
             goto draw;
         }
-        if ((clicked_bit & GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_) != 0) {
+        if ((clicked_bit & GameDataStateStorage.fields_.lock_masks_.human_mask_) != 0) {
             CommlinkPending = 1;
             CommlinkFaction = clicked_faction;
             message_data(0x1501, clicked_faction, ConsoleGlobal.faction_id_,
@@ -334,10 +332,10 @@ void CouncWin::set_vote(int faction_id, int vote) {
 
     leader_label_kind_[faction_id] = static_cast<uint32_t>(vote);
 
-    GameDataLockMaskView status = GameDataStateStorage.fields_.lock_masks_;
+    GameDataLockMaskBytes status = GameDataStateStorage.fields_.lock_masks_;
     int calculate_computer_votes = 1;
     for (int faction = 0; faction < MaxPlayerNum; ++faction) {
-        if ((status.bytes_.human_mask_ & (1 << faction)) != 0 &&
+        if ((status.human_mask_ & (1 << faction)) != 0 &&
             leader_label_kind_[faction] != 0) {
             calculate_computer_votes = 0;
         }
@@ -348,8 +346,8 @@ void CouncWin::set_vote(int faction_id, int vote) {
         do {
             for (int faction = 0; faction < MaxPlayerNum; ++faction) {
                 const uint32_t bit = 1u << faction;
-                if ((status.bytes_.alive_mask_ & bit) != 0 &&
-                    (status.bytes_.human_mask_ & bit) == 0) {
+                if ((status.alive_mask_ & bit) != 0 &&
+                    (status.human_mask_ & bit) == 0) {
                     leader_label_kind_[faction] = static_cast<uint32_t>(
                         council_get_vote(faction, static_cast<int>(field_A1C_),
                                          static_cast<int>(field_A20_)));
@@ -532,7 +530,7 @@ int CouncWin::make_resolution(int resolve) {
         if (static_cast<int>(leader_label_kind_[faction]) < -2) {
             continue;
         }
-        if (((1 << faction) & GameDataStateStorage.fields_.lock_masks_.bytes_.alive_mask_) == 0) {
+        if (((1 << faction) & GameDataStateStorage.fields_.lock_masks_.alive_mask_) == 0) {
             continue;
         }
         vote_total += static_cast<int>(field_A1C_) > 1 ? 1 : leader_tech_[faction];
@@ -587,7 +585,7 @@ int CouncWin::make_resolution(int resolve) {
 
         CouncilPbemGate = 0;
         if (IsMultiplayerPBEM) {
-            const int human_factions = GameDataStateStorage.fields_.lock_masks_.enable_mask_ & 0xff;
+            const int human_factions = GameDataStateStorage.fields_.lock_masks_.human_mask_;
             const int console_faction = ConsoleGlobal.faction_id_;
             for (int faction = 1; faction < MaxPlayerNum; ++faction) {
                 if ((human_factions & (1 << faction)) != 0 &&
@@ -718,11 +716,11 @@ void CouncWin::init(int proposal, int faction_id) {
         CouncilDialogActive = 1;
         field_A38_ = timeGetTime();
     } else {
-        field_A44_ = ~(GameDataStateStorage.fields_.lock_masks_.enable_mask_ & 0xff);
+        field_A44_ = ~GameDataStateStorage.fields_.lock_masks_.human_mask_;
         CouncilDialogActive = 1;
         field_A38_ = timeGetTime();
     }
-    field_A3C_ = bit_count(GameDataStateStorage.fields_.lock_masks_.enable_mask_ & 0xff) * 60000;
+    field_A3C_ = bit_count(GameDataStateStorage.fields_.lock_masks_.human_mask_) * 60000;
     field_A40_ = 1;
 
     if (!IsMultiplayerPBEM || !CouncilPbemGate) {
@@ -956,9 +954,8 @@ void CouncWin::arrived(int faction_id) {
     field_A44_ |= (1 << faction_id);
     if (TurnRedrawPending != 0) {
         static_cast<GraphicWin *>(this)->redraw();
-        const int status = GameDataStateStorage.fields_.lock_masks_.enable_mask_;
-        const int humans = status & 0xFF;
-        const int alive = (status >> 8) & 0xFF;
+        const int humans = GameDataStateStorage.fields_.lock_masks_.human_mask_;
+        const int alive = GameDataStateStorage.fields_.lock_masks_.alive_mask_;
         if ((alive & humans & field_A44_) == humans) {
             NetMsgPrimary.pop("VOTINGOPEN", 1000, 1, 0);
         }
@@ -1239,12 +1236,12 @@ void CouncWin::on_button_clicked(int button_id) {
             // Wait while any human vote is already cast.
             int faction;
             for (faction = 0; faction < MaxPlayerNum; ++faction) {
-                if ((static_cast<uint8_t>(GameDataStateStorage.fields_.lock_masks_.enable_mask_)
+                if ((GameDataStateStorage.fields_.lock_masks_.human_mask_
                      & (1u << faction)) != 0 && leader_label_kind_[faction] != 0) return;
             }
             for (faction = 0; faction < MaxPlayerNum; ++faction) {
                 if (leader_label_kind_[faction] == 0
-                    && (GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & (1u << faction)) == 0) {
+                    && (GameDataStateStorage.fields_.lock_masks_.human_mask_ & (1u << faction)) == 0) {
                     leader_label_kind_[faction] = static_cast<uint32_t>(council_get_vote(
                         faction, static_cast<int>(field_A1C_), static_cast<int>(field_A20_)));
                 }
@@ -1740,9 +1737,9 @@ void CouncWin::draw_leader(int factionID) {
     badgeRect.top = badgeRect.bottom - 0x14;
     if (leader_label_kind_[factionID] != 0) {
         if (IsMultiplayerNet == 0 ||
-            (field_A44_ & GameDataStateStorage.fields_.lock_masks_.bytes_.alive_mask_ &
-             GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_) ==
-                GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_) {
+            (field_A44_ & GameDataStateStorage.fields_.lock_masks_.alive_mask_ &
+             GameDataStateStorage.fields_.lock_masks_.human_mask_) ==
+                GameDataStateStorage.fields_.lock_masks_.human_mask_) {
             Buffer::set_text_color(0x41, -1, 1, 1);
             StringTemp[0] = '\0';
             switch (static_cast<int>(leader_label_kind_[factionID])) {
@@ -1836,7 +1833,7 @@ void __cdecl council(int faction_id, int proposal, int target_faction) {
     }
 
     if (faction_id != ConsoleGlobal.faction_id_ ||
-        (GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ &
+        (GameDataStateStorage.fields_.lock_masks_.human_mask_ &
          (1 << faction_id)) == 0) {
         GenderDefault = Players[faction_id].is_leader_female;
         PluralityDefault = FALSE;
@@ -1974,7 +1971,7 @@ int CouncWin::on_key_click(int, int key) {
     const int local_faction = ConsoleGlobal.faction_id_;
     // Original 425BD4 tests GameState at the existing window's +0x30.
     const bool can_close =
-        (GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & (1 << local_faction)) == 0 ||
+        (GameDataStateStorage.fields_.lock_masks_.human_mask_ & (1 << local_faction)) == 0 ||
         ((GameDataStateStorage.fields_.game_state_ & 0x40) != 0 &&
          (GameDataStateStorage.fields_.game_state_ & 0x1000) != 0 && !IsMultiplayerPBEM) ||
         field_A24_ != 0;
@@ -1997,7 +1994,7 @@ int CouncWin::on_key_click(int, int key) {
         }
         for (int faction = 0; faction < MaxPlayerNum; ++faction) {
             if (leader_label_kind_[faction] == 0 &&
-                (GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & (1 << faction)) == 0) {
+                (GameDataStateStorage.fields_.lock_masks_.human_mask_ & (1 << faction)) == 0) {
                 leader_label_kind_[faction] = static_cast<uint32_t>(council_get_vote(
                     faction, static_cast<int>(field_A1C_), static_cast<int>(field_A20_)));
             }

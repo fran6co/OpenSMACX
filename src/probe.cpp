@@ -156,7 +156,7 @@ int __cdecl mind_control(int base_id, int faction_id, BOOL is_corner_market) {
         + (int)PlayersData[faction_id].mind_control_total / 4 + Bases[base_id].population_size)
         * ((PlayersData[target_faction_id].energy_reserves
             + PlayersData[target_faction_id].corner_market_active + 1200) / (cost + 4));
-    int human_mask = GameDataStateStorage.fields_.lock_masks_.enable_mask_ & 0xFF;
+    int human_mask = GameDataStateStorage.fields_.lock_masks_.human_mask_;
     if (!(human_mask & (1 << faction_id)) && (human_mask & (1 << target_faction_id))) {
         int diff = PlayersData[target_faction_id].diff_level;
         if (diff > DLVL_LIBRARIAN) {
@@ -349,8 +349,8 @@ static inline DWORD probe_time() { return timeGetTime(); }
 // RECOVERY_ASSOCIATED: v1 switch_selector 0x0059F120 0x005A5850 0x005A5860 0x005A178F
 // RECOVERY_ASSOCIATED: v1 switch_targets 0x0059F120 0x005A5860 0x005A5878 0x005A23A7
 // The image tests the human/alive mask bytes in place at every site.
-#define HUMAN_BIT(f) (GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & (1 << (f)))
-#define ALIVE_BIT(f) (GameDataStateStorage.fields_.lock_masks_.bytes_.alive_mask_ & (1 << (f)))
+#define HUMAN_BIT(f) (GameDataStateStorage.fields_.lock_masks_.human_mask_ & (1 << (f)))
+#define ALIVE_BIT(f) (GameDataStateStorage.fields_.lock_masks_.alive_mask_ & (1 << (f)))
 // WORKAROUND(inline): dead /Ob2 budget probe (constant arguments fold it to
 // no code). The image expands the FRAME popup's start and first item
 // (0x005A2F2B, 0x005A2FBE) and then calls parse_set, get_name,
@@ -890,7 +890,7 @@ L_59fb64:
             }
             int cost = (PlayersData[faction_tgt].energy_reserves + 800) / (dist + 2)
                 * VehPrototypes[Vehs[veh_id_tgt].proto_id].cost;
-            int human_mask = GameDataStateStorage.fields_.lock_masks_.enable_mask_ & 0xFF;
+            int human_mask = GameDataStateStorage.fields_.lock_masks_.human_mask_;
             if (!(human_mask & (1 << faction)) && (human_mask & (1 << faction_tgt))
                 && PlayersData[faction_tgt].diff_level > 3) {
                 cost = cost * 3 / PlayersData[faction_tgt].diff_level;
@@ -951,7 +951,7 @@ L_59fb64:
                 cost /= 2;
             }
             parse_says(0, VehPrototypes[Vehs[veh_id_tgt].proto_id].veh_name, -1, -1);
-            human_mask = GameDataStateStorage.fields_.lock_masks_.enable_mask_ & 0xFF;
+            human_mask = GameDataStateStorage.fields_.lock_masks_.human_mask_;
             if (!(human_mask & (1 << faction)) || (Vehs[veh_id].state & 0x200)) {
                 int score = (PlayersData[faction].ai_power - PlayersData[faction].ai_wealth + 2)
                     * cost * 4;
@@ -1122,7 +1122,7 @@ L_59fb64:
             }
             return 0;
         }
-        human_mask = GameDataStateStorage.fields_.lock_masks_.enable_mask_ & 0xFF;
+        human_mask = GameDataStateStorage.fields_.lock_masks_.human_mask_;
         if (!(human_mask & (1 << faction))) {
             if (human_mask & (1 << faction_tgt)) {
                 if (PlayersData[faction].energy_reserves
@@ -1599,7 +1599,7 @@ L_5a2dcd:
             if (home_base_id < 0) {
                 veh_kill(veh_id);
             }
-            GameDataStateStorage.fields_.lock_masks_.bytes_.alive_mask_ |= (uint8_t)(1 << local_64);
+            GameDataStateStorage.fields_.lock_masks_.alive_mask_ |= (uint8_t)(1 << local_64);
             setup_player(local_64, faction_tgt, 1);
             PlayersData[faction_tgt].unk_108--;
             for (int k = 15; k < 21; k++) {

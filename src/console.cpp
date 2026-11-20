@@ -3554,11 +3554,11 @@ void Console::move_cursor(int direction) {
 void Console::quit_game() {
 // RECOVERY_LITERAL: v1 0x0068A7E4 0x0068A7EF $SG64023 0x00514990
     if (!X_pop((IsMultiplayerNet || IsMultiplayerPBEM) &&
-               bit_count(GameDataStateStorage.fields_.lock_masks_.enable_mask_ & 255) > 1
+               bit_count(GameDataStateStorage.fields_.lock_masks_.human_mask_) > 1
                    ? ConsoleReallyWimpOut : "REALLYQUIT", nullptr)) return;
     if (IsMultiplayerPBEM) {
         // The original modifies only the human-faction byte of this word.
-        GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ &=
+        GameDataStateStorage.fields_.lock_masks_.human_mask_ &=
             static_cast<unsigned char>(~(1u << ConsoleGlobal.faction_id_));
         save_game(0);
     }
@@ -3587,7 +3587,7 @@ void Console::retire_game() { // 0x00514B30
 
     const bool multiple_players =
         (IsMultiplayerNet || IsMultiplayerPBEM) &&
-        bit_count(static_cast<uint8_t>(GameDataStateStorage.fields_.lock_masks_.enable_mask_) > 1) != 0;
+        bit_count(GameDataStateStorage.fields_.lock_masks_.human_mask_ > 1) != 0;
     const char *const prompt = multiple_players ? retire_wimpout :
 // RECOVERY_LITERAL: v1 0x0068A828 0x0068A836 $SG64046 0x00514B30
 // RECOVERY_LITERAL: v1 0x0068A838 0x0068A845 $SG64047 0x00514B30
@@ -3597,7 +3597,7 @@ void Console::retire_game() { // 0x00514B30
     }
 
     if (IsMultiplayerPBEM) {
-        GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ &=
+        GameDataStateStorage.fields_.lock_masks_.human_mask_ &=
             static_cast<unsigned char>(~(1u << ConsoleGlobal.faction_id_));
         save_game(0);
     }
@@ -4369,7 +4369,7 @@ void Console::chat(int target_faction) {
     // the broadcast arm first in the source; VC6 lays it out last.
     unsigned int enabled;
     if (network.primary_state_.session_phase_ < 2
-        || ((enabled = GameDataStateStorage.fields_.lock_masks_.enable_mask_ & 0xff)
+        || ((enabled = GameDataStateStorage.fields_.lock_masks_.human_mask_)
             & network.field_1BD0_) == enabled) {
         message_chat(0x4e00, 0, message);
         log_say("Sent CHAT ALL(2)", message, 0, 0, 0);
@@ -5287,9 +5287,9 @@ int Console::on_key_click(int a1, int a2) {
     case 0x3007A:
         if (ConsoleTimer.has_timer()) {
             ConsoleTimer.stop();
-            GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ = 0x10;
+            GameDataStateStorage.fields_.lock_masks_.human_mask_ = 0x10;
         } else {
-            GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ = 0;
+            GameDataStateStorage.fields_.lock_masks_.human_mask_ = 0;
             ConsoleTimer.start(auto_play_callback, 0, 100, 5);
         }
         break;

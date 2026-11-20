@@ -2218,8 +2218,8 @@ void __cdecl alien_start() {
             continue;
         }
 
-        GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ &= ~(1 << faction_id);
-        GameDataStateStorage.fields_.lock_masks_.bytes_.alive_mask_ &= ~(1 << faction_id);
+        GameDataStateStorage.fields_.lock_masks_.human_mask_ &= ~(1 << faction_id);
+        GameDataStateStorage.fields_.lock_masks_.alive_mask_ &= ~(1 << faction_id);
 
         for (int base_id = GameDataStateStorage.fields_.base_current_count_ - 1; base_id >= 0; --base_id) {
             if (Bases[base_id].faction_id_current == faction_id) {
@@ -2888,7 +2888,7 @@ select_faction:
             {
                 for (int i = 1; i < 8; ++i) {
                     if (mode == 2 &&
-                        !(GameDataStateStorage.fields_.lock_masks_.bytes_.alive_mask_ & (1 << i))) continue;
+                        !(GameDataStateStorage.fields_.lock_masks_.alive_mask_ & (1 << i))) continue;
                     StringTemp[0] = 0;
                     strcat(StringTemp, Players[i].formal_name_faction);
                     strcat(StringTemp, "|");
@@ -3019,7 +3019,7 @@ select_faction:
             {
                 for (int i = 1; i < 8; ++i) {
                     if (mode == 2 &&
-                        !(GameDataStateStorage.fields_.lock_masks_.bytes_.alive_mask_ & (1 << i))) continue;
+                        !(GameDataStateStorage.fields_.lock_masks_.alive_mask_ & (1 << i))) continue;
                     StringTemp[0] = 0;
                     if (strcmp(Players[i].filename, "JENN282")) {
                         strcat(StringTemp, Players[i].formal_name_faction);
@@ -3334,10 +3334,10 @@ pbem_selection:
         }
 pbem_commit:
         if (IsMultiplayerPBEM) {
-            GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ =
+            GameDataStateStorage.fields_.lock_masks_.human_mask_ =
                 static_cast<unsigned char>(human_mask);
             for (selected = 1; selected < 8; ++selected) {
-                if (GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & (1 << selected)) break;
+                if (GameDataStateStorage.fields_.lock_masks_.human_mask_ & (1 << selected)) break;
             }
             if (selected >= 8) selected = 1;
             ConsoleGlobal.faction_id_ = selected;
@@ -3345,7 +3345,7 @@ pbem_commit:
         }
     }
     ConsoleGlobal.faction_id_ = selected;
-    GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ =
+    GameDataStateStorage.fields_.lock_masks_.human_mask_ =
         static_cast<unsigned char>(1 << selected);
 time_controls:
     if (IsMultiplayerNet) {
@@ -3827,9 +3827,9 @@ int __cdecl multiplayer_init(int startup_mode) {
             GameDataStateStorage.fields_.net_turn_flags_ &= ~0x10u;
 
         if (NetDaemonNet.primary_state_.leading_words_[0] != 0) {
-            GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ = 0;
+            GameDataStateStorage.fields_.lock_masks_.human_mask_ = 0;
             for (int i = 1; i <= NetDaemonNet.player_count_; ++i)
-                GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ |=
+                GameDataStateStorage.fields_.lock_masks_.human_mask_ |=
                     1 << NetDaemonNet.process_slots_[i].state_.identity_;
 
             if (NetWinSessionData.fields_.mode_ == 0) {
@@ -3906,9 +3906,9 @@ int __cdecl multiplayer_init(int startup_mode) {
 
         log_reset();
         if (NetDaemonNet.primary_state_.leading_words_[0] != 0) {
-            GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ = 0;
+            GameDataStateStorage.fields_.lock_masks_.human_mask_ = 0;
             for (int i = 1; i <= NetDaemonNet.player_count_; ++i)
-                GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ |=
+                GameDataStateStorage.fields_.lock_masks_.human_mask_ |=
                     1 << NetDaemonNet.process_slots_[i].state_.identity_;
             NetDaemonNet.send_rules();
             NetDaemonNet.send_game();

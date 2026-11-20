@@ -278,7 +278,7 @@ Purpose: Find a reusable deletion record. The image returns slot zero if all
 int DeletionList::find_free_slot() {
     int slot = 0;
     DeletionRecord *record = records_;
-    const unsigned char mask = static_cast<unsigned char>(GameDataStateStorage.fields_.lock_masks_.enable_mask_);
+    const unsigned char mask = GameDataStateStorage.fields_.lock_masks_.human_mask_;
     for (; slot < 24; ) {
         if ((record->acknowledgements_ & mask) == mask) {
             return slot;
@@ -302,8 +302,8 @@ int DeletionList::find_owner_slot(int owner) {
         // Indexed acknowledgement read with a re-read mask: the out-of-line body
         // loads the byte into its own register, while convert()'s inlined copy
         // keeps `mov dl, [rec]; and dl, mask` (both measured byte-exact).
-        if ((records_[slot].acknowledgements_ & (unsigned char)GameDataStateStorage.fields_.lock_masks_.enable_mask_)
-                != (unsigned char)GameDataStateStorage.fields_.lock_masks_.enable_mask_
+        if ((records_[slot].acknowledgements_ & GameDataStateStorage.fields_.lock_masks_.human_mask_)
+                != GameDataStateStorage.fields_.lock_masks_.human_mask_
             && record.owner_ == owner) {
             return slot;
         }
@@ -327,7 +327,7 @@ void DeletionList::ack(int owner, int faction) {
     // Preserve the pinned VC6 byte shift by CL, including its original count behavior.
     // The selected compiler output, rather than portable out-of-range C++ shifts, is the evidence.
     record.acknowledgements_ |= static_cast<unsigned char>(1u << faction);
-    const unsigned char mask = static_cast<unsigned char>(GameDataStateStorage.fields_.lock_masks_.enable_mask_);
+    const unsigned char mask = GameDataStateStorage.fields_.lock_masks_.human_mask_;
     if ((record.acknowledgements_ & mask) == mask) {
         record.acknowledgements_ = 0xFF;
     }
@@ -608,7 +608,7 @@ void NetDaemon::on_player_deleted(char *, unsigned long id) {
             }
             parse_says(0, process_slots_[slot].name_, -1, -1);
             if (NetDaemonNet.primary_state_.session_phase_ == 2) {
-                GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ &=
+                GameDataStateStorage.fields_.lock_masks_.human_mask_ &=
                     ~(1 << process_slots_[slot].state_.identity_);
             }
             field_1BBC_ &= ~(1 << process_slots_[slot].state_.identity_);
@@ -618,8 +618,8 @@ void NetDaemon::on_player_deleted(char *, unsigned long id) {
                     == process_slots_[slot].state_.identity_) {
                 for (int next = GameDataStateStorage.fields_.net_turn_faction_ + 1;
                      next < 8; ++next) {
-                    if ((GameDataStateStorage.fields_.lock_masks_.bytes_.alive_mask_ & (1 << next))
-                        && (GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & (1 << next))) {
+                    if ((GameDataStateStorage.fields_.lock_masks_.alive_mask_ & (1 << next))
+                        && (GameDataStateStorage.fields_.lock_masks_.human_mask_ & (1 << next))) {
                         message_data(0x4309, 0, next, 0, 0, 0);
                         goto player_found;
                     }
@@ -644,13 +644,13 @@ player_found:
         && NetDaemonNet.primary_state_.session_phase_ == 2) {
         for (int faction = 1; faction < 8; ++faction) {
             PlayerLock *lock = &locks_.records_[faction];
-            if ((GameDataStateStorage.fields_.lock_masks_.bytes_.alive_mask_ & (1 << faction))
-                && (GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & (1 << faction))
+            if ((GameDataStateStorage.fields_.lock_masks_.alive_mask_ & (1 << faction))
+                && (GameDataStateStorage.fields_.lock_masks_.human_mask_ & (1 << faction))
                 && faction != process_slots_[slot].state_.identity_ && lock->active()
                 && !(lock->active_ & 1)) {
                 lock->active_ |= 1 << slot;
-                if ((lock->active_ & GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_)
-                    == GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_) {
+                if ((lock->active_ & GameDataStateStorage.fields_.lock_masks_.human_mask_)
+                    == GameDataStateStorage.fields_.lock_masks_.human_mask_) {
                     log_say("SPECIAL Sending EXEC DONE to", faction, 0, 0);
                     message_data(0x1206, faction, 0, 0, 0, 0);
                     lock->active_ |= 1;
@@ -1347,7 +1347,7 @@ int NetDaemon::game_checksum(int *results) {
 
     cs = checksum((char *)&GameDataStateStorage.fields_.game_rules_, 4, 0);
     cs = checksum((char *)&GameDataStateStorage.fields_.vehicle_current_count_, 0x10, cs);
-    cs = checksum((char *)&GameDataStateStorage.fields_.lock_masks_.enable_mask_, 2, cs);
+    cs = checksum((char *)&GameDataStateStorage.fields_.lock_masks_, 2, cs);
     cs = checksum((char *)&GameDataStateStorage.fields_.secret_project_, 0x100, cs);
 
     {
@@ -1493,7 +1493,7 @@ int NetDaemon::game_checksum(int *results) {
         cs = checksum((char *)&GameDataStateStorage.fields_.game_rules_, 4, 0);
         cs = checksum((char *)&GameDataStateStorage.fields_.vehicle_current_count_, 0x10, cs);
         *out++ = checksum(
-            (char *)&GameDataStateStorage.fields_.lock_masks_.enable_mask_, 2, cs);
+            (char *)&GameDataStateStorage.fields_.lock_masks_, 2, cs);
         *out++ = checksum(
             (char *)&GameDataStateStorage.fields_.secret_project_, 0x100, 0);
         cs = 0;
@@ -4591,8 +4591,8 @@ void NetDaemon::process_message(char *message, unsigned long message_size, int s
             break;
         }
         record.active_ |= (unsigned char)(1 << who);
-        if ((record.active_ & (unsigned char)GameDataStateStorage.fields_.lock_masks_.enable_mask_) !=
-            (unsigned char)GameDataStateStorage.fields_.lock_masks_.enable_mask_) {
+        if ((record.active_ & GameDataStateStorage.fields_.lock_masks_.human_mask_) !=
+            GameDataStateStorage.fields_.lock_masks_.human_mask_) {
             break;
         }
         log_say("Sending EXEC DONE to", idx, 0, 0);
@@ -4692,11 +4692,11 @@ void NetDaemon::process_message(char *message, unsigned long message_size, int s
             message_data(0x4309, 0, next_faction, 0, 0, 0);
             break;
         }
-        if (bit_count((GameDataStateStorage.fields_.lock_masks_.enable_mask_ & 0xFF)
+        if (bit_count(GameDataStateStorage.fields_.lock_masks_.human_mask_
                       & ~field_1B68_) != 1) {
             break;
         }
-        if (bit_count(GameDataStateStorage.fields_.lock_masks_.enable_mask_ & 0xFF) <= 2) {
+        if (bit_count(GameDataStateStorage.fields_.lock_masks_.human_mask_) <= 2) {
             break;
         }
         int next_faction;
@@ -4732,10 +4732,9 @@ void NetDaemon::process_message(char *message, unsigned long message_size, int s
         if (packet->payload_18_ == GameDataStateStorage.fields_.turn_current_num_) {
             if (packet->payload_14_) {
                 field_1B68_ |= 1 << packet->payload_10_;
-                if (bit_count(GameDataStateStorage.fields_.lock_masks_.enable_mask_ & 0xFF
+                if (bit_count(GameDataStateStorage.fields_.lock_masks_.human_mask_
                               & ~field_1B68_) == 1
-                    && bit_count(GameDataStateStorage.fields_.lock_masks_.enable_mask_
-                                 & 0xFF) > 2) {
+                    && bit_count(GameDataStateStorage.fields_.lock_masks_.human_mask_) > 2) {
                     int next_faction;
                     for (next_faction = 1; next_faction < 8; ++next_faction) {
                         if (is_alive(next_faction) && is_human(next_faction)

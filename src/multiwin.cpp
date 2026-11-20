@@ -367,7 +367,7 @@ void MultiWin::draw_player(int faction_id, int row, RECT *bounds) {
   text_rect.left += 3;
   text_rect.right -= 3;
   if (IsMultiplayerNet &&
-      (GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & (1 << faction_id))) {
+      (GameDataStateStorage.fields_.lock_masks_.human_mask_ & (1 << faction_id))) {
     spot_.add(faction_id, 0, icon_rect.left, icon_rect.top,
               icon_rect.right - icon_rect.left, icon_rect.bottom - icon_rect.top);
   }
@@ -381,7 +381,7 @@ void MultiWin::draw_player(int faction_id, int row, RECT *bounds) {
     selected_turn_word = NetDaemonNet.field_1B68_;
   }
   if (IsMultiplayerNet &&
-      (GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & (1 << faction_id))) {
+      (GameDataStateStorage.fields_.lock_masks_.human_mask_ & (1 << faction_id))) {
     Buffer *const canvas = this;
     int variant;
     if (MultiWindowContactStatusMask & (1 << faction_id)) {
@@ -459,14 +459,14 @@ void MultiWin::draw_player(int faction_id, int row, RECT *bounds) {
           int net_turn_faction = GameDataStateStorage.fields_.net_turn_faction_;
           if (net_turn_faction == faction_id) {
             strcat(StringTemp, "(*)");
-          } else if (GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & faction_bit) {
+          } else if (GameDataStateStorage.fields_.lock_masks_.human_mask_ & faction_bit) {
             if (faction_id > net_turn_faction) {
               strcat(StringTemp, "(+)");
             } else {
               strcat(StringTemp, "(-)");
             }
           }
-        } else if (GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & faction_bit) {
+        } else if (GameDataStateStorage.fields_.lock_masks_.human_mask_ & faction_bit) {
           if ((selected_turn_word & (1 << local_faction)) ||
               (GameDataStateStorage.fields_.game_state_ & 0x80)) {
             if (!in_turn) {
@@ -612,7 +612,7 @@ void MultiWin::draw_time(RECT *bounds, int draw_type) {
   if ((GameDataStateStorage.fields_.net_turn_flags_ & 0x10) != 0 &&
       (GameDataStateStorage.fields_.net_turn_faction_ !=
            ConsoleGlobal.faction_id_ || TurnControlWord93A954 != 0)) {
-    if ((GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ &
+    if ((GameDataStateStorage.fields_.lock_masks_.human_mask_ &
          (1 << GameDataStateStorage.fields_.net_turn_faction_)) == 0) {
       goto done;
     }
@@ -780,11 +780,11 @@ void MultiWin::draw(int draw_type) {
     int row = 0;
     for (int faction = 1; faction < 8; ++faction) {
       if (ConsoleGlobal.faction_id_ == faction) continue;
-      if (!(GameDataStateStorage.fields_.lock_masks_.bytes_.alive_mask_ & (1 << faction))) continue;
+      if (!(GameDataStateStorage.fields_.lock_masks_.alive_mask_ & (1 << faction))) continue;
       if (!(GameDataStateStorage.fields_.game_state_ & 0x80) &&
           !(PlayersData[ConsoleGlobal.faction_id_].diplo_treaties[faction] & 8) &&
           !has_project(SP_EMPATH_GUILD, ConsoleGlobal.faction_id_) &&
-          !(GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & (1 << faction) && auto_contact())) continue;
+          !(GameDataStateStorage.fields_.lock_masks_.human_mask_ & (1 << faction) && auto_contact())) continue;
 
       ++row;
       drew_player = 1;

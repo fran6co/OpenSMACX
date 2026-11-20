@@ -1121,8 +1121,18 @@ raw field access where the original used inline accessors.
   two branch loads joined before one get call is
   `StringTable.get(c ? Labels.strings_ptr[a] : Labels.strings_ptr[b])`.
 - **`cmp reg,1; jle` back-edges** come from `j <= 1`; `j < 2` gives `cmp 2; jl`.
-- **A byte test of `enable_mask_` against `1 << f`** is `is_human(f)`
-  (human_mask_ is byte 0 of that union).
+- **A byte test of `lock_masks_.human_mask_` against `1 << f`** is `is_human(f)`
+  (human_mask_ is byte 0 of the two status bytes at 0x9A64E8).
+- **`mov r, dword ptr [g]; and r, 0xff` is a uint8_t load, not a dword
+  field.** VC6 widens a zero-extended byte read (struct field or plain
+  global) to a dword load plus a mask, and serves an adjacent byte of the
+  same object from `ah`/`ch` of that load; union, struct-of-bytes, array and
+  pointer-cast spellings compile identically (2026-11-20 par-5, rankings
+  test units). Judge a field's width only by reads that use bits it would
+  not have. The lock masks are two bytes for this reason, and they alias
+  GameDataStateStorage stores: rankings reloads `alive` per iteration of
+  the faction_rankings_ store loop (0x5AC94B), which a separate object or a
+  separate rankings array would hoist.
 - **Writable fixed-stride string slots.** strcat sources at a fixed stride
   (e.g. 0x18) with zero padding, in .data before the unit's other globals,
   are a writable `char[N][stride]` table, not literals (load_music's ambience

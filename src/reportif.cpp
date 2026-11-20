@@ -3008,7 +3008,7 @@ void ReportWin::draw_energy() {
     // Loans owed to or by the other factions.
     for (int other = 1; other < MaxPlayerNum; ++other) {
         if (other == faction) continue;
-        const int alive = GameDataStateStorage.fields_.lock_masks_.bytes_.alive_mask_;
+        const int alive = GameDataStateStorage.fields_.lock_masks_.alive_mask_;
         if (!(alive & (1 << other))) continue;
         if (!(alive & (1 << faction))) continue;
         if (PlayersData[faction].loan_balance[other] == 0
@@ -4596,12 +4596,12 @@ void ReportWin::draw_score() {
             report_topic_line(this, rect1_, rect1_.left);
             rect1_.top += field_E268_ * 2;
             for (int other = 1; other < 8; ++other) {
-                if (!(GameDataStateStorage.fields_.lock_masks_.bytes_.alive_mask_ & (1 << other))
+                if (!(GameDataStateStorage.fields_.lock_masks_.alive_mask_ & (1 << other))
                     || other == faction) continue;
                 const int target = ScenarioSave.objective_req_victory
                     ? ScenarioSave.objective_req_victory : most;
                 if (num_objectives(other, GameDataStateStorage.fields_.game_rules_ & 0x1000) < target) continue;
-                if (!(GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & (1 << other))
+                if (!(GameDataStateStorage.fields_.lock_masks_.human_mask_ & (1 << other))
                     && (GameDataStateStorage.fields_.game_rules_ & 0x80000)) continue;
                 const char *section = outcome > 1 ? "DRAWSTRING" : outcome ? "WINSTRING2" : "WINSTRING";
                 if (X_text_open(ScriptPopupFile, section)) break;
@@ -4809,7 +4809,7 @@ void ReportWin::draw_intel() {
     }
     for (int faction = 1; faction < 8; ++faction) {
         if (faction == subject || !(PlayersData[subject].diplo_treaties[faction] & 8) ||
-            !(GameDataStateStorage.fields_.lock_masks_.bytes_.alive_mask_ & (1 << faction)) ||
+            !(GameDataStateStorage.fields_.lock_masks_.alive_mask_ & (1 << faction)) ||
             (!informed && faction != viewer && !(PlayersData[viewer].diplo_treaties[faction] & 1))) continue;
         StringTemp[0] = 0;
         if (PlayersData[subject].diplo_treaties[faction] & 0x10) {

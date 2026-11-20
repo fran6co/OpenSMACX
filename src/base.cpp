@@ -1435,7 +1435,7 @@ void __cdecl base_change(int base_id, int production_id) {
     // minerals, while keeping the unpenalized turn total for later accounting.
     int loss;
     if (Rules.retool_pct_pen_prod_chg
-        && (GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & (1 << faction))
+        && (GameDataStateStorage.fields_.lock_masks_.human_mask_ & (1 << faction))
         && base_making(Bases[base_id].queue_production_id[0], base_id)
             != base_making(Bases[base_id].production_id_last, base_id)
         && Bases[base_id].minerals_accumulated_2 > static_cast<int>(Rules.retool_exemption)) {
@@ -1533,7 +1533,7 @@ void __cdecl base_change(int base_id, int production_id) {
 void __cdecl base_reset(int base_id, int force) {
     int loop_count = 0;
     int faction = Bases[base_id].faction_id_current;
-    if (((1 << faction) & GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_)
+    if (((1 << faction) & GameDataStateStorage.fields_.lock_masks_.human_mask_)
         && (Bases[base_id].governor & GOV_ACTIVE) && force) {
         uint32_t governor = Bases[base_id].governor;
         for (int site = 0; site < 4; ++site) {
@@ -1571,7 +1571,7 @@ void __cdecl base_reset(int base_id, int force) {
     }
     int location = Bases[base_id].queue_production_id[0];
     base_change(base_id, base_build(base_id, 0, 0, 0));
-    if (!((1 << faction) & GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_)) return;
+    if (!((1 << faction) & GameDataStateStorage.fields_.lock_masks_.human_mask_)) return;
     if (!(Bases[base_id].governor & GOV_ACTIVE)) return;
     if (location <= -70) return;
     if (Bases[base_id].queue_production_id[0] > -70) return;
@@ -4505,7 +4505,7 @@ void __cdecl base_terraform(int force_improve) {
     int tech;
     int wealth;
     int power;
-    if (GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & faction_bit) {
+    if (GameDataStateStorage.fields_.lock_masks_.human_mask_ & faction_bit) {
         uint32_t governor = BaseCurrent->governor;
         power = 0;
         tech = 0;
@@ -4745,7 +4745,7 @@ void __cdecl base_terraform(int force_improve) {
         rain_sum += rain;
         temp_sum += temperature; // never read
     }
-    if (!(GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & faction_bit)
+    if (!(GameDataStateStorage.fields_.lock_masks_.human_mask_ & faction_bit)
         && BaseCurrent->population_size >= 4) {
         rough_tiles--;
     }
@@ -4871,7 +4871,7 @@ void __cdecl base_terraform(int force_improve) {
         // Sensor array.
         if (!sensors && !sensor && !bonus
             && (!improvements || BaseCurrent->population_size >= 8)
-            && (!(GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & faction_bit)
+            && (!(GameDataStateStorage.fields_.lock_masks_.human_mask_ & faction_bit)
                 || (GameDataStateStorage.fields_.game_more_preferences_
                     & MPREF_AUTO_FORMER_BUILD_SENSORS))
             && (!unworked_rich || worked_farmable >= BaseCurrent->population_size - 1
@@ -5074,7 +5074,7 @@ void __cdecl base_terraform(int force_improve) {
                         best_kind = 2;
                     }
                 } else if (!road && (mine_or_bore || (items2 & BIT_THERMAL_BORE))
-                           && !((GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_
+                           && !((GameDataStateStorage.fields_.lock_masks_.human_mask_
                                  & faction_bit)
                                 && (GameDataStateStorage.fields_.game_more_preferences_
                                     & MPREF_AUTO_FORMER_CANT_BUILD_ROADS))) {
@@ -5208,7 +5208,7 @@ void __cdecl base_terraform(int force_improve) {
         } else {
             road_priority = 2;
         }
-        if (!(GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & faction_bit)
+        if (!(GameDataStateStorage.fields_.lock_masks_.human_mask_ & faction_bit)
             || !(GameDataStateStorage.fields_.game_more_preferences_
                  & MPREF_AUTO_FORMER_CANT_BUILD_ROADS)) {
             base_connect(road_priority);
@@ -5251,7 +5251,7 @@ void __cdecl base_terraform(int force_improve) {
                 break;
             }
         }
-    } else if (!(GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & faction_bit)
+    } else if (!(GameDataStateStorage.fields_.lock_masks_.human_mask_ & faction_bit)
                || !(GameDataStateStorage.fields_.game_more_preferences_
                     & MPREF_AUTO_FORMER_CANT_BUILD_ROADS)) {
         base_connect(2);
@@ -5269,7 +5269,7 @@ void __cdecl base_terraform(int force_improve) {
                 || has_tech(Ability[abil_index(1)].preq_tech, faction)
                 || GameDataStateStorage.fields_.turn_current_num_ > 200)
             && terrain_avail(TERRA_THERMAL_BORE, FALSE, faction)
-            && (!(GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & faction_bit)
+            && (!(GameDataStateStorage.fields_.lock_masks_.human_mask_ & faction_bit)
                 || (faction == ConsoleGlobal.faction_id_
                     && (GameDataStateStorage.fields_.game_preferences_
                         & PREF_AUTO_FORMER_BUILD_ADV)))) {
@@ -5284,7 +5284,7 @@ void __cdecl base_terraform(int force_improve) {
                             && (has_tech(Ability[abil_index(1)].preq_tech, faction)
                                 || GameDataStateStorage.fields_.turn_current_num_ > 200)))))
             && terrain_avail(TERRA_CONDENSER, FALSE, faction)
-            && (!(GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & faction_bit)
+            && (!(GameDataStateStorage.fields_.lock_masks_.human_mask_ & faction_bit)
                 || (faction == ConsoleGlobal.faction_id_
                     && (GameDataStateStorage.fields_.game_preferences_
                         & PREF_AUTO_FORMER_BUILD_ADV)))) {
@@ -5293,7 +5293,7 @@ void __cdecl base_terraform(int force_improve) {
         }
     }
     if (!((wet && energy_need <= 2) || mirror_score <= 0 || no_raise
-          || ((GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & faction_bit)
+          || ((GameDataStateStorage.fields_.lock_masks_.human_mask_ & faction_bit)
               && (faction != ConsoleGlobal.faction_id_
                   || !(GameDataStateStorage.fields_.game_preferences_
                        & PREF_AUTO_FORMER_RAISE_LWR_TERRAIN)))
@@ -5329,7 +5329,7 @@ relocate:
                     || (Bases[base_id].faction_id_current != faction
                         && !(PlayersData[faction].diplo_treaties[Bases[base_id].faction_id_current]
                              & (DTREATY_PACT | DTREATY_TREATY | DTREATY_TRUCE)))) {
-                    if ((!(GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & faction_bit)
+                    if ((!(GameDataStateStorage.fields_.lock_masks_.human_mask_ & faction_bit)
                          || (faction == ConsoleGlobal.faction_id_
                              && (GameDataStateStorage.fields_.game_preferences_
                                  & PREF_AUTO_FORMER_RAISE_LWR_TERRAIN)))
@@ -5695,7 +5695,7 @@ void __cdecl do_upgrade(int faction_id, int proto_id_new, int proto_id_old) {
     if (proto_id_old >= MaxVehProtoFactionNum) {
         VehPrototypes[proto_id_old].flags &= ~PROTO_ACTIVE;
     }
-    if ((GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & (1 << faction_id)) != 0) {
+    if ((GameDataStateStorage.fields_.lock_masks_.human_mask_ & (1 << faction_id)) != 0) {
         draw_map(1);
     }
     if (faction_id == ConsoleGlobal.faction_id_) {
@@ -5804,13 +5804,13 @@ int __cdecl upgrade_prototype(int faction_id, int proto_id_new,
         if (set_flag) {
             goto fail;
         }
-        if (!(GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_
+        if (!(GameDataStateStorage.fields_.lock_masks_.human_mask_
               & (1 << faction_id))) {
             goto fail;
         }
     }
     faction_bit = 1 << faction_id;
-    if (!(GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & faction_bit)) {
+    if (!(GameDataStateStorage.fields_.lock_masks_.human_mask_ & faction_bit)) {
         minerals = GameDataStateStorage.fields_.diff_level_current_ * cost / 10
             / (8 - PlayersData[GameDataStateStorage.fields_.ranking_faction_id_unk1_].ranking);
         energy = PlayersData[faction_id].energy_reserves;
@@ -5899,7 +5899,7 @@ int __cdecl upgrade_prototype(int faction_id, int proto_id_new,
 fail:
     return 0;
 net_check:
-    if ((faction_bit & GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_)
+    if ((faction_bit & GameDataStateStorage.fields_.lock_masks_.human_mask_)
         && IsMultiplayerNet) {
         message_data(0x2411, 0, faction_id, proto_id_new, proto_id_old, 0);
         while (NetDaemonNet.receive()) {
@@ -6060,7 +6060,7 @@ void __cdecl upgrade_prototypes(int faction_id, int proto_id) {
 
 void __cdecl upgrade_any_prototypes(int faction_id) {
     UpgradePromptAnswered = 0;
-    if (((1 << faction_id) & GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_) == 0
+    if (((1 << faction_id) & GameDataStateStorage.fields_.lock_masks_.human_mask_) == 0
         || (GameDataStateStorage.fields_.game_more_preferences_ & 0x100000) != 0) {
         int i = 0;
         do {
@@ -7231,7 +7231,7 @@ void __cdecl base_check_support() {
             BaseCurrentForcesMaintCost--;
             continue;
         }
-        if (GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & (1 << faction)) {
+        if (GameDataStateStorage.fields_.lock_masks_.human_mask_ & (1 << faction)) {
             parse_says(1, VehPrototypes[Vehs[best_veh].proto_id].veh_name, -1, -1);
             popb("NOSUPPORT", 0x8000, 0xD, "genwarning_sm.pcx", 0);
         } else if (plan == PLAN_COLONIZATION) {
@@ -7248,7 +7248,7 @@ void __cdecl base_check_support() {
         kill(best_veh);
     }
     int faction_bit = 1 << faction;
-    if (GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & faction_bit) {
+    if (GameDataStateStorage.fields_.lock_masks_.human_mask_ & faction_bit) {
         if (!(BaseCurrent->governor & GOV_MANAGES_CITIZENS_SPECS)) {
             return;
         }
@@ -7278,7 +7278,7 @@ void __cdecl base_check_support() {
         if (!(Vehs[veh_id].state & VSTATE_PACIFISM_DRONE)) {
             continue;
         }
-        if (faction_bit & GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_) {
+        if (faction_bit & GameDataStateStorage.fields_.lock_masks_.human_mask_) {
             if (!(Vehs[veh_id].state & VSTATE_UNK_200)
                 || (Vehs[veh_id].state & 0x1000200) == 0x1000200
                 || ((Vehs[veh_id].state & 0x2000200) == 0x2000200
@@ -7481,7 +7481,7 @@ void __cdecl drone_riot() {
         return;
     }
     int bit = 1 << faction_id;
-    if (!(GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & bit)) {
+    if (!(GameDataStateStorage.fields_.lock_masks_.human_mask_ & bit)) {
         return;
     }
     int target;
@@ -7555,7 +7555,7 @@ void __cdecl drone_riot() {
     }
     // Restored original defection gate: either side being human suffices
     // (the rioting faction was already required to be human above).
-    int human_mask = GameDataStateStorage.fields_.lock_masks_.enable_mask_ & 0xFF;
+    int human_mask = GameDataStateStorage.fields_.lock_masks_.human_mask_;
     if (!(bit & human_mask) && !(human_mask & (1 << target))) {
         return;
     }
@@ -7791,7 +7791,7 @@ void __cdecl base_doctors() {
         riot_adjust = 0;
     }
     for (int loop = 1; loop < 10; loop++) {
-        if (GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & (1 << faction)) {
+        if (GameDataStateStorage.fields_.lock_masks_.human_mask_ & (1 << faction)) {
             if (!(BaseCurrent->governor & GOV_MANAGES_CITIZENS_SPECS)) return;
             if (!(BaseCurrent->governor & GOV_ACTIVE)) return;
         }

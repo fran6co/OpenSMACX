@@ -590,13 +590,11 @@ int Lock::any_locks() {
     if (field_E0_ != 0) {
         return 1;
     }
-    const GameDataLockMaskView mask = {
-        GameDataStateStorage.fields_.lock_masks_.enable_mask_
-    };
-    const uint8_t second_byte = mask.bytes_.alive_mask_;
+    const GameDataLockMaskBytes mask = GameDataStateStorage.fields_.lock_masks_;
+    const uint8_t second_byte = mask.alive_mask_;
     for (int index = 1; index < 8; ++index) {
         // Byte-cast mask on the right: the image tests `test eax, edi`.
-        if (((1 << index) & static_cast<uint8_t>(mask.enable_mask_)) &&
+        if (((1 << index) & mask.human_mask_) &&
             (second_byte & (1 << index))) {
             for (int entry = 0; entry < 2; ++entry) {
                 if (records_[index].entries_[entry].flag & 1) {

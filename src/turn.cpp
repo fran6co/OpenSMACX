@@ -752,7 +752,7 @@ void __cdecl wait_loop() {
             for (int other = 1; other < MaxPlayerNum; ++other) {
                 faction = ConsoleGlobal.faction_id_;
                 if (other != faction &&
-                    (GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ &
+                    (GameDataStateStorage.fields_.lock_masks_.human_mask_ &
                      (1 << other)) == 0 &&
                     FactionDiplomacyFlags[other] != 0) {
                     log_say("Initiating diplomatic channel", faction, other, 0);
@@ -806,9 +806,9 @@ void __cdecl random_events(int mode) {
             POP2("NOMORESPOTS", "space_sm.pcx", -1);
         }
         for (int column = 1; column < 8; column++) {
-            if (GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & (1 << column)) {
+            if (GameDataStateStorage.fields_.lock_masks_.human_mask_ & (1 << column)) {
                 for (int row = 1; row < 8; row++) {
-                    if (!(GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & (1 << row))
+                    if (!(GameDataStateStorage.fields_.lock_masks_.human_mask_ & (1 << row))
                         && !(PlayersData[row].diplo_treaties[column] & 0x30)) {
                         set_treaty(row, column, 0xC00, 0);
                     }
@@ -2301,7 +2301,7 @@ void __cdecl set_time_controls() {
     int eligible_vehicle_support = 0;
     int weighted_base_count = 0;
     int seconds = TimeControl[GameDataStateStorage.fields_.time_controls_selection_].turn;
-    const unsigned int active_mask = GameDataStateStorage.fields_.lock_masks_.enable_mask_ & 0xFF;
+    const unsigned int active_mask = GameDataStateStorage.fields_.lock_masks_.human_mask_;
 
     for (int faction_id = 1; faction_id < MaxPlayerNum; ++faction_id) {
         if (ConsoleControlTurnActive != 0 && ControlTurnPhase == 0 &&
@@ -2989,7 +2989,7 @@ int __cdecl end_of_game(int check_victory) {
 
         for (int faction_id = 1; faction_id < 8; ++faction_id) {
             const unsigned int faction_bit = 1u << faction_id;
-            if ((GameDataStateStorage.fields_.lock_masks_.bytes_.alive_mask_ &
+            if ((GameDataStateStorage.fields_.lock_masks_.alive_mask_ &
                  faction_bit) == 0) {
                 continue;
             }
@@ -3034,7 +3034,7 @@ int __cdecl end_of_game(int check_victory) {
                 if (faction_id == ConsoleGlobal.faction_id_) {
                     break;
                 }
-            } else if (((faction_bit & GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_) != 0 ||
+            } else if (((faction_bit & GameDataStateStorage.fields_.lock_masks_.human_mask_) != 0 ||
                         (GameDataStateStorage.fields_.game_rules_ & RULES_SCN_VICT_SOLO_MISSION) == 0) &&
                        static_cast<int>(ScenarioSave.objectives_sudden_death_victory) >= 1 &&
                        num_objectives(faction_id,
@@ -3124,7 +3124,7 @@ int __cdecl end_of_game(int check_victory) {
                 int best_faction = ConsoleGlobal.faction_id_;
                 int best_score = -9999;
                 for (int faction_id = 1; faction_id < 8; ++faction_id) {
-                    if ((GameDataStateStorage.fields_.lock_masks_.bytes_.alive_mask_ &
+                    if ((GameDataStateStorage.fields_.lock_masks_.alive_mask_ &
                          (1u << faction_id)) != 0) {
                         if ((GameDataStateStorage.fields_.game_state_ & EndgameScoreMode) != 0) {
                             compute_score(faction_id, &score, score_items, 1);
@@ -3370,7 +3370,7 @@ void __cdecl turn_upkeep() {
                 if (Players[faction].rule_flags & RFLAG_ALIEN) {
                     announced_native_faction = 1;
                 }
-                GameDataStateStorage.fields_.lock_masks_.bytes_.alive_mask_ |= (uint8_t)(1 << faction);
+                GameDataStateStorage.fields_.lock_masks_.alive_mask_ |= (uint8_t)(1 << faction);
                 setup_player(faction, -0x11a, 0);
             }
         }
@@ -4372,7 +4372,7 @@ turn_loop:
             GameDataStateStorage.fields_.net_turn_flags_ &= ~0x40;
             ConsoleControlTurnActive = 0;
             unsigned int human_mask;
-            human_mask = static_cast<unsigned char>(GameDataStateStorage.fields_.lock_masks_.enable_mask_);
+            human_mask = GameDataStateStorage.fields_.lock_masks_.human_mask_;
             if (human_mask & (1u << faction)) {
                 if (faction == ConsoleGlobal.faction_id_ || bit_count(human_mask) > 1) {
                     ConsoleGlobal.human_turn();
@@ -4431,7 +4431,7 @@ extern int SpockNotifyPending; // netdaemon.cpp, original93F670
 
 
 // ORIGINAL: 0x00528EA0 ?net_upkeep_phase@@YAHH@Z 0x00528EA0-0x00529097 BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["image:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf; original:0x00528EA0-0x00529097; saved pinned full-span sha256:6d3147e1a8d83201f57389f6c8ed65a0938667f845bfcec4215f941828ab75ee", "source:src/game.cpp:net_upkeep at 0x005290A0 is the existing caller/turn owner; game.cpp already includes the NetDaemon, Console, lock-mask, MultiWindow, parser/message, log, temp and WinMM interfaces", "source:src/netdaemon.h:the sent mask is the flat member field_1B6C_ (NetDaemon+0x1B6C); the ack mask, turn-end marker and cleared word are primary_state_.trailing_words_[7], leading_words_[0] and trailing_words_[8] (NetDaemon+0x1B60, +0x1B30, +0x1B64); the referenced sent, ack and turn-end words are existing members, not new globals", "source:src/console.h:ConsoleGlobal.faction_id_; source:src/game_data_state_window.h:GameDataStateStorage.fields_.turn_current_num_ and lock_masks_.enable_mask_; source:src/game.h:ExitTurnLoop", "pinned branch review: preserve early returns before close/mask reset, timeout > 1000, phase>=4 popup suppression, live callback mask rereads, server receive loop, common cleanup order and final ExitTurnLoop reread", "historical seed:git:276d612614085e5d57743cf8cc92903d9468e346:src/unrecovered/00528ea0.cpp; existing TRIED note remains attached verbatim"], "reason": "Keep the multiplayer turn rendezvous in the existing game-turn owner, using the already typed NetDaemon lock-state, Console, game-turn, GameDataStateWindow lock-mask and WinMM APIs while retaining this complete original body identity."}
+// RECOVERY_BINDING: v1 {"evidence": ["image:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf; original:0x00528EA0-0x00529097; saved pinned full-span sha256:6d3147e1a8d83201f57389f6c8ed65a0938667f845bfcec4215f941828ab75ee", "source:src/game.cpp:net_upkeep at 0x005290A0 is the existing caller/turn owner; game.cpp already includes the NetDaemon, Console, lock-mask, MultiWindow, parser/message, log, temp and WinMM interfaces", "source:src/netdaemon.h:the sent mask is the flat member field_1B6C_ (NetDaemon+0x1B6C); the ack mask, turn-end marker and cleared word are primary_state_.trailing_words_[7], leading_words_[0] and trailing_words_[8] (NetDaemon+0x1B60, +0x1B30, +0x1B64); the referenced sent, ack and turn-end words are existing members, not new globals", "source:src/console.h:ConsoleGlobal.faction_id_; source:src/game_data_state_window.h:GameDataStateStorage.fields_.turn_current_num_ and lock_masks_.human_mask_; source:src/game.h:ExitTurnLoop", "pinned branch review: preserve early returns before close/mask reset, timeout > 1000, phase>=4 popup suppression, live callback mask rereads, server receive loop, common cleanup order and final ExitTurnLoop reread", "historical seed:git:276d612614085e5d57743cf8cc92903d9468e346:src/unrecovered/00528ea0.cpp; existing TRIED note remains attached verbatim"], "reason": "Keep the multiplayer turn rendezvous in the existing game-turn owner, using the already typed NetDaemon lock-state, Console, game-turn, GameDataStateWindow lock-mask and WinMM APIs while retaining this complete original body identity."}
 // TRIED: `int shiftAmt = *g_00939284; ... 1 << shiftAmt` vs a two-statement `unsigned int bit = 1; bit <<= shiftAmt;` vs computing the bitmask load before/after the shift - all three schedule the same as the original up to instruction #5, where the original still has a bare `mov eax, 1` that the rebuilt folds away before the `shl`. Rest of the function (the do/while upkeep-poll loop, the two log_say/message_data pairs, the NetDaemon/NetMsg calls) is a straight disassembly transcription.
 // kind      game
 // Native daemon words: 0x0093E8F0 receives peer acknowledgements and
@@ -4474,18 +4474,15 @@ int __cdecl net_upkeep_phase(int phase) {
 
     DWORD time_base = timeGetTime();
     int sent_upkeep = phase >= 4 ? 1 : 0;
-    while ((static_cast<uint8_t>(
-                GameDataStateStorage.fields_.lock_masks_.enable_mask_) &
-            ack_mask) != static_cast<uint8_t>(
-                GameDataStateStorage.fields_.lock_masks_.enable_mask_)) {
+    while ((GameDataStateStorage.fields_.lock_masks_.human_mask_ &
+            ack_mask) != GameDataStateStorage.fields_.lock_masks_.human_mask_) {
         if (ExitTurnLoop != 0) break;
 
         const DWORD now = timeGetTime();
         if (now - time_base > 0x3E8) {
             if (sent_upkeep == 0) {
                 parse_num(0, static_cast<int>(ack_mask));
-                parse_num(1, static_cast<uint8_t>(
-                    GameDataStateStorage.fields_.lock_masks_.enable_mask_));
+                parse_num(1, GameDataStateStorage.fields_.lock_masks_.human_mask_);
                 StringTemp[0] = 0;
                 strcat(StringTemp, "UPKEEP");
                 _itoa(phase, number_buffer, 10);
@@ -4507,10 +4504,8 @@ int __cdecl net_upkeep_phase(int phase) {
         message_data(0x4303, 0, phase,
                      GameDataStateStorage.fields_.turn_current_num_, 0, 0);
         ack_mask = 0;
-        while ((static_cast<uint8_t>(
-                    GameDataStateStorage.fields_.lock_masks_.enable_mask_) &
-                ack_mask) != static_cast<uint8_t>(
-                    GameDataStateStorage.fields_.lock_masks_.enable_mask_)) {
+        while ((GameDataStateStorage.fields_.lock_masks_.human_mask_ &
+                ack_mask) != GameDataStateStorage.fields_.lock_masks_.human_mask_) {
             NetDaemonNet.receive();
         }
     } else {
@@ -4555,7 +4550,7 @@ void __cdecl net_upkeep() {
     for (i = 0; i < 8; ++i) {
         const int faction = (GameDataStateStorage.fields_.turn_current_num_ + i) % 8;
         if (((1 << faction) &
-             GameDataStateStorage.fields_.lock_masks_.bytes_.alive_mask_) != 0) {
+             GameDataStateStorage.fields_.lock_masks_.alive_mask_) != 0) {
             faction_upkeep(faction);
         }
     }
@@ -4600,14 +4595,14 @@ skip_upkeep_synch:
         flags = 0;
         for (unsigned int faction = 1; faction < MaxPlayerNum; ++faction) {
             const int bit = 1 << faction;
-            if ((bit & GameDataStateStorage.fields_.lock_masks_.bytes_.alive_mask_) != 0) {
+            if ((bit & GameDataStateStorage.fields_.lock_masks_.alive_mask_) != 0) {
                 while (PlayersData[faction].earned_techs_saved != 0) {
 // RECOVERY_LITERAL: v1 0x0068BBFC 0x0068BC0B $SG67281 0x005290A0
                     log_say("Upkeep Advance", Players[faction].name_leader,
                             faction, PlayersData[faction].earned_techs_saved, 0);
                     --PlayersData[faction].earned_techs_saved;
                     tech_advance(static_cast<int>(faction));
-                    if ((bit & GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_) != 0) {
+                    if ((bit & GameDataStateStorage.fields_.lock_masks_.human_mask_) != 0) {
                         flags |= (faction ==
                                   static_cast<unsigned int>(ConsoleGlobal.faction_id_))
                             + 1u;
@@ -4619,7 +4614,7 @@ skip_upkeep_synch:
                     log_say("Set Research", faction, 0, 0);
                     PlayersData[faction].tech_id_researching =
                         tech_selection(static_cast<int>(faction));
-                    if ((bit & GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_) != 0) {
+                    if ((bit & GameDataStateStorage.fields_.lock_masks_.human_mask_) != 0) {
                         flags |= (faction ==
                                   static_cast<unsigned int>(ConsoleGlobal.faction_id_))
                             + 1u;
@@ -4700,8 +4695,8 @@ prototype_synch:
     NetMsgPrimary.pop("UPKEEP5", 0, 1, 0);
     for (i = 0; i < 8; ++i) {
         const int bit = 1 << i;
-        if ((GameDataStateStorage.fields_.lock_masks_.bytes_.alive_mask_ & bit) != 0 &&
-            (GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & bit) == 0) {
+        if ((GameDataStateStorage.fields_.lock_masks_.alive_mask_ & bit) != 0 &&
+            (GameDataStateStorage.fields_.lock_masks_.human_mask_ & bit) == 0) {
 // RECOVERY_LITERAL: v1 0x0068BC5C 0x0068BC68 $SG67327 0x005290A0
             log_say("Enemy turn ", i, 0, 0);
             enemy_turn(i);
@@ -4751,8 +4746,8 @@ prototype_synch:
         flags = 0;
 
         for (int faction = 1; faction < MaxPlayerNum; ++faction) {
-            if ((GameDataStateStorage.fields_.lock_masks_.bytes_.alive_mask_ & (1 << faction)) == 0 ||
-                (GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & (1 << faction)) == 0 ||
+            if ((GameDataStateStorage.fields_.lock_masks_.alive_mask_ & (1 << faction)) == 0 ||
+                (GameDataStateStorage.fields_.lock_masks_.human_mask_ & (1 << faction)) == 0 ||
                 faction == ConsoleGlobal.faction_id_) {
                 continue;
             }
@@ -4936,7 +4931,7 @@ static inline void net_skip_absent_turn() {
         } else {
             const uint32_t bit = 1u << level;
             const GameDataLockMaskBytes *const lock_bytes =
-                &GameDataStateStorage.fields_.lock_masks_.bytes_;
+                &GameDataStateStorage.fields_.lock_masks_;
             if ((lock_bytes->human_mask_ & bit) == 0) {
                 next_player_turn();
             } else if ((lock_bytes->alive_mask_ & bit) == 0) {
@@ -5009,11 +5004,11 @@ void __cdecl net_end_of_turn() {
         const DWORD start_time = timeGetTime();
         int sent_finishing = 0;
         for (;;) {
-            if ((static_cast<uint8_t>(GameDataStateStorage.fields_.lock_masks_.enable_mask_) &
+            if ((GameDataStateStorage.fields_.lock_masks_.human_mask_ &
                  NetDaemonNet.factions_waiting_mask()) ==
-                    static_cast<uint8_t>(GameDataStateStorage.fields_.lock_masks_.enable_mask_) &&
+                    GameDataStateStorage.fields_.lock_masks_.human_mask_ &&
                 (NetDaemonNet.primary_state_.trailing_words_[3] &
-                 static_cast<uint8_t>(GameDataStateStorage.fields_.lock_masks_.enable_mask_)) == 0 &&
+                 GameDataStateStorage.fields_.lock_masks_.human_mask_) == 0 &&
                 (NetDaemonNet.primary_state_.leading_words_[0] == 0 ||
                  (NetDaemonNet.locks_.any_locks() == 0 &&
                   NetDaemonNet.field_1B7C_ == 0))) {
@@ -5040,7 +5035,7 @@ void __cdecl net_end_of_turn() {
 // RECOVERY_LITERAL: v1 0x0068BDC8 0x0068BDD9 $SG67493 0x00529F30
             log_say("Ready to proceed",
                     static_cast<int>(NetDaemonNet.factions_waiting_mask()),
-                    GameDataStateStorage.fields_.lock_masks_.enable_mask_ & 0xFFu, 0);
+                    GameDataStateStorage.fields_.lock_masks_.human_mask_, 0);
         } else {
             goto handle_93e8c0;
         }
@@ -5185,7 +5180,7 @@ void __cdecl net_control_turn() {
         InterfaceMessageWin.clear();
 
         if (ControlTurnPhase == 0) {
-            for (GameDataStateStorage.fields_.net_turn_faction_ = 1; !((1 << GameDataStateStorage.fields_.net_turn_faction_) & GameDataStateStorage.fields_.lock_masks_.bytes_.alive_mask_) || !((1 << GameDataStateStorage.fields_.net_turn_faction_) & GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_); ++GameDataStateStorage.fields_.net_turn_faction_) {
+            for (GameDataStateStorage.fields_.net_turn_faction_ = 1; !((1 << GameDataStateStorage.fields_.net_turn_faction_) & GameDataStateStorage.fields_.lock_masks_.alive_mask_) || !((1 << GameDataStateStorage.fields_.net_turn_faction_) & GameDataStateStorage.fields_.lock_masks_.human_mask_); ++GameDataStateStorage.fields_.net_turn_faction_) {
             }
             turn_upkeep();
             net_upkeep();

@@ -249,7 +249,7 @@ int __cdecl base_build(int base_id, int *out_secondary, int *out_tertiary, int *
     l_1c = 1 << l_8;
 
     // AI priorities, or the governor's priorities for a human base under governor control.
-    if ((GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & l_1c)
+    if ((GameDataStateStorage.fields_.lock_masks_.human_mask_ & l_1c)
         && ((gov = BaseCurrent->governor) & 0x80000000)) {
         if (!(gov & 0xF200000) && BaseIDCurrentSelected >= 8) {
             if (PlayersData[l_8].region_base_plan[l_10] <= 2) {
@@ -441,7 +441,7 @@ int __cdecl base_build(int base_id, int *out_secondary, int *out_tertiary, int *
         if (BaseCurrent->drone_total >= BaseCurrent->talent_total) {
             l_74 = 1;
         }
-        if (!(GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & l_1c)
+        if (!(GameDataStateStorage.fields_.lock_masks_.human_mask_ & l_1c)
             || BaseCurrent->minerals_accumulated <= Rules.retool_exemption) {
             if ((BaseCurrent->state & 2)
                 || (l_74 && BaseCurrent->specialist_total - BaseCurrent->specialist_unk_1 > 1)) {
@@ -506,7 +506,7 @@ int __cdecl base_build(int base_id, int *out_secondary, int *out_tertiary, int *
             }
             if (Bases[base_id].queue_production_id[0] == -FAC_ASCENT_TO_TRANSCENDENCE) {
                 l_68++;
-                if (GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & (1 << owner)) {
+                if (GameDataStateStorage.fields_.lock_masks_.human_mask_ & (1 << owner)) {
                     l_154++;
                 }
             }
@@ -516,7 +516,7 @@ int __cdecl base_build(int base_id, int *out_secondary, int *out_tertiary, int *
             if (Bases[base_id].queue_production_id[0] <= -70) {
                 a_694[-Bases[base_id].queue_production_id[0] - 70] |= 1 << owner;
             }
-            if ((GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & (1 << owner)) && Bases[base_id].faction_id_former == l_8
+            if ((GameDataStateStorage.fields_.lock_masks_.human_mask_ & (1 << owner)) && Bases[base_id].faction_id_former == l_8
                 && region_at(Bases[base_id].x, Bases[base_id].y) == l_10
                 && !(PlayersData[l_8].diplo_treaties[owner] & 1)) {
                 l_a0++;
@@ -852,7 +852,7 @@ int __cdecl base_build(int base_id, int *out_secondary, int *out_tertiary, int *
     // One store after the chain; the image keeps the value in a register for the
     // governor test below.
     l_28 = (l_88 < 1) ? 3 : (l_88 < l_f0 - 1) ? 2 : (l_88 < l_f0);
-    l_9c = GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & l_1c;
+    l_9c = GameDataStateStorage.fields_.lock_masks_.human_mask_ & l_1c;
     if (l_9c && BaseCurrent->minerals_accumulated > Rules.retool_exemption
         && !(BaseCurrent->state & 8)) {
         if (!l_64 && !l_3c && !l_40) {
@@ -886,7 +886,7 @@ L_4f9c43:
                 && (PlayersData[i].region_total_combat_vehs[l_10]
                     || PlayersData[i].region_total_bases[l_10])) {
                 if ((PlayersData[l_8].diplo_treaties[i] & 0x30)
-                    || ((GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & (1 << i))
+                    || ((GameDataStateStorage.fields_.lock_masks_.human_mask_ & (1 << i))
                         && (PlayersData[i].diplo_treaties[l_8] & 8)
                         && (!(PlayersData[l_8].diplo_treaties[i] & 2)
                             || PlayersData[i].integrity_blemishes))) {
@@ -944,7 +944,7 @@ L_4f9e89:
                 }
                 int territory = whose_territory(l_8, x, y, NULL, 0);
                 if (territory > 0 && territory != l_8) {
-                    if (GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & (1 << territory)) {
+                    if (GameDataStateStorage.fields_.lock_masks_.human_mask_ & (1 << territory)) {
                         if (!(PlayersData[l_8].diplo_treaties[territory] & 1)) {
                             l_c0 = 1;
                             break;
@@ -1004,11 +1004,11 @@ L_4fa03d:
             if (PlayersData[l_8].unk_77[l_10] & 0x400) l_18++;
             l_18 += a_1dc[1];
         }
-        if (!(GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & l_1c)
+        if (!(GameDataStateStorage.fields_.lock_masks_.human_mask_ & l_1c)
             && (PlayersData[l_8].flags & 0x8000000)) {
             w /= 2;
         }
-        if (!(GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & l_1c)
+        if (!(GameDataStateStorage.fields_.lock_masks_.human_mask_ & l_1c)
             && (Players[l_8].rule_flags & 0x100)) {
             w /= 2;
             l_fc++;  // BUG(original): persists for the following units
@@ -1044,7 +1044,7 @@ L_4fa03d:
             if (has_fac(FAC_COMMAND_CENTER, BaseIDCurrentSelected, 0)) {
                 w = (l_11c + 2) * w / (l_11c + 3);
             }
-            if (!(GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & l_1c)
+            if (!(GameDataStateStorage.fields_.lock_masks_.human_mask_ & l_1c)
                 && (PlayersData[l_8].flags & 0x4000000)) {
                 w /= 2;  // cross-jumped into the air arm's l_38 tail (0x4fa2fe)
             }
@@ -1081,7 +1081,7 @@ L_4fa03d:
         if (has_fac(FAC_AEROSPACE_COMPLEX, BaseIDCurrentSelected, 0)) {
             w = (l_ac + 2) * w / (l_ac + 3);
         }
-        if (!(GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & l_1c)
+        if (!(GameDataStateStorage.fields_.lock_masks_.human_mask_ & l_1c)
             && (PlayersData[l_8].flags & 0x10000000)) {
             w /= 2;
         }
@@ -1137,7 +1137,7 @@ L_4fa03d:
                 w /= 2;
             }
         }
-        if (!(GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & l_1c)
+        if (!(GameDataStateStorage.fields_.lock_masks_.human_mask_ & l_1c)
             && Chassis[VehPrototypes[l_14].chassis_id].missile
             && (PlayersData[l_8].flags_ext & 0x10)) {
             w /= 3;
@@ -1351,7 +1351,7 @@ L_4fa03d:
         for (i = 1; i < 8; i++) {
             if (i != l_8
                 && (!has_treaty(l_8, i, 1)
-                    || (GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & (1 << i)))) {
+                    || (GameDataStateStorage.fields_.lock_masks_.human_mask_ & (1 << i)))) {
                 if (l_54 <= PlayersData[i].satellites_[3]) {
                     l_54 = PlayersData[i].satellites_[3];
                 }
@@ -1363,7 +1363,7 @@ L_4fa03d:
             }
         }
         if (PlayersData[l_8].planet_busters > l_54) goto L_4fd8f6;
-        if (!(GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & l_1c)) {
+        if (!(GameDataStateStorage.fields_.lock_masks_.human_mask_ & l_1c)) {
             if (PlayersData[l_8].flags_ext & 0x10) {
                 w /= 2;
             }
@@ -1375,7 +1375,7 @@ L_4fa03d:
     case 13:  // tectonic payload
         w *= 64;
         if (a_594[l_20 + l_2c * 3] >= 2) goto L_4fd8f6;
-        if (GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & l_1c) goto L_4fc68f;
+        if (GameDataStateStorage.fields_.lock_masks_.human_mask_ & l_1c) goto L_4fc68f;
         if (l_58 && !l_60) {
             w /= 2;
         }
@@ -1389,7 +1389,7 @@ L_4fa03d:
             w /= 2;
         }
         if (a_594[l_20 + l_2c * 3] >= 2) goto L_4fd8f6;
-        if (GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & l_1c) goto L_4fc68f;
+        if (GameDataStateStorage.fields_.lock_masks_.human_mask_ & l_1c) goto L_4fc68f;
         if (l_a4 && !l_60) {
             w /= 2;
         }
@@ -1454,7 +1454,7 @@ L_4fa03d:
             if (l_70 == 1) {
                 w *= 2;
             }
-            if (GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & l_1c) goto L_4fc68f;
+            if (GameDataStateStorage.fields_.lock_masks_.human_mask_ & l_1c) goto L_4fc68f;
             if (a_176c[l_14] > 1 || l_c == 2 || (PlayersData[l_8].unk_77[l_10] & 0x400)) {
                 l_78 = 1;
             }
@@ -1466,13 +1466,13 @@ L_4fa03d:
     case 8:  // colony
         // The whole block below is skipped (to 0x4fb650) for a governed human base
         // whose governor only has the 0x20000 permission among 0xDFBE00.
-        if ((GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & l_1c)
+        if ((GameDataStateStorage.fields_.lock_masks_.human_mask_ & l_1c)
             && (BaseCurrent->governor & 0xdfbe00) == 0x20000) {
             goto L_4fb650;
         }
-        if (!((GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & l_1c)
+        if (!((GameDataStateStorage.fields_.lock_masks_.human_mask_ & l_1c)
               && (BaseCurrent->governor & 0x80000000))) {
-            if (((GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & l_1c) || l_28 >= 3)
+            if (((GameDataStateStorage.fields_.lock_masks_.human_mask_ & l_1c) || l_28 >= 3)
                 && BaseCurrent->population_size < 2) {
                 goto L_4fd8f6;
             }
@@ -1485,7 +1485,7 @@ L_4fa03d:
             // sea colony pods: the skip is the fall-through `jmp` at 0x4fb61d, the
             // keep path jumps over the land block to 0x4fb650.
             if (l_38
-                || (!(GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & l_1c)
+                || (!(GameDataStateStorage.fields_.lock_masks_.human_mask_ & l_1c)
                     && (PlayersData[l_8].flags_ext & 4))
                 || (!PlayersData[l_8].proto_id_active[l_14] && !a_1f6c[l_14])) {
                 goto L_4fb650;
@@ -1510,7 +1510,7 @@ L_4fb650:
         if (BaseCurrent->state & 0x1000000) {
             int t = PlayersData[l_8].current_num_bases
                 - GameDataStateStorage.fields_.turn_current_num_
-                    / ((GameDataStateStorage.fields_.lock_masks_.enable_mask_ & 0xff & l_1c) ? 40 : 20)
+                    / ((GameDataStateStorage.fields_.lock_masks_.human_mask_ & l_1c) ? 40 : 20)
                 - l_60 - l_a4 - 1;
             l_18 += (t < 0) ? 0 : t;
         }
@@ -1520,10 +1520,10 @@ L_4fb650:
                 || BaseCurrent->nutrient_surplus < 1)) {
             w *= 2;
         } else if (l_c > 2 && !(BaseCurrent->state & 0x1000000)) {
-            if (!(GameDataStateStorage.fields_.lock_masks_.enable_mask_ & 0xff & l_1c) || l_c != 7
+            if (!(GameDataStateStorage.fields_.lock_masks_.human_mask_ & l_1c) || l_c != 7
                 || PlayersData[l_8].current_num_bases < GameDataStateStorage.fields_.base_current_count_ / 5
                 || PlayersData[l_8].current_num_bases < 10) {
-                if ((GameDataStateStorage.fields_.lock_masks_.enable_mask_ & 0xff & l_1c)
+                if ((GameDataStateStorage.fields_.lock_masks_.human_mask_ & l_1c)
                     && (BaseCurrent->governor & 0x80000000)) {
                     if (l_64) {
                         w /= range(GameDataStateStorage.fields_.diff_level_current_ + 1, 2, 99);
@@ -1549,7 +1549,7 @@ L_4fb650:
             }
         }
         if (!l_20) {
-            if ((GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & l_1c)
+            if ((GameDataStateStorage.fields_.lock_masks_.human_mask_ & l_1c)
                 && GameDataStateStorage.fields_.turn_current_num_ > 100) {
                 goto L_4fd8f6;
             }
@@ -1603,11 +1603,11 @@ L_4fb650:
                 w /= 2;
             }
             if (!l_38 && l_c != 7
-                && ((GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & l_1c)
+                && ((GameDataStateStorage.fields_.lock_masks_.human_mask_ & l_1c)
                     || !(PlayersData[l_8].flags_ext & 4))) {
                 w *= 2;
             }
-            if (!(GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & l_1c)
+            if (!(GameDataStateStorage.fields_.lock_masks_.human_mask_ & l_1c)
                 && (PlayersData[l_8].flags_ext & 4)) {
                 w /= 2;
             }
@@ -1621,14 +1621,14 @@ L_4fba68:
             if (PlayersData[l_8].current_num_bases >= 4 && BaseCurrent->population_size > l_144) {
                 w *= 2;
             }
-            if ((GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & l_1c)
+            if ((GameDataStateStorage.fields_.lock_masks_.human_mask_ & l_1c)
                 && PlayersData[l_8].current_num_bases
                     >= (PlayersData[l_8].diff_level + 1) * GameDataStateStorage.fields_.turn_current_num_ / 40) {
                 w *= 3;
             }
         }
         if (!strcmp(Players[l_8].filename, "BELIEVE")
-            && !(GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & l_1c)
+            && !(GameDataStateStorage.fields_.lock_masks_.human_mask_ & l_1c)
             && !(PlayersData[l_8].unk_77[l_10] & 1)) {
             w /= 2;
         }
@@ -1691,7 +1691,7 @@ L_4fba68:
             goto L_4fbd33;
         }
         if (!l_44 && !a_f6c[l_14]) {
-            if (!(GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & l_1c)
+            if (!(GameDataStateStorage.fields_.lock_masks_.human_mask_ & l_1c)
                 && (l_c == 8 || GameDataStateStorage.fields_.turn_current_num_ < 40)) {
                 w /= 16;
             }
@@ -1755,7 +1755,7 @@ L_4fbd3d:
         if (a_4bc[l_20 + l_2c * 3] >= PlayersData[l_8].region_total_bases[l_10]) {
             goto L_4fd8f6;
         }
-        if ((GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & l_1c)
+        if ((GameDataStateStorage.fields_.lock_masks_.human_mask_ & l_1c)
             && a_3c4[l_20 + l_2c * 3] + a_2ec[l_20 + l_2c * 3] > 1) {
             goto L_4fd8f6;
         }
@@ -1795,7 +1795,7 @@ L_4fbd3d:
             }
             l_b4++;
             if (has_treaty(l_8, i, 7)) {
-                if (!(GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & (1 << i)) && !(GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & l_1c)) {
+                if (!(GameDataStateStorage.fields_.lock_masks_.human_mask_ & (1 << i)) && !(GameDataStateStorage.fields_.lock_masks_.human_mask_ & l_1c)) {
                     continue;
                 }
                 if (!l_54) {
@@ -1814,7 +1814,7 @@ L_4fbd3d:
                 }
             }
             target = i;
-            if ((GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & (1 << i)) && !IsMultiplayerNet) {
+            if ((GameDataStateStorage.fields_.lock_masks_.human_mask_ & (1 << i)) && !IsMultiplayerNet) {
                 break;
             }
         }
@@ -1830,12 +1830,12 @@ L_4fbd3d:
         if (target == l_8) {
             goto L_4fd8f6;
         }
-        if (GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & l_1c) {
+        if (GameDataStateStorage.fields_.lock_masks_.human_mask_ & l_1c) {
             l_b8 = 0;
         } else {
             l_b8 = PlayersData[l_8].energy_reserves / range(PlayersData[target].energy_reserves, 100, 999999);
         }
-        if (GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & l_1c) {
+        if (GameDataStateStorage.fields_.lock_masks_.human_mask_ & l_1c) {
             l_8c = 0;
         } else {
             l_8c = PlayersData[target].mil_strength_1
@@ -1846,14 +1846,14 @@ L_4fbd3d:
         } else {
             l_bc = PlayersData[target].diff_level;
         }
-        k = (GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & l_1c) ? 4 : 2;
+        k = (GameDataStateStorage.fields_.lock_masks_.human_mask_ & l_1c) ? 4 : 2;
         w = range(PlayersData[l_8].tech_ranking / k - PlayersData[target].tech_ranking / k
                       + PlayersData[target].soc_effect_pending.values_[SocialEffect::PROBE]
                       - l_bc - l_8c - l_b8 - l_54
                       + a_4bc[l_20 + l_2c * 3] + bit_count(has_treaty(l_8, target, 7)) + 13,
                   1, 16)
             * w * 3 / (l_58 - l_60 + 3);
-        if (!(GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & l_1c)) {
+        if (!(GameDataStateStorage.fields_.lock_masks_.human_mask_ & l_1c)) {
             if (has_tech(Chassis[5].preq_tech, target) && !has_tech(Chassis[5].preq_tech, l_8)) {
                 w /= 2;
             }
@@ -1887,14 +1887,14 @@ L_4fbd3d:
             if (a_4bc[l_20 + l_2c * 3] && l_a0 + l_44 < 3) {
                 goto L_4fd8f6;
             }
-            if (GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & l_1c) {
+            if (GameDataStateStorage.fields_.lock_masks_.human_mask_ & l_1c) {
                 w *= 2;
             }
             if (a_3c4[l_20 + l_2c * 3] + a_2ec[l_20 + l_2c * 3]) {
                 w *= 2;
             }
         }
-        if (!(GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & l_1c)
+        if (!(GameDataStateStorage.fields_.lock_masks_.human_mask_ & l_1c)
             && (PlayersData[l_8].flags_ext & 8)) {
             w /= 4;
         }
@@ -1905,7 +1905,7 @@ L_4fbd3d:
     }
 
     case PLAN_SUPPLY_CONVOY:
-        if (GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & l_1c) {
+        if (GameDataStateStorage.fields_.lock_masks_.human_mask_ & l_1c) {
             goto L_4fd8f6;
         }
         if (l_c <= 2) {
@@ -1998,7 +1998,7 @@ L_4fc68f:
                     if (l_2c != 8) {
                         if (!l_30) {
                             l_18++;
-                            if (!l_f4 && !(GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & l_1c)) {
+                            if (!l_f4 && !(GameDataStateStorage.fields_.lock_masks_.human_mask_ & l_1c)) {
                                 w *= 2;
                             }
                         }
@@ -2007,7 +2007,7 @@ L_4fc68f:
                                 w *= 2;
                             }
                             if (GameDataStateStorage.fields_.turn_current_num_ < 100
-                                && !(GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & l_1c)) {
+                                && !(GameDataStateStorage.fields_.lock_masks_.human_mask_ & l_1c)) {
                                 w *= 2;
                             }
                         }
@@ -2115,7 +2115,7 @@ L_4fc68f:
                                 && PlayersData[l_8].region_total_offensive_vehs[l_10] >= guard_check(l_8, l_10)))
                            && (!l_c || l_c == 7) && l_5c + l_c8 >= l_f0))) {
                 if (l_28 == 3
-                    && (!(GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & l_1c)
+                    && (!(GameDataStateStorage.fields_.lock_masks_.human_mask_ & l_1c)
                         || (BaseCurrent->governor & 0x1000))) {
                     l_78 = 1;
                 }
@@ -2281,7 +2281,7 @@ L_4fcf70:
             if (Players[l_8].rule_psi) {
                 w = w * 100 / range(Players[l_8].rule_psi + 100, 50, 200);
             }
-            if ((GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & l_1c)
+            if ((GameDataStateStorage.fields_.lock_masks_.human_mask_ & l_1c)
                 && morale >= 0 && worm < 3) {
                 l_18++;
                 w *= 2;
@@ -2347,7 +2347,7 @@ L_4fcf70:
     {
         int lost = base_lose_minerals(BaseIDCurrentSelected, l_14);
         if (lost > 0
-            && (!(GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & l_1c)
+            && (!(GameDataStateStorage.fields_.lock_masks_.human_mask_ & l_1c)
                 || (!out_score && (BaseCurrent->governor & 0x80000000)))
             && l_c != 2) {
             int cost = veh_cost(l_14, BaseIDCurrentSelected, NULL) * cost_factor(l_8, 1, -1);
@@ -2374,7 +2374,7 @@ L_4fcf70:
         }
     } else {
         int s = l_18;
-        if (GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & l_1c) {
+        if (GameDataStateStorage.fields_.lock_masks_.human_mask_ & l_1c) {
             // Governor permission the unit's plan needs (jump table 0x500018).
             int mask = 0;
             switch (VehPrototypes[l_14].plan) {
@@ -2608,7 +2608,7 @@ L_4fd912:
             if (!has_treaty(l_8, i, 0x10)) {
                 int t = has_treaty(l_8, i, 0x40020);
                 if (t) {
-                    b -= (GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & (1 << i))
+                    b -= (GameDataStateStorage.fields_.lock_masks_.human_mask_ & (1 << i))
                              ? bit_count(t) : 1;
                 }
             }
@@ -2771,7 +2771,7 @@ L_4fd912:
 
     case FAC_SKUNKWORKS:
         value = (l_ec - l_60) * 2 + 6
-                    - ((GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & l_1c) ? 0 : l_7c)
+                    - ((GameDataStateStorage.fields_.lock_masks_.human_mask_ & l_1c) ? 0 : l_7c)
                     + l_120;
         l_24 = 0x90000;
         if (has_fac_built(FAC_COMMAND_CENTER)) {
@@ -2850,7 +2850,7 @@ L_4fd912:
         } else {
             value += l_68;
         }
-        if (!(GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & l_1c)) {
+        if (!(GameDataStateStorage.fields_.lock_masks_.human_mask_ & l_1c)) {
             value -= l_7c * 2;
         }
         int v = (fac_maint(l_20, l_8) + 4) * value / 4;
@@ -2949,11 +2949,11 @@ L_4fe99d:
                             + GameDataStateStorage.fields_.climate_sea_level_delta_
                             + AltNatural[3])) {
                     value = range(8 - BaseCurrent->population_size / 3,
-                        (GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & l_1c) ? 4 : 2,
+                        (GameDataStateStorage.fields_.lock_masks_.human_mask_ & l_1c) ? 4 : 2,
                         8);
                 } else {
                     value = range(20 - BaseCurrent->population_size / 2,
-                        (GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & l_1c) ? 6 : 4,
+                        (GameDataStateStorage.fields_.lock_masks_.human_mask_ & l_1c) ? 6 : 4,
                         12);
                 }
                 goto L_4fef49;
@@ -2976,7 +2976,7 @@ L_4fe99d:
         break;
 
     case FAC_GENEJACK_FACTORY:
-        if (GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & l_1c) {
+        if (GameDataStateStorage.fields_.lock_masks_.human_mask_ & l_1c) {
             break;
         }
         value = range((BaseCurrent->drone_total - BaseCurrent->talent_total
@@ -2991,7 +2991,7 @@ L_4fe99d:
         break;
 
     case FAC_PUNISHMENT_SPHERE:
-        if (GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & l_1c) {
+        if (GameDataStateStorage.fields_.lock_masks_.human_mask_ & l_1c) {
             break;
         }
         if (PlayersData[l_8].soc_effect_pending.values_[SocialEffect::POLICE]
@@ -3069,7 +3069,7 @@ L_4fe99d:
                                        : (PlayersData[l_5c].planet_busters + 1) / 2;
                         }
                         if (has_treaty(l_8, l_5c, 0x30)
-                            || (GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_
+                            || (GameDataStateStorage.fields_.lock_masks_.human_mask_
                                 & (1 << l_5c))) {
                             if (best <= PlayersData[l_5c].satellites_[3]) {
                                 best = PlayersData[l_5c].satellites_[3];
@@ -3113,7 +3113,7 @@ L_4fef49:
     {
         int lost = base_lose_minerals(BaseIDCurrentSelected, -l_20);
         if (lost > 0
-            && (!(GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & l_1c)
+            && (!(GameDataStateStorage.fields_.lock_masks_.human_mask_ & l_1c)
                 || ((BaseCurrent->governor & 0x80000000) && !out_score))) {
             int cost = cost_factor(l_8, 1, -1) * Facility[l_20].cost;
             if (cost) {
@@ -3133,7 +3133,7 @@ L_4fef49:
     }
     if (l_f8 >= 0 && !l_90
         && (l_7c > 0
-            || ((GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & (1 << l_f8))
+            || ((GameDataStateStorage.fields_.lock_masks_.human_mask_ & (1 << l_f8))
                 && (l_7c >= 0 || has_treaty(l_8, l_f8, 0x20))))) {
         l_18 *= 2;
     }
@@ -3141,7 +3141,7 @@ L_4fef49:
         int s = l_18;
         int slot;
         if (i == 0) {
-            if (GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & l_1c) {
+            if (GameDataStateStorage.fields_.lock_masks_.human_mask_ & l_1c) {
                 if (!(BaseCurrent->governor & 0x10000)) {
                     continue;
                 }
@@ -3172,13 +3172,13 @@ L_4ff11f:
     if ((!l_b0
          || (PlayersData[l_8].region_base_plan[l_10] <= 2
              && l_d4 >= (PlayersData[l_8].region_base_plan[l_10] != 2) + 1))
-        && (!(GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & l_1c)
+        && (!(GameDataStateStorage.fields_.lock_masks_.human_mask_ & l_1c)
             || (BaseCurrent->governor & 0xDFBE00) != 0x40000)) {
         if (PlayersData[l_8].region_base_plan[l_10] == 2
             || BaseCurrent->population_size < 3
             || l_28 >= 2
             || (l_28 && l_88 <= 1
-                && !(GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & l_1c))
+                && !(GameDataStateStorage.fields_.lock_masks_.human_mask_ & l_1c))
             || l_e0 < BaseCurrent->population_size * 2
             || BaseCurrent->drone_total > BaseCurrent->talent_total
             || (BaseCurrent->state & 2)
@@ -3202,11 +3202,11 @@ L_4ff11f:
         if (!facility_avail(base_id + FacilitySPStart, l_8, BaseIDCurrentSelected, 0)) {
             continue;
         }
-        if (!(GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & l_1c)
+        if (!(GameDataStateStorage.fields_.lock_masks_.human_mask_ & l_1c)
             && GameDataStateStorage.fields_.diff_level_current_ < 3
             && Facility[base_id + FacilitySPStart].preq_tech >= 0
             && !(GameDataStateStorage.fields_.game_tech_achieved_[Facility[base_id + FacilitySPStart].preq_tech]
-                 & GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_)) {
+                 & GameDataStateStorage.fields_.lock_masks_.human_mask_)) {
             continue;
         }
         l_14 = 0;
@@ -3371,7 +3371,7 @@ L_4ff11f:
         {
             int lost = base_lose_minerals(BaseIDCurrentSelected, l_50);
             if (lost > 0
-                && (!(GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & l_1c)
+                && (!(GameDataStateStorage.fields_.lock_masks_.human_mask_ & l_1c)
                     || (!out_score && (BaseCurrent->governor & 0x80000000)))) {
                 int cost = cost_factor(l_8, 1, -1) * Facility[base_id + FacilitySPStart].cost;
                 weight = (lost + cost) * weight / cost;  // no zero test here
@@ -3393,7 +3393,7 @@ L_4ff11f:
         if (has_fac_built(FAC_HEADQUARTERS) && !l_84) {
             weight = weight * 3 / 4;
         }
-        if (!(GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & l_1c)
+        if (!(GameDataStateStorage.fields_.lock_masks_.human_mask_ & l_1c)
             && BaseCurrent->queue_production_id[0] == l_50) {
             l_ac /= 4;
             if (BaseCurrent->minerals_accumulated
@@ -3458,7 +3458,7 @@ L_4ff11f:
         }
         l_d8 = base_id + FacilitySPStart;
         if (!has_fac_built(FAC_RECREATION_COMMONS)) {
-            if (!(GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & l_1c)
+            if (!(GameDataStateStorage.fields_.lock_masks_.human_mask_ & l_1c)
                 || (BaseCurrent->governor & 0x10000)) {
                 if (!has_tech(Facility[FAC_RECREATION_COMMONS].preq_tech, l_8)) {
                     continue;
@@ -3466,7 +3466,7 @@ L_4ff11f:
                 l_d8 = FAC_RECREATION_COMMONS;
             }
         }
-        if (GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & l_1c) {
+        if (GameDataStateStorage.fields_.lock_masks_.human_mask_ & l_1c) {
             if (l_84) {
                 continue;
             }
@@ -3478,7 +3478,7 @@ L_4ff11f:
                 l_9c = l_ac;
                 for (j = 0; j < 2; j++) {
                     int s = weight;
-                    if (!(GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & l_1c)
+                    if (!(GameDataStateStorage.fields_.lock_masks_.human_mask_ & l_1c)
                         || (BaseCurrent->governor & 0x40000)) {
                         if (out_score
                             && base_claimed(-(base_id + FacilitySPStart), weight, l_64, l_3c, l_40, l_30)) {
@@ -3494,7 +3494,7 @@ L_4ff11f:
         } else {
             for (j = 0; j < 2; j++) {
                 int s = weight;
-                if (!(GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & l_1c)
+                if (!(GameDataStateStorage.fields_.lock_masks_.human_mask_ & l_1c)
                     || (BaseCurrent->governor & 0x40000)) {
                     if (out_score
                         && base_claimed(-(base_id + FacilitySPStart), weight, l_64, l_3c, l_40, l_30)) {
@@ -3524,7 +3524,7 @@ L_4ffea4:
     // the base tile is empty.
     if (a_130[0] < 0 || !Weapon[VehPrototypes[a_130[0]].weapon_id].offense_rating) {
         if (veh_who(BaseCurrent->x, BaseCurrent->y) < 0 && l_74 < 2
-            && (!(GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & l_1c)
+            && (!(GameDataStateStorage.fields_.lock_masks_.human_mask_ & l_1c)
                 || (BaseCurrent->governor & 0x1000))) {
             int best = 99999;
             for (i = 0; i < MaxVehProtoNum; i++) {

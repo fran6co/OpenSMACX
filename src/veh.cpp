@@ -1449,7 +1449,7 @@ reroll:
         if (IsMultiplayerNet) {
             int any = 0;
             for (int i = 1; i < MaxPlayerNum; i++) {
-                if (GameDataStateStorage.fields_.lock_masks_.bytes_.alive_mask_ & (1 << i) && is_human(i) && i != faction_id) {
+                if (GameDataStateStorage.fields_.lock_masks_.alive_mask_ & (1 << i) && is_human(i) && i != faction_id) {
                     if (is_sea) {
                         if (PlayersData[i].unk_70 >= PlayersData[faction_id].unk_70) {
                             any = 1;
@@ -2344,7 +2344,7 @@ Status: MISMATCH.
 */
 int __cdecl is_bunged(int faction_id, int chassis_id, int weapon_id,
                        int armor_id, int ability_flags, int reactor_id) {
-    if ((1u << faction_id) & (uint8_t)GameDataStateStorage.fields_.lock_masks_.enable_mask_) {
+    if ((1u << faction_id) & GameDataStateStorage.fields_.lock_masks_.human_mask_) {
         int i = 0;
         for (; i < 0x40; ++i) {
             const ProtoBung &entry = BungList[faction_id][i];
@@ -2882,7 +2882,7 @@ void __cdecl retire_proto(int prototype_id, int faction_id) {
             continue;
         }
         const uint8_t enabled_factions =
-            static_cast<uint8_t>(GameDataStateStorage.fields_.lock_masks_.enable_mask_);
+            GameDataStateStorage.fields_.lock_masks_.human_mask_;
         // A locked faction's units die before the visibility, map-tile or
         // base-stack tests.
         if (!(enabled_factions & (1 << faction_id))) {
@@ -3397,7 +3397,7 @@ int __cdecl propose_proto(int faction_id, int chassis_id, int weapon_id,
             && ability_flags == VehPrototypes[slot].ability_flags
             && VehPrototypes[slot].reactor_id == reactor_id
             && !DesignConsiderOverride
-            && GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & (1 << faction_id)) {
+            && GameDataStateStorage.fields_.lock_masks_.human_mask_ & (1 << faction_id)) {
             return -1;
         }
         if (VehPrototypes[slot].chassis_id == chassis_id
@@ -3453,7 +3453,7 @@ int __cdecl propose_proto(int faction_id, int chassis_id, int weapon_id,
                     && defense_factor < highest_plus
                     && ((defense_factor - other_defense >= 0)
                         ? defense_factor - other_defense : other_defense - defense_factor) < 2
-                    && !(faction_bit & GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_)
+                    && !(faction_bit & GameDataStateStorage.fields_.lock_masks_.human_mask_)
                     && strcmp(Players[faction_id].filename, "UNIV")) {
                     return slot;
                 }

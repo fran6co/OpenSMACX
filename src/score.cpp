@@ -636,13 +636,13 @@ void __cdecl rankings(int apply_ranks) {
         GameDataStateStorage.fields_.faction_rankings_[clear] = 0;
     }
     for (faction_id = 1; faction_id < MaxPlayerNum; faction_id++) {
-        if ((1 << faction_id) & GameDataStateStorage.fields_.lock_masks_.bytes_.alive_mask_) {
+        if ((1 << faction_id) & GameDataStateStorage.fields_.lock_masks_.alive_mask_) {
             GameDataStateStorage.fields_.faction_rankings_[PlayersData[faction_id].ranking] = (uint32_t)faction_id;
         }
     }
     GameDataStateStorage.fields_.ranking_faction_id_unk1_ = 0;
     GameDataStateStorage.fields_.ranking_faction_id_unk2_ = 0;
-    int humans = GameDataStateStorage.fields_.lock_masks_.enable_mask_ & 0xFF;
+    int humans = GameDataStateStorage.fields_.lock_masks_.human_mask_;
     for (rank = MaxPlayerNum - 1; rank >= 0; rank--) {
         if (humans & (1 << GameDataStateStorage.fields_.faction_rankings_[rank])) {
             GameDataStateStorage.fields_.ranking_faction_id_unk1_ = GameDataStateStorage.fields_.faction_rankings_[rank];
@@ -658,7 +658,7 @@ void __cdecl rankings(int apply_ranks) {
     int target_id = great_satan(GameDataStateStorage.fields_.faction_rankings_[MaxPlayerNum - 1], false)
         ? (int)GameDataStateStorage.fields_.faction_rankings_[MaxPlayerNum - 1] : 0;
     if (climactic_battle()) {
-        humans = GameDataStateStorage.fields_.lock_masks_.enable_mask_ & 0xFF;
+        humans = GameDataStateStorage.fields_.lock_masks_.human_mask_;
         for (faction_id = 1; faction_id < MaxPlayerNum; faction_id++) {
             if (humans & (1 << faction_id)
                 && (PlayersData[faction_id].diff_level >= 4
@@ -870,7 +870,7 @@ void __cdecl compute_score(int faction, int *total, int *items, int recursive) {
             }
         }
     }
-    if (!(GameDataStateStorage.fields_.lock_masks_.bytes_.alive_mask_ & (1 << faction))) {
+    if (!(GameDataStateStorage.fields_.lock_masks_.alive_mask_ & (1 << faction))) {
         items[7] = 0;
         items[8] = 0;
     }

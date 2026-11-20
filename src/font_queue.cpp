@@ -400,9 +400,9 @@ int __cdecl veh_draw(Buffer * buffer, int veh_id, int screen_x, int screen_y, in
         label[2] = 0;
         label[1] = 0;
         if (faction != ConsoleGlobal.faction_id_
-            || !((unsigned char)GameDataStateStorage.fields_.lock_masks_.enable_mask_ & (1 << faction))) {
+            || !(GameDataStateStorage.fields_.lock_masks_.human_mask_ & (1 << faction))) {
             if (!(GameDataStateStorage.fields_.game_state_ & 0x80)
-                && ((unsigned char)GameDataStateStorage.fields_.lock_masks_.enable_mask_
+                && (GameDataStateStorage.fields_.lock_masks_.human_mask_
                     & (1 << ConsoleGlobal.faction_id_))) {
                 label[0] = '-';
             } else {

@@ -535,7 +535,7 @@ int __cdecl action_terraform(int veh_id, int action, int do_it) {
     }
 
     const int faction_bit = 1 << faction;
-    if (!(faction_bit & (uint8_t)GameDataStateStorage.fields_.lock_masks_.enable_mask_)
+    if (!(faction_bit & GameDataStateStorage.fields_.lock_masks_.human_mask_)
         && GameDataStateStorage.fields_.diff_level_current_ > 3 && base_time > 3) {
         base_time--;
     }
@@ -647,7 +647,7 @@ int __cdecl action_terraform(int veh_id, int action, int do_it) {
             Bases[near_base].minerals_accumulated_2 = Bases[near_base].minerals_accumulated;
             Bases[near_base].production_id_last = Bases[near_base].queue_production_id[0];
             if (faction == ConsoleGlobal.faction_id_
-                && faction_bit & (uint8_t)GameDataStateStorage.fields_.lock_masks_.enable_mask_
+                && faction_bit & GameDataStateStorage.fields_.lock_masks_.human_mask_
                 && Rules.minerals_harvesting_forest) {
                 parse_says(0, Bases[near_base].name_string, -1, -1);
                 parse_num(0, Rules.minerals_harvesting_forest);
@@ -660,8 +660,8 @@ int __cdecl action_terraform(int veh_id, int action, int do_it) {
 
     if (action == TERRA_RAISE_LAND || action == TERRA_LOWER_LAND || action == TERRA_CONDENSER) {
         if (TerraformTileFaction >= 0
-            && !((1 << TerraformTileFaction) & (uint8_t)GameDataStateStorage.fields_.lock_masks_.enable_mask_)
-            && faction_bit & (uint8_t)GameDataStateStorage.fields_.lock_masks_.enable_mask_
+            && !((1 << TerraformTileFaction) & GameDataStateStorage.fields_.lock_masks_.human_mask_)
+            && faction_bit & GameDataStateStorage.fields_.lock_masks_.human_mask_
             && !(PlayersData[faction].diplo_treaties[TerraformTileFaction] & 0x11)) {
             if (PlayersData[TerraformTileFaction].diplo_treaties[faction] & 0x20) {
                 set_treaty(TerraformTileFaction, faction, 0x400, 1);
@@ -1106,7 +1106,7 @@ void __cdecl action_go_to(int veh_id) {
                     }
                 }
 
-                if (!(GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & (1 << Vehs[veh_id].faction_id))
+                if (!(GameDataStateStorage.fields_.lock_masks_.human_mask_ & (1 << Vehs[veh_id].faction_id))
                     && Chassis[VehPrototypes[Vehs[veh_id].proto_id].chassis_id].cargo != 0) {
                     Map *tile = map_tiles()
                         + ((Vehs[veh_id].x >> 1) + Vehs[veh_id].y * MapLongitude);
@@ -1696,7 +1696,7 @@ int __cdecl action_airdrop(int veh_id, int x, int y, int mode) {
         if (base_id >= 0) {
             if (faction_id != Bases[base_id].faction_id_current
                 && !(PlayersData[faction_id].diplo_treaties[Bases[base_id].faction_id_current] & DTREATY_PACT)) {
-                if (!((1 << faction_id) & GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_)) {
+                if (!((1 << faction_id) & GameDataStateStorage.fields_.lock_masks_.human_mask_)) {
                     veh_skip(veh_id);
                 }
                 Vehs[veh_id].dmg_incurred = 0;
@@ -2157,7 +2157,7 @@ int __cdecl shoot_it(int attacker, int defender, int x, int y,
         if (PlayersData[defender].satellites_[sat]) {
             // Image literal order: the must-sacrifice texts precede the
             // human prompt's, so that arm was written first.
-            if (IsMultiplayerNet || !(GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & (1 << defender))
+            if (IsMultiplayerNet || !(GameDataStateStorage.fields_.lock_masks_.human_mask_ & (1 << defender))
                 || defender != ConsoleGlobal.faction_id_) {
                 if (defender == ConsoleGlobal.faction_id_) {
                     if (fungal_attack) {

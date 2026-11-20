@@ -8,15 +8,14 @@
 #include <stddef.h>
 #include <stdint.h>
 
+// Two status bytes, never a dword: every image reader of 0x9A64E8..EB is a
+// byte (`test byte ptr`, `mov r8`) or a dword load masked to a byte
+// (`and r,0xff`, `ah`/`ch`), which is VC6's own widening of a uint8_t load;
+// nothing reads +2/+3, and game_checksum sums exactly two bytes from +0.
 struct GameDataLockMaskBytes {
     uint8_t human_mask_;
     uint8_t alive_mask_;
     uint8_t unassigned_[2];
-};
-
-union GameDataLockMaskView {
-    uint32_t enable_mask_;
-    GameDataLockMaskBytes bytes_;
 };
 
 struct GameDataStateWindowFields {
@@ -41,7 +40,7 @@ struct GameDataStateWindowFields {
     int vehicle_selection_follow_limit_;        // +0x04C
     int time_controls_selection_;               // +0x050
     int turn_control_duration_milliseconds_;    // +0x054
-    GameDataLockMaskView lock_masks_;            // +0x058
+    GameDataLockMaskBytes lock_masks_;           // +0x058
     uint32_t faction_rankings_[8];              // +0x05C
     int ranking_faction_id_unk1_;          // +0x07C
     int ranking_faction_id_unk2_;          // +0x080
@@ -121,7 +120,7 @@ extern GameDataStateWindow GameDataStateStorage;
 // Original identity (src/console.cpp): // RECOVERY_OBJECT: v1 0x009A64E0 ?TimeControlsSelection@@3HA
 // TurnControlDurationMilliseconds at 0x009A64E4 -> turn_control_duration_milliseconds_; former source src/game.cpp:1337; no explicit initializer; static zero initialization.
 // Original identity (src/game.cpp): // RECOVERY_OBJECT: v2 0x009A64E4 0x009A64E8 ?TurnControlDurationMilliseconds@@3HA 0x00523C60
-// LockEnableMask at 0x009A64E8 -> lock_masks_.enable_mask_; former source src/lock.cpp:22; no explicit initializer; static zero initialization.
+// LockEnableMask at 0x009A64E8 -> lock_masks_ (human_mask_, alive_mask_); former source src/lock.cpp:22; no explicit initializer; static zero initialization.
 // No separate RECOVERY_OBJECT annotation was present for this former global.
 // FactionRankings at 0x009A64EC -> faction_rankings_; former source src/alpha.cpp:126; no explicit initializer; static zero initialization.
 // Original identity (src/alpha.cpp): // RECOVERY_OBJECT: v2 0x009A64EC 0x009A650C ?FactionRankings@@3PAIA 0x005AC690
@@ -176,8 +175,6 @@ extern GameDataStateWindow GameDataStateStorage;
 // EcologyEventAccumulator at 0x009A6824 -> ecology_event_accumulator_; former source src/game.cpp:1522; no explicit initializer; static zero initialization.
 // Original identity (src/game.cpp): // RECOVERY_OBJECT: v2 0x009A6824 0x009A6828 ?EcologyEventAccumulator@@3HA 0x004F67F0
 
-typedef char GameDataStateLockMaskHasNativeExtent[
-    sizeof(GameDataLockMaskView) == 4 ? 1 : -1];
 typedef char GameDataStateLockMaskBytesHasNativeExtent[
     sizeof(GameDataLockMaskBytes) == 4 ? 1 : -1];
 typedef char GameDataStateLockHumanByteAtZero[

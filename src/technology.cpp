@@ -2170,7 +2170,7 @@ int __cdecl tech_selection(int faction) {
     int announced = false;
     if (IsMultiplayerNet != 0) {
         const unsigned int faction_bit = 1u << faction;
-        if ((GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & faction_bit) != 0
+        if ((GameDataStateStorage.fields_.lock_masks_.human_mask_ & faction_bit) != 0
             && faction != ConsoleGlobal.faction_id_) {
             while (ExitTurnLoop == 0 && PlayersData[faction].tech_id_researching < 0) {
                 NetDaemonNet.net_tasks();
@@ -2194,7 +2194,7 @@ int __cdecl tech_selection(int faction) {
     PlayersData[faction].tech_id_researching = result;
     if (IsMultiplayerNet != 0) {
         const unsigned int faction_bit = 1u << faction;
-        if ((GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & faction_bit) != 0) {
+        if ((GameDataStateStorage.fields_.lock_masks_.human_mask_ & faction_bit) != 0) {
             synch_researching(faction);
             int stop = ExitTurnLoop;
             PlayersData[faction].tech_id_researching = -1;
@@ -2249,7 +2249,7 @@ int __cdecl tech_advance(int faction) {
     if (IsMultiplayerNet == 0 || TurnUpkeepPhase != 1) {
         if (IsMultiplayerPBEM == 0 ||
             (((1 << faction) &
-              GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_) == 0) ||
+              GameDataStateStorage.fields_.lock_masks_.human_mask_) == 0) ||
             faction == ConsoleGlobal.faction_id_) {
             selection = *researching;
             if (selection < 0) {
@@ -2261,7 +2261,7 @@ int __cdecl tech_advance(int faction) {
             *researching = -1;
             tech_achieved(faction, selection, 0, 0);
             if (((1 << faction) &
-                 GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_) == 0) {
+                 GameDataStateStorage.fields_.lock_masks_.human_mask_) == 0) {
                 int saved_base = BaseIDCurrentSelected;
                 bases_reset(-1, faction, 0);
                 if (GameDataStateStorage.fields_.turn_current_num_ != 0 && saved_base >= 0 &&

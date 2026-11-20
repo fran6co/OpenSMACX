@@ -830,8 +830,7 @@ int Console::upgrade(int veh_id) { // 0x004D06C0
             if (has_abil(Vehs[veh_id].proto_id, 0x8000) != has_abil(proto_id, 0x8000)) {
                 continue;
             }
-            int human = static_cast<uint8_t>(
-                            GameDataStateStorage.fields_.lock_masks_.enable_mask_)
+            int human = GameDataStateStorage.fields_.lock_masks_.human_mask_
                         & (1 << faction_id);
             if ((!human || VehPrototypes[Vehs[veh_id].proto_id].plan > 3
                  || VehPrototypes[proto_id].plan > 3)
@@ -5364,7 +5363,7 @@ again:
                 if (ConsoleGlobal.cursor_active_) ConsoleGlobal.set_move(1);
             }
             if (!is_alive(ScenarioVehicleFaction)) {
-                GameDataStateStorage.fields_.lock_masks_.bytes_.alive_mask_ |=
+                GameDataStateStorage.fields_.lock_masks_.alive_mask_ |=
                     static_cast<uint8_t>(1 << ScenarioVehicleFaction);
             }
         }
@@ -5438,8 +5437,8 @@ void Console::editor_view() {
     if (selected == 0x63) {
         PopupModalState = 6;
         if (X_pop("EDITORCONTROLALL", nullptr) != 0) {
-            GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ =
-                static_cast<uint8_t>(GameDataStateStorage.fields_.lock_masks_.bytes_.alive_mask_ & 0xFEu);
+            GameDataStateStorage.fields_.lock_masks_.human_mask_ =
+                static_cast<uint8_t>(GameDataStateStorage.fields_.lock_masks_.alive_mask_ & 0xFEu);
         }
         GameDataStateStorage.fields_.game_state_ |= 0x80u;
         PopupModalState = 0;
@@ -5456,10 +5455,10 @@ void Console::editor_view() {
         parse_says(0, Players[selected].noun_faction, -1, -1);
         PopupModalState = 6;
         if (X_pop("EDITORCONTROL", nullptr) == 0) {
-            GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ =
+            GameDataStateStorage.fields_.lock_masks_.human_mask_ =
                 static_cast<uint8_t>(1u << selected);
         } else {
-            GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ = 0;
+            GameDataStateStorage.fields_.lock_masks_.human_mask_ = 0;
         }
         PopupModalState = 0;
     }
@@ -5797,8 +5796,8 @@ void Console::editor_eliminate() {
     }
 
     const uint8_t mask = static_cast<uint8_t>(~(1 << faction));
-    GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ &= mask;
-    GameDataStateStorage.fields_.lock_masks_.bytes_.alive_mask_ &= mask;
+    GameDataStateStorage.fields_.lock_masks_.human_mask_ &= mask;
+    GameDataStateStorage.fields_.lock_masks_.alive_mask_ &= mask;
     kill_faction_bases(faction);
     ::draw_map(1);
     eliminate_player(faction, -2);

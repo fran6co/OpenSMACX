@@ -2521,7 +2521,7 @@ void MapWin::draw_vehicles(int tile_x, int tile_y, int pixel_x, int pixel_y,
     draw_state = 3;
     if (tile_x == Vehs[ConsoleGlobal.selected_vehicle_].x &&
         tile_y == Vehs[ConsoleGlobal.selected_vehicle_].y &&
-        (GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & (1U << Vehs[ConsoleGlobal.selected_vehicle_].faction_id)) != 0 &&
+        (GameDataStateStorage.fields_.lock_masks_.human_mask_ & (1U << Vehs[ConsoleGlobal.selected_vehicle_].faction_id)) != 0 &&
         veh_selectable(ConsoleGlobal.selected_vehicle_) != 0 &&
         (Vehs[ConsoleGlobal.selected_vehicle_].state & 0x4200U) == 0) {
         target = ConsoleGlobal.selected_vehicle_;
@@ -5108,7 +5108,7 @@ void MapWin::draw_base_names() {
                            ChatShadowColors[Bases[base_id].faction_id_current], 1, 1);
             if ((GameDataStateStorage.fields_.game_state_ & STATE_DEBUG_MODE) != 0 &&
                 ((GameDataStateStorage.fields_.game_state_ & STATE_OMNISCIENT_VIEW) != 0 ||
-                 (GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ &
+                 (GameDataStateStorage.fields_.lock_masks_.human_mask_ &
                   (1 << ConsoleGlobal.faction_id_)) == 0)) {
                 // 0x00468025: one scaled PlayersData index (shl eax,2) is
                 // reused for both targets; no PlayerData pointer is formed.

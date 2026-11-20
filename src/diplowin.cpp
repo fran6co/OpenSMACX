@@ -856,7 +856,7 @@ void DiploWin::do_it() {
                     }
                     case 5: {
                         int target = offer_value_[side][i];
-                        if (((unsigned char)GameDataStateStorage.fields_.lock_masks_.enable_mask_ & (1 << target)) != 0
+                        if ((GameDataStateStorage.fields_.lock_masks_.human_mask_ & (1 << target)) != 0
                             && !(PlayersData[giver].diplo_treaties[target] & 0x10)) {
                             message_data(0x150F, target, giver, recipient, 0, 0);
                         }
@@ -1876,7 +1876,7 @@ void DiploWin::exec(int faction_id, int faction_id_with) {
     UNK3(1);
   }
 
-  const int player_flags = static_cast<int>(GameDataStateStorage.fields_.lock_masks_.enable_mask_ & 0xFF);
+  const int player_flags = static_cast<int>(GameDataStateStorage.fields_.lock_masks_.human_mask_);
   CommlinkPending = 1;
   DiploOffersDirty = 0;
   if (bit_count(player_flags) == 2)
