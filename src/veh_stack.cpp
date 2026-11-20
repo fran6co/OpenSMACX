@@ -775,7 +775,7 @@ void __cdecl spot_all(int veh_id, int toggle) {
         }
         // 0x5B7435
         stack_id = stack_fix(veh_at(x, y)); // [ebp-0x2c]
-        if (stack_id < 0) {
+        if (0 > stack_id) {
             continue;
         }
         int stack_faction = Vehs[stack_id].faction_id; // [ebp-0x10]
