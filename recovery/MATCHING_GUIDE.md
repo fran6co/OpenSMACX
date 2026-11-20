@@ -9244,6 +9244,31 @@ Counters and tie arms (par-5 2026-11-20, councwin)
   uint32_t copy; `cmp esi, [edx]; jle` against `cmp; jge` is the
   comparison written with its operands swapped (diplomacy_check
   `other > faction`).
+- **`add r, -K` against `sub r, K` names the source of `x - K`** (2026-11-20
+  par-6, `analysis/addnegscan.py`). VC6 writes a plain `x - K` as `sub r, K`.
+  It writes `add r, -K` when the subtraction is a CSE of the same `x - K`
+  written twice (draw_score: `panel.right - 3` stored to two rects) or when
+  `-K` reaches the code through an inline's parameter (`expand_rect(&r, -n,
+  -n)`, `inset_rect`). So an image `sub` where ours has `add -K` means the
+  image did not go through the helper: `rc = src;` with per-edge `+= n` /
+  `-= n` (DiploWin::exec 227 -> 121 rows, NewTechWin::exec); an image
+  `add -K` where ours has `sub` means the expression was a helper argument
+  or written twice. Count both forms per function before respelling a rect.
+- **A pointer local to an array element costs a spill slot.** `RECT *rect =
+  &boxes[i];` used across a call kept one edge in an extra frame slot (ours
+  0x78, image 0x74); indexing `boxes[i]` at every use dropped it
+  (NewTechWin::exec, 2026-11-20 par-6). When our frame is one dword larger
+  and the image recomputes `lea r, [ebp+i*16-K]` at each use, drop the
+  pointer local.
+- **A same-unit function written out by hand where the image inlines it.**
+  When a host's image span contains another same-unit function's body
+  instruction for instruction (argument evaluation order, its stores, its
+  reloads), the original called it and /Ob2 expanded it; a hand-written
+  copy stores in source order and reuses cached values instead
+  (ReportWin::draw_ops/draw_projects: the scroll reset is UNK1(0, 0,
+  count - 1, rows - 1), 168 -> 141 rows). Search the host's span for the
+  exact bodies of the unit's small functions before respelling a block, and
+  call the function; /Ob2 inlines it again.
 
 ### 3.8 VC5 (Caviar/VOX) x87 rules (2026-11-19 par-5)
 
