@@ -8369,6 +8369,26 @@ Constant registers (measured with standalone probes, 2026-11-18)
   0x004F81A0 (loop 0x4FF0FC..0x4FF27C, eax) and config_game 0x00589D30
   (loop 0x58B4BD..0x58B5AB, eax) carry the signature, so the form is rare.
 
+- **A store through a pointer is a scheduling barrier for an address-taken
+  local; a store into a global array is not** (par-5 2026-11-20, game_data
+  0x005A6AC0, read loops 0x5A89F8/0x5A8C8A). `fread(&string_id, ...)` makes
+  string_id address-taken; the image loads it for `list->add(string_id)`
+  only after the `StringTemp[length] = 0` byte store. With the plain global
+  subscript VC6 hoists the load and push above the byte store;
+  `char *text = StringTemp; text[length] = 0;` keeps it below (40 -> 36
+  rows, not committed: no evidence for the pointer). Read a late reload of
+  an address-taken local as "some store before it went through a pointer".
+- **Shared-slot screen (packrev MUST-MERGE) over par-5's 74 non-exact
+  functions, 2026-11-20: no evidenced merge.** The draw_pop finding (one
+  function-scope variable for several arms) did not recur: the MUST-MERGE
+  rows were alignment-label noise (reset_territory -0x8 is y with more
+  reloads, not y+x; order_veh/base_ecology/draw_farm rows are count-1 webs).
+  The two frame-size mismatches go the other way, the image has ONE MORE
+  4-byte slot: draw_expenses 0x00412AA0 (0x128 vs 0x124; image keeps
+  count, the inner `max` and |energy| in slots) and ListBox::on_key_down
+  0x0060AF90 (0x14 vs 0x10; image spills count to [esp+0x10] and keeps key
+  in ebx; loop bound, seek, const/order and typed width are neutral or worse).
+
 Arm layout and operand sources (par-3, 2026-11-19)
 - **Flat `if (A && B) X else if (!A) Y` is not the nested form.**
   `if (A) { if (B) X } else Y` hosts the join after the inner then-arm and
