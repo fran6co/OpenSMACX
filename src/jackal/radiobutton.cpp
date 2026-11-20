@@ -446,8 +446,8 @@ void RadioButton::draw_item(int position, int state) {
             items.current_ = items.current_->next;
             if (++items.current_position_ == items.entry_count_) items.current_position_ = 0;
         }
-        if (items.current_ != 0 &&
-            static_cast<int>(items.current_entry()->field_8_) > 1) {
+        if ((items.current_ != 0 &&
+            static_cast<int>(items.current_entry()->field_8_) > 1) != 0) {
             extra_height += max(Dialog::field_68_,
                                 Buffer::text_line_height() *
                                     current_lines(Dialog::item_list_))
