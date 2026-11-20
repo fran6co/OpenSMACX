@@ -6770,8 +6770,8 @@ void ReportIf::draw_ops() {
                              rect_width(&field_20_) - 12, 26);
     RECT *const workspace = &draw_workspace_rect_;
     MainInterfaceGlobal.Buffer::box_sprite(workspace, &InterfaceBoxStyles[3]);
-    workspace->top = workspace->bottom;
-    workspace->bottom = field_20_.bottom - 6;
+    workspace->top = draw_workspace_rect_.bottom;
+    draw_workspace_rect_.bottom = field_20_.bottom - 6;
     MainInterfaceGlobal.Buffer::box_sprite(workspace, &InterfaceBoxStyles[3]);
     flatButton3_.show(0);
     flatButton4_.show(0);
