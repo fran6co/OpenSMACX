@@ -5430,15 +5430,6 @@ int __cdecl directplay_install_is_complete() {
     return result;
 }
 
-// WORKAROUND(decl): stand-in for an unidentified header inline that ors bits
-// into MapWin::field_1DD70_. The image materializes 0x8C0 in a callee-saved
-// register before the turn-wheel loop (`mov ebx, 0x8c0` at 0x0052AB8D) and ors
-// through it (0x0052ACDD); only an inline call's parameter copy reproduces that
-// hoist - every literal spelling folds to `or reg, 0x8c0`.
-static inline void control_game_set_map_flags(MapWin *window, uint32_t flags) {
-    window->field_1DD70_ |= flags;
-}
-
 /*
 Purpose: Run the game. Brings the system and game up, decides the intro
          movie, then turns the wheel: menu or multiplayer handshake, desktop,
@@ -5559,7 +5550,7 @@ void __cdecl control_game() {
                 {
                     MapWin *const primary_window = MapWinTable[0];
                     WorldClimateSkipTerrainClear = 0;
-                    control_game_set_map_flags(primary_window, 0x8C0);
+                    primary_window->field_1DD70_ |= 0x8C0;
                 }
                 ConsoleGlobal.focus_vehicle_ = -1;
                 if (IsMultiplayerNet != 0) {
