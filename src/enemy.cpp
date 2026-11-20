@@ -8075,7 +8075,7 @@ L_57708a:
         for (int d = 0; d < 8; d++) {
             tx = xrange(x + VehMoveDeltaX[d]);
             ty = y + VehMoveDeltaY[d];
-            if (on_map(tx, ty) && is_ocean(tx, ty)) {
+            if ((on_map(tx, ty) && is_ocean(tx, ty)) != 0) {
                 // Laid out after the loop at 0x577161.
                 add_goal(faction_id, 7, 1, tx, ty, -1);
                 coast_goal = 1;
