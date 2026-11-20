@@ -55,6 +55,10 @@ an explicit `--pfx` is only needed to pick another lane.
 - `objdis.py <unit> <src> <addr>` raw listing of our function with real jump targets.
 - `objdis.py <unit> <src> <addr>` raw listing of our function with real jump targets (unit as `picktech`, `picktech.cpp`,
   `src/picktech.cpp`, or a basename found in a subdirectory; lane FE_PFX_BASE).
+- `analysis/litaddr.py FEALL.json [--shared] [--json F]` literal-address evidence (MATCHING_GUIDE 2.8 "A pushed literal's
+  address decides inline against written out"): per function, the separator literals the image pushes (shared header-inline
+  COMDAT `S` or unit-local copy `L`, in code order) against ours (`??_C@` S, `$SG` L, named stand-in N). `--shared` adds
+  every other text the image references from two units. 20 s tree-wide on `feall.py --all --out`.
 - `analysis/sdeck.py` (`sdeck.run(unit, addr, lo, hi, [(key, text), ...])`) structural deck runner: ranks whole-file
   variants by (EH unwind-depth edit distance, named call multiset distance, jcc/jmp/call/ret count distance,
   control-flow hunks, fe rows), so a

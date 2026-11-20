@@ -3049,6 +3049,34 @@ What the model does not predict (2026-11-19)
   per-site and per-unit. So no "+" helper belongs in strings.h; the
   shared-literal family (`" "`, `", "`, `": "`, `"("`, `")"`, `"%"`,
   `". "`) is exactly the texts the image shares across units.
+- **A pushed literal's address decides inline against written out** (high;
+  2026-11-20 par-4, `analysis/litaddr.py`). The image is unpooled, so the
+  address a site pushes tells which source form emitted it: a raw
+  `strcat(x, ", ")`, or a literal passed as an argument, is a `$SG` of the
+  calling unit, laid out in its literal run in source order; a text written
+  inside an inline function's body is a `??_C@` COMDAT, one address for
+  every unit (the separators at 0x00682820, 0x00682E90-0x00682EA0 and
+  0x006867E0). So a site that pushes the shared address MUST be the header
+  inline (`say_X()` / `strcat_X(dest)` / `space()`), and a site that pushes
+  a unit-local copy of the same text MUST be written out, whatever rows,
+  call distance or a probe screen says. fe masks relocations and cannot see
+  this; compare the push sequence, in code order, with `litaddr.py
+  FEALL.json` (20 s tree-wide). It is evidence, not a screen: apply it and
+  keep it when rows rise. 2026-11-20 tree pass after the separator rounds:
+  ReportIf::draw_sat's first paragraph `" "` pushes a draw_sat-local copy
+  (0x4AAB18), so it is `strcat(paragraph, " ")` (6cad1c0b04's rows-based
+  `strcat_space` reverted, 54 -> 55 rows). The same test reaches beyond the
+  separators: AlphaNetStringStruct::add pushes the shared out-of-heap texts
+  (0x00682700/0x00682724, referenced by three units) at all four sites, so
+  AlphaNetLedgerEntry's placement `operator new` pair is `inline` (ours were
+  out-of-line definitions whose expansions kept `$SG` copies); battle_fight's
+  `"biohazd_sm.pcx"`/`"USENERVE"` sit in its own literal run, so the
+  WORKAROUND(decl) inline owner takes them as arguments rather than writing
+  them in its body. Named stand-in arrays (`BufferJoinSpace`,
+  `SocialWin*Text`, shown as `N`) at a shared push are header-inline sites
+  too; `--shared` also lists other texts referenced from two units, where
+  a data read that happens to point at a string (`mov eax, [0x0068FB58]`)
+  is the usual false hit.
 - **Frame-slot order follows the expansion counts: judge a spelling by its
   decisions, not its rows** (high; 2026-11-19 par-4, PickTech::pick
   64a5fb2ca3). Every expanded destructor or helper brings its own locals and
