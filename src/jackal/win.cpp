@@ -2136,12 +2136,14 @@ static void win_mouse_wheel(HWND hwnd, int x, int y, WPARAM keys) {
 }
 
 // WORKAROUND(inline): dead /Ob2 budget probe. Called with 0 it folds to no
-// code. The image refuses every second-level helper inside the expanded
-// handlers (get_hdc/release_hdc in the WM_ACTIVATE and WM_PALETTECHANGED
-// arms at 0x005F073D/0x005F0D48, play_if_idle at 0x005F0946) while still
-// expanding OnQueryNewPalette; without this spend VC6 expands those three.
-// 9-30 calls after the switch (11-30 before 2026-11-19) give the image's decisions; fewer leave
-// play_if_idle inlined. The original spending is not identified.
+// code. The image refuses get_hdc/release_hdc inside the expanded WM_ACTIVATE
+// and WM_PALETTECHANGED handlers (0x005F073D/0x005F0D48) while still
+// expanding OnQueryNewPalette and, at pass 2, OnSysCommand's
+// publish_callback_window; that copy's own play_if_idle (0x005F0946) is a
+// third-level call, never expanded. Five calls plus one dead statement after
+// the switch give the image's decisions (four or fewer expand get_hdc, six
+// or more refuse publish_callback_window). The original spending is not
+// identified.
 static int window_proc_budget_probe(int x) {
     if (x == 1) x = 2;
     return x;
@@ -2205,10 +2207,7 @@ LRESULT __stdcall Win::window_proc(HWND window, UINT message, WPARAM wParam,
     window_proc_budget_probe(0);
     window_proc_budget_probe(0);
     window_proc_budget_probe(0);
-    window_proc_budget_probe(0);
-    window_proc_budget_probe(0);
-    window_proc_budget_probe(0);
-    window_proc_budget_probe(0);
+    if (0) message = 0;
     return DefWindowProcA(window, message, wParam, lParam);
 }
 
@@ -7019,10 +7018,12 @@ void Win::on_key(unsigned int key, long flags, int repeat, unsigned int scan) {
 // discards the callback result, and the pinned close path's void virtual call
 // leaves no deterministic EAX when no Sound child is present. Registration
 // provenance for this standalone identity remains unresolved.
-// The play-if-idle tail is the 0x005F86A0 call, not its body written out
-// (2026-11-12): window_proc's expansion calls it at 0x005F0946, this copy
-// expands it. The image calls it with the owner in ecx (`mov ecx,esi`),
-// so 0x005F86A0 is a Win member taking the Sound (Win::play_if_idle).
+// The close tail is publish_callback_window (0x005EE460, no image
+// references: /Ob2 expands it here and in window_proc's copy of this
+// handler). Its play_if_idle (0x005F86A0) is expanded in this copy and a
+// call in window_proc's, where it sits three levels deep. The image calls
+// it with the owner in ecx (`mov ecx,esi`), so 0x005F86A0 is a Win member
+// taking the Sound (Win::play_if_idle).
 void __cdecl Win::OnSysCommand(HWND hwnd, unsigned int command, int x,
                                int y) {
     Win *self = reinterpret_cast<Win *>(
@@ -7037,13 +7038,7 @@ void __cdecl Win::OnSysCommand(HWND hwnd, unsigned int command, int x,
                 | static_cast<unsigned short>(x));
         return;
     }
-    WinCallbackWindow = self;
-    WinNullaryEventCallback cb = self->field_404_;
-    if (cb != 0) {
-        cb();
-    }
-    self->on_sys_close();
-    self->play_if_idle(self->val_6_);
+    self->publish_callback_window();
 }
 
 // ORIGINAL: 0x005EF050 ?client_to_nonclient@Win@@QAEXPAURECT@@@Z 0x005EF050-0x005EF10D FILE BYTE_EXACT
