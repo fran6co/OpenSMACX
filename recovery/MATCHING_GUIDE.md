@@ -6840,7 +6840,17 @@ Layout
   three middle rejections, and those copies merged only partly because the
   first copy loads the focus id into eax and the host into ecx, so one more
   `is_visible` call stayed. With `goto` to one exit label the named call
-  multiset, EH and frame equal the image. So when the image shows several
+  multiset, EH and frame equal the image. The gotos are not yet the final
+  spelling: over all 32 goto/copy subsets of the five exits, every subset
+  with two or more written-out copies gives `this` the image's esi and
+  [ebp-0x10] (rows 45..60, is_visible 3), and only zero or one copy gives
+  edi/[ebp-4] (is_visible 2 with all gotos). Tail-merged copies still count
+  for allocation (2.7), so the original most likely wrote the copies and
+  VC6 merged them whole. Ours merges them only from the `push` on: the
+  copies load `focusedBaseID_` into eax and the host into ecx. The nearest
+  earlier difference is the specialist loop, where ours forms
+  `lea edx,[edx*4+0x84]` and addresses `[edx+esi]` while the image
+  addresses `[esi+edx*4+0x84]` three times. So when the image shows several
   `jmp`s into one tail holding the call and ours writes that tail at each
   site, replace the copies with `goto` to one label. In the reverse case
   (ours merges what the image keeps) look for a missing source jump or for
