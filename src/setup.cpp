@@ -2405,27 +2405,32 @@ void __cdecl social_ai(int faction_id, int growth_val, int tech_val, int wealth_
             score = soc_eff.values_[effect_focus] * 1000;
         }
         unavailable = false;
-        int ideology_cat = Players[faction_id].soc_ideology_category[0];
-        if (ideology_cat >= 0) {
-            int ideology_model = Players[faction_id].soc_ideology_model[0];
-            if (ideology_model) {
-                uint32_t model = soc_cat.models_[ideology_cat];
-                if (model && model != ideology_model) {
-                    unavailable = true;
+        // A one-trip loop over the ideology entry: the image keeps the
+        // unavailable test at the join (mov edi,1; test edi,edi; jne), which
+        // VC6 threads away without a loop between the stores and the test.
+        for (int ideology = 0; ideology < 1; ideology++) {
+            int ideology_cat = Players[faction_id].soc_ideology_category[ideology];
+            if (ideology_cat >= 0) {
+                int ideology_model = Players[faction_id].soc_ideology_model[ideology];
+                if (ideology_model) {
+                    uint32_t model = soc_cat.models_[ideology_cat];
+                    if (model && model != ideology_model) {
+                        unavailable = true;
+                    }
+                    if (model == ideology_model) {
+                        score += PlayersData[faction_id].current_num_bases;
+                    }
                 }
-                if (model == ideology_model) {
+            }
+            int ideology_eff = Players[faction_id].soc_ideology_effect[ideology];
+            if (ideology_eff >= 0) {
+                int value = soc_eff.values_[ideology_eff];
+                if (value > 0) {
                     score += PlayersData[faction_id].current_num_bases;
                 }
-            }
-        }
-        int ideology_eff = Players[faction_id].soc_ideology_effect[0];
-        if (ideology_eff >= 0) {
-            int value = soc_eff.values_[ideology_eff];
-            if (value > 0) {
-                score += PlayersData[faction_id].current_num_bases;
-            }
-            if (value < 0) {
-                unavailable = true;
+                if (value < 0) {
+                    unavailable = true;
+                }
             }
         }
         if (unavailable) {
