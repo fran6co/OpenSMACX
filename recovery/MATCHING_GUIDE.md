@@ -5882,6 +5882,42 @@ result over 64 symbol-counter pads, so none of these is a counter canary.
     8 -> 6, rows 118 -> 119, packrev 32 of 33 units. The merged unit (5)
     is created before the count-3 centres, and centre_x/centre_y interfere
     with its max_range role in the 128 arm, so they open their own slots.
+  - **Dead parameter homes are taken first, the parameter read first first**
+    (par-2 2026-11-20, probe `tempslot/g17`, packsim default). Every unit, in
+    the usual descending-count order, tries the homes of the dead parameters
+    BEFORE any local slot: a light Z joins a dead parameter's home although a
+    local slot that ended before Z is free (`x3_p1`, `x3_p12`), and of two
+    dead parameters it takes the one whose read comes first (`pq_lone`
+    against `qp_lone`; an early-return branch's read counts where it stands,
+    `qret2`). Heavy or light, address-taken or not; interference is flow
+    liveness (a read lexically after Z on a path Z never reaches does not
+    block, `lex_goto`). packsim.py models it (`--no-params` = old model,
+    `--param-order first|last|oldest`): agreement on our compiles battle_fight
+    48 -> 53 of 58 units (last 45, oldest 43), Console::go_to 30 -> 46 of 51,
+    boom 20 -> 25, enemy_move 111 -> 113; first beats last everywhere.
+    Consequence: a dead home is never "left over". In battle_fight 0x00506AF0
+    allow_interceptor (+0x1c, read 0x507007) is tried before odds_out (+0x20,
+    0x507098): the heaviest compatible unit, `display` (11), takes +0x1c and
+    the next one that interferes with display takes +0x20. Ours gives +0x20 to
+    nerve_gas (8); the image keeps nerve_gas at -0x3c and +0x20 holds only
+    light units (has_fac's mask 2, rx 5, the target_x>>1 CSE 4, the inlined
+    battle_kill_chaff's killer_id 3), and att_bit (7, live from 0x5070D6) is
+    not there either. So in the original some unit ranked between display
+    and nerve_gas took +0x20 first: rx (its range lies inside display's). The
+    count that ranks rx is NOT its frame accesses: spelling the withdraw loop
+    with `rx = wrap_map_x(...)` and rx at every site (instead of `int x =
+    ...; rx = x;`, which copy propagation turns into x everywhere, rx = 1
+    reference) gives rx 9 frame accesses against display's 11, yet rx is
+    packed FIRST (rx at +0x1c, display at +0x20, nerve_gas at -0x3c as the
+    image, mask at +0x20 as the image; frame 0x134 -> 0x130, rows 2442 ->
+    2768). So VC6's count includes a variable's register-resident references
+    (after copy propagation), and the image needs display > rx >= nerve_gas
+    in that count: the all-rx loop overshoots (rx ~13 references against
+    display's ~12), the x-copy loop undershoots (rx ~6). Spellings that move
+    one reference (`stack_put(.., x, ..)` at L_509923 through a copy, four
+    `display |= any_visible` forms) change nothing. Open: which original
+    spelling puts rx between them (the image's loop keeps x in esi with two
+    `mov [ebp+0x20],esi` stores, one per wrap_map_x arm).
 
 - **A loop counter the image keeps in memory while a callee-saved register
   holds a per-iteration conversion** (par-2 2026-11-19, ReportWin::draw_ops

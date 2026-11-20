@@ -8,7 +8,8 @@ optimizer temporary = one web of an anonymous frame operand) has a RAW reference
 loop weighting; probe g15: a ?: result spilled per arm and a spilled pointer IV count exactly their frame
 accesses, not less). Symbols are taken in descending count; each joins the MOST RECENTLY CREATED slot none of
 whose occupants interferes with it, else opens a new slot; slots get frame offsets in creation order (-4
-first). Interference is liveness of the HOME (stores to loads of the slot through the flow graph): a value
+first; dead parameter homes are pre-existing slots tried before every local slot, the parameter read first
+first, probe g17). Interference is liveness of the HOME (stores to loads of the slot through the flow graph): a value
 cached in a register over a stretch leaves its home dead there.
 
 This tool rebuilds the symbols from our compile (/FAsc names, anonymous operands split into webs), computes
@@ -42,6 +43,12 @@ ap.add_argument('--defined', action='store_true', help='interference on live AND
                 'its own stores reaches), not plain flow liveness')
 ap.add_argument('--no-tail', dest='tail', action='store_false', help='plain home liveness for optimizer temporaries '
                 '(default: a spilled temporary stays live over its scratch-register reload tail, boom 0x00504AA0)')
+ap.add_argument('--no-params', dest='params', action='store_false', help='leave dead parameter homes out (the model '
+                'before 2026-11-20); default: parameter homes are pre-existing slots tried before every local slot, '
+                'earliest-read parameter first (probe g17)')
+ap.add_argument('--param-order', default='first', choices=['first', 'last', 'oldest'],
+                help='where parameter homes sit among the candidates: first (before local slots, probe g17), last '
+                '(after them), oldest (after them, latest-read parameter first)')
 ap.add_argument('--tie', default='last', choices=['last', 'first', 'actual'],
                 help='order among equal counts: earlier LAST reference first (probe g14, default), or the actual slot (oracle)')
 a = ap.parse_args()
@@ -71,7 +78,7 @@ for n, i in enumerate(F.ins):
     for s in list(i['rd']) + list(i['wr']):
         if isinstance(s, tuple):
             s = s[1]
-        if s >= 8 or s >= 0:
+        if s >= 0 and not (a.params and s >= 8):
             continue
         nm = name_at.get(i['a'])
         lab.setdefault(n, {})[s] = nm
@@ -135,7 +142,7 @@ def relabel(sym):
 
 LIVE = {}
 for sym in sym_ins:
-    if sym in addr_taken or sym.startswith('coast_'):
+    if (sym in addr_taken and sym_slot[sym].most_common(1)[0][0] < 0) or sym.startswith('coast_'):
         LIVE[sym] = (set(range(len(F.ins))), set())
     else:
         LIVE[sym] = relabel(sym)
@@ -156,13 +163,68 @@ elif a.tie == 'first':  # control: earlier first reference first
     order = sorted(sym_ins, key=lambda x: (-count[x], min(addr_of[n] for n in sym_ins[x])))
 else:
     order = sorted(sym_ins, key=lambda x: (-count[x], actual[x] if actual[x] < 0 else -9999))
+
+
+def sym_slot_all():
+    return {s for c in sym_slot.values() for s in c}
+
+
+def _reach(starts, s):
+    seen, work = set(), list(starts)
+    while work:
+        n = work.pop()
+        if n in seen:
+            continue
+        seen.add(n)
+        if s in F.ins[n]['wr']:
+            continue
+        work.extend(F.ins[n]['s'])
+    return seen
+
+
+_ER = {}
+
+
+def entry_web(sym, s):
+    """number of sym's reads of slot s that only the parameter's entry value reaches (no store of s reaches them;
+    a maybe-uninitialised local packed into the home has none)."""
+    if s not in _ER:
+        stores = [n for n in range(len(F.ins)) if s in F.ins[n]['wr']]
+        _ER[s] = (_reach([0], s), _reach([x for w in stores for x in F.ins[w]['s']], s))
+    er, sr = _ER[s]
+    return sum(1 for n in sym_ins[sym] if s in F.ins[n]['rd'] and n in er and n not in sr)
+
+
 # model run
 groups = []  # list of [members]
 model = {}
+# parameter homes (probe g17): pre-existing slots, founded by the parameter itself (the web its entry value
+# reaches), tried before every local slot, the parameter read first first
+pgroups = []
+pname = {}
+if a.params:
+    for s in sorted({x for x in sym_slot_all() if x >= 8}):
+        par = sorted((sym for sym in sym_ins if actual[sym] == s and entry_web(sym, s)), key=lambda x: -entry_web(x, s))
+        if par:
+            pname[s] = par[0]
+            g = [par[0]]
+            pgroups.append((min(addr_of[n] for n in sym_ins[par[0]]), s, g))
+            model[par[0]] = g
+    pgroups.sort()
+    if os.environ.get('PACKSIM_DEBUG'):
+        print('PARAMS', [(hex(s), g[0], hex(f)) for f, s, g in pgroups], 'slots', sorted(hex(x) for x in sym_slot_all() if x >= 8))
+        for sym in sym_ins:
+            if actual[sym] >= 8:
+                print('  ', sym, hex(actual[sym]), sorted(hex(addr_of[n]) for n in sym_ins[sym])[:8])
+    pgroups = [g for _, _, g in pgroups]
 for sym in order:
-    if sym in addr_taken or actual[sym] > 0:
+    if sym in addr_taken and actual[sym] < 0 or sym in model:
         continue
-    cands = list(reversed(groups)) if a.fit == 'last' else list(groups)
+    if not a.params and actual[sym] > 0:
+        continue
+    loc = list(reversed(groups)) if a.fit == 'last' else list(groups)
+    cands = (list(pgroups) + loc if a.param_order == 'first' else loc + list(pgroups) if a.param_order == 'last'
+             else loc + list(reversed(pgroups)))
     if a.fit == 'smallest':
         cands.sort(key=lambda g: sum(count[m] for m in g))
     for g in cands:
@@ -176,6 +238,7 @@ for sym in order:
         model[sym] = g
 # compare: map model groups to actual slots by majority
 gslot = {}
+groups = pgroups + groups
 for g in groups:
     cnt = collections.Counter(actual[m] for m in g)
     gslot[id(g)] = cnt.most_common(1)[0][0]
