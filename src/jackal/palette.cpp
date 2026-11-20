@@ -627,19 +627,7 @@ int Palette::init_cycle(int key, int first, int count, unsigned long interval) {
         return 7;
     }
 
-    int slot = 0;
-    const PaletteInternal *entry = internal_;
-    while (slot < 5) {
-        const int held = static_cast<int>(entry->key);
-        if (key == held) {
-            break;
-        }
-        if (held == -1) {
-            break;
-        }
-        ++slot;
-        ++entry;
-    }
+    int slot = get_pos(key);
 
     if (static_cast<int>(internal_[slot].key) == key) {
         if (internal_[slot].time != 0) {
@@ -692,30 +680,7 @@ almost always will. Reproduced rather than fixed; a bounds check here is a
 different program.
 */
 int Palette::start_cycle(int key) {
-    // A WALKING POINTER AND AN INDEX, both live. The image steps `esi` by
-    // 0x10 through the slots and counts in `eax`, then recomputes the
-    // address from the INDEX afterwards - `shl eax, 4; add eax, ecx`.
-    // Indexing in the loop lets VC6 peel the first iteration and rotate the
-    // test to the bottom, which is a different shape entirely.
-    int slot = 0;
-    const PaletteInternal *entry = internal_;
-    while (slot < 5) {
-        // Read once, compared twice: `mov edx, [esi]` then two `cmp`s
-        // against the register, not two memory compares. TWO SEPARATE
-        // `if`s, not one chained `||` - the image jumps to the same target
-        // from two distinct `je`s, which is what two early-exit `if`s
-        // produce; a single OR condition made VC6 peel the first read
-        // outside the loop and rotate the test to the bottom instead.
-        const int held = static_cast<int>(entry->key);
-        if (key == held) {
-            break;
-        }
-        if (held == -1) {
-            break;
-        }
-        ++slot;
-        ++entry;
-    }
+    int slot = get_pos(key);
     if (static_cast<int>(internal_[slot].key) != key) {
         return 0xB;
     }
@@ -786,13 +751,7 @@ int Palette::start_cycle(int key) {
 
 
 void Palette::stop_animation(int key) {
-    int i;
-    for (i = 0; i < 5; i++) {
-        int v = internal_[i].key;
-        if (key == v || v == -1) {
-            break;
-        }
-    }
+    int i = get_pos(key);
     // BUG IN THE ORIGINAL, reproduced: when no slot matches and none is
     // free, i is 5 and the read below is internal_[5].key - the first four
     // bytes PAST the object. The image does exactly this.
@@ -841,15 +800,8 @@ not chased further given the size of the function.
 reference) and the compaction is a counted for loop over an unused index.
 */
 void Palette::remove_animation(int key) {
-    // get_pos INLINED - the image never calls it here (`osmx calls` lists
-    // no reference to it), it repeats the search loop directly.
-    int index = 0;
-    for (; index < 5; ++index) {
-        const int slot_key = static_cast<int>(internal_[index].key);
-        if (key == slot_key || slot_key == -1) {
-            break;
-        }
-    }
+    // get_pos is an orphan in the image: /Ob2 expands it at every site.
+    int index = get_pos(key);
     if (internal_[index].key != static_cast<uint32_t>(key)) {
         return;
     }
@@ -910,13 +862,7 @@ void __cdecl Palette::timer_callback(int key, void *context) {
     }
 
     Palette *self = static_cast<Palette *>(context);
-    int idx = 0;
-    for (; idx < 5; ++idx) {
-        const int slot_key = static_cast<int>(self->internal_[idx].key);
-        if (key == slot_key || slot_key == -1) {
-            break;
-        }
-    }
+    int idx = self->get_pos(key);
 
     if ((int)self->internal_[idx].key != key) {
         return;
