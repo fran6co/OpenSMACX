@@ -2459,16 +2459,13 @@ void ReportWin::draw_labs() {
                         } else {
                             say_comma();
                         }
-                        // UNSURE: the image tests datalink here with no
-                        // branch (0x49AFEF..0x49AFF7); identical arms that VC6
-                        // merged would leave exactly that test.
-                        if (!datalink) {
-                            strcat(StringTemp, StringTable.get(
-                                SocialCategories[v_4].name[j]));
-                        } else {
-                            strcat(StringTemp, StringTable.get(
-                                SocialCategories[v_4].name[j]));
-                        }
+                        // The image tests datalink here with no branch
+                        // (0x49AFEF..0x49AFF7): a ternary whose arms are the
+                        // same name; written as two if/else arms the test
+                        // keeps its branches.
+                        strcat(StringTemp, StringTable.get(
+                            datalink ? SocialCategories[v_4].name[j]
+                                     : SocialCategories[v_4].name[j]));
                         if (StringTemp[0]) {
                             if (pass) {
                                 y = host->Buffer::wrap(StringTemp, x + 3, y,
