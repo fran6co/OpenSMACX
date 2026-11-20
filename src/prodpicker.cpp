@@ -122,7 +122,7 @@ void ProdPicker::on_mousewheel(int delta) {
 // RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/004927c0.cpp", "source:src/prodpicker.h", "source:src/stringstruct.h", "source:src/buffer.h", "source:src/sprite.h", "source:src/veh.h"], "reason": "Paint production-picker cells through typed item lists, buffer/base services, sprite tables and Caviar rendering; preserve observed wrapped icon and panel-style data views."}
 // TRIED: direct translation of Ghidra's (already-clean) pseudocode into RD()-based offset access, matching the bounds check / grid position calc / set_clip+ box_sprite / three seek-list blocks / mandate_color+wrap_cent name draw / veh_fake+veh_draw+Caviar render-or-Sprite::draw_mono branch / veh_cost string; MISMATCH #0 (prologue/frame) not chased further. Typed source now measures 583 compiled instructions versus 672 original, with first divergence in stack-frame setup. The original sign-based icon dispatch conflicts with the positive IDs visible from StringList::current_id(); this source preserves the ID unchanged and leaves that producer/consumer discrepancy unresolved.
 void ProdPicker::draw_item(int item, int update) {
-    if (item < field_A77C_ || item >= field_A77C_ + field_A82C_) return;
+    if ((item < field_A77C_ || item >= field_A77C_ + field_A82C_) != 0) return;
 
     // Function scope: the image gives it a slot of its own ([ebp-0x38]);
     // block-local it packed with the vehicle arm's float temporaries.
