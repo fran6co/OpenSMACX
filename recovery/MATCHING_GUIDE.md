@@ -1910,6 +1910,75 @@ Zero webs on one side only (2026-11-20 par-1; candset.py over the 288 rung
   frame RECT: rejected), a named wrap width, braces; `page_width_ - 4` as
   wrap_height's width gives 260 but reads the member where the image reads
   the rect fields (rejected).
+- Z9 (high, 2026-11-20 par-2; `regalloc/c_zform.spec` and the generated
+  grids behind it, about 400 probes, /Oy-, values 0, 5, -1; MapWin::init
+  0x00470A90). **Formation, materialisation and rank are three different
+  counts.**
+  - *Formation* (does the constant become a candidate at all; seen as two
+    adjacent stores turning from the Z1 `xor eax,eax` piece into Z2
+    immediates): one more reference of any kind anywhere. Counted: a memory
+    compare in every spelling (`!= 0`, `!x`, `if (x)`, `< 0`, `> 0`, char,
+    pointer or field operands, even though without a zero register they
+    compile to `mov r,[m]; test r,r`), a compare of an enregistered variable
+    (`a != 0`, `test esi,esi`), a push, a store in another block, a char,
+    short, pointer or field store, a parameter store, a propagated `int x =
+    0` read once, and every one of these inside an inlined helper (inline
+    copies count like direct ones). Not counted: a compare of a call result
+    (`cond() != 0`, `< 0`), `return 0`, `a > 0 ? a : 0`, and the
+    initialiser of a variable that is redefined later (`int x = 0; if (..) x
+    = f();`: that is the variable's web, Z6).
+  - *Materialisation* (`xor reg,reg` in a callee-saved register when one is
+    free over the range): only **stores** of the constant count, each
+    weighted 2^loop-depth, and the threshold is exactly **4** (S stores
+    separated by calls, in if-arms, else-arms, `&&` arms, nested ifs or
+    inline helpers: S = 3 never, S = 4 always; one store in a loop plus two
+    outside = 4: yes; plus one outside: no). Switch-case stores count one
+    each beside other stores (two stores + two cases, or one + four, do), but
+    four or eight case stores alone did not. char stores count with
+    the int ones and then force ebx (byte register). A `for (i = 0; ...)`
+    counter's `i = 0` counts as one, and the counter then shares the zero
+    (Z4). Compares and pushes never count toward the four: nine memory
+    compares, nine pushes, or three stores with seven compares stay
+    immediates. Four or more stores in one straight block with no call
+    between them stay a scratch piece (Z1), and two if/else pairs each
+    storing in both arms (4 stores) did not materialise where three pairs
+    (6) did: the probes do not explain that one shape.
+  - *Rank* against rivals (4g): stores count as in 4g; **memory compares add
+    to the constant's score** (rival with 3 references: 5 stores + 2
+    compares win ebx, 4 stores + 4 compares do not, + 8 do); **pushes add
+    nothing** (5 stores + 8 pushes still lose; this is 4g's "constant pushes
+    never formed a candidate" measured as rank); compares of the rival
+    itself (`c == 0`) count for the rival (7 stores win against c, 7 stores
+    + 2 `c == 0` lose).
+  - Reading a one-side zero register: count the stores first. An image zero
+    register over fewer than four visible stores means the original wrote a
+    store more that cross-jumping merged afterwards (tail-merged references
+    count, "Candidate set" above). MapWin::init: three byte stores of 0 in
+    the image, ebx = 0 with 18 references; the inlined standard_caption
+    (its `StringTemp[0] = 0` is one of the three) is shared by the
+    `map_view_index_ == 1` arm and the other arm. Writing
+    `standard_caption()` in both arms (`else if (map_view_index_ == 1) {
+    ...; standard_caption(); } else { standard_caption(); }`) gives the
+    fourth store, the image's ebx zero and every `cmp r,ebx` (53 -> 15; the
+    rest is scratch eax/ecx choice). A ternary that the image computes
+    branch-free (`neg; sbb; and`) is not the hidden store: the if/else
+    spelling materialises the zero too but stores it as a branch (36).
+  - `candset.py <unit> <addr>` prints a "constants whose formation differs"
+    block: per constant and side, the stores (and their 2^depth weight,
+    counting scratch pieces and register stores), memory compares (including
+    `mov r,[m]; test r,r`) and pushes, and flags a register on one side whose
+    store weight is under four.
+  - Credits::exec 0x004289F0 (probe `unload` shape, c_zform-style): the
+    inlined unload pair after the free loop is immediates in a probe whose
+    counts sit at offsets 0/4, and a piece as soon as they sit at any other
+    offset (4 to 0xA14), with the same instructions otherwise; under /Oy
+    both are immediates. The piece/immediate choice for that pair depends on
+    the field offsets, not on the zero's references; still open.
+  - DiploPop::draw_info 0x0043FA90 (constant 3 in edi in ours only, from the
+    entry `+ 3` through the four loop-top adjustments): both sides have the
+    same constant-3 references; the image keeps `r.right`'s reload in edi
+    there. Reordering the four adjustments, `x = x + 3`, `RECT r; r = box;`
+    and four spellings of the half-width expression do not move it (29).
 - Screen (2026-11-20, rung 4-7 functions): image-only `#0` webs in
   CouncWin::make_resolution 0x00424410, MapWin::init 0x00470A90 (ebx, 18
   refs), draw_tech 0x00484C60, vehdraw_construct_chassis 0x004C2470 (ebx, 22
@@ -5375,6 +5444,18 @@ result over 64 symbol-counter pads, so none of these is a counter canary.
   `recover measure`) on every function that becomes fe-exact.
 
 ### 3.3 Frame and locals
+- **A RECT member written through `this` while an address temporary of it is
+  live** (2026-11-20 par-2, ReportIf::draw_ops 0x004A9050). When the image
+  forms `&member` in a register (`lea edi,[esi+K]`, passed to calls) but
+  reads or writes some of the member's fields as `[esi+K+f]`, those fields
+  were spelled through the member (`draw_workspace_rect_.bottom = ...`) and
+  the others through the pointer (`workspace->top = ...`). VC6 does not
+  route a direct member access through the live temporary, so the mix in
+  the image is the mix in the source; spell each access the way the image
+  addresses it (draw_ops 14 -> 4). Changing one more access to the member
+  can also drop a copy elsewhere (draw_ops' top store: 105), so measure each
+  access separately. Rule (a) in 2.7 "How VC6 forms each kind" (a struct
+  copy or `&member` forms the temporary) still decides whether it forms.
 - **Locals at `[ebp+8]`/`[ebp+0xc]`** sit in dead parameter slots: write ordinary
   locals and pass the parameters directly.
 - **A frame larger than the locals.** Either a block-scoped buffer overlapped a

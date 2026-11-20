@@ -115,6 +115,9 @@ an explicit `--pfx` is only needed to pick another lane.
   its role (`this`, `lea:this+K`, `[slot]{name}` piece, `#K`, `ret@line`), scored by rule 4/4b at instruction
   level and checked against its own side's registers; prints the roles on one side only and the pairs the sides
   order differently (MATCHING_GUIDE 2.7 "Candidate set"). `regprio.py ... --candset` appends the same report.
+  A "constants whose formation differs" block lists, per constant and side, stores (weight 2^depth, scratch pieces
+  included), memory compares (`mov r,[m]; test r,r` too) and pushes, flagging a register held on one side with a
+  store weight under 4 (2.7 Z9: a merged store is hidden there).
   `candset.py --census [unit ..] [--oy] --opts k=v,.. --opts ..` sums the image-side rank constraints explained over
   the fe-exact functions per option set (70 s tree-wide; 4j `bytepref` validated this way).
 - `analysis/rotscan.py <unit> <addr[,..]> [--src ALT] [--track] | --tree [unit ..] [--from FEALL.json] [--all] [--json F]`

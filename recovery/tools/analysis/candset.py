@@ -405,6 +405,85 @@ def interferes(a, b):
     return bool(a['live'] & b['live'])
 
 
+def const_census(code, webs):
+    """MATCHING_GUIDE 2.7 Z9: per constant, the references that decide its formation and materialisation.
+    -> {K: dict(st, stw, cmp, push, other, reg)}.  st = stores of K to memory (immediate, or through a register web
+    holding K), stw = the same weighted 2^depth (the materialisation count: >= 4 forms a callee-saved register when
+    one is free; compares and pushes never count toward it), cmp = memory compares with K (for 0 also `mov r,[m];
+    test r,r`: the spelling of a memory compare when no zero register exists), push = pushed K (formation only, no
+    rank weight), other = arithmetic/register operands."""
+    held = {}  # instruction index -> {reg: K} for constant webs
+    regs_of = {}
+    for w in webs:
+        m = re.fullmatch(r'#(-?\d+)', w.get('role', ''))
+        if w.get('kind') != 'const' or not m:
+            continue
+        k = int(m.group(1))
+        regs_of.setdefault(k, set()).add(w['reg'])
+        for i in w['live'] | w['refs']:
+            held.setdefault(i, {})[w['reg']] = k
+    out = collections.defaultdict(lambda: dict(st=0, stw=0, cmp=0, push=0, other=0, reg=set()))
+
+    def kval(o, i):
+        o = o.strip()
+        if re.fullmatch(r'-?(0x[0-9a-f]+|\d+)', o):
+            v = int(o, 0)
+            return v - (1 << 32) if v >= 1 << 31 else v
+        return held.get(i, {}).get({'bl': 'ebx', 'bx': 'ebx', 'si': 'esi', 'di': 'edi'}.get(o, o))
+    scr = {}  # scratch register -> constant it holds (a piece: `xor eax,eax` + register stores), within a block
+    for i, (off, t, g) in enumerate(code.ins):
+        if i in code.skip:
+            continue
+        mn = mnem(t)
+        os_ = ops(t)
+        w8 = 2 ** code.depth[code.bof[i]]
+        if i in code.starts or mn == 'call':
+            scr = {}
+        if len(os_) == 2 and re.fullmatch(r'e[acd]x', os_[0]):
+            r0 = os_[0]
+            if mn == 'xor' and os_[1] == r0:
+                scr[r0] = 0
+                continue
+            if mn == 'mov' and re.fullmatch(r'-?(0x[0-9a-f]+|\d+)', os_[1]):
+                scr[r0] = int(os_[1], 0)
+                continue
+            scr.pop(r0, None)
+        elif len(os_) == 1 and mn in ('pop', 'inc', 'dec', 'neg', 'not') and os_[0] in scr:
+            scr.pop(os_[0], None)
+        if len(os_) == 2 and os_[1] in scr and mn in ('mov', 'cmp') and '[' in os_[0]:
+            t = '%s %s, %d' % (mn, os_[0], scr[os_[1]])
+            os_ = [os_[0], str(scr[os_[1]])]
+        elif len(os_) == 1 and mn == 'push' and os_[0] in scr:
+            os_ = [str(scr[os_[0]])]
+        if mn == 'push' and len(os_) == 1:
+            k = kval(os_[0], i)
+            if k is not None:
+                out[k]['push'] += 1
+            continue
+        if len(os_) != 2:
+            continue
+        k = kval(os_[1], i)
+        if mn == 'test' and os_[0] == os_[1] and re.fullmatch(r'e[acd]x|[acd]l', os_[0]) and i > 0:
+            pm = re.match(r'mov (e[acd]x|[acd]l), (byte|word|dword) ptr \[', code.ins[i - 1][1])
+            if pm and pm.group(1) == os_[0]:
+                out[0]['cmp'] += 1
+            continue
+        if k is None:
+            continue
+        if mn == 'mov' and '[' in os_[0]:
+            out[k]['st'] += 1
+            out[k]['stw'] += w8
+        elif mn == 'cmp' and '[' in os_[0]:
+            out[k]['cmp'] += 1
+        elif mn in ('mov',) and '[' not in os_[0]:
+            continue
+        else:
+            out[k]['other'] += 1
+    for k, rs in regs_of.items():
+        out[k]['reg'] |= rs
+    return out
+
+
 def side_analysis(code, regs, names, lst, srclines, scratch=False):
     this_reg = None
     for off, t, g in code.ins[:14]:
@@ -703,7 +782,7 @@ def main():
     report(r, text, items, addr, a.quiet, a.min, a.scratch)
 
 
-def report(r, text, items, addr, quiet=False, minrefs=2, scratch=False, sections=('webs', 'only', 'order', 'unexplained')):
+def report(r, text, items, addr, quiet=False, minrefs=2, scratch=False, sections=('webs', 'only', 'consts', 'order', 'unexplained')):
     """print the candidate-set comparison for one evaluated function (fe.evaluate result, source text, /FAsc items)"""
     rows = r['rows']
     srclines = text.split('\n')
@@ -786,6 +865,28 @@ def report(r, text, items, addr, quiet=False, minrefs=2, scratch=False, sections
             print('  %-36s image %d webs %3d refs %-14s ours %d webs %3d refs %-14s | %s' % (
                 k[:36], len(a_), ra, ','.join(sorted({w['reg'] for w in a_})), len(b_), rb, ','.join(sorted({w['reg'] for w in b_})),
                 LEVERS.get(kind, '')[:90]))
+    if 'consts' in sections:
+        ic_, oc_ = const_census(icode, iw), const_census(ocode, ow)
+        rows_ = []
+        for k in sorted(set(ic_) | set(oc_), key=lambda v: (abs(v), v)):
+            a_, b_ = ic_.get(k), oc_.get(k)
+            a_ = a_ or dict(st=0, stw=0, cmp=0, push=0, other=0, reg=set())
+            b_ = b_ or dict(st=0, stw=0, cmp=0, push=0, other=0, reg=set())
+            if a_['reg'] == b_['reg'] and all(a_[f] == b_[f] for f in ('st', 'stw', 'cmp', 'push')):
+                continue
+            if max(a_['stw'], b_['stw'], a_['cmp'], b_['cmp']) == 0 and not (a_['reg'] or b_['reg']):
+                continue
+            rows_.append((k, a_, b_))
+        if rows_:
+            print('--- constants whose formation differs (Z9: stores weighted 2^depth >= 4 materialise when a register is'
+                  ' free; cmp counts in rank only, push in neither)')
+            for k, a_, b_ in rows_:
+                f = lambda d: 'reg %-7s st %2d (w %2d) cmp %2d push %2d' % (','.join(sorted(d['reg'])) or '-', d['st'],
+                                                                           d['stw'], d['cmp'], d['push'])
+                hint = ''
+                if (a_['reg'] and not b_['reg'] and b_['stw'] < 4) or (b_['reg'] and not a_['reg'] and a_['stw'] < 4):
+                    hint = '  <- a store weight under 4 on one side: look for a merged/extra store of %d' % k
+                print('  #%-10d image %s | ours %s%s' % (k, f(a_), f(b_), hint))
     print('--- register order the sides disagree on (pairs of interfering webs, matched by role)')
     seen = set()
     for x in iw:
