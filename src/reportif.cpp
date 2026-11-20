@@ -3512,7 +3512,7 @@ void ReportWin::draw_ops() {
             } else {
                 facility = -production;
                 v_10 = Facility[facility].cost;
-                strcat(StringTemp, StringTable.get(Facility[facility].name));
+                strcat(StringTemp, table_text(Facility[facility].name));
                 Buffer::set_text_color(
                     mandate_color(TutWinBaseWindow.prodPicker_.edbc_fac(facility)), -1, 1, 1);
             }
@@ -4660,7 +4660,7 @@ void ReportWin::draw_intel() {
     rect1_.top += field_E268_;
     diplomacy_check(viewer, subject, 0);
     report_intel_label(0xE94 / 4);
-    say_special(StringTemp, StringTable.get(Mood[get_mood(DiploFriction)]), subject);
+    say_special(StringTemp, table_text(Mood[get_mood(DiploFriction)]), subject);
     CharUpperA(StringTemp);
     report_topic_line(this, rect1_, text_x);
     rect1_.top += field_E268_;
