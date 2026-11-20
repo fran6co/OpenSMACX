@@ -2955,9 +2955,11 @@ int __cdecl battle_fight(int veh_id, int dir, int target_x, int target_y,
             if (GameDataStateStorage.fields_.turn_current_num_ < 50) {
                 att_strength /= 2;
             }
-            // 0x507BCF: inlined has_fac (its bitmask() out-params use [ebp+0x1c]/[ebp+0x20])
-            if (has_fac(FAC_HEADQUARTERS, base_id, 0) &&
-                PlayersData[def_faction].current_num_bases < 4) {
+            // 0x507BCF: inlined has_fac (its bitmask() out-params use [ebp+0x1c]/[ebp+0x20]).
+            // The test is a value (MATCHING_GUIDE 3.7): it gives the image's
+            // frame (0x138) and jump count.
+            if ((has_fac(FAC_HEADQUARTERS, base_id, 0) &&
+                PlayersData[def_faction].current_num_bases < 4) != 0) {
                 att_strength /= 2;
             }
         }
