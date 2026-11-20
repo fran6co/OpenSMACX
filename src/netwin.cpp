@@ -2273,7 +2273,6 @@ void NetWin::draw_session_info() {
         && NetWinSessionData.fields_.scenario_text_wire_tail_[0] == 0) {
         spot_.add(4, 0, col, bottom, written - col + 0x1E, next - bottom);
     }
-    bottom = next;
 
     StringTemp[0] = 0;
     says("{");
@@ -2289,6 +2288,7 @@ void NetWin::draw_session_info() {
         says(label_get(NetWinSessionOptions.fields_.ocean_coverage_ + 0x3D8));
     }
     avail = field.right - col - 10;
+    bottom = next;
     if (Buffer::text_width(StringTemp) > avail) {
         written = field.right - 10;
         next = Buffer::wrap(StringTemp, col, bottom, avail);
@@ -2306,7 +2306,6 @@ void NetWin::draw_session_info() {
         && NetWinSessionData.fields_.scenario_text_wire_tail_[0] == 0) {
         spot_.add(5, 0, col, bottom, written - col + 0x1E, next - bottom);
     }
-    bottom = next;
 
     StringTemp[0] = 0;
     says("{");
@@ -2322,6 +2321,7 @@ void NetWin::draw_session_info() {
         says(label_get(NetWinSessionOptions.fields_.erosion_ + 0x3DB));
     }
     avail = field.right - col - 10;
+    bottom = next;
     if (Buffer::text_width(StringTemp) > avail) {
         written = field.right - 10;
         next = Buffer::wrap(StringTemp, col, bottom, avail);
@@ -2339,7 +2339,6 @@ void NetWin::draw_session_info() {
         && NetWinSessionData.fields_.scenario_text_wire_tail_[0] == 0) {
         spot_.add(6, 0, col, bottom, written - col + 0x1E, next - bottom);
     }
-    bottom = next;
 
     StringTemp[0] = 0;
     says("{");
@@ -2355,6 +2354,7 @@ void NetWin::draw_session_info() {
         says(label_get(NetWinSessionOptions.fields_.native_life_ + 0x3E4));
     }
     avail = field.right - col - 10;
+    bottom = next;
     if (Buffer::text_width(StringTemp) > avail) {
         written = field.right - 10;
         next = Buffer::wrap(StringTemp, col, bottom, avail);
@@ -2372,7 +2372,6 @@ void NetWin::draw_session_info() {
         && NetWinSessionData.fields_.scenario_text_wire_tail_[0] == 0) {
         spot_.add(7, 0, col, bottom, written - col + 0x1E, next - bottom);
     }
-    bottom = next;
 
     StringTemp[0] = 0;
     says("{");
@@ -2388,6 +2387,7 @@ void NetWin::draw_session_info() {
         says(label_get(NetWinSessionOptions.fields_.cloud_cover_ + 0x3E1));
     }
     avail = field.right - col - 10;
+    bottom = next;
     if (Buffer::text_width(StringTemp) > avail) {
         written = field.right - 10;
         next = Buffer::wrap(StringTemp, col, bottom, avail);
