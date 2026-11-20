@@ -209,7 +209,7 @@ void FameWin::on_redraw() {
   set_font(ReportIfGlobal.field_1E190_, 0, 0, 0);
   set_text_color(0xE6, -1, 1, 1);
 
-  for (i = 0; i < 6; ++i) {
+  for (i = 0; 6 > i; ++i) {
     flatButtons2_[i].show(0);
   }
   for (i = 0; i < 7; ++i) {
