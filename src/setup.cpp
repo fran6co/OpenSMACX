@@ -2581,7 +2581,7 @@ void __cdecl social_ai(int faction_id, int growth_val, int tech_val, int wealth_
                 effic_weight /= 2;
             }
         } else {
-            if (wealth_val || tech_val) {
+            if ((wealth_val || tech_val) != 0) {
                 if (!power_val) {
                     if (!growth_val) {
                         effic_weight *= 2;
