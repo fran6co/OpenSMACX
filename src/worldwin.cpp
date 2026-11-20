@@ -127,8 +127,13 @@ void WorldWin::right_menu(int x, int y) {
         MapWinTable[0]->set_center(tile_x, tile_y, 1);
         break;
     case 2:
-        on_redraw();
-        GraphicWin::soft_update();
+        // "Recenter this window here" (label 0x245): this window's own
+        // set_center, expanded. set_center, focus and follow_center share
+        // one body; MapWin::right_menu pairs the same two labels the same
+        // way (0x244 -> MapWinTable[0]->set_center, 0x245 -> its own
+        // set_center(tile_x, tile_y, 1)) and calls WorldWin::set_center
+        // with the tile for its world-map item.
+        set_center(tile_x, tile_y);
         break;
     case 4:
         MapWinTable[1]->set_center(MapWinTable[0]->center_x_,
