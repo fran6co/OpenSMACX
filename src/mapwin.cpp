@@ -2019,11 +2019,12 @@ void MapWin::draw_map(int draw_type) {
                                  -Buffer::dib_.bmiHeader.biHeight, 0);
             }
         } else if (dx < 0) {
-            // 46AA64: neg edi, then width - edi.
+            // 46AA64: neg edi, then width - edi: the same |dx| form as the
+            // branch above (the abs value is materialised, then subtracted).
             set_rectangle_dimensions(&horizontal_pixels,
-                                     Buffer::dib_.bmiHeader.biWidth - -dx, 0,
-                                     -dx, -Buffer::dib_.bmiHeader.biHeight);
-            GraphicWin::fill(Buffer::dib_.bmiHeader.biWidth - -dx, 0, -dx,
+                                     Buffer::dib_.bmiHeader.biWidth - (dx >= 0 ? dx : -dx), 0,
+                                     (dx >= 0 ? dx : -dx), -Buffer::dib_.bmiHeader.biHeight);
+            GraphicWin::fill(Buffer::dib_.bmiHeader.biWidth - (dx >= 0 ? dx : -dx), 0, (dx >= 0 ? dx : -dx),
                              -Buffer::dib_.bmiHeader.biHeight, 0);
         } else {
             set_rectangle_dimensions(&horizontal_pixels, 0, 0, dx,
@@ -2033,10 +2034,10 @@ void MapWin::draw_map(int draw_type) {
 
         if (dy < 0) {
             set_rectangle_dimensions(&vertical_pixels, 0,
-                                     -Buffer::dib_.bmiHeader.biHeight - -dy,
-                                     Buffer::dib_.bmiHeader.biWidth, -dy);
-            GraphicWin::fill(0, -Buffer::dib_.bmiHeader.biHeight - -dy,
-                             Buffer::dib_.bmiHeader.biWidth, -dy, 0);
+                                     -Buffer::dib_.bmiHeader.biHeight - (dy >= 0 ? dy : -dy),
+                                     Buffer::dib_.bmiHeader.biWidth, dy >= 0 ? dy : -dy);
+            GraphicWin::fill(0, -Buffer::dib_.bmiHeader.biHeight - (dy >= 0 ? dy : -dy),
+                             Buffer::dib_.bmiHeader.biWidth, dy >= 0 ? dy : -dy, 0);
         } else {
             set_rectangle_dimensions(&vertical_pixels, 0, 0,
                                      Buffer::dib_.bmiHeader.biWidth, dy);
