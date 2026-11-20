@@ -3660,17 +3660,37 @@ What the model does not predict (2026-11-19)
   calls both). Two to four probes do not flip the second; eight change the
   Dialogs stage instead. This is 2.3's two-stage behaviour, which the
   additive model cannot express.
-- **config_game 0x00589D30.** Ours expands ~StringList at its two sites;
-  the image calls both. These are the two early `return 1` teardowns
-  (0x589F1C, 0x58A09E), inside the expanded ~SetupWin, and the expansion
-  costs ours two extra EH states (runs [8,11,11,7,18] against the image's
-  [7,10,11,7,18]). Unmovable by dead spend (par-5 2026-11-20): 1-, 4-, 8-
-  and 16-if constant probes, 1 to 32 copies, at the function top, after
-  each early return, at `custom_rules`, `select_faction` and before the
-  closing `prefs_save` leave the EH runs AND the rows (244) unchanged; so
-  do label_get at the difficulty, CUSTOMNAMES and gender sites (+70..260
-  rows). Not a budget question at this caller; look at the
-  SetupWin/StringList declarations (`??_DStringList` vbase destructor) next.
+- **config_game 0x00589D30: solved by later-site count, not spend**
+  (2026-11-20 par-5 round 53, 5bf0b04f1c). Ours expanded ~StringList
+  inside the expanded ~SetupWin at both early `return 1` teardowns
+  (0x589F1C, 0x58A09E) where the image calls 0x004066C0 (EH runs
+  [8,11,11,7,18] against [7,10,11,7,18]). Charged spend at the top (1 to
+  64 four-if probes) moves nothing, as rule 8 predicts once S is large;
+  what moves it is later_j: empty free inline sites
+  (`static inline void pad() {}`) anywhere after the second return flip
+  the first site at 46 and both at 48..80 (88+ breaks other teardowns),
+  EH 2 -> 0, named calls 6 -> 0, rows 244 -> 162. label_get at the 20 label
+  sites counts as 20 such sites but rewrites the label loads (+250 rows),
+  so the original's extra sites are code-invisible ones we do not spell.
+  The StringList/SetupWin declarations are not involved (census below).
+  Lesson: an early-return teardown that is deeper than the image and
+  deaf to dead *charged* probes wants more *sites after it*; screen with
+  empty-body inline calls placed after the return before concluding.
+- **StringList teardown census** (2026-11-20 par-5; every image function
+  that destroys a StringList, 130 functions, per-site ??_D/??1/remove_all
+  tokens image against ours). Disagreeing: config_game (ours deeper at 2,
+  fixed above), pick_player (ours deeper at its first BasePop's first list
+  and at both closing lists), terraform (mixed), editor_edit_veh (ours
+  shallower: ~StringStruct called where the image expands it) and
+  queue_click (ours calls ??_DStringList at the closing teardown where the
+  image expands it and calls ~StringList). ~110 functions agree, and the
+  disagreements point both ways, so no StringList/StringStruct
+  declaration or body change can serve them (the respellings lose 18-24
+  exact functions, rule 9). pick_player: empty sites after the exec
+  return go the wrong way (??_DDialogs expands, EH 2 -> 11+); after the
+  mode return they change the Dialogs stage first. queue_click: size pads
+  (`if (0) {...}`, 2..32, with 0..4 probes) never give site 1 E / site 2 c
+  together.
 - **PickTech::pick 0x00486510.** The image calls ~Scroll at the four Popup
   teardowns of the first `return tech_ai(...)`; ours expands it at all 16
   sites. Up to 24 dead 4-if probes after that return all expand. Each one
