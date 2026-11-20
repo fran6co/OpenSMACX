@@ -4059,16 +4059,7 @@ inline void Win::hide() {
             this->release_modal();
         }
         if (JackalInitFlags & 1) {
-            WinZOrderCount = 0;
-            for (int root = 0; root < WinRootCount; ++root) {
-                if (WinZOrderWindow != 0 && WinZOrderWindow == WinRootWindows[root]) {
-                    WinZOrderCount = 0;
-                    WinZOrderFlag = 0;
-                }
-                if (WinRootWindows[root]->iSomeFlag_ & 1) {
-                    recurse_zorder(WinRootWindows[root]);
-                }
-            }
+            update_zorder();
             InvalidateRect(HandleMain, 0, 0);
             play_if_idle(val_4_);
         }
@@ -7824,21 +7815,7 @@ int Win::set_base_window(GraphicWin *window) {
         }
     }
     poWinBase_ = window;
-
-    WinZOrderCount = 0;
-    int i = 0;
-    if (WinRootCount > 0) {
-        do {
-            if (WinZOrderWindow != 0 && WinZOrderWindow == WinRootWindows[i]) {
-                WinZOrderCount = 0;
-                WinZOrderFlag = 0;
-            }
-            if (WinRootWindows[i]->iSomeFlag_ & 1) {
-                recurse_zorder(WinRootWindows[i]);
-            }
-            ++i;
-        } while (i < WinRootCount);
-    }
+    update_zorder();
     on_update();
     return 0;
 }
@@ -9439,8 +9416,13 @@ int __stdcall win_reparent_window(HWND hwnd, int unused) {
 // The loop reads the globals directly (2026-11-20 par-6). The earlier
 // cached `target`/`arr` locals cost more: with them the copy inside
 // bring_parent_to_top reloads the target before the count after
-// recurse_zorder, and a for-loop is too cheap (update_back_to_window then
-// expands client_to_screen one level deeper).
+// recurse_zorder. The paragraph above describes the retired do-while with
+// the count cached in a local: the for-loop with the null test nested as
+// its own `if` (2026-11-20 par-6 r50) is the one spelling every expansion
+// accepts. It gives the same standalone bytes; with `&&` instead it is too
+// cheap (update_back_to_window then expands client_to_screen one level
+// deeper), and the do-while puts on_char's copy inside hide() 8 rows off
+// (the zero register). hide() and set_base_window call it as a result.
 //
 // WinRootWindows (the Win* array base) did NOT need the extern-array override
 // the general lever warns about: the given `static Win *const g = ...`
@@ -9464,20 +9446,17 @@ int __stdcall win_reparent_window(HWND hwnd, int unused) {
 // show, the raises and update_back_to_window expand this; the copy of
 // bring_parent_to_top inside on_l_button_down calls it.
 void __cdecl Win::update_zorder() {
-    int i = 0;
-    int n = WinRootCount;
     WinZOrderCount = 0;
-    if (n > 0) {
-        do {
-            if (WinZOrderWindow != 0 && WinZOrderWindow == WinRootWindows[i]) {
+    for (int root = 0; root < WinRootCount; ++root) {
+        if (WinZOrderWindow != 0) {
+            if (WinZOrderWindow == WinRootWindows[root]) {
                 WinZOrderCount = 0;
                 WinZOrderFlag = 0;
             }
-            if (WinRootWindows[i]->iSomeFlag_ & 1) {
-                recurse_zorder(WinRootWindows[i]);
-            }
-            i++;
-        } while (i < WinRootCount);
+        }
+        if (WinRootWindows[root]->iSomeFlag_ & 1) {
+            recurse_zorder(WinRootWindows[root]);
+        }
     }
 }
 
