@@ -1997,11 +1997,14 @@ void NetWin::draw_player_names() {
         }
 
         // The lock chip: the chosen faction's own id field against the
-        // record's claim dword, only while the eighth word is 2 or 3.
-        const signed char mode = NetWinLobbyRows.rows_[row + 1].faction_or_color_;
+        // record's claim dword, only while the eighth word is 2 or 3. The
+        // image sign-extends the byte at the load (0x00480501, before the
+        // `je`) and still tests the byte (`cmp dl, 0xff`): an int local for
+        // the index, the field itself in the test.
+        int mode = NetWinLobbyRows.rows_[row + 1].faction_or_color_;
         int locked = 0;
         if (NetWinSessionData.fields_.mode_ == 2 || NetWinSessionData.fields_.mode_ == 3) {
-            if (mode != -1) {
+            if (NetWinLobbyRows.rows_[row + 1].faction_or_color_ != -1) {
                 const unsigned long owned = faction_records_->records_[mode].owner_;
                 if (owned != 0 && owned != NetWinLobbyRows.rows_[row + 1].owner_) {
                     locked = 1;
@@ -2080,11 +2083,14 @@ void NetWin::draw_player_names() {
 
     if (NetDaemonNet.primary_state_.leading_words_[0] == 0) {
         // Not connected: the left button's label follows the local row's
-        // ready byte (480 8A9).
-        flatButton1_.set_name(StringTable.get(
-            NetWinLobbyRows.rows_[pid_idx].ready_or_occupied_ != 0
-                ? Labels.strings_ptr[0x1054 / 4]
-                : Labels.strings_ptr[0x1050 / 4]));
+        // ready byte (480 8A9). Two set_name calls: the image forms the
+        // button address before the test (0x0048089B), the merged prefix
+        // of both arms.
+        if (NetWinLobbyRows.rows_[pid_idx].ready_or_occupied_ != 0) {
+            flatButton1_.set_name(StringTable.get(Labels.strings_ptr[0x1054 / 4]));
+        } else {
+            flatButton1_.set_name(StringTable.get(Labels.strings_ptr[0x1050 / 4]));
+        }
         flatButton1_.redraw();
     }
 }
