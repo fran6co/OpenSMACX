@@ -630,11 +630,14 @@ void BaseWin::farm_click(int x, int y, int) {
     log_say("Farm Click", BaseCurrent->name_string, position, 0, 0);
     if (BaseCurrent->governor & 0x40u) BaseCurrent->governor &= ~0x40u;
     unsigned bit;
-    // The unchanged exit (recompute, unlock) is written out in the three
-    // middle rejections and reached by goto from the first and last: the
-    // image ranks `this` above the specialist temporaries only with the
-    // written-out copies, which cross-jumping folds into one (MATCHING_GUIDE
-    // 2.7, tail-merged references).
+    // Every rejection reaches the one unchanged exit (recompute, unlock):
+    // the image jumps to 0x0040A7A5 from all five (0x0040A417 and 0x0040A42D
+    // included) and calls Win::is_visible twice. Written-out copies in the
+    // three middle rejections cross-jump only partly (the first copy loads
+    // the focus id into eax, the host into ecx) and leave a third
+    // is_visible call. Left: with the gotos `this` takes edi and [ebp-4]
+    // (image esi, [ebp-0x10]) and one ecx reload adds a jmp in the farm loop
+    // tail; the written-out spelling had the image's `this` ranking.
     if (field_40B4C_ == 1) {
         bit = 1u << position;
         if (BaseCurrent->resource_sqr_radius & bit) goto unchanged;
@@ -651,16 +654,8 @@ void BaseWin::farm_click(int x, int y, int) {
         if (BaseCurrent->specialist_total) --BaseCurrent->specialist_total;
     } else if (previous > 0) {
         const unsigned old_bit = 1u << previous;
-        if (!(BaseCurrent->resource_sqr_radius & old_bit)) {
-            recompute(0);
-            NetDaemonNet.unlock_base(BaseIDCurrentSelected);
-            return;
-        }
-        if (BaseCurrent->resource_sqr_radius & (1u << position)) {
-            recompute(0);
-            NetDaemonNet.unlock_base(BaseIDCurrentSelected);
-            return;
-        }
+        if (!(BaseCurrent->resource_sqr_radius & old_bit)) goto unchanged;
+        if (BaseCurrent->resource_sqr_radius & (1u << position)) goto unchanged;
         BaseCurrent->resource_sqr_radius &= ~old_bit;
         BaseCurrent->resource_sqr_radius |= 1u << position;
     } else if (position == 0) {
@@ -679,11 +674,7 @@ void BaseWin::farm_click(int x, int y, int) {
             }
             ++BaseCurrent->specialist_total;
         } else {
-            if (FarmStatus[position]) {
-                recompute(0);
-                NetDaemonNet.unlock_base(BaseIDCurrentSelected);
-                return;
-            }
+            if (FarmStatus[position]) goto unchanged;
             if (BaseCurrent->specialist_total == 0) {
                 int fight, growth, tech, wealth, power;
                 if ((GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & (1u << faction))
