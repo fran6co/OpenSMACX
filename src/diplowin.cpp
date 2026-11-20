@@ -1719,14 +1719,16 @@ void DiploWin::exec(int faction_id, int faction_id_with) {
   button_rects_[4] = rc;
 
   // 0x444140: four offer columns (gaps 2, 8, 2) ending 10 above that row.
+  // row.top is set on row itself: the image keeps the copy's dead row.top
+  // store (0x0044414D) and no rc.top store per copy (rule: MATCHING_GUIDE 3.3).
   row = rect_EDC_;
   row.left += 7;
   row.right -= 7;
   row.bottom = rc.top - 10;
+  row.top = row.bottom - 0x14;
   row.right = row.left + (row.right - row.left - 4) / 4 - 2;
 
   rc = row;
-  rc.top = rc.bottom - 0x14;
   button_rects_[7] = rc;
   offset_rect(&rc, rc.right - rc.left + 2, 0);
   button_rects_[8] = rc;
@@ -1737,7 +1739,6 @@ void DiploWin::exec(int faction_id, int faction_id_with) {
 
   // 0x44421F: the row above (0x16 higher).
   rc = row;
-  rc.top = rc.bottom - 0x14;
   offset_rect(&rc, 0, -0x16);
   button_rects_[5] = rc;
   offset_rect(&rc, rc.right - rc.left + 2, 0);
@@ -1749,7 +1750,6 @@ void DiploWin::exec(int faction_id, int faction_id_with) {
 
   // 0x4442AD: two-column-wide title cells another 0x16 higher.
   rc = row;
-  rc.top = rc.bottom - 0x14;
   offset_rect(&rc, 0, -0x2C);
   rc.right += rc.right - rc.left + 2;
   rect_F9C_ = rc;
