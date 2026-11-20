@@ -5605,7 +5605,7 @@ void __cdecl add_parent(Win * window) {
 void Win::on_char(char param2, int param3) {
     *WinKeyRingCursor = param2;
     // typed_keys_differ is inlined (it reads the code backward from its end).
-// RECOVERY_LITERAL: v1 0x00696DF8 0x00696DFF $SG50756 0x005F5FB0
+// RECOVERY_LITERAL: v1 0x00696DF8 0x00696DFF $SG50750 0x005F5FB0
     if (!typed_keys_differ("mdebug", 6)) {
         // Toggle the debug window; hide() is inlined here.
         if (WinBubbleWindow.is_visible()) {
@@ -9530,7 +9530,7 @@ void Win::set_bubble_text(char * text, RECT * rect) {
             *caret = 0;
         }
         int line_width = WinBubbleFont->width(str) +
-// RECOVERY_LITERAL: v1 0x00696E00 0x00696E02 $SG52215 0x005F83D0
+// RECOVERY_LITERAL: v1 0x00696E00 0x00696E02 $SG52201 0x005F83D0
                          WinBubbleFont->width(" ") * 2;
         if (line_width > max_width) {
             max_width = line_width;
