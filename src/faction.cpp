@@ -3376,6 +3376,12 @@ Return Value: Value of base or -1 for invalid requests
 Status: Complete - testing
 */
 // The image inlines veh_top here (no call to 0x00579920).
+// WORKAROUND(inline): veh.h's while-form veh_top gives 4 rows here. Measured
+// 2026-11-20: veh_top respelled in this int16_t for-form retires the twin
+// (and makes veh_pick exact, standalone veh_top stays exact) but loses
+// best_defender, stack_fix and spot_loc, whose image keeps the while form's
+// reload (int i: 17 lost). The image has both loop forms, so the original
+// likely wrote this loop out or had a second helper.
 static inline int value_of_base_veh_top(int veh_id) {
     int top_veh_id = veh_id;
     if (veh_id < 0) {
@@ -7003,6 +7009,11 @@ incited:
 
 
 // vector_dist without x_dist's wrap; only its two abs calls survive.
+// WORKAROUND(inline): vector_dist(dx, dy) evaluates both deltas before the
+// first abs (2 rows). Measured 2026-11-20: map.h's vector_dist(int, int) with
+// its y (or both) parameters left unassigned retires this twin (the image's
+// sub/abs/sub/abs) but loses 18 (21) exact four-argument users (base_find x3,
+// give_a_base, attack_from, quick_zoc, Path::sensors, ...).
 static inline int flat_vector_dist(int x_point_a, int y_point_a, int x_point_b, int y_point_b) {
     int x_distance = abs(x_point_a - x_point_b);
     int y_distance = abs(y_point_a - y_point_b);
