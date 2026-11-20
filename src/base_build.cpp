@@ -471,7 +471,7 @@ int __cdecl base_build(int base_id, int *out_secondary, int *out_tertiary, int *
     }
     l_148 = 0;
     for (i = 0; i < 64; i++) {
-        if (GameDataStateStorage.fields_.secret_project_.project_base[i] == BaseIDCurrentSelected) {
+        if (GameDataStateStorage.fields_.secret_project_[i] == BaseIDCurrentSelected) {
             l_148++;
         }
         if (has_project(i, l_8)) {
