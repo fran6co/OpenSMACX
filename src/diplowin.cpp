@@ -1164,10 +1164,10 @@ void DiploWin::draw_offers() {
                     // the image pushes this unit's own "(" (0x004434BF,
                     // .data 0x006839F4) and ")" (0x004434DF, 0x006839F8),
                     // which follow "VENDETTA" in diplowin's unpooled data.
-                    // RECOVERY_LITERAL: v1 0x006839F4 0x006839F6 $SG57599 0x00443170
+                    // RECOVERY_LITERAL: v1 0x006839F4 0x006839F6 $SG57600 0x00443170
                     strcat(StringTemp, "(");
                     say_tech(StringTemp, offer_value_[1][i], side);
-                    // RECOVERY_LITERAL: v1 0x006839F8 0x006839FA $SG57600 0x00443170
+                    // RECOVERY_LITERAL: v1 0x006839F8 0x006839FA $SG57601 0x00443170
                     strcat(StringTemp, ")");
                 } else {
                     say_tech(StringTemp, offer_value_[side][i], 1);
