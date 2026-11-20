@@ -307,6 +307,7 @@ void __cdecl help_tech_info(void (__cdecl *a1)(char *), int a2, int a3,
             flushed = *buf;
             if (a4 >= 0 && flushed) {
                 a1(buf);
+                flushed = 0;
                 *buf = 0;
             }
         }
