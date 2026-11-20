@@ -2135,8 +2135,8 @@ void __cdecl dispatch_mouse_wheel(int unused, int keys, int delta, int x, int y)
 // code. The image refuses get_hdc/release_hdc inside the expanded WM_ACTIVATE
 // and WM_PALETTECHANGED handlers (0x005F073D/0x005F0D48) while still
 // expanding OnQueryNewPalette and, at pass 2, OnSysCommand's
-// publish_callback_window; that copy's own play_if_idle (0x005F0946) is a
-// third-level call, never expanded. Five calls after the switch give the
+// publish_callback_window; that copy's own play_if_idle (0x005F0946), a
+// third-level site, stays a call even with no probe. Five calls after the switch give the
 // image's decisions (four or fewer expand get_hdc, six or more refuse
 // publish_callback_window). The original spending is not identified.
 static int window_proc_budget_probe(int x) {
@@ -7017,7 +7017,8 @@ void Win::on_key(unsigned int key, long flags, int repeat, unsigned int scan) {
 // The close tail is publish_callback_window (0x005EE460, no image
 // references: /Ob2 expands it here and in window_proc's copy of this
 // handler). Its play_if_idle (0x005F86A0) is expanded in this copy and a
-// call in window_proc's, where it sits three levels deep. The image calls
+// call in window_proc's, where it sits three levels deep (a call there at
+// every probe count). The image calls
 // it with the owner in ecx (`mov ecx,esi`), so 0x005F86A0 is a Win member
 // taking the Sound (Win::play_if_idle).
 void __cdecl Win::OnSysCommand(HWND hwnd, unsigned int command, int x,
