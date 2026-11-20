@@ -291,7 +291,7 @@ void __cdecl help_tech_info(void (__cdecl *a1)(char *), int a2, int a3,
             if (a4 < 0) {
                 if (!flushed) {
                     strcat(buf, "^");
-                    char *s = StringTable.get(Labels.strings_ptr[0x234 / 4]);
+                    char *s = table_text(Labels.strings_ptr[0x234 / 4]);
                     strcat(buf, s);
                     strcat_colon(buf);
                 } else {
@@ -374,7 +374,7 @@ void __cdecl help_tech_info(void (__cdecl *a1)(char *), int a2, int a3,
             }
             DatalinkMain.construct_id(idbuf, 6,
                                                                   idx);
-            char *link = StringTable.get(Weapon[idx].name);
+            char *link = table_text(Weapon[idx].name);
             help_create_link(buf, link, idbuf);
             TechnologyHelpEntryKind = 0x63;
             TechnologyHelpEntryName = Weapon[idx].name;
@@ -423,7 +423,7 @@ void __cdecl help_tech_info(void (__cdecl *a1)(char *), int a2, int a3,
             }
             DatalinkMain.construct_id(idbuf, 7,
                                                                   idx);
-            char *link = StringTable.get(Armor[idx].name);
+            char *link = table_text(Armor[idx].name);
             help_create_link(buf, link, idbuf);
             TechnologyHelpEntryKind = 0x64;
             TechnologyHelpEntryName = Armor[idx].name;
