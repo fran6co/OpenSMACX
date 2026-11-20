@@ -3818,6 +3818,7 @@ L_509980:
                     if (eliminate_player(def_faction, att_faction)) {
                         pact_report = 0;
                     }
+                    goto L_50aebf;
                 } else {
                     // 0x50AEB2
                     spot_base(base_id, att_faction);
