@@ -736,7 +736,7 @@ int MainInterface::init(int) {
             StringTemp[0] = 0;
             switch (k - 11) {
               case 0:
-                strcat(StringTemp, StringTable.get(Labels.strings_ptr[0xEBC / 4]));
+                strcat(StringTemp, label_get(0xEBC / 4));
                 break;
               case 1:
                 strcat(StringTemp, label_get(0xEC0 / 4));
@@ -754,16 +754,16 @@ int MainInterface::init(int) {
                 strcat(StringTemp, label_get(0xED0 / 4));
                 break;
               case 21:
-                strcat(StringTemp, StringTable.get(Natural[2].name_short));
+                strcat(StringTemp, table_text(Natural[2].name_short));
                 break;
               case 22:
-                strcat(StringTemp, StringTable.get(Natural[6].name_short));
+                strcat(StringTemp, table_text(Natural[6].name_short));
                 break;
               case 23:
-                strcat(StringTemp, StringTable.get(Natural[3].name_short));
+                strcat(StringTemp, table_text(Natural[3].name_short));
                 break;
               case 24:
-                strcat(StringTemp, StringTable.get(Natural[10].name_short));
+                strcat(StringTemp, table_text(Natural[10].name_short));
                 break;
             }
             flat_button_[k].set_bubble_text(StringTemp);
