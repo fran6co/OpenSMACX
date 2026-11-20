@@ -3486,7 +3486,9 @@ size or the order of its decisions:
   - **D, teardowns equal but other callees or layout differ**:
     propose_attack 0x00545E80 (remove_all, indirect calls) and tech_trade
     0x00541100 (the cross-jump host of its ~BasePop exits, a layout
-    question; see 3.7). A teardown lever does not apply.
+    question; see 3.7; solved 2026-11-20 par-4 by an `||` goto site, 3.7
+    "An `||` goto site moves its label block last"). A teardown lever does
+    not apply.
   Round results (2026-11-20 par-1, sdeck):
   - base_editor_proj: the PICKAPLACE `label_get` results passed straight to
     `popup.item(label_get(..), id)`, not through a block-scoped local:
@@ -7420,7 +7422,10 @@ result over 64 symbol-counter pads, so none of these is a counter canary.
   original's spelling is still unknown; no model of the plateau positions
   exists. Do not retry body-level stand-ins on proposal_menu; tech_trade's
   pair is structural (358 rows) and should be read again once its
-  teardowns match.
+  teardowns match. Read again (2026-11-20 par-4): with every teardown equal
+  to the image it is the function's only residue (2 rows, ours ii, image
+  TT); 1-3 dead `{ int t = actor; }` at four positions and 8-13 dead stores
+  in its if(0) stand-in leave ii (more of either moves teardowns).
 - **Runtime constant arithmetic is almost absent** (par-6 2026-11-19,
   `analysis/constfold.py`: every straight-line `op r,K2` whose register input
   is a known constant from `mov r,K`/`xor r,r`, both sides, all 5,600
@@ -9457,6 +9462,25 @@ Counters and tie arms (par-5 2026-11-20, councwin)
   if-chain (0x498402), not in the later F8 copy or the rotation switch's
   copies; ours hosts it in the switch's case 7 (22 rows, jcc/jmp counts
   equal). An F-key `switch` costs 110 rows; not resolved.
+- **An `||` goto site moves its label block last and makes it the
+  cross-jump host** (probe `analysis/probes/orgoto/run.py`, 2026-11-20 par-4, tech_trade
+  0x00541100). A return-ending label block (`L: ...; return 0;` with an
+  EH object in scope) reached by several gotos and a fall-through is laid
+  at its flow position among the out-of-line exits, and the textually last
+  return copy hosts the shared teardown tail, in every shape tried: separate
+  `if (c) goto L;` sites, L written after the final `goto again`,
+  jump-around, `if (0) { L: }`, backward gotos, do-while/goto/outer-`for`
+  loops. One bare `if (A || B) goto L;` site anywhere among them (or the
+  whole test chain as one `if (A || B || ...) { L-body }`) instead lays L
+  after every other exit and makes L's last return the host that the other
+  copies jump into, while EH state numbers stay textual (L keeps its middle
+  numbers). This is ret2_or's rule ("an `||` guard's return leaves the
+  line") applied to a goto label, and it is also the orientation toggle
+  above. Reading the image: an out-of-line block whose EH states are
+  numbered in the middle but which is laid last and hosts the shared tail
+  is reached by an `||` site. tech_trade: the first three REJTECHLATER
+  gotos as one `||` goto, 357 -> 2 rows (the two are the vtordisp plateau,
+  3.4).
 - **A switch arm that falls into a shared tail the other arms jump to is
   a flag-tested tail after the switch, not a goto label** (par-4
   2026-11-20, Console::on_key_click 0x005178C0, 418b0cfc68). Eight
