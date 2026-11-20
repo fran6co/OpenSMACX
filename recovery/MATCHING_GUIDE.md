@@ -8552,6 +8552,19 @@ Counters and tie arms (par-5 2026-11-20, councwin)
   if-chain (0x498402), not in the later F8 copy or the rotation switch's
   copies; ours hosts it in the switch's case 7 (22 rows, jcc/jmp counts
   equal). An F-key `switch` costs 110 rows; not resolved.
+- **A switch arm that falls into a shared tail the other arms jump to is
+  a flag-tested tail after the switch, not a goto label** (par-4
+  2026-11-20, Console::on_key_click 0x005178C0, 418b0cfc68). Eight
+  direction cases set `a2` and `goto move_direction;` into a label after
+  the first case: VC6 lays the label after the last goto's block (case 7)
+  whatever the case order or label position (five orders measured
+  identical). The image's first case (0x0051B0B2) falls into the tail.
+  `a2 = K; break;` in every direction case, `scroll = 1; break;` in the
+  other cases and `default`, and `if (!scroll) { tail }` after the switch
+  give it (7 -> 2 control-flow hunks, 555 -> 239 rows with one operand
+  order fix); a `goto map_done` from the other cases instead of the flag
+  compiles like the label form. Same mechanism as 2.6's council_action
+  rule, inside a jump-table switch.
 - **Host orientation: the last-copy rule flips to first-copy with
   constructs elsewhere in the function** (probe
   `analysis/probes/xjhost/orient.py`, 2026-11-20 par-5). Three copies of
