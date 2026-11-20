@@ -6411,6 +6411,19 @@ result over 64 symbol-counter pads, so none of these is a counter canary.
   rows on a local aggregate's slots (AGG_FRAME / IP_AGG). AlphaSave::init
   (frame = layout.edit_box_bounds_) keeps both dead stores on both sides;
   its residual there is scheduling, not this rule.
+  Two more readings of the same rule. (1) A copied field the image never
+  stores although the source overwrites it unread was read first, often
+  by an inline taking the RECT: ProdPicker::draw_item's `area = cell;
+  area.top = cell.top + 5; area.bottom = cell.top + h + 5;` (a dead
+  area.top store the image lacks) was `area.bottom = cell.top + h;
+  offset_rect(&area, 0, 5);` (112 -> 91). (2) When the local's address is
+  taken later (passed to `wrap_cent(&r)`), a read through any pointer
+  (`portrait->height()`, a `p->f` of another object) between the copy and
+  a field's in-place adjustment (`r.right -= 3`) also keeps that field's
+  copy store: VC6 assumes the pointer may read `r` (probe `bw_*`; a global
+  read does not). The image's missing copy stores then give the statement
+  order: BattleWin::battle_report adjusted left/right/bottom before the
+  `top = y + portrait->height() + 3` (424 -> 403).
 - **Declaration order of function-scope scalars does not set frame offsets**
   (par-5 2026-11-19, setup_text: mode/pane at -0x10 against a pointer temp at
   -0x14, row_pitch/width/base among -0x88..-0x90; declaration order, block
@@ -8360,7 +8373,11 @@ Expression residues (par-5 2026-11-19, `analysis/probes/bytecse/`, `addsub/`,
   `int &` / `int *`, or written as `return w += x` (probe `deadstore/ret.py`,
   16 spellings). The image's `mov [ebp+8],ecx; mov eax,ecx` before
   Buffer::text_width's return (0x005DC9F6) therefore comes from storage VC6
-  treats as live after the return, not from a body spelling of a local. A
+  treats as live after the return, not from a body spelling of a local
+  (2026-11-20 par-2, `lx1`..`lx4`: only an add inside the loop, before the
+  `len == 0` exit, keeps the store, because the back edge needs it; the
+  image measures the last segment in a block of its own, so that is not
+  the source; a cast-free `r` temporary assigned back drops it too). A
   function with an EH object drops it too; only static storage keeps the
   store (and then reloads it for the return). A `neg esi; mov eax,esi; push eax`
   (SocialWin::draw_info 0x004B0289) was not reproduced by `-u`, `u = -u`, a

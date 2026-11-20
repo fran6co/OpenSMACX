@@ -11,7 +11,7 @@ HDR = '''#include "probe.h"
 int wd(char *, int);
 char *scan(char *, int *);
 void scanp(char **, int *);
-struct B { int slot; int on; int pend; int f[4]; int tw(char *text, int len); int tw2(char *text, int len); int tw3(char *text, int len); int tw4(char *text, int len); int tw5(char *text, int len); int tw6(char *text, int len); int tw7(char *text, int len); int tw8(char *text, int len); int tw9(char *text, int len); int twa(char *text, int len); int xa1(char *text, int len); int xa2(char *text, int len); int xa3(char *text, int len); int pa1(char *text, int len); int pa2(int text, int len); int ir1(char *text, int len); int ir2(char *text, int len); int ir3(char *text, int len); int eh1(char *text, int len); int st1(char *text, int len); };
+struct B { int slot; int on; int pend; int f[4]; int tw(char *text, int len); int tw2(char *text, int len); int tw3(char *text, int len); int tw4(char *text, int len); int tw5(char *text, int len); int tw6(char *text, int len); int tw7(char *text, int len); int tw8(char *text, int len); int tw9(char *text, int len); int twa(char *text, int len); int xa1(char *text, int len); int xa2(char *text, int len); int xa3(char *text, int len); int pa1(char *text, int len); int pa2(int text, int len); int ir1(char *text, int len); int ir2(char *text, int len); int ir3(char *text, int len); int eh1(char *text, int len); int st1(char *text, int len); int lx1(char *text, int len); int lx2(char *text, int len); int lx3(char *text, int len); int lx4(char *text, int len); };
 struct D { D(); ~D(); };
 extern int GW;
 inline void addw(int &w, char *s, int n) { w += wd(s, n); }
@@ -46,6 +46,13 @@ V = {
  'tw9': 'char *seg = text; int &width = *(int *)&text; width = 0; if (!on) return wd(seg, len);\n' + LOOP.replace('  W += wd(seg, len);\n', '').replace('return W;', 'return W += wd(seg, len);').replace('W', 'width'),
  'twa': 'char *seg = text; int width = 0; if (!on) return wd(seg, len);\n' + LOOP.replace('  W += wd(seg, len);\n  on = 0;\n', '').replace('return W;', 'on = 0; return W += wd(seg, len);').replace('W', 'width'),
 
+
+ # the final segment measured inside the loop, the exit after the add (the add's store serves the back edge)
+ 'lx1': 'char *seg = text; int &width = *(int *)&text; width = 0; if (!on) return wd(seg, len);\n  for (;;) {\n    char *cur = scan(seg, &len);\n    width += f[slot] ? wd(seg, cur - seg) : wd(seg, cur - seg + 1);\n    if (len == 0) break;\n    if (pend) { slot = *cur; pend = 0; }\n    seg = cur + 1; len--;\n  }\n  on = 0;\n  return width;',
+ 'lx2': 'char *seg = text; int width = 0; if (!on) return wd(seg, len);\n  for (;;) {\n    char *cur = scan(seg, &len);\n    width += f[slot] ? wd(seg, cur - seg) : wd(seg, cur - seg + 1);\n    if (len == 0) break;\n    if (pend) { slot = *cur; pend = 0; }\n    seg = cur + 1; len--;\n  }\n  on = 0;\n  return width;',
+ # the return value kept in a parameter (text) declared int-typed through a cast-free reuse: len
+ 'lx3': 'char *seg = text; int &width = *(int *)&text; width = 0; if (!on) return wd(seg, len);\n' + LOOP.replace('W += wd(seg, len);', 'W += f[slot] ? wd(seg, len) : wd(seg, len + 1);').replace('W', 'width'),
+ 'lx4': 'char *seg = text; int &width = *(int *)&text; width = 0; if (!on) return wd(seg, len);\n' + LOOP.replace('  W += wd(seg, len);\n  on = 0;\n  return W;', '  int r = W + (f[slot] ? wd(seg, len) : wd(seg, len + 1));\n  on = 0;\n  W = r;\n  return r;').replace('W', 'width'),
  'tw': 'char *seg = text; int width = 0; if (!on) return wd(seg, len);\n' + LOOP.replace('W', 'width'),
  'tw2': 'char *seg = text; int width = 0; if (!on) return wd(seg, len); (void)&width;\n' + LOOP.replace('W', 'width'),
  'tw3': 'char *seg = text; int &width = *(int *)&text; width = 0; if (!on) return wd(seg, len);\n' + LOOP.replace('W', 'width'),
