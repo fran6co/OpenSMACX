@@ -3574,16 +3574,19 @@ int __cdecl gen_terrain_poly(Buffer *buffer, MapWin *window, int a3, int a4,
                 }
                 if (VehDrawPositionX == (int)local_20 &&
                     VehDrawPositionY == iVar5) {
-                    // 0x463888 loads the drawn vehicle once and reuses it
-                    // across has_abil.
-                    const int draw_veh = VehDrawPositionVehicle;
-                    if (Vehs[draw_veh].faction_id == a4 &&
-                        has_abil(Vehs[draw_veh].proto_id, ABL_DEEP_RADAR) != 0 &&
-                        (Chassis[VehPrototypes[Vehs[draw_veh].proto_id].chassis_id].triad == '\x02' ||
+                    // 0x463888: the owner test indexes the global (v*13 in a
+                    // scratch register); the local copy's v*13 is formed again
+                    // in place and scaled at both proto reads (MATCHING_GUIDE
+                    // 2.7 "Index or address CSE").
+                    if (Vehs[VehDrawPositionVehicle].faction_id == a4) {
+                        const int draw_veh = VehDrawPositionVehicle;
+                        if (has_abil(Vehs[draw_veh].proto_id, ABL_DEEP_RADAR) != 0 &&
+                            (Chassis[VehPrototypes[Vehs[draw_veh].proto_id].chassis_id].triad == '\x02' ||
                          local_18 ==
                              (uint32_t)(Chassis[VehPrototypes[Vehs[draw_veh].proto_id].chassis_id].triad == '\x01'))) {
-                        local_1c = 1;
-                        break;
+                            local_1c = 1;
+                            break;
+                        }
                     }
                 }
                 // 0x463943: the no-owner -1 row is read unguarded as well.
