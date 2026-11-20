@@ -7302,9 +7302,10 @@ again:
         if (great_satan(actor, 0) &&
             !has_treaty(actor, partner, 1) &&
             !(PlayersData[partner].flags & PFLAG_COOP_WITH_HUMAN)) {
-            // 0x5412C9: sign of (rule_techcost - 100) (setge/dec).
-            int techcost_delta = Players[partner].rule_techcost - 100;
-            int techcost_sign = techcost_delta > 0 ? 1 : (techcost_delta >= 0) - 1;
+            // 0x5412C9: sign of (rule_techcost - 100) (setge/dec); the operand is
+            // written at both tests and CSE'd (`add eax, -0x64`).
+            int techcost_sign = Players[partner].rule_techcost - 100 > 0 ? 1
+                : (Players[partner].rule_techcost - 100 >= 0) - 1;
             if (DiploFriction >=
                 (has_treaty(partner, actor, 2) ? 3 : 0) +
                     2 * (2 - techcost_sign)) {
