@@ -9006,6 +9006,14 @@ Counters and tie arms (par-5 2026-11-20, councwin)
   test is a slot in the image and a callee-saved register in ours, and the
   block layout is otherwise equal. Screen with `orsweep.py --and` on the
   frame-differing functions (framescan / rungs.py rung 3).
+- **The value form applies to loop conditions too** (par-5 2026-11-20):
+  consider_designs 0x00581260's `for (k = 1; k < 4 && next == weapon;
+  k++)` threads into an extra test/jump pair; `for (k = 1; (k < 4 && next
+  == weapon) != 0; k++)` gives the image's exact jcc/jmp/call/ret counts
+  (950 -> 557 rows). orsweep.py only rewrites `if`; a scratch extension
+  that also rewrites `while`/`for` conditions, `if (!(A && B))` as `== 0`
+  and nested else-less ifs as one value-form `&&` found it in a tree pass
+  (51 functions with such sites; this was the only structural win).
 - **Host orientation: the last-copy rule flips to first-copy with
   constructs elsewhere in the function** (probe
   `analysis/probes/xjhost/orient.py`, 2026-11-20 par-5). Three copies of
