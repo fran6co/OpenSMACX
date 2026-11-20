@@ -499,8 +499,8 @@ void __cdecl spot_all(int veh_id, int toggle) {
     if (!IsMultiplayerNet) {
         toggle = 1;
     }
-    int y0 = Vehs[veh_id].y;
     int x0 = Vehs[veh_id].x;
+    int y0 = Vehs[veh_id].y;
     int triad = get_proto_triad(Vehs[veh_id].proto_id);
     int leave = veh_can_leave_stack(veh_id);
     int faction_id = Vehs[veh_id].faction_id;
