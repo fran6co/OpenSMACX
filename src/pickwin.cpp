@@ -167,16 +167,6 @@ extern char PickWinCaptionBuffer[];  // initial VA 0x00834D6C; capacity unknown
 extern PickWin PickWinGlobal;        // initialized by the native .CRT wrapper
 void __cdecl list_was_dblclicked(int faction_id);
 
-// WORKAROUND(inline): init shifts the list RECT with `add reg,-0x12` on left
-// and right only (0x00488DB6), the shape of an inlined offset helper whose
-// vertical delta folded away.
-static inline RECT *pickwin_offset_rect(RECT *rect, int horizontal, int vertical) {
-  rect->left += horizontal;
-  rect->right += horizontal;
-  rect->top += vertical;
-  rect->bottom += vertical;
-  return rect;
-}
 
 // WORKAROUND(decl): the list reset at 0x00489DF4..0x00489E4E (and again at
 // 0x0048A226) stores ListBox +0x2C/+0x14, the four Dialog fields, then Win
@@ -319,7 +309,7 @@ void PickWin::init(void (__cdecl *callback)(int), int mode, int faction) {
   set_rectangle_dimensions(&list_area_rect_, header_panel_rect_.left + 0x15B, field_625C_rect_.bottom + 3,
                            header_panel_rect_.right - header_panel_rect_.left - 0x15E, 0x88);
   expand_rect(&list_area_rect_, -3, -3);
-  pickwin_offset_rect(&list_area_rect_, -0x12, 0);
+  offset_rect(&list_area_rect_, -0x12, 0);
 
   int row = 0;
   for (i = 0; i < 0x85; i += 0x13, ++row) {
