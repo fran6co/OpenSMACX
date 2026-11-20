@@ -246,6 +246,12 @@ void draw_dest_unk1(Buffer *, int, int, int, int, unsigned char *);
  private:
   static BufferSpecialText special_texts_[10];
   static Sprite shared_sprite_;
+  // WORKAROUND(decl): declared, never defined. The invented inline twin of
+  // setup_buff_sprite it named is gone (its hosts call setup_buff_sprite);
+  // dropping the declaration shifts the front-end symbol counter of every
+  // unit that includes this header (feall 2026-11-20: PrefWin::init,
+  // vehdraw_construct_chassis/_armor, action_airdrop lost), so it waits
+  // for the header cleanup pass.
   void prepare_shared_sprite(int colour);
 
  public:

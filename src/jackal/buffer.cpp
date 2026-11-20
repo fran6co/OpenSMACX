@@ -4053,51 +4053,6 @@ int Buffer::write_right_l(char *text, int x_coord, int y_coord, int field_width,
 // All buffer blitters borrow the same Sprite descriptor. Its real object
 // definition and original construction evidence are below.
 // It shares the special-text cleanup byte, but uses its independent bit 2.
-inline void Buffer::prepare_shared_sprite(int colour) {
-    if (surface_ != nullptr) {
-        return;
-    }
-    if (colour == -1) {
-        // HONEST READ OF THE WORD. The image reads ONE byte here
-        // (`xor ecx,ecx; mov cl, byte ptr [0x696d14]`), the low byte of the
-        // colour word - which is how VC6 zero-extends a BYTE-typed object,
-        // and WinFillColour is one now.
-        colour = WinFillColour;
-    }
-    // THE BITS ARE PUBLISHED WHATEVER THEY ARE, and `locked_bits_` is stored
-    // before the test - the same shape `get_data` and `get_pixel` have.
-    LPVOID bits = dib_bits_;
-    locked_bits_ = bits;
-    if (bits != nullptr) {
-        ++surface_lock_count_;
-    }
-    shared_sprite_.pcBits_ = static_cast<unsigned char *>(bits);
-    shared_sprite_.iSpriteWidth2_ = stride_;
-    shared_sprite_.iSpriteWidth_ = dib_.bmiHeader.biWidth;
-    shared_sprite_.iSpriteHeight_ = -dib_.bmiHeader.biHeight;
-    shared_sprite_.iWidth_ = dib_.bmiHeader.biWidth;
-    shared_sprite_.iHeight_ = -dib_.bmiHeader.biHeight;
-    shared_sprite_.iLeftOffset_ = 0;
-    shared_sprite_.iTopOffset_ = 0;
-    shared_sprite_.cTransparentIndex_ = (uint8_t)colour;
-    shared_sprite_.fObj1Exists_ = 0;
-
-    // The same release pair `get_pixel` ends with, in the same two arms.
-    if (surface_ == nullptr) {
-        const int count = --surface_lock_count_;
-        if (count <= 0) {
-            locked_bits_ = nullptr;
-            surface_lock_count_ = 0;
-        }
-        return;
-    }
-    const int count = --surface_lock_count_;
-    if (locked_bits_ != nullptr && count <= 0) {
-        surface_->Unlock(locked_bits_);
-        locked_bits_ = nullptr;
-        surface_lock_count_ = 0;
-    }
-}
 
 // ORIGINAL: 0x005D8290 ?setup_buff_sprite@Buffer@@QAEXH@Z 0x005D8290-0x005D835C FILE BYTE_EXACT
 // LEVER: NAMED MEMBERS AND THE REAL INTERFACE. This was `*(int *)((char *)this
@@ -4121,12 +4076,7 @@ void Buffer::setup_buff_sprite(int colour) {
     if (colour == -1) {
         colour = WinFillColour;
     }
-    LPVOID bits = dib_bits_;
-    locked_bits_ = bits;
-    if (bits != nullptr) {
-        ++surface_lock_count_;
-    }
-    shared_sprite_.pcBits_ = static_cast<unsigned char *>(bits);
+    shared_sprite_.pcBits_ = static_cast<unsigned char *>(get_data());
     shared_sprite_.iSpriteWidth2_ = stride_;
     shared_sprite_.iSpriteWidth_ = dib_.bmiHeader.biWidth;
     shared_sprite_.iSpriteHeight_ = -dib_.bmiHeader.biHeight;
@@ -4136,20 +4086,7 @@ void Buffer::setup_buff_sprite(int colour) {
     shared_sprite_.iTopOffset_ = 0;
     shared_sprite_.cTransparentIndex_ = (uint8_t)colour;
     shared_sprite_.fObj1Exists_ = 0;
-    if (surface_ == nullptr) {
-        const int count = --surface_lock_count_;
-        if (count <= 0) {
-            locked_bits_ = nullptr;
-            surface_lock_count_ = 0;
-        }
-        return;
-    }
-    const int count = --surface_lock_count_;
-    if (locked_bits_ != nullptr && count <= 0) {
-        surface_->Unlock(locked_bits_);
-        locked_bits_ = nullptr;
-        surface_lock_count_ = 0;
-    }
+    free_data(1);
 }
 
 /*
@@ -4203,7 +4140,7 @@ int Buffer::draw(Buffer *destination, int index, int x, int y,
         // 0x005D854F; no plain spelling found
         return *(volatile int *)&denominator;
     }
-    prepare_shared_sprite(index);
+    setup_buff_sprite(index);
     int result = shared_sprite_.draw(destination, index, x, y, numerator, denominator);
     shared_sprite_.pcBits_ = 0;
     return result;
@@ -4214,7 +4151,7 @@ int Buffer::draw(Buffer *destination, int index, int x, int y,
 // symbol    ?draw_mono@Buffer@@QAEHPAV1@HHHHHH@Z
 int Buffer::draw_mono(Buffer *destination, int transparent, int x, int y,
                       int colour, int numerator, int denominator) {
-    prepare_shared_sprite(transparent);
+    setup_buff_sprite(transparent);
     int result = shared_sprite_.draw_mono(
         destination, transparent, x, y, colour, numerator, denominator);
     shared_sprite_.pcBits_ = 0;
@@ -4240,7 +4177,7 @@ int Buffer::draw_mono(Buffer *destination, int transparent, int x, int y,
 // member at 0x005E3E50.
 int Buffer::draw_mono(Buffer *target, int transparent, int x, int y,
                       int colour) {
-    prepare_shared_sprite(transparent);
+    setup_buff_sprite(transparent);
     int result = shared_sprite_.draw_mono(target, transparent, x, y, colour);
     shared_sprite_.pcBits_ = 0;
     return result;
@@ -4279,7 +4216,7 @@ int Buffer::draw(Buffer *destination, int index, int x, int y) {
         // volatile: stand-in for the image's reload of index at 0x005D83CA; no plain spelling found
         return *(volatile int *)&index;
     }
-    prepare_shared_sprite(index);
+    setup_buff_sprite(index);
     int result = shared_sprite_.draw(destination, index, x, y);
     release_buff_sprite();
     return result;
@@ -5178,11 +5115,11 @@ int __stdcall Buffer::load_tga(const char * a1, Palette * a2, int a3, int a4) {
         goto has_ext;
     }
     switch (Language) {
-// RECOVERY_LITERAL: v1 0x00696C58 0x00696C5D $SG44403 0x005D7B40
+// RECOVERY_LITERAL: v1 0x00696C58 0x00696C5D $SG44381 0x005D7B40
         case 1: strcat(path, ".tgf"); break;
-// RECOVERY_LITERAL: v1 0x00696C60 0x00696C65 $SG44405 0x005D7B40
+// RECOVERY_LITERAL: v1 0x00696C60 0x00696C65 $SG44383 0x005D7B40
         case 2: strcat(path, ".tgg"); break;
-// RECOVERY_LITERAL: v1 0x00696C68 0x00696C6D $SG44407 0x005D7B40
+// RECOVERY_LITERAL: v1 0x00696C68 0x00696C6D $SG44385 0x005D7B40
         default: strcat(path, ".tga"); break;
     }
   has_ext:
@@ -7414,50 +7351,11 @@ int Buffer::wrap(char *text, int x, int y, int width) {
 
 int Buffer::draw_dest(Buffer *destination, int transparent_in, int x, int y,
                       unsigned char *table) {
-    int transparent = transparent_in;
-    if (surface_ == 0) {
-        if (transparent_in == -1) {
-            transparent = WinFillColour;
-        }
-        locked_bits_ = dib_bits_;
-        if (locked_bits_ != nullptr) {
-            surface_lock_count_ = surface_lock_count_ + 1;
-        }
-        shared_sprite_.pcBits_ = static_cast<unsigned char *>(locked_bits_);
-        shared_sprite_.iSpriteWidth2_ = stride_;
-        shared_sprite_.iSpriteWidth_ = dib_.bmiHeader.biWidth;
-        shared_sprite_.iSpriteHeight_ = -dib_.bmiHeader.biHeight;
-        shared_sprite_.iWidth_ = dib_.bmiHeader.biWidth;
-        shared_sprite_.iHeight_ = -dib_.bmiHeader.biHeight;
-        shared_sprite_.iLeftOffset_ = 0;
-        shared_sprite_.iTopOffset_ = 0;
-        shared_sprite_.cTransparentIndex_ = (unsigned char)transparent;
-        shared_sprite_.fObj1Exists_ = 0;
-
-        if (surface_ == 0) {
-            surface_lock_count_ = surface_lock_count_ - 1;
-            if ((int)surface_lock_count_ > 0) {
-                goto tail;
-            }
-        } else {
-            surface_lock_count_ = surface_lock_count_ - 1;
-            if (locked_bits_ == nullptr || (int)surface_lock_count_ > 0) {
-                goto tail;
-            }
-            {
-            surface_->Unlock(locked_bits_);
-        }
-        }
-        locked_bits_ = nullptr;
-        surface_lock_count_ = 0;
-    }
-tail:
-    {
-        int result = shared_sprite_.draw_dest(
-            destination, transparent_in, x, y, table);
-        shared_sprite_.pcBits_ = 0;
-        return result;
-    }
+    setup_buff_sprite(transparent_in);
+    int result = shared_sprite_.draw_dest(
+        destination, transparent_in, x, y, table);
+    release_buff_sprite();
+    return result;
 }
 
 /*
@@ -7516,50 +7414,11 @@ int Buffer::check_pcx_input_data(PcxInputView *source, int, int, int) {
 
 int Buffer::draw_multi_table_dest(Buffer *destination, int transparent_in, int x,
                                   int y, ColorTable *table) {
-    int transparent = transparent_in;
-    if (surface_ == 0) {
-        if (transparent_in == -1) {
-            transparent = WinFillColour;
-        }
-        locked_bits_ = dib_bits_;
-        if (locked_bits_ != nullptr) {
-            surface_lock_count_ = surface_lock_count_ + 1;
-        }
-        shared_sprite_.pcBits_ = static_cast<unsigned char *>(locked_bits_);
-        shared_sprite_.iSpriteWidth2_ = stride_;
-        shared_sprite_.iSpriteWidth_ = dib_.bmiHeader.biWidth;
-        shared_sprite_.iSpriteHeight_ = -dib_.bmiHeader.biHeight;
-        shared_sprite_.iWidth_ = dib_.bmiHeader.biWidth;
-        shared_sprite_.iHeight_ = -dib_.bmiHeader.biHeight;
-        shared_sprite_.iLeftOffset_ = 0;
-        shared_sprite_.iTopOffset_ = 0;
-        shared_sprite_.cTransparentIndex_ = (unsigned char)transparent;
-        shared_sprite_.fObj1Exists_ = 0;
-
-        if (surface_ == 0) {
-            surface_lock_count_ = surface_lock_count_ - 1;
-            if ((int)surface_lock_count_ > 0) {
-                goto tail;
-            }
-        } else {
-            surface_lock_count_ = surface_lock_count_ - 1;
-            if (locked_bits_ == nullptr || (int)surface_lock_count_ > 0) {
-                goto tail;
-            }
-            {
-            surface_->Unlock(locked_bits_);
-        }
-        }
-        locked_bits_ = nullptr;
-        surface_lock_count_ = 0;
-    }
-tail:
-    {
-        int result = shared_sprite_.draw_multi_table_dest(
-            destination, transparent_in, x, y, table);
-        shared_sprite_.pcBits_ = 0;
-        return result;
-    }
+    setup_buff_sprite(transparent_in);
+    int result = shared_sprite_.draw_multi_table_dest(
+        destination, transparent_in, x, y, table);
+    release_buff_sprite();
+    return result;
 }
 
 // ORIGINAL: 0x005D8B20 ?draw_dest@Buffer@@QAEHPAVBuffer@@HHHHHPAE@Z 0x005D8B20-0x005D8C18 FILE BYTE_EXACT
@@ -7591,52 +7450,10 @@ tail:
 
 
 int Buffer::draw_dest(Buffer * a1, int a2, int a3, int a4, int a5, int a6, unsigned char * a7) {
-    int transparentIndex = a2;
-    if (surface_ == 0) {
-        if (transparentIndex == -1) {
-            transparentIndex = WinFillColour;
-        }
-
-        locked_bits_ = dib_bits_;
-        LPVOID const bits = locked_bits_;
-        if (bits != nullptr) {
-            ++surface_lock_count_;
-        }
-        shared_sprite_.pcBits_ = static_cast<unsigned char *>(locked_bits_);
-        shared_sprite_.iSpriteWidth2_ = stride_;
-        shared_sprite_.iSpriteWidth_ = dib_.bmiHeader.biWidth;
-        shared_sprite_.iSpriteHeight_ = -dib_.bmiHeader.biHeight;
-        shared_sprite_.iWidth_ = dib_.bmiHeader.biWidth;
-        shared_sprite_.iHeight_ = -dib_.bmiHeader.biHeight;
-        shared_sprite_.iLeftOffset_ = 0;
-        shared_sprite_.iTopOffset_ = 0;
-        shared_sprite_.cTransparentIndex_ = static_cast<char>(transparentIndex);
-        shared_sprite_.fObj1Exists_ = 0;
-
-        IDirectDrawSurface2 *surface = surface_;
-        if (surface == 0) {
-            surface_lock_count_ = surface_lock_count_ - 1;
-            if (surface_lock_count_ > 0) {
-                goto forward;
-            }
-        } else {
-            surface_lock_count_ = surface_lock_count_ - 1;
-            LPVOID const cachedBits = locked_bits_;
-            if (cachedBits == nullptr || surface_lock_count_ > 0) {
-                goto forward;
-            }
-            surface->Unlock(cachedBits);
-        }
-        locked_bits_ = nullptr;
-        surface_lock_count_ = 0;
-    }
-
-forward:
-    {
-        int result = shared_sprite_.draw_dest(a1, a2, a3, a4, a5, a6, a7);
-        shared_sprite_.pcBits_ = 0;
-        return result;
-    }
+    setup_buff_sprite(a2);
+    int result = shared_sprite_.draw_dest(a1, a2, a3, a4, a5, a6, a7);
+    release_buff_sprite();
+    return result;
 }
 
 // ORIGINAL: 0x005D94B0 ?draw_multi_table_dest@Buffer@@QAEHPAVBuffer@@HHHHHPAE@Z 0x005D94B0-0x005D95A8 FILE BYTE_EXACT
@@ -7661,52 +7478,10 @@ forward:
 
 
 int Buffer::draw_multi_table_dest(Buffer * a1, int a2, int a3, int a4, int a5, int a6, ColorTable * a7) {
-    int transparentIndex = a2;
-    if (surface_ == 0) {
-        if (transparentIndex == -1) {
-            transparentIndex = WinFillColour;
-        }
-
-        locked_bits_ = dib_bits_;
-        LPVOID const bits = locked_bits_;
-        if (bits != nullptr) {
-            ++surface_lock_count_;
-        }
-        shared_sprite_.pcBits_ = static_cast<unsigned char *>(locked_bits_);
-        shared_sprite_.iSpriteWidth2_ = stride_;
-        shared_sprite_.iSpriteWidth_ = dib_.bmiHeader.biWidth;
-        shared_sprite_.iSpriteHeight_ = -dib_.bmiHeader.biHeight;
-        shared_sprite_.iWidth_ = dib_.bmiHeader.biWidth;
-        shared_sprite_.iHeight_ = -dib_.bmiHeader.biHeight;
-        shared_sprite_.iLeftOffset_ = 0;
-        shared_sprite_.iTopOffset_ = 0;
-        shared_sprite_.cTransparentIndex_ = static_cast<char>(transparentIndex);
-        shared_sprite_.fObj1Exists_ = 0;
-
-        IDirectDrawSurface2 *surface = surface_;
-        if (surface == 0) {
-            surface_lock_count_ = surface_lock_count_ - 1;
-            if (surface_lock_count_ > 0) {
-                goto forward;
-            }
-        } else {
-            surface_lock_count_ = surface_lock_count_ - 1;
-            LPVOID const cachedBits = locked_bits_;
-            if (cachedBits == nullptr || surface_lock_count_ > 0) {
-                goto forward;
-            }
-            surface->Unlock(cachedBits);
-        }
-        locked_bits_ = nullptr;
-        surface_lock_count_ = 0;
-    }
-
-forward:
-    {
-        int result = shared_sprite_.draw_multi_table_dest(a1, a2, a3, a4, a5, a6, a7);
-        shared_sprite_.pcBits_ = 0;
-        return result;
-    }
+    setup_buff_sprite(a2);
+    int result = shared_sprite_.draw_multi_table_dest(a1, a2, a3, a4, a5, a6, a7);
+    release_buff_sprite();
+    return result;
 }
 
 // ORIGINAL: 0x005D7CA0 ?load_bmp@Buffer@@QAGHPBDPAVPalette@@HH@Z 0x005D7CA0-0x005D7DD8;0x00662BA7-0x00662BBC FILE BYTE_EXACT
@@ -7735,11 +7510,11 @@ int __stdcall Buffer::load_bmp(const char * a1, Palette * a2, int a3, int a4) {
         goto has_ext;
     }
     switch (Language) {
-// RECOVERY_LITERAL: v1 0x00696C70 0x00696C75 $SG45322 0x005D7CA0
+// RECOVERY_LITERAL: v1 0x00696C70 0x00696C75 $SG45234 0x005D7CA0
         case 1: strcat(path, ".bmf"); break;
-// RECOVERY_LITERAL: v1 0x00696C78 0x00696C7D $SG45324 0x005D7CA0
+// RECOVERY_LITERAL: v1 0x00696C78 0x00696C7D $SG45236 0x005D7CA0
         case 2: strcat(path, ".bmg"); break;
-// RECOVERY_LITERAL: v1 0x00696C80 0x00696C85 $SG45326 0x005D7CA0
+// RECOVERY_LITERAL: v1 0x00696C80 0x00696C85 $SG45238 0x005D7CA0
         default: strcat(path, ".bmp"); break;
     }
   has_ext:
@@ -8294,48 +8069,11 @@ void Buffer::hline(int x1, int x2, int y, int first_color, int second_color,
 // size      238 bytes
 int Buffer::draw_unk2(Buffer *source, int transparent_in, int x, int y,
                            int table) {
-    int transparent = transparent_in;
-    if (surface_ == 0) {
-        if (transparent_in == -1) {
-            transparent = WinFillColour;
-        }
-        locked_bits_ = dib_bits_;
-        if (locked_bits_ != nullptr) {
-            surface_lock_count_ = surface_lock_count_ + 1;
-        }
-        shared_sprite_.pcBits_ = static_cast<unsigned char *>(locked_bits_);
-        shared_sprite_.iSpriteWidth2_ = stride_;
-        shared_sprite_.iSpriteWidth_ = dib_.bmiHeader.biWidth;
-        shared_sprite_.iSpriteHeight_ = -dib_.bmiHeader.biHeight;
-        shared_sprite_.iWidth_ = dib_.bmiHeader.biWidth;
-        shared_sprite_.iHeight_ = -dib_.bmiHeader.biHeight;
-        shared_sprite_.iLeftOffset_ = 0;
-        shared_sprite_.iTopOffset_ = 0;
-        shared_sprite_.cTransparentIndex_ = (unsigned char)transparent;
-        shared_sprite_.fObj1Exists_ = 0;
-
-        if (surface_ == 0) {
-            surface_lock_count_ = surface_lock_count_ - 1;
-            if ((int)surface_lock_count_ > 0) {
-                goto tail;
-            }
-        } else {
-            surface_lock_count_ = surface_lock_count_ - 1;
-            if (locked_bits_ == nullptr || (int)surface_lock_count_ > 0) {
-                goto tail;
-            }
-            surface_->Unlock(locked_bits_);
-        }
-        locked_bits_ = nullptr;
-        surface_lock_count_ = 0;
-    }
-tail:
-    {
-        int result = shared_sprite_.draw_noop(source,
-                                          transparent_in, x, y, table);
-        shared_sprite_.pcBits_ = 0;
-        return result;
-    }
+    setup_buff_sprite(transparent_in);
+    int result = shared_sprite_.draw_noop(source,
+                                      transparent_in, x, y, table);
+    release_buff_sprite();
+    return result;
 }
 
 
@@ -8344,47 +8082,10 @@ tail:
 // size      238 bytes
 int Buffer::draw(Buffer *source, int transparent_in, int x, int y,
                            unsigned char *table) {
-    int transparent = transparent_in;
-    if (surface_ == 0) {
-        if (transparent_in == -1) {
-            transparent = WinFillColour;
-        }
-        locked_bits_ = dib_bits_;
-        if (locked_bits_ != nullptr) {
-            surface_lock_count_ = surface_lock_count_ + 1;
-        }
-        shared_sprite_.pcBits_ = static_cast<unsigned char *>(locked_bits_);
-        shared_sprite_.iSpriteWidth2_ = stride_;
-        shared_sprite_.iSpriteWidth_ = dib_.bmiHeader.biWidth;
-        shared_sprite_.iSpriteHeight_ = -dib_.bmiHeader.biHeight;
-        shared_sprite_.iWidth_ = dib_.bmiHeader.biWidth;
-        shared_sprite_.iHeight_ = -dib_.bmiHeader.biHeight;
-        shared_sprite_.iLeftOffset_ = 0;
-        shared_sprite_.iTopOffset_ = 0;
-        shared_sprite_.cTransparentIndex_ = (unsigned char)transparent;
-        shared_sprite_.fObj1Exists_ = 0;
-
-        if (surface_ == 0) {
-            surface_lock_count_ = surface_lock_count_ - 1;
-            if ((int)surface_lock_count_ > 0) {
-                goto tail;
-            }
-        } else {
-            surface_lock_count_ = surface_lock_count_ - 1;
-            if (locked_bits_ == nullptr || (int)surface_lock_count_ > 0) {
-                goto tail;
-            }
-            surface_->Unlock(locked_bits_);
-        }
-        locked_bits_ = nullptr;
-        surface_lock_count_ = 0;
-    }
-tail:
-    {
-        int result = shared_sprite_.draw(source, transparent_in, x, y, table);
-        shared_sprite_.pcBits_ = 0;
-        return result;
-    }
+    setup_buff_sprite(transparent_in);
+    int result = shared_sprite_.draw(source, transparent_in, x, y, table);
+    release_buff_sprite();
+    return result;
 }
 
 
@@ -8393,48 +8094,11 @@ tail:
 // size      238 bytes
 int Buffer::draw_dest_unk2(Buffer *source, int transparent_in, int x, int y,
                            unsigned char *table) {
-    int transparent = transparent_in;
-    if (surface_ == 0) {
-        if (transparent_in == -1) {
-            transparent = WinFillColour;
-        }
-        locked_bits_ = dib_bits_;
-        if (locked_bits_ != nullptr) {
-            surface_lock_count_ = surface_lock_count_ + 1;
-        }
-        shared_sprite_.pcBits_ = static_cast<unsigned char *>(locked_bits_);
-        shared_sprite_.iSpriteWidth2_ = stride_;
-        shared_sprite_.iSpriteWidth_ = dib_.bmiHeader.biWidth;
-        shared_sprite_.iSpriteHeight_ = -dib_.bmiHeader.biHeight;
-        shared_sprite_.iWidth_ = dib_.bmiHeader.biWidth;
-        shared_sprite_.iHeight_ = -dib_.bmiHeader.biHeight;
-        shared_sprite_.iLeftOffset_ = 0;
-        shared_sprite_.iTopOffset_ = 0;
-        shared_sprite_.cTransparentIndex_ = (unsigned char)transparent;
-        shared_sprite_.fObj1Exists_ = 0;
-
-        if (surface_ == 0) {
-            surface_lock_count_ = surface_lock_count_ - 1;
-            if ((int)surface_lock_count_ > 0) {
-                goto tail;
-            }
-        } else {
-            surface_lock_count_ = surface_lock_count_ - 1;
-            if (locked_bits_ == nullptr || (int)surface_lock_count_ > 0) {
-                goto tail;
-            }
-            surface_->Unlock(locked_bits_);
-        }
-        locked_bits_ = nullptr;
-        surface_lock_count_ = 0;
-    }
-tail:
-    {
-        int result = shared_sprite_.draw_dest_unk2(source, transparent_in, x,
-                                                    y, table);
-        shared_sprite_.pcBits_ = 0;
-        return result;
-    }
+    setup_buff_sprite(transparent_in);
+    int result = shared_sprite_.draw_dest_unk2(source, transparent_in, x,
+                                                y, table);
+    release_buff_sprite();
+    return result;
 }
 
 // ORIGINAL: 0x005E1350 ?vline@Buffer@@QAEXHHHHHHHH@Z 0x005E1350-0x005E15E7 BYTE_EXACT
@@ -8651,7 +8315,7 @@ extern const char BufferCenteredSpace[] = " ";
 // Sprite5E4ADA receives the genuine destination Buffer pointer and six integers.
 int Buffer::draw_unk2(Buffer *destination, int transparent, int x, int y,
                       int numerator, int denominator, int table) {
-    prepare_shared_sprite(transparent);
+    setup_buff_sprite(transparent);
     int result = shared_sprite_.draw_noop(destination, transparent, x, y,
                                           numerator, denominator, table);
     shared_sprite_.pcBits_ = 0;
@@ -8665,7 +8329,7 @@ int Buffer::draw_unk2(Buffer *destination, int transparent, int x, int y,
 int Buffer::draw_dest_source(Buffer *destination, int transparent, int x, int y,
                              int numerator, int denominator,
                              unsigned char *table) {
-    prepare_shared_sprite(transparent);
+    setup_buff_sprite(transparent);
     int result = shared_sprite_.draw_dest_source(destination, transparent, x, y,
                                                   numerator, denominator, table);
     shared_sprite_.pcBits_ = 0;
@@ -8678,7 +8342,7 @@ int Buffer::draw_dest_source(Buffer *destination, int transparent, int x, int y,
 // TRIED: nothing new past that - 94.9%+ mnemonic similarity, first gap at #41 (mov vs cmp) in the NULL-surface lock-count arm, same spot as every sibling in this family.
 int Buffer::draw(Buffer *destination, int transparent, int x, int y,
                   int numerator, int denominator, unsigned char *table) {
-    prepare_shared_sprite(transparent);
+    setup_buff_sprite(transparent);
     int result = shared_sprite_.draw(destination, transparent, x, y,
                                       numerator, denominator, table);
     shared_sprite_.pcBits_ = 0;
@@ -8692,7 +8356,7 @@ int Buffer::draw(Buffer *destination, int transparent, int x, int y,
 int Buffer::draw_dest_unk2(Buffer *destination, int transparent, int x, int y,
                            int numerator, int denominator,
                            unsigned char *table) {
-    prepare_shared_sprite(transparent);
+    setup_buff_sprite(transparent);
     int result = shared_sprite_.draw_dest_unk2(destination, transparent, x, y,
                                                numerator, denominator, table);
     shared_sprite_.pcBits_ = 0;
@@ -10086,7 +9750,7 @@ Status: Coverage transcription - unclaimed body
 */
 void Buffer::draw_dest_unk1(Buffer *destination, int x, int y,
                             unsigned char *table) {
-    prepare_shared_sprite(-1);
+    setup_buff_sprite(-1);
     shared_sprite_.draw_dest_unk1(destination, x, y, table);
     shared_sprite_.pcBits_ = 0;
 }
@@ -10105,7 +9769,7 @@ Status: Coverage transcription - unclaimed body
 void Buffer::draw_dest_unk1(Buffer *destination, int x, int y,
                             int numerator, int denominator,
                             unsigned char *table) {
-    prepare_shared_sprite(-1);
+    setup_buff_sprite(-1);
     shared_sprite_.draw_dest_unk1(destination, x, y,
                                   numerator, denominator, table);
     shared_sprite_.pcBits_ = 0;
@@ -10263,48 +9927,11 @@ Status: Coverage promotion of the retained seed (src/unrecovered/005d8df0.cpp).
 
 int Buffer::draw_dest_source(Buffer *source, int transparent_in, int x, int y,
                              unsigned char *bits) {
-    int transparent = transparent_in;
-    if (surface_ == 0) {
-        if (transparent_in == -1) {
-            transparent = WinFillColour;
-        }
-        locked_bits_ = dib_bits_;
-        if (locked_bits_ != nullptr) {
-            surface_lock_count_ = surface_lock_count_ + 1;
-        }
-        shared_sprite_.pcBits_ = static_cast<unsigned char *>(locked_bits_);
-        shared_sprite_.iSpriteWidth2_ = stride_;
-        shared_sprite_.iSpriteWidth_ = dib_.bmiHeader.biWidth;
-        shared_sprite_.iSpriteHeight_ = -dib_.bmiHeader.biHeight;
-        shared_sprite_.iWidth_ = dib_.bmiHeader.biWidth;
-        shared_sprite_.iHeight_ = -dib_.bmiHeader.biHeight;
-        shared_sprite_.iLeftOffset_ = 0;
-        shared_sprite_.iTopOffset_ = 0;
-        shared_sprite_.cTransparentIndex_ = (unsigned char)transparent;
-        shared_sprite_.fObj1Exists_ = 0;
-
-        if (surface_ == 0) {
-            surface_lock_count_ = surface_lock_count_ - 1;
-            if ((int)surface_lock_count_ > 0) {
-                goto tail;
-            }
-        } else {
-            surface_lock_count_ = surface_lock_count_ - 1;
-            if (locked_bits_ == nullptr || (int)surface_lock_count_ > 0) {
-                goto tail;
-            }
-            surface_->Unlock(locked_bits_);
-        }
-        locked_bits_ = nullptr;
-        surface_lock_count_ = 0;
-    }
-tail:
-    {
-        int result = shared_sprite_.draw_dest_source(source, transparent_in,
-                                                      x, y, bits);
-        shared_sprite_.pcBits_ = 0;
-        return result;
-    }
+    setup_buff_sprite(transparent_in);
+    int result = shared_sprite_.draw_dest_source(source, transparent_in,
+                                                  x, y, bits);
+    release_buff_sprite();
+    return result;
 }
 
 /*
