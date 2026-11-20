@@ -2043,15 +2043,7 @@ void Console::ready() {
     field_23D18_ = 0;
     if (selected_vehicle_ < 0 || !ConsoleGlobal.cursor_active_) return;
     if (!Vehs[selected_vehicle_].order || Vehs[selected_vehicle_].order >= 24) {
-        const int y = Vehs[selected_vehicle_].y;
-        const int x = Vehs[selected_vehicle_].x;
-        field_23BF8_ = 0;
-        if (survey_mode_) {
-            survey_mode_ = 0;
-            MapWinTable[0]->draw_map(1);
-        }
-        MapWinTable[0]->draw_cursor();
-        cursor_next(x, y);
+        sub_510c90(Vehs[selected_vehicle_].x, Vehs[selected_vehicle_].y);
         ConsoleInfoWin.change(0);
         ConsoleStatusWin.redraw();
         MapWinTable[0]->main_caption();
@@ -2203,16 +2195,7 @@ void Console::set_move(int force_update) {
         if (Vehs[visible_vehicle_id].moves_expended == 0 && IsMultiplayerNet == 0) {
             spot_all(visible_vehicle_id, 0);
         }
-        const int coordinate_vehicle_id = selected_vehicle_;
-        const int tile_y = Vehs[coordinate_vehicle_id].y;
-        const int tile_x = Vehs[coordinate_vehicle_id].x;
-        field_23BF8_ = 0;
-        if (survey_mode_ != 0) {
-            survey_mode_ = 0;
-            MapWinTable[0]->draw_map(1);
-        }
-        MapWinTable[0]->draw_cursor();
-        cursor_next(tile_x, tile_y);
+        sub_510c90(Vehs[selected_vehicle_].x, Vehs[selected_vehicle_].y);
 
         if (did_reset) {
             ConsoleInfoWin.change(0);
@@ -3308,15 +3291,9 @@ void Console::human_turn() {
             } else if (field_23BF4_ == 0) {
                 // The helper can run callbacks; native reloads the selection
                 // after the eligibility callback and before reading its tile.
-                const int y = Vehs[selected_vehicle_].y;
-                const int x = Vehs[selected_vehicle_].x;
-                field_23BF8_ = 0;
-                if (survey_mode_ != 0) {
-                    survey_mode_ = 0;
-                    MapWinTable[0]->draw_map(1);
-                }
-                MapWinTable[0]->draw_cursor();
-                cursor_next(x, y);
+                // sub_510c90 (0x00510C90, no image callers) expands here
+                // with the same code as the former written-out copy.
+                sub_510c90(Vehs[selected_vehicle_].x, Vehs[selected_vehicle_].y);
                 // cursor_next may dispatch callbacks that change the live
                 // selection; native reloads selected_vehicle_ afterward.
                 if (field_23BF0_ == 0 || Vehs[selected_vehicle_].order != 0x18) {
