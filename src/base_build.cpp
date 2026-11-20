@@ -280,7 +280,7 @@ int __cdecl base_build(int base_id, int *out_secondary, int *out_tertiary, int *
         l_3c = l_58;
         l_40 = l_98;
         l_30 = l_60;
-        if (l_a4 && l_58 && l_98 && l_60) {
+        if ((l_a4 && l_58 && l_98 && l_60) != 0) {
             l_64 = l_3c = l_40 = l_30 = 0;
         }
     } else {
