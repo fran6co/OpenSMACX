@@ -249,8 +249,8 @@ int __cdecl base_build(int base_id, int *out_secondary, int *out_tertiary, int *
     l_1c = 1 << l_8;
 
     // AI priorities, or the governor's priorities for a human base under governor control.
-    if ((GameDataStateStorage.fields_.lock_masks_.human_mask_ & l_1c)
-        && ((gov = BaseCurrent->governor) & 0x80000000)) {
+    if (((GameDataStateStorage.fields_.lock_masks_.human_mask_ & l_1c)
+        && ((gov = BaseCurrent->governor) & 0x80000000)) != 0) {
         if (!(gov & 0xF200000) && BaseIDCurrentSelected >= 8) {
             if (PlayersData[l_8].region_base_plan[l_10] <= 2) {
                 gov |= 0x8000000;
