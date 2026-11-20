@@ -97,6 +97,7 @@ V = {
  'e_inlif':    'if (g) { if (isp2(b) && c > 0) { use(1); pop(1); } else if (isp2(b) && vis2(a)) { use(2); pop(1); } } use(3); return 1;',
  'e_neq':      'if (g) { if (b == g2 && c > 0) { use(1); pop(1); } else if ((b == g2) != 0 && vis2(a)) { use(2); pop(1); } } use(3); return 1;',
  'e_ge1':      'if (g) { if (b == g2 && c >= 1) { use(1); pop(1); } else if (b == g2 && vis2(a)) { use(2); pop(1); } } use(3); return 1;',
+ 'e_hop':      'if (g && b == g2 && c > 0) { use(1); pop(1); } else if (g && b == g2 && vis2(a)) { use(2); pop(1); } use(3); return 1;',
  # the || value forms of on_key_click
  'o_if':       'if (ga[a] || cond()) { use(3); return 0; } use(4); use(5); return 1;',
  'o_val':      'int go = ga[a] || cond(); if (go) { use(3); return 0; } use(4); use(5); return 1;',

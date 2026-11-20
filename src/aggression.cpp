@@ -126,21 +126,22 @@ void __cdecl intervention(int target_faction, int actor_faction) {
 // RECOVERY_BINDING: v1 {"evidence": ["git:276d612614085e5d57743cf8cc92903d9468e346:src/unrecovered/0050bcc0.cpp retains original identity/spans and contradictory scaffold history.", "Pinned full-span review and genuine Player/PlayerData/Base/Veh/Map declarations own the field interpretation; Popup uses the real C++ lifecycle.", "Related intervention50BA50/pact_withdraw53C370 bodies own the coupled helper behavior. Shared proposal cell93FAB0 and map outcome93FAD8 have native producer/consumer evidence; seed-only workflow producers remain explicit obligations."], "reason": "Recover this original diplomacy identity in its genuine faction owner, preserving typed game records, shared-state lifetimes and every seed obligation. This binding is not a byte or runtime claim."}
 // TRIED: exact register-cached reuse of the 2099*a1/2099*a2 index products across the whole tail (rebuilt recomputes idxE/idxF locally at each site instead); structure (message section + three-index diplomacy-effects section, both branches of the cVarFlags&1 split) transcribed field-by-field from the disasm with parse_says/set_agenda/set_treaty/pact_ends/treaty_on/ cause_friction/great_satan/intervention argument order matched from each call's own push sequence.
 void __cdecl double_cross(int faction_id, int partner_id, int victim_id) {
-    if (IsMultiplayerNet) {
-        if (partner_id == ConsoleGlobal.faction_id_ && victim_id > 0) {
-            parse_says(0, get_title(victim_id), -1, -1);
-            parse_says(1, get_name(victim_id), -1, -1);
-            parse_says(2, get_noun(victim_id), -1, -1);
-            parse_says(3, get_title(faction_id), -1, -1);
-            parse_says(4, get_name(faction_id), -1, -1);
-            parse_says(5, get_noun(faction_id), -1, -1);
-            NetMsgPrimary.pop("INCITED", 0x1388, 0, nullptr);
-        } else if (partner_id == ConsoleGlobal.faction_id_ && is_human(faction_id)) {
-            parse_says(0, get_title(faction_id), -1, -1);
-            parse_says(1, get_name(faction_id), -1, -1);
-            parse_says(2, get_noun(faction_id), -1, -1);
-            NetMsgPrimary.pop("VENDETTAWARNING", 0x1388, 0, nullptr);
-        }
+    // Each arm tests IsMultiplayerNet itself: the image's failed partner test
+    // re-tests the partner (0x0050BE1A) after threading only past the
+    // already-known IsMultiplayerNet; nested under one if, VC6 threads both.
+    if (IsMultiplayerNet && partner_id == ConsoleGlobal.faction_id_ && victim_id > 0) {
+        parse_says(0, get_title(victim_id), -1, -1);
+        parse_says(1, get_name(victim_id), -1, -1);
+        parse_says(2, get_noun(victim_id), -1, -1);
+        parse_says(3, get_title(faction_id), -1, -1);
+        parse_says(4, get_name(faction_id), -1, -1);
+        parse_says(5, get_noun(faction_id), -1, -1);
+        NetMsgPrimary.pop("INCITED", 0x1388, 0, nullptr);
+    } else if (IsMultiplayerNet && partner_id == ConsoleGlobal.faction_id_ && is_human(faction_id)) {
+        parse_says(0, get_title(faction_id), -1, -1);
+        parse_says(1, get_name(faction_id), -1, -1);
+        parse_says(2, get_noun(faction_id), -1, -1);
+        NetMsgPrimary.pop("VENDETTAWARNING", 0x1388, 0, nullptr);
     }
     PlayersData[partner_id].loan_balance[faction_id] = 0;
     uint32_t treaty_flags = PlayersData[faction_id].diplo_treaties[partner_id];

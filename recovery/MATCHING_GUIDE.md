@@ -8717,9 +8717,13 @@ Counters and tie arms (par-5 2026-11-20, councwin)
   and the frame, social_ai 256 -> 197 and the frame). `analysis/mattest.py`
   screens `mat`/`set` and the `||` layouts tree-wide (40 s).
   Else-if re-tests of the same compare (`if (p == g && v > 0) {} else if
-  (p == g && f())`) are threaded in every probe spelling (inline compare
-  helpers, `!= 0`, `>= 1`); double_cross 0x0050BE1A keeps its re-test, so
-  that one is not explained yet.
+  (p == g && f())`) are threaded in every spelling nested under `if (net)`
+  (inline compare helpers, `!= 0`, `>= 1`). An image that keeps the
+  re-test (double_cross 0x0050BE1A: both misses land on `cmp ebx,eax`)
+  repeats the outer flag in each condition: `if (net && p == g && v > 0)
+  {} else if (net && p == g && f())`. VC6 threads the misses past the
+  known `net` test only, one hop, and stops at the compare (49 -> 24
+  rows, jseq 0 hunks; probe e_hop).
 - **An `||` in an else-if chain whose arm the image lays in place
   (`je arm; je arm; jne else; arm:`) is the same value form**: `(A || B ||
   C) != 0`, a bool local or `A ? 1 : B` all compile alike (stack_veh
