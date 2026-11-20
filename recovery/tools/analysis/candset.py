@@ -473,6 +473,8 @@ def const_census(code, webs):
         if mn == 'mov' and '[' in os_[0]:
             out[k]['st'] += 1
             out[k]['stw'] += w8
+            if os.environ.get('CANDSET_SITES') and str(k) == os.environ['CANDSET_SITES']:
+                print('  store #%d at %x: %s (w %d)' % (k, off, t, w8))
         elif mn == 'cmp' and '[' in os_[0]:
             out[k]['cmp'] += 1
         elif mn in ('mov',) and '[' not in os_[0]:

@@ -3962,8 +3962,9 @@ void __cdecl make_gift(int giver, int receiver) {
             return;
         }
 
-        int gift_value = 0;
+        int gift_value;
         if (DiplomacyProposalMode == 7) {
+            gift_value = 0;
             for (int tech = 0; tech < 0x59; ++tech) {
                 if (has_tech(tech, giver) && !has_tech(tech, receiver)) {
                     gift_value += tech_val(tech, receiver, 1);
