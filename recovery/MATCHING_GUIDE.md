@@ -2604,6 +2604,16 @@ we cannot see, so the numbers are fitted within about 0.3 unit.
    expanded ~Scroll, is decided after pass 2 and gets what is left. In
    PickTech::pick, each added dead probe removes one ~FlatButton expansion
    before any ~Scroll changes. Its order within the level was not measured.
+   **Depth cap 8** (high; turn_upkeep 2026-11-20 par-1): a chain of free
+   one-line forwarders expands up to depth 8 and the depth-9 call stays out
+   of line, wherever the chain sits (no leak between sites). Arguments nest
+   too: `idf(idf(..veh_health(v)..))` seven deep changes range decisions.
+   A refused deep site also changes its sibling site's decision (suffix
+   regime), so screen a whole call pair, not one site. Nesting the sites
+   one level deeper inside a natural owner (predicate, crash helper) is how
+   turn_upkeep's two out-of-line reactor ranges were reached without a
+   function-pointer twin; dead spend alone needed about 72 if-units in the
+   loop.
 6. **Teardown with real headers** (high; `real_popup.py`). An isolated
    `Popup p;` with M returns expands ~Popup at every site up to the budget.
    Its ~Scroll then falls in the periodic regime: 5 returns give
