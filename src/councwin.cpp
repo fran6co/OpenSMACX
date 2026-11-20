@@ -1206,8 +1206,7 @@ void CouncWin::on_button_clicked(int button_id) {
                                                   picture_size[1], picture_size[0]) == 0) {
                     popup.select_owned_picture();
                 }
-                Dialogs &options = popup.dialogs();
-                options.item(StringTable.get(Labels.strings_ptr[0x7c4 / 4]), 0);
+                popup.item(StringTable.get(Labels.strings_ptr[0x7c4 / 4]), 0);
                 for (int faction = 1; faction < MaxPlayerNum; ++faction) {
                     if ((Players[faction].rule_flags & RFLAG_ALIEN) == 0
                         && is_alive(faction)
@@ -1215,7 +1214,7 @@ void CouncWin::on_button_clicked(int button_id) {
                         StringTemp[0] = '\0';
                         parse_set(Players[faction].is_leader_female, 0);
                         strcat(StringTemp, Players[faction].name_leader);
-                        options.item(StringTemp, faction);
+                        popup.item(StringTemp, faction);
                     }
                 }
                 int result = popup.exec(0, pop_wait);
