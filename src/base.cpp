@@ -2345,7 +2345,7 @@ int __cdecl mine_yield(int faction_id, int base_id, int x, int y,
 
 /*
 Purpose: Calculate the energy produced by a single map square.
-// ORIGINAL: 0x004E7750 ?energy_yield@@YAHHHHHH@Z 0x004E7750-0x004E7DA3
+// ORIGINAL: 0x004E7750 ?energy_yield@@YAHHHHHH@Z 0x004E7750-0x004E7DA3 BYTE_EXACT
 // LEVER: same bit2 shape as mine_yield - cached to a named local, but the
 //        image re-reads tile->bit2 from memory for the landmark_bonus mask
 //        (the register holding it was already destroyed by the >>24 shift
@@ -8490,7 +8490,7 @@ void __cdecl make_base_unique(int base_id) {
     if (collisions != 0) {
         Bases[base_id].name_string[21] = 0;
         // make_base_unique passes this one-byte delimiter to strcat; collision digits use a separate buffer.
-// RECOVERY_LITERAL: v1 0x00689F08 0x00689F0A $SG65686 0x004F7FE0
+// RECOVERY_LITERAL: v1 0x00689F08 0x00689F0A $SG65684 0x004F7FE0
         strcat(Bases[base_id].name_string, "-");
         char digits[0x50];
         _itoa(collisions + 1, digits, 10);
