@@ -430,18 +430,23 @@ void MultiWin::draw_player(int faction_id, int row, RECT *bounds) {
       uint32_t faction_bit = 1 << faction_id;
       int local_faction = ConsoleGlobal.faction_id_;
       uint32_t in_turn = faction_bit & selected_turn_word;
-      // One else-if chain, no goto into the waiting arm: the image ranks
-      // faction_id (edi) and faction_bit (ebx) above `this` and
-      // selected_turn_word, which the goto form did not.
-      if (in_turn && !ConsoleControlTurnActive &&
-          ((GameDataStateStorage.fields_.game_state_ & 0x80) ||
-           (selected_turn_word & (1 << local_faction)))) {
-        // In turn and already answered: no suffix.
-      } else if (in_turn && ConsoleControlTurnActive) {
-        strcat(StringTemp, label_get(0x42C / 4));
-        space();
-        _itoa(NetUpkeepPhase, number, 10);
-        strcat(StringTemp, number);
+      // The image tests ConsoleControlTurnActive once on the in-turn path
+      // (`jne` to the 0x42C arm laid out after the answered tests, which end
+      // `je waiting | jmp past`) and enters the waiting arm from both paths,
+      // one entry reloading turn_flags: a nested test and a goto, not the
+      // else-if chain that re-tests the flag (0x478997).
+      if (in_turn) {
+        if (!ConsoleControlTurnActive) {
+          if (!(GameDataStateStorage.fields_.game_state_ & 0x80)
+              && !(selected_turn_word & (1 << local_faction))) {
+            goto waiting;
+          }
+        } else {
+          strcat(StringTemp, label_get(0x42C / 4));
+          space();
+          _itoa(NetUpkeepPhase, number, 10);
+          strcat(StringTemp, number);
+        }
       } else if (ConsoleControlTurnActive) {
         strcat(StringTemp, "*");
         strcat(StringTemp, label_get(0x42C / 4));
@@ -449,6 +454,7 @@ void MultiWin::draw_player(int faction_id, int row, RECT *bounds) {
         _itoa(NetUpkeepPhase, number, 10);
         strcat(StringTemp, number);
       } else {
+      waiting:
         if (turn_flags) {
           int net_turn_faction = GameDataStateStorage.fields_.net_turn_faction_;
           if (net_turn_faction == faction_id) {
