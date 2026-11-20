@@ -2732,7 +2732,7 @@ void __cdecl diplomacy_check(int faction, int other, int update) {
         DiploScratchFA9C--;
     }
     DiploScratchFA9C += -DiploScratchFA50 - (DiploScratchFA78 - 1) / 3 - fight;
-    if (PlayersData[faction].tech_commerce_bonus < PlayersData[other].tech_commerce_bonus && fight <= 0) {
+    if (PlayersData[other].tech_commerce_bonus > PlayersData[faction].tech_commerce_bonus && fight <= 0) {
         DiploScratchFA9C++;
     }
     if (!(GameDataStateStorage.fields_.game_rules_ & 0x800) && !PlayersData[other].se_alloc_labs) {
