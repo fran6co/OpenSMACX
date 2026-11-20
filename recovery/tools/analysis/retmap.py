@@ -12,7 +12,8 @@ into any of its instructions. Per function it prints the `ret` count image/ours 
              `if (..) goto done;` tests, or let the exit fall to the final return (MATCHING_GUIDE 3.7)
 
 each with the image address, our offset and our source line (`L123`; image-only rows get the line of the
-nearest aligned row). --show prints the full tail list of each side. Screen only: confirm with fe.py."""
+nearest aligned row). --show prints the full tail list of each side. Markers with `// compile_context <tu>` are
+measured in that unit's compile (one listing per lane and context). Screen only: confirm with fe.py."""
 import sys, os, re, json, argparse, collections
 from concurrent.futures import ThreadPoolExecutor
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -111,6 +112,9 @@ def scan_fn(res, lmap):
     return I, O, flags
 
 
+CTX = {}  # (lane prefix, context unit) -> (Coff, listing), one compile per lane
+
+
 def scan_unit(unit, pfx, mode, only=None, show=False):
     text = open(fe.R + '/' + unit, encoding='latin-1').read()
     c, cod = tailscan.compile_listing(unit, fe.R + '/' + unit, pfx)
@@ -121,12 +125,24 @@ def scan_unit(unit, pfx, mode, only=None, show=False):
         addr = int(m.group(1), 16)
         if only and addr not in only:
             continue
-        if '// compile_context' in text[m.end():m.end() + 2000].split('\n// ORIGINAL')[0][:600]:
-            continue
-        r = fe.evaluate(c, text, addr)
+        # A marker with `// compile_context <tu>` is measured in that unit's compile (as fe.py and
+        # `recover measure` do); the listing's line numbers then name the file that holds the body.
+        blk = re.match(r'[^\n]*\n((?://(?! ORIGINAL)[^\n]*\n)*)', text[m.end():])
+        mc = blk and re.search(r'// compile_context (src/\S+\.cpp)', blk.group(1))
+        cc_, cod_ = c, cod
+        if mc and mc.group(1) != unit:
+            ctx = mc.group(1)
+            if (pfx, ctx) not in CTX:
+                CTX[(pfx, ctx)] = (tailscan.compile_listing(ctx, fe.R + '/' + ctx, pfx)
+                                   if os.path.exists(fe.R + '/' + ctx) else (None, None))
+            cc_, cod_ = CTX[(pfx, ctx)]
+            if cc_ is None:
+                out.append(('ERR', unit, 'context %s of %08X failed' % (ctx, addr)))
+                continue
+        r = fe.evaluate(cc_, text, addr)
         if 'error' in r or (mode == 'nonexact' and r['exact']):
             continue
-        lmap = tailscan.lines_of(cod, r['sym'], os.path.basename(unit).lower()) if cod else {}
+        lmap = tailscan.lines_of(cod_, r['sym'], os.path.basename(unit).lower()) if cod_ else {}
         I, O, fl = scan_fn(r, lmap)
         if fl or show:
             d = dict(unit=unit, addr='%08X' % addr, fn=r['sym'], exact=r['exact'], diff=r['diff'],
