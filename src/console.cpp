@@ -6434,6 +6434,7 @@ map_keys:
         const int raw = a2;
         const int mode = raw & 0x20000;
         int key = raw;
+        int scroll = 0;
         if (mode != 0) {
             key &= ~0x30000;
         }
@@ -6443,7 +6444,88 @@ map_keys:
         case 0x61:
         case 0x23:
             a2 = 4;
-        move_direction:
+            break;
+        case 0x21:
+        case 0x69:
+            a2 = 0;
+            break;
+        case 0x27:
+        case 0x66:
+            a2 = 1;
+            break;
+        case 0x22:
+        case 0x63:
+            a2 = 2;
+            break;
+        case 0x28:
+        case 0x62:
+            a2 = 3;
+            break;
+        case 0x25:
+        case 0x64:
+            a2 = 5;
+            break;
+        case 0x24:
+        case 0x67:
+            a2 = 6;
+            break;
+        case 0x26:
+        case 0x68:
+            a2 = 7;
+            break;
+        case 0x10026:
+        case 0x10068: {
+            MapWin *const map_window = MapWinTable[0];
+            y = map_window->center_y_ -
+                ::range((map_window->field_1DDD0_ + 2) / 3, 0, map_window->field_1DDA8_);
+            if (y != map_window->center_y_) {
+                map_window->set_center(map_window->center_x_, y, 1);
+            }
+            scroll = 1;
+            break;
+        }
+        case 0x10028:
+        case 0x10062: {
+            MapWin *const map_window = MapWinTable[0];
+            y = map_window->center_y_ +
+                ::range((map_window->field_1DDD0_ + 2) / 3, 0,
+                        MapLatitudeBounds - 2 * map_window->field_1DDD8_ -
+                            map_window->field_1DDA8_ + 1);
+            if (y != map_window->center_y_) {
+                map_window->set_center(map_window->center_x_, y, 1);
+            }
+            scroll = 1;
+            break;
+        }
+        case 0x10025:
+        case 0x10064: {
+            MapWin *const map_window = MapWinTable[0];
+            x = ::wrap_map_x(map_window->center_x_ - (map_window->field_1DDCC_ + 2) / 3);
+            if (x != map_window->center_x_) {
+                map_window->set_center(x, map_window->center_y_, 1);
+            }
+            scroll = 1;
+            break;
+        }
+        case 0x10027:
+        case 0x10066: {
+            MapWin *const map_window = MapWinTable[0];
+            x = ::wrap_map_x((map_window->field_1DDCC_ + 2) / 3 + map_window->center_x_);
+            if (x != map_window->center_x_) {
+                map_window->set_center(x, map_window->center_y_, 1);
+            }
+            scroll = 1;
+            break;
+        }
+        default:
+            scroll = 1;
+            break;
+        }
+        // 0x51B0B2: the a2 = 4 arm falls into the direction tail and the
+        // other direction arms jump to it; the scroll arms and unlisted keys
+        // skip it. A shared goto label is laid after the last goto instead
+        // (MATCHING_GUIDE 2.6, a flag-tested join; VC6 threads the jumps).
+        if (!scroll) {
             if (mode != 0 && (raw & 0x10000) != 0) {
                 if (a2 == 5) {
                     ConsoleStatusWin.arrow_left();
@@ -6455,104 +6537,36 @@ map_keys:
             if (ConsoleGlobal.cursor_active_ != 0) {
                 if (edit_lock() == 0) {
                     if (!(net_lock != 0)) {
-                    if (selected_vehicle_ < 0) {
+                        if (selected_vehicle_ < 0) {
+                            return 1;
+                        }
+                        if (mode != 0) {
+                            Vehs[selected_vehicle_].order = 0x19;
+                            Vehs[selected_vehicle_].waypoint_x[0] = static_cast<int16_t>(a2);
+                            Vehs[selected_vehicle_].waypoint_x[1] = Vehs[selected_vehicle_].x;
+                            Vehs[selected_vehicle_].waypoint_y[1] = Vehs[selected_vehicle_].y;
+                            return 1;
+                        }
+                        if (not_my_turn() != 0) {
+                            NetMsgPrimary.pop("SIMULNO", 5000, 0, 0);
+                            return 1;
+                        }
+                        if (veh_ready(selected_vehicle_) == 0) {
+                            NetMsgPrimary.pop("UNITMOVED", 5000, 0, 0);
+                            field_23BE4_ = 0;
+                            return 1;
+                        }
+                        NetDaemonNet.order_veh(selected_vehicle_, a2, 0);
                         return 1;
                     }
-                    if (mode != 0) {
-                        Vehs[selected_vehicle_].order = 0x19;
-                        Vehs[selected_vehicle_].waypoint_x[0] = static_cast<int16_t>(a2);
-                        Vehs[selected_vehicle_].waypoint_x[1] = Vehs[selected_vehicle_].x;
-                        Vehs[selected_vehicle_].waypoint_y[1] = Vehs[selected_vehicle_].y;
-                        return 1;
-                    }
-                    if (not_my_turn() != 0) {
-                        NetMsgPrimary.pop("SIMULNO", 5000, 0, 0);
-                        return 1;
-                    }
-                    if (veh_ready(selected_vehicle_) == 0) {
-                        NetMsgPrimary.pop("UNITMOVED", 5000, 0, 0);
-                        field_23BE4_ = 0;
-                        return 1;
-                    }
-                    NetDaemonNet.order_veh(selected_vehicle_, a2, 0);
                     return 1;
-    }
-                        return 1;
-}
+                }
                 if (ConsoleGlobal.cursor_active_ != 0) {
                     reset_turn_view();
                 }
             }
             move_cursor(a2);
             return 1;
-        case 0x21:
-        case 0x69:
-            a2 = 0;
-            goto move_direction;
-        case 0x27:
-        case 0x66:
-            a2 = 1;
-            goto move_direction;
-        case 0x22:
-        case 0x63:
-            a2 = 2;
-            goto move_direction;
-        case 0x28:
-        case 0x62:
-            a2 = 3;
-            goto move_direction;
-        case 0x25:
-        case 0x64:
-            a2 = 5;
-            goto move_direction;
-        case 0x24:
-        case 0x67:
-            a2 = 6;
-            goto move_direction;
-        case 0x26:
-        case 0x68:
-            a2 = 7;
-            goto move_direction;
-        case 0x10026:
-        case 0x10068: {
-            MapWin *const map_window = MapWinTable[0];
-            y = map_window->center_y_ -
-                ::range((map_window->field_1DDD0_ + 2) / 3, 0, map_window->field_1DDA8_);
-            if (y != map_window->center_y_) {
-                map_window->set_center(map_window->center_x_, y, 1);
-            }
-            break;
-        }
-        case 0x10028:
-        case 0x10062: {
-            MapWin *const map_window = MapWinTable[0];
-            y = ::range((map_window->field_1DDD0_ + 2) / 3, 0,
-                        MapLatitudeBounds - 2 * map_window->field_1DDD8_ -
-                            map_window->field_1DDA8_ + 1) +
-                map_window->center_y_;
-            if (y != map_window->center_y_) {
-                map_window->set_center(map_window->center_x_, y, 1);
-            }
-            break;
-        }
-        case 0x10025:
-        case 0x10064: {
-            MapWin *const map_window = MapWinTable[0];
-            x = ::wrap_map_x(map_window->center_x_ - (map_window->field_1DDCC_ + 2) / 3);
-            if (x != map_window->center_x_) {
-                map_window->set_center(x, map_window->center_y_, 1);
-            }
-            break;
-        }
-        case 0x10027:
-        case 0x10066: {
-            MapWin *const map_window = MapWinTable[0];
-            x = ::wrap_map_x((map_window->field_1DDCC_ + 2) / 3 + map_window->center_x_);
-            if (x != map_window->center_x_) {
-                map_window->set_center(x, map_window->center_y_, 1);
-            }
-            break;
-        }
         }
     }
 
