@@ -8127,6 +8127,32 @@ Counters and tie arms (par-5 2026-11-20, councwin)
   (`count > greatest` first, tie as `else if`) stores a different value and
   keeps two copies. Read a cross-jump into an arm's tail as a statement the
   source repeated, and arrange the arms so the repeated stores end both.
+- **Cross-jump host: the copy LAST in block order before layout hosts, and
+  every other copy merges only into the host** (probe
+  `analysis/probes/xjhost/run.py`, 2026-11-20). Three arms with the tail
+  `f1(7); f1(8); return 1;` (ret3, join3, fallend, loop, ifelse/ifelse_n):
+  the last arm in source keeps the tail, the earlier arms `jmp` into it.
+  Block order is source order, except:
+  - a block reached by `goto` keeps its source position for the choice of
+    host, then layout pulls it into its test's fall-through, so the host
+    can sit FIRST in the image (goto_late, goto_mid, goto_early: the `one:`
+    or `two:` block written after the final return hosts and is laid out
+    right after its `jne`);
+  - a compare-chain switch (`sub eax,K; je`) lays its case blocks out in
+    descending case value and hosts in the lowest value's case, whatever
+    the source order (switch3, switch3r, sw_529, sw_952); a jump-table
+    switch keeps source order and hosts in the last case written (sw_dense).
+  Each other copy jumps into the host at the start of its longest
+  identical suffix WITH THE HOST; copies never merge with each other: in
+  sfx12 arms 1 and 2 are identical (`use; g2 = 6; T`) and both keep their
+  `use; g2 = 6` privately because the host (arm 3) lacks the store; sfx13,
+  sfx23, sfx_only1/3 the same. Unequal pending pops never merge (suffix12).
+  Reading the image: the copy that holds the shared code is the last one
+  in source (or the lowest case of a compare-chain switch); when the
+  image's host is a different arm than ours, the arm order in the source
+  differs (or the host arm was reached by a goto), and when two non-host
+  copies in the image share code with each other, they were one statement
+  reached by goto, not two copies.
 
 ### 3.8 VC5 (Caviar/VOX) x87 rules (2026-11-19 par-5)
 
