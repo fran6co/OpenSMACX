@@ -23,7 +23,10 @@ static inline RECT *__cdecl set_rectangle_dimensions(
 // as call arguments are, then stored in order through the pointer.
 // WORKAROUND(decl): the name is descriptive. Copies src into dst inset by
 // the horizontal and vertical amounts, reading all four source edges through
-// the source pointer (NewTechWin 0x00483FB3..0x00483FF2, DiploWin).
+// the source pointer (NewTechWin 0x00483FB3..0x00483FF2). DiploWin::exec and
+// NewTechWin's text rect copy the rect and adjust its edges instead: through
+// the inline parameter VC6 forms some right - h edges there as `add r, -h`
+// where the image has `sub r, h`.
 static inline void inset_rect(RECT *dst, const RECT *src, int horizontal,
                               int vertical) {
     dst->left = src->left + horizontal;
