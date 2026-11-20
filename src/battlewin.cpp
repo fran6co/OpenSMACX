@@ -239,9 +239,9 @@ void BattleWin::battle_report(int first_vehicle_id, int second_vehicle_id,
     portrait->draw(&MainInterfaceGlobal, portrait->transparent_index(), x, y, 1, 1);
     RECT name_rect = battle_rects_[2];
     name_rect.left += 3;
-    name_rect.top = y + portrait->height() + 3;
     name_rect.right -= 3;
     name_rect.bottom -= 3;
+    name_rect.top = y + portrait->height() + 3;
     MainInterfaceGlobal.set_text_color(ChatItemIdTable[first_faction],
                                        ChatShadowColors[first_faction], 1, 1);
     MainInterfaceGlobal.wrap_cent(Players[first_faction].formal_name_faction, &name_rect);
@@ -265,9 +265,9 @@ void BattleWin::battle_report(int first_vehicle_id, int second_vehicle_id,
     portrait->draw(&MainInterfaceGlobal, portrait->transparent_index(), x, y, 1, 1);
     name_rect = battle_rects_[3];
     name_rect.left += 3;
-    name_rect.top = y + portrait->height() + 3;
     name_rect.right -= 3;
     name_rect.bottom -= 3;
+    name_rect.top = y + portrait->height() + 3;
     MainInterfaceGlobal.set_text_color(ChatItemIdTable[second_faction],
                                        ChatShadowColors[second_faction], 1, 1);
     MainInterfaceGlobal.wrap_cent(Players[second_faction].formal_name_faction, &name_rect);

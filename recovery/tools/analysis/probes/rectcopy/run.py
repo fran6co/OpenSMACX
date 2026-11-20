@@ -20,6 +20,8 @@ inline void offs(R *r, int dx, int dy) { r->left += dx; r->right += dx; r->top +
 inline int rw(const R *r) { return r->right - r->left; }
 extern "C" void *memcpy(void *, const void *, unsigned);
 #pragma intrinsic(memcpy)
+struct SP { int a, b, h; int height() const { return h; } };
+extern SP *gp;
 struct W { R m1, m2, m3; void f(); };
 '''
 X = 'int x = gg.c.right - gg.b.right + gg.c.left; '
@@ -75,6 +77,11 @@ V = {
  'loc_same':     'R c; c = gg.b; ext(&c); R r; r = c; r.top = c.top + 5; r.bottom = c.top + cond() * 3; ext(&r); ',
  'loc_other':    'R c; c = gg.b; ext(&c); R r; r = c; r.top = c.bottom + 5; r.bottom = c.top + cond() * 3; ext(&r); ',
  'loc_selfadd':  'R c; c = gg.b; ext(&c); R r; r = c; r.top += 5; r.bottom = c.top + cond() * 3; ext(&r); ',
+ # BattleWin::battle_report: a read through a pointer between the copy and the in-place adjustments
+ 'bw_ptr':       'R r; r = gg.a; r.left += 3; r.top = g + gp->height() + 3; r.right -= 3; r.bottom -= 3; ext(&r); ',
+ 'bw_glob':      'R r; r = gg.a; r.left += 3; r.top = g + g2 + 3; r.right -= 3; r.bottom -= 3; ext(&r); ',
+ 'bw_ptr_last':  'R r; r = gg.a; r.left += 3; r.right -= 3; r.bottom -= 3; r.top = g + gp->height() + 3; ext(&r); ',
+ 'bw_lptr':      'SP *p = gp; use(p->a); R r; r = gg.a; r.left += 3; r.top = g + p->height() + 3; r.right -= 3; r.bottom -= 3; ext(&r); ',
  'ref_noread_e': 'R r; r = gg.ra(); ' + X + 'r.right = x - 3; r.left = x; m1 = r; r = gg.b; ext(&r); ',
 }
 
