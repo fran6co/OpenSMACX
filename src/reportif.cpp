@@ -2482,7 +2482,7 @@ void ReportWin::draw_labs() {
                         say_comma();
                     }
                     strcat(StringTemp,
-                           StringTable.get(Citizen[v_4].singular_name));
+                           table_text(Citizen[v_4].singular_name));
                     if (StringTemp[0]) {
                         if (pass) {
                             y = host->Buffer::wrap(StringTemp, x + 3, y,
