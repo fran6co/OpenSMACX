@@ -3003,9 +3003,10 @@ static void say_faction_noun(int slot, const int &faction) {
 // one helper (no out-of-line copy in the image; name and home unknown). With
 // it and say_faction_noun, /Ob2 calls ~Dialogs out of line at introduce's
 // closing teardown as the image does (0x0053DAEB), which eight dead budget
-// probes stood in for. WORKAROUND(inline): the const reference parameter is a
-// cost stand-in; with int (or Player * / Player &) both helpers fall short.
-static void say_leader(int title_slot, int name_slot, const int &faction) {
+// probes stood in for. Its faction parameter is a plain int (measured
+// 2026-11-20: the former const-reference stand-in is dead here; say_faction_noun
+// still needs its own).
+static void say_leader(int title_slot, int name_slot, int faction) {
     parse_set(Players[faction].is_leader_female, 0);
     parse_says(title_slot, Players[faction].title_leader, -1, -1);
     parse_set(Players[faction].is_leader_female, 0);
