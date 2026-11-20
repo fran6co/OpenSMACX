@@ -161,8 +161,8 @@ void ProdPicker::draw_item(int item, int update) {
     set_font(&font1_, 0, 0, 0);
 
     RECT area = cell;
-    area.top = cell.top + 5;
-    area.bottom = cell.top + font_line_advance(font1_) * 3 + 5;
+    area.bottom = cell.top + font_line_advance(font1_) * 3;
+    offset_rect(&area, 0, 5);
     wrap_cent(prod_a_.head_ ? prod_a_.current_->string_payload()->text : 0, &area);
 
     font3_.unk_1_ = 3;

@@ -69,6 +69,12 @@ V = {
  'pre_esc_ab':   'R r; r = gg.b; ext(&r); r = gg.ra(); r.top = r.bottom + 4; r.bottom = r.top + 20; m1 = r; ',
  'ref_ab':       'R r; r = gg.ra(); r.top = r.bottom + 4; r.bottom = r.top + 20; m1 = r; ',
  'ref_ab_e':     'R r; r = gg.ra(); r.top = r.bottom + 4; r.bottom = r.top + 20; m1 = r; ext(&r); ',
+ # the overwrite reads the copy source's same field (ProdPicker::draw_item: area = cell; area.top = cell.top + 5)
+ 'src_same':     'R r; r = gg.a; r.top = gg.a.top + 5; r.bottom = gg.a.top + cond() * 3; ext(&r); ',
+ 'src_other':    'R r; r = gg.a; r.top = gg.a.bottom + 5; r.bottom = gg.a.top + cond() * 3; ext(&r); ',
+ 'loc_same':     'R c; c = gg.b; ext(&c); R r; r = c; r.top = c.top + 5; r.bottom = c.top + cond() * 3; ext(&r); ',
+ 'loc_other':    'R c; c = gg.b; ext(&c); R r; r = c; r.top = c.bottom + 5; r.bottom = c.top + cond() * 3; ext(&r); ',
+ 'loc_selfadd':  'R c; c = gg.b; ext(&c); R r; r = c; r.top += 5; r.bottom = c.top + cond() * 3; ext(&r); ',
  'ref_noread_e': 'R r; r = gg.ra(); ' + X + 'r.right = x - 3; r.left = x; m1 = r; r = gg.b; ext(&r); ',
 }
 
