@@ -3789,13 +3789,13 @@ base_attack:
             if (!((Vehs[veh_id].state & 0x200) && Vehs[veh_id].order_auto_type == ORDERA_BOMBING_RUN)) {
                 odds = battle_fight(veh_id, 0, Vehs[target].x, Vehs[target].y, 0, 0, 0);
                 odds = compute_odds(odds, faction_id, veh_id, target, -2);
-                if (base_who(Vehs[target].x, Vehs[target].y) < 0) {
-                    odds /= 2;
-                } else {
+                if (!(base_who(Vehs[target].x, Vehs[target].y) < 0)) {
                     int artifacts = stack_check(target, 0x13, -1, -1, -1);
                     if (stack_check(target, 1, -1, -1, -1) - artifacts != 1) {
                         odds /= 2;
                     }
+                } else {
+                    odds /= 2;
                 }
                 if (odds < 8) {
                     continue;
