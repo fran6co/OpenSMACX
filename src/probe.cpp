@@ -468,17 +468,17 @@ int __cdecl probe(int veh_id, int base_id, int veh_id_tgt, int mode) {
         if (!mode && HUMAN_BIT(faction)) {
             return 0;
         }
-        if ((NetDaemonNet.action_mode_ & 2) && mode) {
-            if (faction == ConsoleGlobal.faction_id_) {
-                parse_says(0, Players[faction_tgt].adj_name_faction, -1, -1);
-                NetMsgPrimary.pop("HUNTERSEEKER", "huntsk_sm.pcx");
-            } else if (faction_tgt == ConsoleGlobal.faction_id_) {
-                parse_says(0, Players[faction].adj_name_faction, -1, -1);
-                NetMsgPrimary.pop("HUNTERSEEKER2", "huntsk_sm.pcx");
-            }
-            kill(veh_id);
+        if (!(NetDaemonNet.action_mode_ & 2) || !mode) {
             return 1;
         }
+        if (faction == ConsoleGlobal.faction_id_) {
+            parse_says(0, Players[faction_tgt].adj_name_faction, -1, -1);
+            NetMsgPrimary.pop("HUNTERSEEKER", "huntsk_sm.pcx");
+        } else if (faction_tgt == ConsoleGlobal.faction_id_) {
+            parse_says(0, Players[faction].adj_name_faction, -1, -1);
+            NetMsgPrimary.pop("HUNTERSEEKER2", "huntsk_sm.pcx");
+        }
+        kill(veh_id);
         return 1;
     }
 
