@@ -1988,21 +1988,6 @@ void __cdecl farm_compute() {
 
 
 /*
-Purpose: Address the map tile the terrain yield functions price.
-Original Offset: n/a
-Return Value: Pointer to map tile
-Status: Complete
-
-The three yield functions each inline this, and they inline it with signed
-arithmetic - `imul` against y and `sar esi, 1` on x. map_loc() takes unsigned
-coordinates and therefore shifts x logically, which differs for a negative x.
-Neither form bounds-checks, exactly as the original does not.
-*/
-static inline Map *yield_tile(int x, int y) {
-    return &map_tiles()[(x >> 1) + y * (int)MapLongitude];
-}
-
-/*
 Purpose: Identify the faction owning a base standing on the specified tile.
 Original Offset: n/a
 Return Value: Faction id of the base in the tile, or -1 for none/unowned
@@ -2062,14 +2047,14 @@ suppresses the fungus path, an improved square having had its fungus cleared.
 */
 int __cdecl crop_yield(int faction_id, int base_id, int x, int y,
                        BOOL assume_improved) {
-    Map *tile = yield_tile(x, y);
+    Map *tile = map_loc(x, y);
     uint32_t bit = tile->bit;
     BOOL is_ocean_tile = (tile->climate & ~0x1F) < ALT_BIT_SHORE_LINE;
     // Re-addressed: the image re-reads tile->bit here instead of reusing `bit`.
-    BOOL has_base_in_tile = yield_tile_owner(yield_tile(x, y)) >= 0;
+    BOOL has_base_in_tile = yield_tile_owner(map_loc(x, y)) >= 0;
     // Bonus id 1 is the nutrient bonus.
     BOOL has_nutrient_bonus = bonus_at(x, y, 0) == 1;
-    tile = yield_tile(x, y);
+    tile = map_loc(x, y);
     // Nutrient landmarks: Jungle counts on land, Freshwater Sea on ocean. Not
     // cached to a local: bit2 is read once here (reused via register across
     // both disjuncts within this one expression), and both arms re-test
@@ -2254,7 +2239,7 @@ at sea, and suppresses the roadless-mine mineral limit.
 */
 int __cdecl mine_yield(int faction_id, int base_id, int x, int y,
                        BOOL assume_improved) {
-    Map *tile = yield_tile(x, y);
+    Map *tile = map_loc(x, y);
     uint32_t bit = tile->bit; // declared first: the image loads it into edx
     // Landmark sequence code, signed exactly as `sar edi, 0x18`. Bit 31 of bit2
     // is required clear by every test below, so the sign only decides branches
@@ -2264,7 +2249,7 @@ int __cdecl mine_yield(int faction_id, int base_id, int x, int y,
     int code = tile->bit2 >> 24;
     // Bonus id 2 is the mineral bonus.
     BOOL has_mineral_bonus = bonus_at(x, y, 0) == 2;
-    tile = yield_tile(x, y);
+    tile = map_loc(x, y);
     BOOL landmark_bonus =
         (((tile->bit2 & (BIT2_UNK_80000000 | BIT2_VOLCANO)) == BIT2_VOLCANO)
             && code < 9)
@@ -2434,7 +2419,7 @@ do, not a transcription slip.
 int __cdecl energy_yield(int faction_id, int base_id, int x, int y,
                          BOOL assume_improved) {
     int energy = 0;
-    Map *tile = yield_tile(x, y);
+    Map *tile = map_loc(x, y);
     uint32_t bit = tile->bit;
     // Not cached: bit2 is read directly off tile->bit2 at both use sites
     // below (here, shifted for `code`, and again in landmark_bonus). The
@@ -2443,10 +2428,10 @@ int __cdecl energy_yield(int faction_id, int base_id, int x, int y,
     // mine_yield's borehole/landmark computation.
     int code = tile->bit2 >> 24;
     BOOL is_ocean_tile = (tile->climate & ~0x1F) < ALT_BIT_SHORE_LINE;
-    BOOL has_base_in_tile = yield_tile_owner(yield_tile(x, y)) >= 0;
+    BOOL has_base_in_tile = yield_tile_owner(map_loc(x, y)) >= 0;
     // Bonus id 3 is the energy bonus.
     BOOL has_energy_bonus = bonus_at(x, y, 0) == 3;
-    tile = yield_tile(x, y);
+    tile = map_loc(x, y);
     BOOL landmark_bonus = false;
     if ((((tile->bit2 & (BIT2_UNK_80000000 | BIT2_VOLCANO)) == BIT2_VOLCANO)
             && code < 9)
@@ -2549,7 +2534,7 @@ int __cdecl energy_yield(int faction_id, int base_id, int x, int y,
                 if (!on_map(x_adj, y_adj)) {
                     continue;
                 }
-                Map *adjacent = yield_tile(x_adj, y_adj);
+                Map *adjacent = map_loc(x_adj, y_adj);
                 if (!(adjacent->bit & BIT_ECH_MIRROR)) {
                     continue;
                 }
