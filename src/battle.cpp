@@ -2519,15 +2519,20 @@ int __cdecl battle_fight(int veh_id, int dir, int mode, int allow_interceptor,
 // the block as one owner those sites expand, the population-loss sites
 // (0x50ACB1..0x50AEC7) are refused as in the image, and the eight early
 // veh_health sites keep their inner range() out of line.
+// The popup label and picture are the caller's: the image's "biohazd_sm.pcx"
+// 0x0068A0D4 and "USENERVE" 0x0068A0E4 sit in battle_fight's own literal run
+// (after AIRSCRAMBLE, before SURPRISE), i.e. $SG literals of battle_fight,
+// not the COMDAT literals an inline body's own texts would be.
 inline void battle_nerve_gas_choice(int &att_faction, int &att_bit, int &veh_id,
-                                    int &def_faction, uint32_t &nerve_state) {
+                                    int &def_faction, uint32_t &nerve_state,
+                                    const char *label, const char *picture) {
     if (att_faction == ConsoleGlobal.faction_id_ &&
         (GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & att_bit)) {
         // 0x5071F0
         parse_says(0, VehPrototypes[Vehs[veh_id].proto_id].veh_name, -1, -1);
         parse_say(1, Ability[abil_index(ABL_NERVE_GAS)].name, -1, -1);
         g_BattleWin.stop_timer();
-        if (popp(ScriptPopupFile, "USENERVE", 0, "biohazd_sm.pcx", 0)) {
+        if (popp(ScriptPopupFile, label, 0, picture, 0)) {
             Vehs[veh_id].state |= VSTATE_USED_NERVE_GAS;
         }
         g_BattleWin.pulse_timer();
@@ -2755,7 +2760,7 @@ int __cdecl battle_fight(int veh_id, int dir, int target_x, int target_y,
         if (!IsMultiplayerNet || (NetDaemonNet.action_mode_ & 1)) {
             nerve_state = Vehs[veh_id].state & ~VSTATE_USED_NERVE_GAS;
             Vehs[veh_id].state = nerve_state;
-            battle_nerve_gas_choice(att_faction, att_bit, veh_id, def_faction, nerve_state);
+            battle_nerve_gas_choice(att_faction, att_bit, veh_id, def_faction, nerve_state, "USENERVE", "biohazd_sm.pcx");
             // 0x5073A7
             if (IsMultiplayerNet) {
                 synch_veh(veh_id);
