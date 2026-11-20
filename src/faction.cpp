@@ -6482,49 +6482,55 @@ int __cdecl proposal_menu(int faction_id, int faction_id_with) {
         return DiploScratchFA34;
     }
 commlink:
-    if (DiploScratchFA34 == 13) {
-        popup.start("PROPOSECOMMLINK", 0x100040);
-        popup.set_picture(FactionDiplomacyPortraits[faction_id_with], 0, nullptr);
-        if (X_text_open(ScriptPopupFile, "ATTACKSTRING")) {
-            goto fail;
-        }
-        text_get();
-        for (i = 1; i < MaxPlayerNum; i++) {
-            if (GameDataStateStorage.fields_.lock_masks_.alive_mask_ & (1 << i)
-                && i != faction_id && i != faction_id_with
-                && !(PlayersData[faction_id].diplo_treaties[i] & DTREATY_COMMLINK)) {
-                parse_says(0, get_title(i), -1, -1);
-                parse_says(1, get_name(i), -1, -1);
-                parse_says(2, get_noun(i), -1, -1);
-                clear();
-                parse_string(TextBufferGetPtr, StringTemp);
-                popup.item(StringTemp, i);
-            }
-        }
-        DiploScratchFA5C = popup.exec(pop_wait);
-        // The last fail site is an else arm, not `if (< 0) goto fail;`: a
-        // conditional goto as the last site pulls fail: (and done:) after it
-        // (MATCHING_GUIDE 3.7 "Label block placement"); the image keeps them
-        // at the ATTACK block's fall-through.
-        if (DiploScratchFA5C >= 0) {
-            if (!(PlayersData[faction_id_with].diplo_treaties[DiploScratchFA5C] & DTREATY_COMMLINK)
-                && !has_project(SP_EMPATH_GUILD, faction_id_with)) {
-                // WORKAROUND(inline): the three getters written out (same bytes);
-                // as get_title/get_name/get_noun they spend the budget the image's
-                // ATTACKSTRING exit (done) needs for its expanded ~Scroll teardown.
-                parse_says(0, get_title(DiploScratchFA5C), -1, -1);
-                parse_says(1, get_name(DiploScratchFA5C), -1, -1);
-                parse_set(Players[DiploScratchFA5C].noun_gender,
-                          Players[DiploScratchFA5C].is_noun_plural);
-                parse_says(2, Players[DiploScratchFA5C].noun_faction, -1, -1);
-                DiploScratchFA34 = 0;
-                x_pops_minimal("NOCOMMLINK", FactionDiplomacyPortraits[faction_id_with],
-                               pop_wait);
-            }
-        } else {
-            goto fail;
+    // The commlink proposal is not nested in an if block: a fail site inside
+    // `if (FA34 == 13) { ... }` (whose false edge joins the done site) sends
+    // done: to the function end; skipping it with a goto keeps done: at its
+    // fall-through as in the image (0x0054E4B5).
+    if (DiploScratchFA34 != 13) {
+        goto skip13;
+    }
+    popup.start("PROPOSECOMMLINK", 0x100040);
+    popup.set_picture(FactionDiplomacyPortraits[faction_id_with], 0, nullptr);
+    if (X_text_open(ScriptPopupFile, "ATTACKSTRING")) {
+        goto fail;
+    }
+    text_get();
+    for (i = 1; i < MaxPlayerNum; i++) {
+        if (GameDataStateStorage.fields_.lock_masks_.alive_mask_ & (1 << i)
+            && i != faction_id && i != faction_id_with
+            && !(PlayersData[faction_id].diplo_treaties[i] & DTREATY_COMMLINK)) {
+            parse_says(0, get_title(i), -1, -1);
+            parse_says(1, get_name(i), -1, -1);
+            parse_says(2, get_noun(i), -1, -1);
+            clear();
+            parse_string(TextBufferGetPtr, StringTemp);
+            popup.item(StringTemp, i);
         }
     }
+    DiploScratchFA5C = popup.exec(pop_wait);
+    // The last fail site is an else arm, not `if (< 0) goto fail;`: a
+    // conditional goto as the last site pulls fail: (and done:) after it
+    // (MATCHING_GUIDE 3.7 "Label block placement"); the image keeps them
+    // at the ATTACK block's fall-through.
+    if (DiploScratchFA5C >= 0) {
+        if (!(PlayersData[faction_id_with].diplo_treaties[DiploScratchFA5C] & DTREATY_COMMLINK)
+            && !has_project(SP_EMPATH_GUILD, faction_id_with)) {
+            // WORKAROUND(inline): the three getters written out (same bytes);
+            // as get_title/get_name/get_noun they spend the budget the image's
+            // ATTACKSTRING exit (done) needs for its expanded ~Scroll teardown.
+            parse_says(0, get_title(DiploScratchFA5C), -1, -1);
+            parse_says(1, get_name(DiploScratchFA5C), -1, -1);
+            parse_set(Players[DiploScratchFA5C].noun_gender,
+                      Players[DiploScratchFA5C].is_noun_plural);
+            parse_says(2, Players[DiploScratchFA5C].noun_faction, -1, -1);
+            DiploScratchFA34 = 0;
+            x_pops_minimal("NOCOMMLINK", FactionDiplomacyPortraits[faction_id_with],
+                           pop_wait);
+        }
+    } else {
+        goto fail;
+    }
+skip13:
     if (DiploScratchFA34 == 9) {
         PlanWindow.init(nullptr);
         PlanWindow.back_redraw();
