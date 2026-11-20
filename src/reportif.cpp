@@ -4385,7 +4385,8 @@ void ReportWin::draw_score() {
     RECT title = {energy_panel_rect_.left + 3, energy_panel_rect_.top + 3,
                   energy_panel_rect_.right - 3,
                   energy_panel_rect_.top + field_E268_ + 9};
-    RECT body = {title.left, title.bottom + 2, title.right, energy_panel_rect_.bottom - 3};
+    RECT body = {energy_panel_rect_.left + 3, title.bottom + 2, energy_panel_rect_.right - 3,
+                 energy_panel_rect_.bottom - 3};
     Buffer::box_sprite(&energy_panel_rect_, &InterfaceBoxStyles[0]);
     Buffer::box_sprite(&title, &InterfaceBoxStyles[1]);
     Buffer::box_sprite(&body, &InterfaceBoxStyles[1]);
