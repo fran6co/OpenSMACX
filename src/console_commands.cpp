@@ -1023,10 +1023,7 @@ int Console::upgrade(int veh_id) { // 0x004D06C0
                     Vehs[veh_id].morale = static_cast<uint8_t>(range(Vehs[veh_id].morale + 1, 0, 6));
                 }
                 if (!has_abil(choice, 0x4000) && has_abil(Vehs[veh_id].proto_id, 0x4000)) {
-                    {
-                        uint32_t morale = Vehs[veh_id].morale;
-                        Vehs[veh_id].morale = static_cast<uint8_t>(range(morale - 1, 0, 6));
-                    }
+                    Vehs[veh_id].morale = static_cast<uint8_t>(range(Vehs[veh_id].morale - 1, 0, 6));
                 }
                 veh_skip(veh_id);
                 ::draw_tile(Vehs[veh_id].x, Vehs[veh_id].y, 1);
