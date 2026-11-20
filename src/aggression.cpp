@@ -388,7 +388,7 @@ void __cdecl capture_base(int base_id, int faction_id, int mode) {
                         best_base = Bases[survivor].queue_production_id[0];
                         parse_says(0, get_adjective(faction_id_def), -1, -1);
                         parse_say(1, Facility[best_base].name, -1, -1);
-                        popp(ScriptPopupFile, "SURVIVEPROJECT", 0, "secproj_sm.pcx", 0);
+                        popp("SURVIVEPROJECT", "secproj_sm.pcx", 0);
                         break;
                     }
                 }
@@ -401,7 +401,7 @@ void __cdecl capture_base(int base_id, int faction_id, int mode) {
                         halted_id = -halted_id;
                     }
                     parse_say(3, Facility[halted_id].name, -1, -1);
-                    popp(ScriptPopupFile, "HALTPROJECT", 0, "secproj_sm.pcx", 0);
+                    popp("HALTPROJECT", "secproj_sm.pcx", 0);
                     halted_id = Bases[base_id].queue_production_id[0];
                     if (halted_id < 0) {
                         halted_id = -halted_id;
@@ -420,9 +420,9 @@ void __cdecl capture_base(int base_id, int faction_id, int mode) {
             if (base_project(project_id) == base_id) {
                 parse_say(0, Facility[FAC_HUMAN_GENOME_PROJ + project_id].name, -1, -1);
                 if (faction_id == ConsoleGlobal.faction_id_) {
-                    popp(ScriptPopupFile, "SEIZEPROJECT", 0, "secproj_sm.pcx", 0);
+                    popp("SEIZEPROJECT", "secproj_sm.pcx", 0);
                 } else {
-                    popp(ScriptPopupFile, "LOSEPROJECT", 0, "secproj_sm.pcx", 0);
+                    popp("LOSEPROJECT", "secproj_sm.pcx", 0);
                 }
             }
         }
@@ -488,10 +488,10 @@ void __cdecl capture_base(int base_id, int faction_id, int mode) {
         PlayersData[faction_id_def].corner_market_active = 0;
         PlayersData[faction_id_def].corner_market_turn = 0;
         if (faction_id_def == ConsoleGlobal.faction_id_) {
-            popp(ScriptPopupFile, "CORNERFOILED", 0, "econwin_sm.pcx", 0);
+            popp("CORNERFOILED", "econwin_sm.pcx", 0);
         } else {
             parse_says(0, get_adjective(faction_id_def), -1, -1);
-            popp(ScriptPopupFile, "CORNERTHEMFOILED", 0, "econwin_sm.pcx", 0);
+            popp("CORNERTHEMFOILED", "econwin_sm.pcx", 0);
         }
     }
 
@@ -659,15 +659,15 @@ void __cdecl capture_base(int base_id, int faction_id, int mode) {
             || (has_treaty(faction_id, ConsoleGlobal.faction_id_, DTREATY_UNK_80)
                 && has_treaty(faction_id, faction_id_def, DTREATY_UNK_40))) {
             strcat(label, "2");
-            popp(ScriptPopupFile, label, 0, "liberate_sm.pcx", 0);
+            popp(label, "liberate_sm.pcx", 0);
         } else if (has_treaty(ConsoleGlobal.faction_id_, faction_id_def, DTREATY_PACT)
                    || (has_treaty(faction_id_def, ConsoleGlobal.faction_id_, DTREATY_UNK_80)
                        && has_treaty(faction_id_def, faction_id, DTREATY_UNK_40))) {
             strcat(label, "3");
-            popp(ScriptPopupFile, label, 0, "seized_sm.pcx", 0);
+            popp(label, "seized_sm.pcx", 0);
         } else if (spying(faction_id) || spying(faction_id_def)) {
             strcat(label, "4");
-            popp(ScriptPopupFile, label, 0, "seized_sm.pcx", 0);
+            popp(label, "seized_sm.pcx", 0);
         }
     }
 
@@ -682,34 +682,34 @@ void __cdecl capture_base(int base_id, int faction_id, int mode) {
         if (Players[faction_id].rule_flags & RFLAG_ALIEN) {
             if (faction_id == ConsoleGlobal.faction_id_) {
                 if (refugees == 1) {
-                    popp(ScriptPopupFile, "HOMELESSONE", 0, "humanref_sm.pcx", 0);
+                    popp("HOMELESSONE", "humanref_sm.pcx", 0);
                 } else if (refugees) {
-                    popp(ScriptPopupFile, "HOMELESS", 0, "humanref_sm.pcx", 0);
+                    popp("HOMELESS", "humanref_sm.pcx", 0);
                 }
                 interlude(0x25, Bases[base_id].name_string, 1, 0);
             }
             if (faction_id_def == ConsoleGlobal.faction_id_) {
                 if (refugees == 1) {
-                    popp(ScriptPopupFile, "HOMELESSONE", 0, "humanref_sm.pcx", 0);
+                    popp("HOMELESSONE", "humanref_sm.pcx", 0);
                 } else if (refugees) {
-                    popp(ScriptPopupFile, "HOMELESS", 0, "humanref_sm.pcx", 0);
+                    popp("HOMELESS", "humanref_sm.pcx", 0);
                 }
                 interlude(0x18, Bases[base_id].name_string, 1, 0);
             }
         } else {
             if (faction_id == ConsoleGlobal.faction_id_) {
                 if (refugees == 1) {
-                    popp(ScriptPopupFile, "HOMELESSONE", 0, "alienref_sm.pcx", 0);
+                    popp("HOMELESSONE", "alienref_sm.pcx", 0);
                 } else if (refugees) {
-                    popp(ScriptPopupFile, "HOMELESS", 0, "alienref_sm.pcx", 0);
+                    popp("HOMELESS", "alienref_sm.pcx", 0);
                 }
                 interlude(0x19, Bases[base_id].name_string, 1, 0);
             }
             if (faction_id_def == ConsoleGlobal.faction_id_) {
                 if (refugees == 1) {
-                    popp(ScriptPopupFile, "HOMELESSONE", 0, "alienref_sm.pcx", 0);
+                    popp("HOMELESSONE", "alienref_sm.pcx", 0);
                 } else if (refugees) {
-                    popp(ScriptPopupFile, "HOMELESS", 0, "alienref_sm.pcx", 0);
+                    popp("HOMELESS", "alienref_sm.pcx", 0);
                 }
             }
         }
