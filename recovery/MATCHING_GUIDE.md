@@ -5904,6 +5904,40 @@ result over 64 symbol-counter pads, so none of these is a counter canary.
   can also drop a copy elsewhere (draw_ops' top store: 105), so measure each
   access separately. Rule (a) in 2.7 "How VC6 forms each kind" (a struct
   copy or `&member` forms the temporary) still decides whether it forms.
+- **VC6 never forwards a stored value between a member access and an access
+  through a pointer to the same aggregate** (par-6 2026-11-20, PickWin::init
+  0x004887A0, 61 -> 20 rows). A store written as `m_.x = v` and a later read
+  as `p->x` (with `p = &m_`, or inside an inline that takes `&m_`), or the
+  reverse, is a reload from memory, and a store through one form that a
+  later store through the other overwrites is not deleted as dead. Within
+  one form the value is forwarded and dead stores are dropped. So when the
+  image keeps a "dead" store to `[this+K]` and reloads it, or reloads a
+  field right after storing a neighbouring field of the same aggregate
+  (x/y stored at 0x00488C93/9C, reloaded at 0x00488CC4/D0 after the
+  width/height stores; x reloaded at 0x00488E42 after the y store while y
+  stays in ebx), the original mixed the two forms on that aggregate: some
+  fields through a local `RECT *r = &member_` or a header inline taking
+  `&member_` (`rect_width`, `rect_height`, `set_rect`, `offset_rect`), the
+  rest as members. Spell each access in the form the image's forwarding
+  shows: forwarded pairs share a form, reloaded pairs differ. Two
+  consequences: (1) the words must be one aggregate (struct or RECT); four
+  separate `int` members have no pointer form and always forward, so a
+  recovered run of scalar fields that shows this pattern is a struct
+  (PickWin's 0xA14..0xA20 cursor); retyping alone compiles identically, the
+  behaviour only appears once some access goes through the pointer.
+  (2) An all-member or all-pointer spelling of the block forwards or reloads
+  everything, so neither extreme reproduces a mixed image; measure per
+  access. The two rules above (the live address temporary, the dead store
+  kept by `rect_height(&...)`) are instances. A header helper call is itself
+  a pointer access, so a four-edge `set_rect(&r, x, y, w + x, y + h)` whose
+  right-to-left argument loads match the image is a real fix, not a
+  stand-in (PickWin's second sprite loop, 0x00488B15: loads y, width, x;
+  20 -> 14). Screen: `analysis/aggscan.py` (dead stores the image keeps,
+  reloads after a neighbouring store). Tree-wide on 2026-11-20 it found no
+  other clean instance among the non-exact functions: ReportIf::draw_ops'
+  top store (0x004A910A) is member in the image, but the all-member
+  spelling flips a register tie across the function (4 -> 105), and the
+  rest are register or scheduling differences.
 - **Locals at `[ebp+8]`/`[ebp+0xc]`** sit in dead parameter slots: write ordinary
   locals and pass the parameters directly.
 - **A frame larger than the locals.** Either a block-scoped buffer overlapped a

@@ -108,6 +108,15 @@ an explicit `--pfx` is only needed to pick another lane.
   40 s tree-wide; most rows are register-allocation noise, the clean ones are a bool/uint8_t local the image keeps
   as int. A per-local retype sweep (every char/short/bool local of a non-exact function to int) finds the same
   cases more directly.
+- `analysis/aggscan.py <unit> <addr[,..]> | --from FEALL.json [--json F] [--stores] [--sites]` mixed member/pointer
+  aggregate screen (MATCHING_GUIDE 3.3 "VC6 never forwards a stored value between a member access and an access
+  through a pointer"): per straight-line block, stores to `[R+K]` overwritten with no read between (`dead`) and reads
+  of a field stored earlier in the block (`rel/n` when only same-base stores lie between), image against ours by
+  displacement; `--stores` ranks image-only store displacements instead. `AGG_EBB=1` keeps state across a
+  conditional jump's fall-through, `AGG_FRAME=1` adds frame slots (local aggregates; spill homes are noise).
+  1 min over the non-exact set. 2026-11-20: on the pre-fix PickWin::init it lists the three cursor reloads; tree-wide
+  the block screen lists only labs_line and draw_projects (register noise), `--stores` adds ReportIf::draw_ops (the
+  top store, an all-member spelling flips a register tie, 105 rows) and otherwise CSE/scheduling differences.
 - `analysis/aliasscan.py <unit> <addr[,..]> | --from FEALL.json [--json F]` "scalar that was an array element"
   screen (MATCHING_GUIDE 3.3, colortables_init): per natural loop, `imul r,[ebp-N]` and reads of ebp slots the
   loop never writes or address-takes, on both sides, plus the aligned rows where the image reads such a slot and
