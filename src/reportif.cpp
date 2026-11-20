@@ -1959,6 +1959,8 @@ void ReportWin::draw_labs() {
         // the two-arm) and never re-tests it after the one-arm: the two-arm
         // is a goto target written after the one-arm (an if/else-if chain
         // re-tests both ids, a nested if/else lays the two-arm first).
+        // Measured 2026-11-20: if/else with either arm first or the test
+        // inverted all compile alike, 10 rows from this layout.
         if (ids[1] >= 0 && ids[2] >= 0) {
             goto two_prereqs;
         }
@@ -2476,7 +2478,9 @@ void ReportWin::draw_labs() {
                         // The image tests datalink here with no branch
                         // (0x49AFEF..0x49AFF7): a ternary whose arms are the
                         // same name; written as two if/else arms the test
-                        // keeps its branches.
+                        // keeps its branches. An if/else assigning a named
+                        // local compiles identically; an empty if (datalink)
+                        // folds the test away.
                         strcat(StringTemp, StringTable.get(
                             datalink ? SocialCategories[v_4].name[j]
                                      : SocialCategories[v_4].name[j]));

@@ -8645,7 +8645,10 @@ Counters and tie arms (par-5 2026-11-20, councwin)
   `if (c) S; else S;` arms keep their branches (test; jne; S; jmp; S). So
   write `f(c ? X : X)` at the argument the arms share (here inside
   StringTable.get), not around the call (blocks 282 -> 279 = image, 0
-  control-flow hunks).
+  control-flow hunks). Checked for a plainer spelling: `char *n; if (c) n =
+  X; else n = X; f(n);` compiles to the same bytes (either is fine); an
+  empty `if (c) {}` / `(void)c;` beside the plain call drops the test (105
+  rows worse).
 - **An else-if whose test the image never re-tests is a goto target laid
   after the first arm** (draw_labs, same day). The image tests
   `ids[1] >= 0 && ids[2] >= 0` once, jumps to the two-arm, and lays the
@@ -8654,7 +8657,11 @@ Counters and tie arms (par-5 2026-11-20, councwin)
   the chain in the other order lays two first; `goto two; ... goto done;
   two: ...` is not it either. Only `if (!A && !B) goto two; if (C) { one }
   if (0) { two: two-arm }` gives the image's tests and order (blocks
-  284 -> 282, first diverging block 3383 -> 9407).
+  284 -> 282, first diverging block 3383 -> 9407). Rechecked for a plainer
+  spelling: `if (A && B) two; else if (C) one;`, `if (!(A && B)) { if (C)
+  one } else two` and `if (A < 0 || B < 0) ... else two` compile to one
+  and the same code, 10 rows from the goto form: the source order of a
+  plain if/else does not reach the image's layout, so the goto stays.
 - **Small polarity / width checks worth a jseq pass on every rung-4
   function** (2026-11-20 par-4; `analysis/jseq.py <unit.cpp> <src> <addr>`
   prints the jcc/jmp hunks): `mov eax, A; je; mov eax, B` against ours
