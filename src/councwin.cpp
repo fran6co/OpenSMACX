@@ -1201,7 +1201,7 @@ void CouncWin::on_button_clicked(int button_id) {
                 if (!council_humans_present(field_A44_)) {
                     // The image pushes this case's own "VOTING" copy at
                     // 0x0068318C (0x004248F9); case 4 has a second one.
-                    // RECOVERY_LITERAL: v1 0x0068318C 0x00683193 $SG57520 0x00424870
+                    // RECOVERY_LITERAL: v1 0x0068318C 0x00683193 $SG57517 0x00424870
                     NetMsgPrimary.pop("VOTING", 0x1388, 1, nullptr);
                 } else {
                     message_data(0x2601, 0, ConsoleGlobal.faction_id_, -button_id, 0, 0);
@@ -1221,19 +1221,19 @@ void CouncWin::on_button_clicked(int button_id) {
         if (field_A24_ == 0) {
             if (IsMultiplayerNet && !council_humans_present(field_A44_)) {
                 // Case 4's unpooled "VOTING" copy, pushed at 0x0042498C.
-                // RECOVERY_LITERAL: v1 0x00683194 0x0068319B $SG57528 0x00424870
+                // RECOVERY_LITERAL: v1 0x00683194 0x0068319B $SG57525 0x00424870
                 NetMsgPrimary.pop("VOTING", 0x1388, 1, nullptr);
             } else {
                 // The image pushes "GOVVOTE" at 0x0068319C (0x004249A9).
-                // RECOVERY_LITERAL: v1 0x0068319C 0x006831A4 $SG57530 0x00424870
+                // RECOVERY_LITERAL: v1 0x0068319C 0x006831A4 $SG57527 0x00424870
                 popup.start(PopupStartCaption, "GOVVOTE", -1, nullptr, 0x200040, nullptr);
                 int picture_size[2];  // stand-in: one array keeps the image's frame slots
                 // The two "council_sm.pcx" uses are separate unpooled copies:
                 // 0x006831A4 (pushed at 0x004249C6) and 0x006831B4 (0x004249DF).
-                // RECOVERY_LITERAL: v1 0x006831A4 0x006831B3 $SG57533 0x00424870
+                // RECOVERY_LITERAL: v1 0x006831A4 0x006831B3 $SG57530 0x00424870
                 if (Buffer::get_pcx_dimensions("council_sm.pcx", &picture_size[1],
                                                &picture_size[0]) == 0
-                    // RECOVERY_LITERAL: v1 0x006831B4 0x006831C3 $SG57534 0x00424870
+                    // RECOVERY_LITERAL: v1 0x006831B4 0x006831C3 $SG57531 0x00424870
                     && popup.owned_picture().init("council_sm.pcx",
                                                   picture_size[1], picture_size[0]) == 0) {
                     popup.select_owned_picture();
