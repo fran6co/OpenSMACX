@@ -4742,13 +4742,13 @@ prototype_synch:
     ++NetUpkeepPhase;
 
     {
-        flags = 0;
         // Original 0x0052972D clears 21 DWORDs; 0x005297C0/0x005297D0
         // read and set four-byte flags, not packed byte flags.
         int mismatch_seen[NetTurnChecksumWords];
         for (int clear = 0; clear < NetTurnChecksumWords; clear++) {
             mismatch_seen[clear] = 0;
         }
+        flags = 0;
 
         for (int faction = 1; faction < MaxPlayerNum; ++faction) {
             if ((GameDataStateStorage.fields_.lock_masks_.bytes_.alive_mask_ & (1 << faction)) == 0 ||
