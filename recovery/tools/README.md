@@ -607,6 +607,8 @@ an explicit `--pfx` is only needed to pick another lane.
   automatically after every tumap regroup. `NOT EMITTED` = the object's definition is not in the unit.
 - `feall.py --base` compares rows by address, so a marker moved to another unit is compared with its old row; fe/feall
   read a worktree's own `build/compile_commands.json` for units the main database lacks (a unit created by a split).
+- `analysis/leascreen.py FEALL.json [--max N]` (lane FE_PFX_BASE) lists non-exact functions whose only differences are lea
+  base/index order or a block of the same instructions in another order: the IL-node counter class (MATCHING_GUIDE 3.4).
 - `analysis/packsim.py <unit> <addr> [--src ALT.cpp] [--why] [--sym NAME,..] [--fit last|first|smallest]` frame
   packing model check (MATCHING_GUIDE 3.3 "Frame slots are packed last-fit"): rebuilds the memory units of our
   compile (named, `$T`, one unit per anonymous temporary web), runs last-fit in raw-count order on our home

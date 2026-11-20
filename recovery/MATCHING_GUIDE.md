@@ -5853,6 +5853,24 @@ result over 64 symbol-counter pads, so none of these is a counter canary.
     accesses (the 0x18E store, the tail-merged eax store 0x41EE92, one read
     0x41F4C7 shared by `top` and the init argument), so the missing count is
     in references the final code merges away.
+  - **g14 exception: two loop-carried founders, NetWin::draw_custom_rules
+    0x0047F960 (par-5 2026-11-20, open).** Image -0x14 = line(6) + top(2),
+    -0x18 = row(6) + left's temporary(2); ours has the same two groups with
+    the offsets swapped (16 rows, nothing else differs). In ours line's
+    last access (0x4B2, `line = text_get()`) precedes row's (0x4B9, the
+    bottom `++row` store), yet row gets the shallower (first-created) slot,
+    so "last reference first" in final-code order mispredicts our own
+    compile: both live to the loop's back edge. Measured not to move it:
+    declaring row or line at function top, `int row = 0` before line's
+    first store (row's first reference first), `line = text_get()` moved
+    before the rect updates (line's last reference earlier), a `while`
+    loop, IL-only references (`line = line`, `row = row`, a dead read, an
+    extra `line ?:` test: removed before counting), the for-increment
+    `++row, line = text_get()` (loses the tail duplication, slots kept).
+    A synthetic probe did not reproduce two homed loop variables (the
+    char* stays in a register). Note that packsim's "model slot = actual"
+    maps model groups to slots by majority, so it confirms grouping, not
+    offset order: do not read its tie modes as validated on offsets.
   - **One variable for two exclusive-arm roles packs as one heavy unit**
     (par-2 2026-11-20, Console::go_to 0x004D61A0, verdict for par-4).
     Image -0x18 holds base_id (order == -1 arm, 3 accesses), max_range
@@ -6262,6 +6280,52 @@ result over 64 symbol-counter pads, so none of these is a counter canary.
   (`item_width + (Dialog::field_40_ - (Dialog::field_40_ << 1))` instead of
   the `inset` local) keeps the image's grouping, with a register swap left
   (ListBox::UNK1 7 -> 8 rows, not applied).
+  **What counts (2026-11-20 par-5, `probes/leaorder/forms.py`, phase mod 4
+  from `X;T` and `X;u(z9);T`).** The counter is IL nodes, not only member
+  references: a parameter `u(k+1)` is +3 and `if (k<0) u(1)` +3 although
+  plain global and parameter loads are 0. Measured phases (none = 0):
+  +1: `u(f1)`, `f1 = f1`, `u(get1())` (an accessor that returns f1), `this->`
+  or a cached `E *p = this` alike, `q->f1`, `RC r = rc` (copying a member
+  struct to a local), `u(f1+f2)`, `u(f1+f2+f3)`, a reload after a store
+  `f1 = k; u(f1)`;
+  +2: any plain member store (`f1 = 1`, `f1 = k`, `set1(k)`, `ref1() = k`,
+  a dead store overwritten by a second one), member struct copy `rc = GR`,
+  `u(f1 ? f2 : f3)`, `u(&f1 == 0)`, `{int c = k/f1; u(c); u(k-f1*c);}`;
+  +3: `f1 = f2; f1 = k`, `rc = rc2`, passing `&rc` (`ur(&rc)`,
+  `memset(&rc,...)`), `if (flag1())` (`f1 & 1` accessor), `u(k+1)`,
+  `if (k > f1-1)`;
+  0 (mod 4): compound `f1 |= 1`, `|= k`, `&= ~1`, `+= k`, `++`; `f1 = 0;
+  f1 |= 1`; `f1 = f2 = k`; `u(f1 && f2)`; `u(f1 + k)`, `u(f1 * k)`,
+  `u(f1 >> 1)`; per-field `rc.l = GR.l; ...` (four stores); dead reads
+  (`(void)f1`, `get1();`, `{int t = f1;}`, `if (f1) {}`); a CSE'd reload
+  (`u(f1); u(f1)` = `u(f1)`). So swapping a plain store for a compound one
+  (`= 1` against `|= 1`) is a -2 step, a struct copy against per-field
+  stores is +2, and member arithmetic folded into one expression differs
+  from the same loads in two statements. Spelling-level changes do NOT move
+  it (measured on SpriteBox::draw_item and FameWin::on_redraw: operand order,
+  statement order of the four RECT stores (720 orders), `!x` against
+  `x == 0`, `||`/`&&` of two early returns, commutative factor order,
+  an inline helper against the written-out expression, `rect_width()`
+  against `r - l`, `RECT area = {...}` (changes code), `set_rect()`).
+  Self-assignments locate the residue but are invented code, never source.
+- **The commutative load order of `this->a + this->b` follows the same
+  counter** (par-5 2026-11-20). FameWin::on_redraw 0x00448D90 (2 rows,
+  `field_A14_ + field_A1C_` loaded A1C first): +3 self-assignment stand-ins
+  anywhere between the function entry and `field_A1C_`'s first store make
+  it exact, +1/+2 do not, and nothing after that store does. In isolation
+  (a probe with only the add) no prefix moves it: the counter is sampled at
+  the field's first reference, so look for the missing node between the
+  function entry and that reference. SpriteBox::draw_item 0x00610C50:
+  +2 or +3 anywhere from the entry, or +1 after the two `seek_pos`
+  expansions (SpriteListBase::seek_pos header variants: per-arm tail,
+  `>=`, operand order, `for`, `i-- > 0` - none). No natural form found for
+  either (the decks above, about 40 variants). Screen for the class:
+  `analysis/leascreen.py FEALL.json` (non-exact functions whose only
+  differences are lea base/index order or one block of the same
+  instructions in another order): on 2026-11-20 only draw_item and
+  CouncWin::draw_leader 0x00425DB0 (2 leas, councwin.cpp). tech_achieved
+  0x005BB000 (`[edi+edx]` of two register locals) is NOT this counter:
+  global self-assignment stand-ins at its entry do not move it.
 - **Runtime constant arithmetic is almost absent** (par-6 2026-11-19,
   `analysis/constfold.py`: every straight-line `op r,K2` whose register input
   is a known constant from `mov r,K`/`xor r,r`, both sides, all 5,600
