@@ -458,8 +458,11 @@ int __cdecl coast_or_border(int x_point_a, int y_point_a, int x_point_b,
 // `int`, not `uint32_t`: the image shifts x with `sar ecx, 1` at 0x005001BF,
 // which is the arithmetic shift a SIGNED right-shift compiles to. Unsigned
 // gives `shr` and is one byte different in every caller.
+// MapTiles itself, not the map_tiles() budget accessor: the accessor level
+// flips the MapLongitude/tile-base register tie in set_course and alien_base
+// (2026-11-20, no other marker moves).
 inline Map *__cdecl map_loc(int x, int y) {
-  return &map_tiles()[(x >> 1) + y * MapLongitude];
+  return &MapTiles[(x >> 1) + y * MapLongitude];
 }
 void __cdecl temp_set(int x, int y, int temperature);
 void __cdecl climate_set(int x, int y, int climate);
