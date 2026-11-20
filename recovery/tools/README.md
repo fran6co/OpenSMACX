@@ -76,6 +76,11 @@ an explicit `--pfx` is only needed to pick another lane.
   control-flow hunks, fe rows), so a
   spelling is judged by its /Ob2 and block decisions before its rows (MATCHING_GUIDE 2.8 "Judge by decisions").
   `sdeck.WATCH = ['remove_all', ...]` adds per-callee image/ours counts to the key.
+- `analysis/orsweep.py <unit.cpp> <addr> [--and] [--write KEY]` / `analysis/orsweep2.py <unit.cpp> <addr> [--write KEY]
+  [--list]` value-form sweeps (MATCHING_GUIDE 3.7 "Flag tests: threaded or materialised"): orsweep turns each `if (A || B)`
+  (with --and also `&&`) alone into `if ((A || B) != 0)`; orsweep2 adds loop conditions with a top-level `&&`/`||`
+  (`(cond) != 0`), `if (!(A && B))` -> `if ((A && B) == 0)` and nested else-less ifs merged into `if ((A && B) != 0)`.
+  Ranked by sdeck's structural key against BASE; --write applies a variant.
 - `analysis/jseq.py <unit> <src> <addr> [<lo> <hi>]` control-flow token diff (jcc/jmp/call/ret) of one function:
   both token counts and the first `SHOW` differing hunks. Equal counts and 0 hunks = rung 4 settled.
 - `analysis/ucmp.py <unit.cpp> ...` per-marker fe rows of HEAD's version of each unit against the worktree's:

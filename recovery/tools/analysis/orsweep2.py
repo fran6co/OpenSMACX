@@ -5,8 +5,8 @@ N  if (!(A && B)) -> if ((A && B) == 0)
 M  nested else-less ifs `if (A) { if (B) {...} }` -> if ((A && B) != 0) {...}
 """
 import sys, os, re
-W='/home/fran6co/code/OpenSMACX/.opensmacx/worktrees/par-5'
-sys.path.insert(0, W+'/recovery/tools'); sys.path.insert(0, W+'/recovery/tools/analysis')
+S = os.path.dirname(os.path.abspath(__file__)); T = os.path.dirname(S)
+sys.path.insert(0, T); sys.path.insert(0, S)
 import orsweep
 from orsweep import span, close, toplevel
 
@@ -77,7 +77,7 @@ def variants(t, addr):
 
 if __name__=='__main__':
     unit,addr=sys.argv[1],int(sys.argv[2],16)
-    path=W+'/src/'+unit; t=open(path,encoding='latin-1').read()
+    path=os.path.dirname(os.path.dirname(T))+'/src/'+unit; t=open(path,encoding='latin-1').read()
     deck=variants(t,addr)
     if '--list' in sys.argv:
         for k,_ in deck: print(k)
