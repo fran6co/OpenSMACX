@@ -164,6 +164,13 @@ an explicit `--pfx` is only needed to pick another lane.
 - `analysis/callees.py <unit> <addr> [--src ALT] [--pfx N]` named call multisets: image direct calls named
   through the ORIGINAL markers (plus a CRT table learned from aligned call sequences), `call [IAT]` through the
   image's import directory, ours through relocations; prints the callees on one side only.
+- `analysis/xjcalls.py <unit> <addr[,addr]> [--src ALT] [--all-callees] | --rungs [RUNGS.json] [--only 2] [--json F]`
+  cross-jump screen for rung-2 call-count gaps (MATCHING_GUIDE 3.7 "A written-out copy of a shared exit"): for each
+  callee whose count differs (callees.py naming), every call site on both sides with the jumps landing up to 12
+  instructions before the call (`j@-k` jmp, `c@-k` jcc), jumps landing after it in the same run, its continuation, and
+  `lines img/ours` per-source-line site counts. Verdict IMG-SHARES (image has fewer sites and more jmp-ins: our copies
+  may want a goto), OURS-SHARES (the reverse), SITES (no jump-in difference: inlining/teardown). `--rungs` takes
+  every rung-2 function of rungs.json (10 s on 5 lanes).
 - `analysis/regalloc/` the probe sources and runner behind MATCHING_GUIDE 2.7 (see its README).
 - `crtcalls.py OUT.json` compares, per function, the calls to memcpy/memmove/memset/strlen/strcpy/
   strcat/strcmp/memcmp in our objects with the image's (20 s). The game and Jackal have no

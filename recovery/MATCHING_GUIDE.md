@@ -6832,6 +6832,52 @@ Layout
     0x4D61A0: the image cross-jumps the three Psi Gate `NetMsgPrimary.pop`
     calls into the first and lays the `finish:` unlock right after it; ours
     keeps three identical `mov ecx; call pop; jmp finish` copies.
+- **A written-out copy of a shared exit loses its cross-jump to one scratch
+  register** (2026-11-20 par-6, `analysis/xjcalls.py`). Rung 2 call-count
+  gaps are often cross-jump outcomes, not inlining. BaseWin::farm_click
+  0x0040A1D0 reaches its unchanged exit (0x0040A7A5, `Win::is_visible`
+  inside) by `jmp` from five rejections; ours wrote the exit in each of
+  three middle rejections, and those copies merged only partly because the
+  first copy loads the focus id into eax and the host into ecx, so one more
+  `is_visible` call stayed. With `goto` to one exit label the named call
+  multiset, EH and frame equal the image. So when the image shows several
+  `jmp`s into one tail holding the call and ours writes that tail at each
+  site, replace the copies with `goto` to one label. In the reverse case
+  (ours merges what the image keeps) look for a missing source jump or for
+  a register difference just before the call. `xjcalls.py` lists, for
+  every callee whose count differs, each call site on both sides with the
+  jumps landing in its run (`j@-k` = `jmp` landing k instructions before
+  the call), its continuation and the per-line site counts. On the 26
+  rung-2 functions of 2026-11-20 farm_click was the only written-out copy
+  that a `goto` fixes. The rest fall into three groups:
+  - *A register difference before the call* (fix the allocation, 2.7):
+    find_line_break_l 0x5DC410 (image `this` edi, segment [ebp-4]; ours the
+    reverse, so the in-loop memrchr tails cannot jump into the post-loop
+    ones at the shared `je`), Net::send 0x630080 (ours holds `packet` in esi
+    in the L2716 MessageBoxA tail and in edi in L2813's, so they do not
+    merge; the image merges L2655, L2716 and L2813 at the final `push 0`),
+    base_terraform 0x4ECBF0 (the image jumps the L5283/L5298 `add_goal`
+    copies into L5308's at `push esi`, which falls into `relocate:`; ours
+    reloads esi on another path into relocate, so L5308 is not the join's
+    fall-through host), battle_report 0x421B50 (image psi_label in ebx; ours
+    loads first_vehicle_id into ebx inside the psi arm's tail, so that arm
+    cannot jump into the shared `push eax; mov ecx; call get` and
+    `table_text`/`StringTable.get` spellings of the label do not change it),
+    propose_pact, MapWin::draw_map, write_strings_height (above).
+  - *Expansion or teardown, not tails*: tech_trade (~BasePop 2/5, return
+    teardowns), editor_edit_veh and propose_attack (remove_all against an
+    expanded ~StringStruct), base_editor_proj, session_picker_dialog,
+    control_turn, CouncWin::init (CharUpperA), send_files (GetFileSize),
+    select_special (Popup::start overload), filefind_init.
+  - *Ours merges a tail that the image keeps*: communicate 0x54FFD0 L8497
+    (the image copies `DiploScratchF7B8 = DiploScratchF7E8;
+    diplomacy_caption(); goto` into both arms of the expanded net_treaty_off
+    and schedules each arm's pending pop, `add esp,0x28` or `0xc`, inside it;
+    ours flushes the pops and joins once), MapWin::editor 0x46B510 L831 (the
+    image keeps range's `2` arm with its own `rocky_set` call and `jmp`; the
+    same arm of the erase branch's range merges; neither a spelling of the
+    `changed` tests without `goto` nor the operand order changes it),
+    use_ability L2853, menu_proc, vehdraw_scoot_start (above).
 - **Cross-jumping ground truth** (par-2 2026-11-19,
   `analysis/probes/crossjump/run.py`, one-function probes with `use(K)`
   markers; names below are its variants).
