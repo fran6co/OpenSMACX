@@ -2597,6 +2597,45 @@ Member-address temporaries that live across calls (2026-11-19 par-6, round 11)
     `candset.py` prints "pointer induction in the image only" with the
     stride when the image steps a callee-saved register by a stride ours
     lacks, beside our `lea:idx` webs.
+  - **SR blocking: one induction variable per stride class** (high, par-1
+    2026-11-20, `analysis/probes/srblock/run.py`, 70 variants). VC6 forms
+    at most one derived IV per element stride among the arrays a loop
+    subscripts by `i`, and turns it into a table pointer only when exactly
+    one array uses that stride:
+    - one `int` table `tab[i]`: a pointer (`mov esi,OFFSET tab ... add
+      esi,4`), whatever else reads `i`. A call argument, `i / 8`, a compare,
+      a modified `i`, an unknown bound, `char`/`short`/`unsigned` counters,
+      `*(tab + i)`, an inline `at(i)`, `while`/backward `goto` loops, a
+      function-scope `i` read after the loop, a `switch` in the body, a
+      `goto` out or an inner loop reading `i` all keep the pointer (then
+      `i` is a second register beside it: so the pointer-plus-index pair is
+      NOT by itself evidence of a source pointer, contrary to the ptrinc
+      note above). 64 earlier loops in the function do not stop it.
+    - two or more arrays of the SAME stride (`tab[i]` and `tab2[i]`, read
+      or written, global, local or through an `int *q`): no pointer. With
+      `i` read elsewhere they are `[i*4+tab]`, `[i*4+tab2]` off the counter
+      (IDX); with `i` used only as the subscript, one byte offset
+      `[off+tab]`, `[off+tab2]` stepped by 4 (OFF). Arrays of different
+      strides (`int` and `short`, `int` and a 32-byte struct) each get their
+      own pointer; `tab[i]` and `tab[i+1]` are one array.
+    - `&i` taken anywhere, or an irreducible loop (a `goto` into the body):
+      IDX.
+    - a constant-left compare of `i` in the body (`9 <= i`) turns the
+      two-table IDX back into OFF and compares the offset (`cmp esi,0x24`)
+      while keeping `i`; `i >= 9` compares `i` (guide 3.2, world_site, for
+      the loop test itself).
+    Reading the image: `[i*4+table]` with `i` live elsewhere and no stepped
+    register means a second same-stride array indexed by `i` in that loop
+    (or `&i`); look for one the recovery moved out. base_build 0x004F8931:
+    `a_694[i] = 0` belongs in the project census loop (VC6 distributes the
+    store into the rep stosd ahead of it, so the clearing loop looks
+    separate), census window exact except a slot. spot_all 0x005B6A0D: the
+    image's `cmp [i],9` against our `cmp ebx,0x24` was `9 <= i`. A dead
+    `and r,K` beside a mask test (spot_all 0x005B69FC `and edx,0x80001000`)
+    is a second `(v & K) == C` test whose consumer was dropped: a dead
+    counter `if ((bit2 & 0x80001000) == 0x1000) n++;` reproduces it (not yet
+    applied: the extra local moves counter-sensitive ties later in the
+    function).
   - A loser's single reference per loop iteration (low, c_looppiece.spec):
     with no call between two such loops, each read is a scratch load
     (`mov eax,[r]` right before its use, and the loop test loads the mask
