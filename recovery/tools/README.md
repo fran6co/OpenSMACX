@@ -84,6 +84,13 @@ an explicit `--pfx` is only needed to pick another lane.
   (MATCHING_GUIDE 3.4): straight-line `op r,K2` (and `lea r,[s+K]`) whose register input is a known constant from
   `mov r,K`, `xor r,r` or a register copy; image pairs marked `ours-folded` when ours uses the folded value as an
   immediate. 70 s tree-wide with --all on 5 lanes; 2026-11-19: twelve image pairs in ten functions, one unexplained (NetWin::exec).
+- `analysis/selscan.py [unit ..] [--all] [--kinds sel,negsbb,cmpsbb,set,abs,babs,mm,neg] [--json F]` branchless
+  select/bool/abs/min-max/negation idioms whose multiset differs between the image and ours (MATCHING_GUIDE 3.4
+  "Ternary setcc forms"): `setcc; dec; and K; add B` keyed by (K, B) with the condition compared separately (`COND`),
+  `neg; sbb; <op>` and `cmp; sbb` with their tails, lone `setcc` with the op that follows (inc/add/sub/lea), `cdq;
+  xor; sub` against `test; jge; neg`, `cmp; jcc; mov` min/max and lone `neg`. 6 s tree-wide on 5 lanes; most rows
+  are scheduling or register noise, read each with `fe.py --all` before editing. 2026-11-20: 8 fixes (order_veh,
+  base_terraform x2, air_power, draw_supported, enemy_move, right_menu, draw_nutrients).
 - `analysis/widthscan.py [unit ..] [--json F] [--min N]` byte/word-register arithmetic on one side against the same
   mnemonic on a full register on the other, inside fe's differing blocks (MATCHING_GUIDE 3.4 "Narrow locals").
   40 s tree-wide; most rows are register-allocation noise, the clean ones are a bool/uint8_t local the image keeps
