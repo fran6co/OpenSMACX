@@ -3591,6 +3591,15 @@ What the model does not predict (2026-11-19)
   expansions against four), probe 6..9 blocks with its three probes, order_veh
   24..26 with three probes. Mark the blocks WORKAROUND(inline) `<fn>_size_pad`;
   they stand for the original's statements that our recovery lacks.
+  The lever is coarse: call_council's rows step 268 (0 statements) -> 243
+  (fractional `!= 0` spellings) -> 142 (1 statement, or 0 + four `!= 0`) ->
+  200 (2 statements, or 1 + four `!= 0`), with no state between 142 and 200.
+  Its last wrong site (the closing ~Scroll copy's second ~FlatButton,
+  image 0x0052DA61 calls it; the four preceding teardowns are `Ec` in both)
+  did not move under any size or under one to three dead budget probes
+  (`static` four-test step/probe helpers) at eight positions from the top to
+  the IsMultiplayerNet tail: position never mattered and every probe broke
+  earlier ~Scroll sites (par-5 round 41).
 - The units are approximate. Costs come from fitted counts, not node
   counts, so a prediction is good to about one expansion. Use it to choose
   the *kind* and *place* of a missing spend, then confirm with fe.
@@ -7570,7 +7579,28 @@ Layout
     are made after cross-jumping (the image's two copies are identical from
     `push esi` and still not merged). Both image copies store F7B8 after
     the treaty call, so the store is not hoisted; what makes the original's
-    two-statement tail cheap enough to copy is still open), MapWin::editor 0x46B510 L831 (the
+    two-statement tail cheap enough to copy is still open. par-5 round 41
+    (`analysis/probes/tailcopy/run.py tails.txt`, nto inline + tail + `goto`
+    in a loop): the
+    limit is the join's CODE SIZE, not its statement count. The join is
+    copied whole when its instructions before the final `jmp` take at most
+    15 bytes: `cap0(); cap0(); cap0();` (15), `cap1(a); cap1(b);` (15),
+    `H = K; cap0();` (15), `H = capr(a, b);` (15), `cap(a, K);` (15) copy;
+    `cap(a, b); cap1(a);` (16), `cap3(a, b, K);` (16), `H = 0; cap(a, b);`
+    (20), `cap0()` x4 (20) and the one-statement struct copy `s2a = s2b;`
+    (22) stay joined. A tail whose call cross-jumps into an identical call
+    falling into the target first (`H = K; cap1(a)` before a `cap1(i);
+    cont:`) shrinks to 11 bytes and is then copied, so the copies end in
+    `push esi; jmp` (cross-jump first, copy second). Jump distance does not
+    raise the limit. The image's two copies here are 20-22 bytes, over the
+    limit, and its arm-B order `call treaty_off; mov edx,[F7E8]; add esp,0xc;
+    mov [F7B8],edx` shows no label in front of the store; a hand-written
+    tail in both arms of an open-coded IsMultiplayerNet test merges the
+    pops (`add esp,0x30`) instead, so the original's shape is still open.
+    Tested in communicate with no effect: comma statement, the store inside
+    either argument (`diplomacy_caption(f, (F7B8 = F7E8, fw))`), an inline
+    or `__forceinline` caption helper, a pointer store, an inline
+    treaty_off+store helper (changes the budget, 1868 rows)), MapWin::editor 0x46B510 L831 (the
     image keeps range's `2` arm with its own `rocky_set` call and `jmp`; the
     same arm of the erase branch's range merges; neither a spelling of the
     `changed` tests without `goto` nor the operand order changes it),
