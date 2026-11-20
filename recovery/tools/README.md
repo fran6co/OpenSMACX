@@ -120,6 +120,8 @@ an explicit `--pfx` is only needed to pick another lane.
   store weight under 4 (2.7 Z9: a merged store is hidden there).
   `candset.py --census [unit ..] [--oy] --opts k=v,.. --opts ..` sums the image-side rank constraints explained over
   the fe-exact functions per option set (70 s tree-wide; 4j `bytepref` validated this way).
+  `CANDSET_SITES=K candset.py ...` prints every store of constant K counted in that block (image first, then ours):
+  diff the two lists to find the extra store (make_gift's `gift_value = 0` before the mode-7 test).
 - `analysis/rotscan.py <unit> <addr[,..]> [--src ALT] [--track] | --tree [unit ..] [--from FEALL.json] [--all] [--json F]`
   scratch-rotation scan (MATCHING_GUIDE 3.2 S1/S7, 3.7 "Cross-jumping ground truth"; 40 s tree-wide with FE_JOBS=5):
   aligns both listings with eax/ecx/edx abstracted, pairs every scratch load (return-value `mov eax, K` excluded) and
