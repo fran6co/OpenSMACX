@@ -707,6 +707,13 @@ an explicit `--pfx` is only needed to pick another lane.
   the number of ways into it, image over ours; classes a (image up front, ours deferred), b (reverse), c (tail count), d (order),
   s (saved set). `--census` tabulates the exact functions' shape against the source guard spelling (7 s, no compile).
   `analysis/probes/prosave/run.py` is the probe family behind the rule (one edge from the register's region to the exit).
+- `analysis/stmovescan.py <unit> <addr[,..]> [--src ALT] | --tree [unit ..] [--from FEALL.json] [--both] [--json F]` moved
+  spill-home store screen (MATCHING_GUIDE 3.7 Frame and slots, draw_session_info; 40 s tree-wide with FE_JOBS=5): pairs
+  unaligned `mov [ebp-N], v` stores of both sides (slots mapped by aligned-row votes, a same-row store counts as aligned)
+  and flags an image store that sits at least one of our basic blocks later than ours (`LATER blocks +k`, `CALL` = a call
+  follows within 8 instructions), with our source line of the store and at the image's position. Read the flag with
+  equal register values (`img_ins`/`our_ins` value equal); mismatched values are mostly slot or register permutations.
+  2026-11-20: load_vehicles (source_y after the skip test).
 - `analysis/storesched.py [unit ...] [--addr A,..] [--src ALT] [--max N] [--json F]` moved-store screen (MATCHING_GUIDE 3.6
   "A member setter's parameter schedules the store early"; 60 s tree-wide): the `mov [reg + K], v` stores both sides emit at
   different places of one differing stretch, rows earlier/later, base register `this` or another object; `SETTER?` = moved

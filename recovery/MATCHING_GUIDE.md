@@ -7369,6 +7369,15 @@ Frame and slots
   identifies a scalarised RECT (show_post_movie_text).
 - `mov dl,[slot]; or [mem],dl` is a named `int bit = 1 << n`; `x |= 1 << n`
   on a byte recomputes a narrowed shift.
+- A spill-home store the image places right before the next call (after
+  that block's own computation), where ours stores the same value at the end
+  of the previous block, is an assignment written later in source. VC6 does
+  not sink a store to a homed variable across statements: the store sits
+  where the assignment is. Move the assignment next to its next real use
+  (behaviour-preserving when nothing in between reads it).
+  NetWin::draw_session_info 0x00480900: `bottom = next;` at each section's
+  end -> after the next section's `avail = ...`, just before
+  Buffer::text_width (11 -> 3 rows). Screen: `analysis/stmovescan.py`.
 
 Rectangles
 - Stores through one register from single loads are
