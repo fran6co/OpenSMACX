@@ -4763,9 +4763,11 @@ void __cdecl base_terraform(int force_improve) {
     int bore_y;
     int cond_x;
     int cond_y;
-    for (i = 0; i < 21; i++) {
-        int x = wrap_map_x(BaseCurrent->x + RadiusOffsetX[i]);
-        int y = BaseCurrent->y + RadiusOffsetY[i];
+    // The site scan counts on energy_low: the image stores its exit value
+    // (21) to energy_low's home at 0x004ED0E7 (loopreuse).
+    for (energy_low = 0; energy_low < 21; energy_low++) {
+        int x = wrap_map_x(BaseCurrent->x + RadiusOffsetX[energy_low]);
+        int y = BaseCurrent->y + RadiusOffsetY[energy_low];
         if (!on_map(x, y)) {
             continue;
         }
@@ -4779,7 +4781,7 @@ void __cdecl base_terraform(int force_improve) {
         if (items & BIT_CONDENSER) {
             cond_seen = 1;
         }
-        if (!i) {
+        if (!energy_low) {
             continue;
         }
         if ((items & BIT_FUNGUS) && (map_loc(x, y)->climate & ~0x1F) >= ALT_BIT_OCEAN_SHELF
@@ -4833,7 +4835,7 @@ void __cdecl base_terraform(int force_improve) {
         }
         uint32_t forest = items & BIT_FOREST;
         int fungus = ((items & BIT_FUNGUS) && (sq->climate & ~0x1F) >= ALT_BIT_OCEAN_SHELF) ? 4 : 0;
-        uint32_t worked = (1 << i) & BaseCurrent->resource_sqr_radius;
+        uint32_t worked = (1 << energy_low) & BaseCurrent->resource_sqr_radius;
         int height = rain_sum - 2 < 0 ? 0 : rain_sum - 2;
         if (!worked && worked_improved == worked_rough && !unworked_rich && !forest && !fungus) {
             if (food_want && rocky < 2) {
@@ -4891,7 +4893,7 @@ void __cdecl base_terraform(int force_improve) {
             }
             if (score > best) {
                 best = score;
-                best_idx = i;
+                best_idx = energy_low;
                 best_kind = 9;
             }
         }
@@ -4934,19 +4936,19 @@ void __cdecl base_terraform(int force_improve) {
                         }
                         if (score > best) {
                             best = score;
-                            best_idx = i;
+                            best_idx = energy_low;
                             best_kind = 0;
                         }
                     } else if (!solar_or_bore) {
                         if (score > best) {
                             best = score;
-                            best_idx = i;
+                            best_idx = energy_low;
                             best_kind = 3;
                         }
                     } else if (!farm && food < 3 && rocky < 2) {
                         if (score > best) {
                             best = score;
-                            best_idx = i;
+                            best_idx = energy_low;
                             best_kind = 0;
                         }
                     }
@@ -4959,7 +4961,7 @@ void __cdecl base_terraform(int force_improve) {
             mirror_score = -99999;
         }
         if (!wet && mirror_score > -99999 && (mirror_score > -9999 || bonus == 1)) {
-            score = RadiusOffsetX[i] * RadiusOffsetX[i] * 2;
+            score = RadiusOffsetX[energy_low] * RadiusOffsetX[energy_low] * 2;
             if (rain_sum == 3) {
                 if (rocky == 1) {
                     score += 3;
@@ -5008,7 +5010,7 @@ void __cdecl base_terraform(int force_improve) {
                 if (bonus == 1) {
                     score += 8;
                 }
-                if (i < 8) {
+                if (energy_low < 8) {
                     score /= 2;
                 }
                 if (score > mirror_score) {
@@ -5069,7 +5071,7 @@ void __cdecl base_terraform(int force_improve) {
                 if (!mine_or_bore && !has_special) {
                     if (score > best) {
                         best = score;
-                        best_idx = i;
+                        best_idx = energy_low;
                         best_kind = 2;
                     }
                 } else if (!road && (mine_or_bore || (items2 & BIT_THERMAL_BORE))
@@ -5079,13 +5081,13 @@ void __cdecl base_terraform(int force_improve) {
                                     & MPREF_AUTO_FORMER_CANT_BUILD_ROADS))) {
                     if (score > best) {
                         best = score;
-                        best_idx = i;
+                        best_idx = energy_low;
                         best_kind = 5;
                     }
                 } else if (mine_or_bore && !has_special && !farm && rocky < 2
                            && ((sq2->climate & 0x18) || bonus == 1) && score > best) {
                     best = score;
-                    best_idx = i;
+                    best_idx = energy_low;
                     best_kind = 0;
                 }
             }
@@ -5125,7 +5127,7 @@ void __cdecl base_terraform(int force_improve) {
             }
             if (score > best) {
                 best = score;
-                best_idx = i;
+                best_idx = energy_low;
                 best_kind = 0;
             }
         }
@@ -5136,14 +5138,14 @@ void __cdecl base_terraform(int force_improve) {
             score = BaseCurrent->eco_damage * fungus * 2;
             if (score > best) {
                 best = score;
-                best_idx = i;
+                best_idx = energy_low;
                 best_kind = 10;
             }
         }
 
         // Thermal borehole.
         if (!bore_seen) {
-            score = (rocky == 2 ? 12 : 0) - i + 21;
+            score = (rocky == 2 ? 12 : 0) - energy_low + 21;
             score += (rocky == 2 || !food_want) ? 12 : 0;
             if (improvements) {
                 score -= 8;
@@ -5174,7 +5176,7 @@ void __cdecl base_terraform(int force_improve) {
 
         // Condenser.
         if (!cond_seen) {
-            score = 21 - i;
+            score = 21 - energy_low;
             if (!improvements) {
                 score += 8;
             }
