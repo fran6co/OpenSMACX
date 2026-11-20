@@ -1986,6 +1986,25 @@ Zero webs on one side only (2026-11-20 par-1; candset.py over the 288 rung
     cross-jumping (VC6 merges them back into the single store the image
     shows), which materialises the zero and gives every `cmp r,ebx` /
     `cmp [m],ebx` of the range.
+    Do not nest where the image shows the chain's own codegen: `mov
+    [x],1; <last test>; jcc over; mov [x],0` (or `mov r,1; jmp; xor r,r`)
+    is `x = a && b` into a memory (register) variable, and the nested form
+    compiles to `setcc` or to separate stores there (make_gift 0x00547C10
+    `favored`, TutWin::tour 0x004BC6E0 `ridge`: the 151 -> 140 and 303 ->
+    300 sweep gains are slot/register reshuffles with the wrong block shape).
+  - Shared case labels (vehdraw_construct_chassis 0x004C2470, 140 -> 0).
+    `case 0: case 9: body; break;` beside an identical `default: body;`
+    lets VC6 merge the two blocks before jump threading: the jump table
+    sends 0/9 to the default's code, the merged block loses its threaded
+    jump past the following `armor == 10 ...` tests, and a case whose tail
+    matches another (`mov ebx,2; xor edi,edi` against case 1's) jumps into
+    it. The image kept every case block apart (table entries for 0 and 9
+    equal, but a separate threaded block for them, and case 4/8's own
+    `xor edi,edi`): writing `case 0: ...; case 9: ...;` and `case 4: ...;
+    case 8: ...;` apart gives that, and the zero-test pushes of
+    `armor_grade` (`test ebx,ebx; jne; push ebx`) then keep armor_grade in
+    ebx instead of folding to `push 0` (one folded push alone hands ebx to
+    faction_id). The table still shows one target per pair.
   - Census caveat (candset.py): `#0` is the zero *constant* web (every
     definition is `xor r,r`); `init#0` is a *variable* whose first
     definition is 0 and that is redefined later (Z6). Only `#0` rows are Z9
