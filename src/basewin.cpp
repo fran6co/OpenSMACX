@@ -5803,11 +5803,12 @@ again:
 // away). The image's first cancel return calls ~Scroll and ~BasePop out of
 // line (0x0041BD5D, 0x0041BD6F) while the second expands ~BasePop fully.
 // With the PICKAPLACE labels read through label_get (as base_editor_copy
-// does) and passed straight to popup.item, and the owner store written on
-// project_base, four one-test expansions after the first return give the
-// image's unwind map exactly; the closing teardown still expands ??_DDialogs
-// (0x0041C1AF calls it) and two ??_DStringList sites expand where the image
-// calls 0x00406820. The original's spend is not identified.
+// does) and passed straight to popup.item, the owner store written on
+// project_base, and the first two owner-status labels appended through the
+// header's say_label, two one-test expansions after the first return give the
+// image's unwind map and call multiset exactly (the closing ??_DDialogs and
+// both ??_DStringList sites called, as at 0x0041C037/0x0041C1AF). The
+// original's remaining spend is not identified.
 static inline int base_editor_proj_budget_probe(int x) {
     if (x == 0) x = 7;
     return x;
@@ -5832,11 +5833,11 @@ void BaseWin::base_editor_proj() {
         strcat(StringTemp, "|");
         const int owner_base = *owner;
         if (owner_base == -2) {
-            strcat(StringTemp, label_get(0xD54 / 4));
+            say_label(0xD54 / 4);
         } else if (owner_base == -1) {
             if (has_tech(Facility[FacilitySPStart + project_index].preq_tech,
                          BaseCurrent->faction_id_current)) {
-                strcat(StringTemp, label_get(0x3DC / 4));
+                say_label(0x3DC / 4);
             } else {
                 strcat(StringTemp, label_get(0x4D8 / 4));
             }
@@ -5854,8 +5855,6 @@ void BaseWin::base_editor_proj() {
     if (project < 0) return;
     base_editor_proj_budget_probe(1001);  // WORKAROUND(inline)
     base_editor_proj_budget_probe(1002);  // WORKAROUND(inline)
-    base_editor_proj_budget_probe(1003);  // WORKAROUND(inline)
-    base_editor_proj_budget_probe(1004);  // WORKAROUND(inline)
     // A named facility id: in an EH function VC6 keeps the +70 in the scaled
     // index (0x0041BD85 lea edx,[esi+esi*2+0xD2]; MATCHING_GUIDE 3.4).
     const int facility_id = FacilitySPStart + project;
