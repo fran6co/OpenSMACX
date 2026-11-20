@@ -4637,7 +4637,6 @@ void __cdecl load_vehicles() {
     // Chassis 0..8 are walked and skipped; the UNITS rows start at 9.
     for (chassis = 0; chassis < 19; ++chassis) {
         row = chassis - 9;
-        source_y = 2 + row * 77;
         // The image counts `row` (edx from -9, `lea eax,[edx+9]; cmp eax,9`
         // here and `cmp eax,0x13` at the latch, `cmp edx,9` for row == 9);
         // a `chassis < 9` test keeps chassis as the counter and folds the
@@ -4645,6 +4644,7 @@ void __cdecl load_vehicles() {
         if (row + 9 < 9) {
             continue;
         }
+        source_y = 2 + row * 77;
         count = 1;
         if (source_y == 233) {
             count = 7;
