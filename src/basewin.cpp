@@ -4048,20 +4048,7 @@ void BaseWin::gov_on(int priorities) {
         BaseCurrent->governor &= ~GOV_ACTIVE;
     }
     BaseCurrent->governor &= ~GOV_UNK_40000000;
-    if (BaseCurrent->governor & GOV_ACTIVE) {
-        if (BaseCurrent->governor & GOV_MANAGES_PRODUCTION) {
-            BaseCurrent->state &= ~BSTATE_UNK_8000000000;
-            BaseCurrent->queue_size = 0;
-            base_reset(BaseIDCurrentSelected, 1);
-        }
-        if (BaseCurrent->governor & GOV_MANAGES_CITIZENS_SPECS) {
-            BaseCurrent->resource_sqr_radius = 0;
-            BaseCurrent->specialist_total = 0;
-            BaseCurrent->specialist_unk_1 = 0;
-            base_compute(1);
-            base_doctors();
-        }
-    }
+    gov_activate();
     NetDaemonNet.unlock_base(BaseIDCurrentSelected);
     // Original 0x004160A8 dispatches Win slot 62 on this receiver. The
     // following call at 0x004160B3 is direct, to GraphicWin::redraw.
@@ -4893,20 +4880,7 @@ int BaseWin::governor(int settings_only) {
     if (PopupWriteCheckState & 0x40000) BaseCurrent->governor |= 0x20u;
     PlayersData[faction].base_governor_adv = BaseCurrent->governor;
     if (!settings_only) {
-        if (BaseCurrent->governor & 0x80000000u) {
-            if (BaseCurrent->governor & 1) {
-                BaseCurrent->state &= 0x7FFFFFFFu;
-                BaseCurrent->queue_size = 0;
-                base_reset(BaseIDCurrentSelected, 1);
-            }
-            if (BaseCurrent->governor & 0x40) {
-                BaseCurrent->resource_sqr_radius = 0;
-                BaseCurrent->specialist_total = 0;
-                BaseCurrent->specialist_unk_1 = 0;
-                base_compute(1);
-                base_doctors();
-            }
-        }
+        gov_activate();
         if (!(BaseCurrent->governor & 0x80000000u) || !(BaseCurrent->governor & 1))
             draw_radius(BaseCurrent->x, BaseCurrent->y, 2, 2);
     }
