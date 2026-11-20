@@ -8152,7 +8152,12 @@ Counters and tie arms (par-5 2026-11-20, councwin)
   image's host is a different arm than ours, the arm order in the source
   differs (or the host arm was reached by a goto), and when two non-host
   copies in the image share code with each other, they were one statement
-  reached by goto, not two copies.
+  reached by goto, not two copies. Open counter-example: ReportWin::
+  on_key_click 0x00498280 hosts the shared `set_modal` arm of nine
+  report_* expansions in the F7 (report_security) copy of the F-key
+  if-chain (0x498402), not in the later F8 copy or the rotation switch's
+  copies; ours hosts it in the switch's case 7 (22 rows, jcc/jmp counts
+  equal). An F-key `switch` costs 110 rows; not resolved.
 
 ### 3.8 VC5 (Caviar/VOX) x87 rules (2026-11-19 par-5)
 
