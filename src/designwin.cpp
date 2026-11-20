@@ -3687,8 +3687,10 @@ void DesignWin::select_special(int which) {
         }
     }
 
-    // 0x0043AED5 calls the five-argument start (0x0043EF70) out of line:
-    // /Ob2 refuses it here without a member-pointer stand-in.
+    // 0x0043AED5 calls the five-argument start (0x0043EF70) out of line; ours
+    // expands it. A member pointer or an inline owner keeps it out of line
+    // but frees room that moves later teardowns (EH distance 1-2), so the
+    // original also spent that room elsewhere (MATCHING_GUIDE 2.8).
     popup.start(PopupStartCaption, "UNITSPECIAL", -1, nullptr, 0x200042);
 
     StringTemp[0] = 0;

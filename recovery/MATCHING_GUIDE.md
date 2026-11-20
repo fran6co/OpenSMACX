@@ -3123,6 +3123,21 @@ What the model does not predict (2026-11-19)
   returning a string; 2026-11-20 scan), which neither confirms nor rules
   out such header helpers (only space() of the strcat forms has a copy
   either). Mark them WORKAROUND(inline).
+  Other hosts (2026-11-20 par-4): editor_edit_veh takes the raw structure
+  with it (1,7,1,4,147 -> 0,4,0,3,122); upgrade gets (9,13,5,6,473) and
+  then the raw structure once its tuned reservation probes are re-swept
+  (10 -> 1-7 probes, (0,0,0,5,302)); in draw_active it costs exactly what
+  say_X costs (every subset), and the cost is a suffix effect: making the
+  last 11 sites raw restores the image while any single site or the first
+  23 do not. There the separators were right and the stand-in that was
+  tuned against the raw form was wrong (status_damage_percent level ->
+  status_damage_taken, 418 -> 60). So after a separator change, re-sweep
+  the host's existing budget stand-ins before blaming the separators.
+  select_special's five-argument Popup::start (0x0043AED5): ours now
+  expands it with no structural cost; refusing it (member pointer or any
+  owner) frees room that deepens a ~FlatButton or loses a ~StringList
+  teardown (EH 1-2), so the image refused it AND spent its cost
+  elsewhere. Left expanded (call distance 2, 5 rows).
 - **`__forceinline` spends the same budget as `inline` in a real caller**
   (2026-11-20 par-4, same deck). Rule 3's "`__forceinline` sites expand and
   charge nothing" holds for the synthetic probes only: in select_special,
