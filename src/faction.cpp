@@ -5045,13 +5045,13 @@ void __cdecl propose_trade_maps(int faction_id, int faction_id_with) {
         parse_says(0, Players[faction_id_with].adj_name_faction, -1, -1);
 // Map-trade refusal and proposal use separate script topics.
 // Bounds cover the literal payload, not surrounding allocation or lifetime.
-// RECOVERY_LITERAL: v1 0x0068DA60 0x0068DA68 $SG64435 0x00545D60
+// RECOVERY_LITERAL: v1 0x0068DA60 0x0068DA68 $SG64433 0x00545D60
         X_pops("REJMAPS", 0x100000,
                      FactionDiplomacyPortraits[faction_id_with], pop_wait);
         return;
     }
 
-// RECOVERY_LITERAL: v1 0x0068DA68 0x0068DA72 $SG64436 0x00545D60
+// RECOVERY_LITERAL: v1 0x0068DA68 0x0068DA72 $SG64434 0x00545D60
     X_pops("TRADEMAPS", 0x100000,
                  FactionDiplomacyPortraits[faction_id_with], pop_wait);
 
@@ -5086,17 +5086,17 @@ void __cdecl demands_withdrawal(int faction_id, int faction_id_with) {
 
     switch (response) {
     case 0:
-// RECOVERY_LITERAL: v1 0x0068D68C 0x0068D697 $SG64450 0x0053E4C0
+// RECOVERY_LITERAL: v1 0x0068D68C 0x0068D697 $SG64448 0x0053E4C0
         NetMsgPrimary.pop("WITHSUNYES", 5000, 0, 0);
         break;
     case 1:
-// RECOVERY_LITERAL: v1 0x0068D680 0x0068D68A $SG64452 0x0053E4C0
+// RECOVERY_LITERAL: v1 0x0068D680 0x0068D68A $SG64450 0x0053E4C0
         NetMsgPrimary.pop("WITHSUNNO", 5000, 0, 0);
         break;
     case 2:
 // The withdrawal response selects the war, refusal or acceptance script topic.
 // Bounds cover the literal payload, not surrounding allocation or lifetime.
-// RECOVERY_LITERAL: v1 0x0068D674 0x0068D67F $SG64454 0x0053E4C0
+// RECOVERY_LITERAL: v1 0x0068D674 0x0068D67F $SG64452 0x0053E4C0
         NetMsgPrimary.pop("WITHSUNWAR", 5000, 0, 0);
         break;
     default:
@@ -7785,11 +7785,11 @@ static int communicate_budget_probe4(int x) {
 }
 // make_a_proposal's string operands, each read from the image's push operand
 // and checked against the literal text in the body (unpooled, one copy each).
-// RECOVERY_LITERAL: v1 0x0068DF20 0x0068DF2B $SG65544 0x0054F420
-// RECOVERY_LITERAL: v1 0x0068DF2C 0x0068DF3A $SG65546 0x0054F420
-// RECOVERY_LITERAL: v1 0x0068DF3C 0x0068DF3E $SG65575 0x0054F420
-// RECOVERY_LITERAL: v1 0x0068DF40 0x0068DF4C $SG65580 0x0054F420
-// RECOVERY_LITERAL: v1 0x0068DF4C 0x0068DF5B $SG65584 0x0054F420
+// RECOVERY_LITERAL: v1 0x0068DF20 0x0068DF2B $SG65542 0x0054F420
+// RECOVERY_LITERAL: v1 0x0068DF2C 0x0068DF3A $SG65544 0x0054F420
+// RECOVERY_LITERAL: v1 0x0068DF3C 0x0068DF3E $SG65573 0x0054F420
+// RECOVERY_LITERAL: v1 0x0068DF40 0x0068DF4C $SG65578 0x0054F420
+// RECOVERY_LITERAL: v1 0x0068DF4C 0x0068DF5B $SG65582 0x0054F420
 // RECOVERY_ASSOCIATED: v1 switch_targets 0x0054F420 0x0054FFAC 0x0054FFD0 0x0054FA67
 // RECOVERY_LITERAL: v2 merged 0x00682820 0x00682822 ??_C@_01FCOA@?5?$AA@ 0x0054F420
 // ORIGINAL: 0x0054F420 ?make_a_proposal@@YAXHHH@Z 0x0054F420-0x0054FFAB;0x0065FD5F-0x0065FF4F BYTE_EXACT
