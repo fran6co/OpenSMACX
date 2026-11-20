@@ -2123,8 +2123,8 @@ void __cdecl enemy_diplomacy(int faction_id) {
                 || PlayersData[faction_id].satellites_[3] <= PlayersData[i].satellites_[3]) {
                 continue;
             }
-            if (PlayersData[i].satellites_[3]
-                && PlayersData[i].satellites_[3] >= PlayersData[faction_id].planet_busters) {
+            if ((PlayersData[i].satellites_[3]
+                && PlayersData[i].satellites_[3] >= PlayersData[faction_id].planet_busters) != 0) {
                 attack_type = 3;
             } else {
                 // Its own counter, not territory's address-taken pod_count:
