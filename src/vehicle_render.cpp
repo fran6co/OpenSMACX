@@ -44,6 +44,16 @@ void VehicleRenderHeaderPad12();
 void VehicleRenderHeaderPad13();
 void VehicleRenderHeaderPad14();
 void VehicleRenderHeaderPad15();
+void VehicleRenderHeaderPad16();
+void VehicleRenderHeaderPad17();
+void VehicleRenderHeaderPad18();
+void VehicleRenderHeaderPad19();
+void VehicleRenderHeaderPad20();
+void VehicleRenderHeaderPad21();
+void VehicleRenderHeaderPad22();
+void VehicleRenderHeaderPad23();
+void VehicleRenderHeaderPad24();
+void VehicleRenderHeaderPad25();
 
 #include "general.h"  // range is used by veh.h inline members.
 #include "veh.h"

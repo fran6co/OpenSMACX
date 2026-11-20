@@ -128,6 +128,7 @@ void ConsoleCommandsDeclFnPad29();
 void ConsoleCommandsDeclFnPad30();
 void ConsoleCommandsDeclFnPad31();
 void ConsoleCommandsDeclFnPad32();
+void ConsoleCommandsDeclFnPad33();
 
 
 void __cdecl base_kill(int base_id);
