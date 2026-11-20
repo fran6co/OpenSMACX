@@ -2187,13 +2187,13 @@ void ReportWin::draw_labs() {
             for (v_4 = 0; v_4 < 4; v_4++) {
                 if (Reactor[v_4].preq_tech == tech) {
                     if (!StringTemp[0]) {
-                        strcat(StringTemp, label_get(0x234 / 4));
+                        strcat(StringTemp, StringTable.get(Labels.strings_ptr[0x234 / 4]));
                         say_colon();
                     } else {
                         say_comma();
                     }
                     if (!datalink) {
-                        strcat(StringTemp, StringTable.get(Reactor[v_4].name));
+                        strcat(StringTemp, table_text(Reactor[v_4].name));
                     } else {
                         // Reactor link ids are one-based.
                         DatalinkMain.construct_id(id, 5, v_4 + 1);
@@ -2398,7 +2398,7 @@ void ReportWin::draw_labs() {
                 if (Facility[v_4].preq_tech == tech
                     || Facility[v_4].free_tech == tech) {
                     if (!StringTemp[0]) {
-                        strcat(StringTemp, label_get(0x110 / 4));
+                        strcat(StringTemp, StringTable.get(Labels.strings_ptr[0x110 / 4]));
                         say_colon();
                     } else {
                         say_comma();
@@ -2409,7 +2409,7 @@ void ReportWin::draw_labs() {
                         say_open_paren();
                     }
                     if (!datalink) {
-                        strcat(StringTemp, StringTable.get(Facility[v_4].name));
+                        strcat(StringTemp, table_text(Facility[v_4].name));
                     } else {
                         if (v_4 < 70) {
                             DatalinkMain.construct_id(id, 0xA, v_4);
@@ -3000,14 +3000,14 @@ void ReportWin::draw_energy() {
         StringTemp[0] = 0;
         if (PlayersData[faction].diplo_treaties[other] & 0x10) {
             strcat(StringTemp, "*");
-            strcat(StringTemp, StringTable.get(Labels.strings_ptr[0x604 / 4]));
+            strcat(StringTemp, label_get(0x604 / 4));
             space();
         } else if ((PlayersData[faction].loan_balance[other] != 0
                     && PlayersData[other].sanction_turns != 0)
                    || (PlayersData[other].loan_balance[faction] != 0
                        && PlayersData[faction].sanction_turns != 0)) {
             strcat(StringTemp, "*");
-            strcat(StringTemp, label_get(0x708 / 4));
+            strcat(StringTemp, StringTable.get(Labels.strings_ptr[0x708 / 4]));
             space();
         }
         parse_says(3, StringTemp, -1, -1);
@@ -4408,7 +4408,7 @@ void ReportWin::draw_score() {
             if (total > own) {
                 say_num(own);
                 space();
-                strcat(StringTemp, StringTable.get(Labels.strings_ptr[0xE0C / 4]));
+                strcat(StringTemp, label_get(0xE0C / 4));
                 report_topic_line(this, rect1_, rect1_.left);
                 rect1_.top += field_E268_;
                 StringTemp[0] = 0;
@@ -4428,7 +4428,7 @@ void ReportWin::draw_score() {
             if (item == 7) {
                 if (GameDataStateStorage.fields_.game_state_ & 0x200000) text = label_get(0xE70 / 4);
                 else if (GameDataStateStorage.fields_.game_state_ & 0x400000) text = label_get(0xE88 / 4);
-                else if (PlayersData[faction].flags & 0x100000) text = StringTable.get(Labels.strings_ptr[0x1198 / 4]);
+                else if (PlayersData[faction].flags & 0x100000) text = label_get(0x1198 / 4);
                 else if (!(GameDataStateStorage.fields_.game_state_ & 0x2000)) text = label_get(0xE10 / 4);
                 else text = TextBufferGetPtr;
             } else {
@@ -4665,7 +4665,7 @@ void ReportWin::draw_intel() {
     report_topic_line(this, rect1_, text_x);
     rect1_.top += field_E268_;
     report_intel_label(0x5A0 / 4);
-    if (PlayersData[subject].ai_fight > 0) strcat(StringTemp, StringTable.get(Labels.strings_ptr[0x5A4 / 4]));
+    if (PlayersData[subject].ai_fight > 0) strcat(StringTemp, table_text(Labels.strings_ptr[0x5A4 / 4]));
     else if (PlayersData[subject].ai_fight < 0) strcat(StringTemp, label_get(0x5AC / 4));
     else strcat(StringTemp, label_get(0x5A8 / 4));
     CharUpperA(StringTemp);
@@ -4673,7 +4673,7 @@ void ReportWin::draw_intel() {
     rect1_.top += field_E268_;
     StringTemp[0] = 0;
     strcat(StringTemp, "[");
-    strcat(StringTemp, label_get(0x5B0 / 4));
+    strcat(StringTemp, StringTable.get(Labels.strings_ptr[0x5B0 / 4]));
     CharUpperA(StringTemp);
     say_colon();
     space();
@@ -4796,7 +4796,7 @@ void ReportWin::draw_intel() {
                 space();
             }
             else {
-                if (PlayersData[subject].diplo_treaties[faction] & 0x10000) { strcat(StringTemp, label_get(0x5D0 / 4)); space(); }
+                if (PlayersData[subject].diplo_treaties[faction] & 0x10000) { strcat(StringTemp, StringTable.get(Labels.strings_ptr[0x5D0 / 4])); space(); }
                 strcat(StringTemp, label_get(0x354 / 4));
                 space();
             }
