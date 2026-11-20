@@ -2783,6 +2783,23 @@ Using it
     on_map, getters).
 
   Free inlines written before the first refused site do not move it.
+- **Image refuses a run of late pass-1 sites that ours expands: put the
+  dead spend right before the image's FIRST refused pass-1 site** (high in
+  probe 0x0059F120, 6ae5d5819b, 2026-11-20 par-4). A ceiling-bound or
+  budget-tight giant whose image calls a run of later first-level sites
+  (probe: parse_set, get_name, BasePop::item, BasePop::exec in the
+  accomplice loop 0x005A302B..0x005A30A4) while ours expands them takes a
+  charged dead probe (three branchy one-line ifs on a constant argument,
+  folded to no code) placed immediately before the first site the image
+  refuses: all four flip together and nothing earlier moves (named calls
+  59 -> 52). Placed earlier it refuses sites the image expands (the FRAME
+  popup's start and first item); placed later, between the run and the
+  next refusals (six NetMsg::pop), it moves nothing. So sweep position
+  first (the first refused site, from inlinemap/xjcalls) and count second.
+  Then **re-check every existing stand-in of the function**: the new probe
+  supplies spend an older stand-in was tuned to supply. probe's
+  amphibious-test is_human stand-in measured identical to the raw
+  HUMAN_BIT with the probe in place, every rung and row, and was retired.
 - **A callee is called at an early pass-1 site and expanded at a later one.**
   Pass 1 cannot do that with equal costs, so the called site was a pass-2
   site in the original, inside an inline helper.
@@ -8940,3 +8957,9 @@ a call decision), Console::editor_edit_veh (all three sites; any one
 helper gives 4 -> 7 named-callee distance), StatusWin::draw_active (any
 site: 161 -> 395, calls unchanged: allocation), upgrade's four sites of
 its first label block, and DesignWin::select_special (par-2).
+Update 2026-11-20 (par-4): select_special's row above is stale. Since
+f6fcf7075b its 28 separator sites push the shared texts through
+text-returning inlines (`strcat(StringTemp, f())`, WORKAROUND(inline)),
+and editor_edit_veh, draw_active and upgrade were re-measured with that
+form (2.8, "A shared-COMDAT separator that costs what the raw literal
+costs").
