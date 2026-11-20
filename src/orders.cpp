@@ -1325,9 +1325,9 @@ L_597350:
                         Vehs[veh_id].order = ORDER_NONE;
                         goto done;
                     }
-                    if (faction == ConsoleGlobal.faction_id_
+                    if ((faction == ConsoleGlobal.faction_id_
                             && (NetDaemonNet.action_mode_ & 1)
-                            && break_treaty(faction, owner, 7)) {
+                            && break_treaty(faction, owner, 7)) != 0) {
                         goto done;
                     }
                 }
