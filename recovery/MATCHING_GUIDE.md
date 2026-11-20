@@ -5330,6 +5330,30 @@ result over 64 symbol-counter pads, so none of these is a counter canary.
   (78 -> 68). An image store that a later store of the same field
   overwrites with no read between them is the trace of an address-taking
   inline (`rect_height`, `rect_width`, `offset_rect`) in the source.
+- **Chained rectangles: an edge computed with `add r,K` / `lea r2,[r+K]`
+  from a register that holds another rectangle's edge means the source wrote
+  that edge from the other rectangle** (par-2 2026-11-20, ReportWin::draw_ops
+  0x0049D540, 233 -> 170). The image forms `icon.top` as `lower.top + 3`
+  (lower.top = split + 2 already in a register), `text.left = icon.right + 2`
+  and `text.top = icon.top` from registers; ours, written with every edge as
+  `split + k` from one shared value, folded the offsets onto split and
+  produced a different register and slot map. Write each rectangle from the
+  previous one (`RECT lower = {l, upper.bottom + 2, ...}; RECT icon = {l + 3,
+  lower.top + 3, ...}; RECT text = {icon.right + 2, icon.top, ...,
+  icon.bottom}`): VC6 /Og does not reassociate the folded `split + 5` back into
+  `(split + 2) + 3` once the chain is broken, nor break a written chain. The
+  counter-case on the same function: `icon.right = icon.left + 40` written
+  inside the initializer or via `set_rectangle_dimensions` (right = x + w) is
+  worse (170 -> 194/241), because the image's `add eax,0x28` there is a
+  register reuse of `left + 3`, not a source chain. Screen:
+  `analysis/chainscan.py [unit ...] [--kind f|m|x]` lists, per non-exact
+  function, store -> `+K` -> store chains present on one side only. Tree-wide
+  (2026-11-20) it lists 8 functions; the frame-to-frame ones besides
+  draw_ops (draw_labs, AlphaSave::init, NetWin::exec, draw_farm,
+  DiploWin::exec) are slot or register-reuse differences on inspection, not
+  missing source chains (draw_labs' `field_A34_ = field_A2C_ + 0xAE` is
+  already chained in the source; ours reloads A2C). Read each listed chain
+  against the source before rewriting.
 - **Two same-type locals in disjoint block scopes share one slot**
   (on_scrolled's two shifted rectangles in a 0x10 frame).
 - **Slot sharing follows the source's variable structure: read the image's
