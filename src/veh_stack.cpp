@@ -1218,7 +1218,7 @@ Purpose: Board the eligible units stacked with the specified transport or carrie
          anything; mode 1 sorts the stack first and lifts each boarder plus the subject to the
          off-map holding square; mode 2+ makes a single pass and short-circuits to the lift when
          the subject already sits on a faction-owned base.
-// ORIGINAL: 0x005B8EE0 ?stack_veh@@YAHHH@Z 0x005B8EE0-0x005B950F
+// ORIGINAL: 0x005B8EE0 ?stack_veh@@YAHHH@Z 0x005B8EE0-0x005B950F BYTE_EXACT
 // TRIED: by 1 (17 vs image's 16) - two `veh_top(veh_id)` calls (the mode-0 refresh loop and the per-pass boarding loop's start index) hand-inlined, matching stack_fix's precedent, and `sleep(i)` forced to a real call via a new `sleep_call` forwarder in veh.h/veh.cpp (its only other reference is the inline body - under /O2 `sleep(i)` folds to 3 field writes, but the image calls it for real at this one site). call_diff now agrees (0 disagreeing, was MORE by 1). This is a 472-instruction function; the remaining gap is per-branch register/scheduling noise not chased further at this budget.
 // SUPERSEDED: sleep now has a separate ordinary mapped owner in
 // vehicle_orders.cpp; stack_veh calls it directly.
