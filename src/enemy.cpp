@@ -8577,12 +8577,13 @@ L_578b1c:
         Vehs[veh_id].move_to_ai_type = 'x';
 L_578b26:
 L_578b29:
-        if (best_dir >= 0)
-            goto L_578da8;
+        if (best_dir < 0) {
 L_578b34:
-        Vehs[veh_id].state &= ~0x10000;
-        Vehs[veh_id].order = 0;
-        goto L_578f46;
+            Vehs[veh_id].state &= ~0x10000;
+            Vehs[veh_id].order = 0;
+            goto L_578f46;
+        }
+        goto L_578da8;
     }
     if (stay) {
         best_dir = -1;
