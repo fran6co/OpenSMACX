@@ -52,6 +52,11 @@ an explicit `--pfx` is only needed to pick another lane.
   `CEIL_PROBES` probes to locate the stop. One compile per unit, 18 s tree-wide. MATCHING_GUIDE 2.8 rule 7.
 - `analysis/inline/giant.py N STRIDE [if|store|call] [--charged] [--mixed] [--front]` synthetic giant caller:
   expansions against caller size (the ceiling T, MATCHING_GUIDE 2.8 rule 7).
+- `analysis/labelscan.py [--from FEALL.json] [unit:addr ...] [--moved] [--json F]` label-placement screen
+  (MATCHING_GUIDE 3.7 "Label block placement"): per goto label, the last reaching site, its claiming form, the
+  predicted placement and the source line laid before the label block in ours and in the image (found through the
+  image targets of our goto jumps); `MOVE` = different predecessor. 2 min over the non-exact set; the predecessor line
+  is the listing's attribution, so a tail-duplicated return reads as the shared return's line.
 - `objdis.py <unit> <src> <addr>` raw listing of our function with real jump targets.
 - `objdis.py <unit> <src> <addr>` raw listing of our function with real jump targets (unit as `picktech`, `picktech.cpp`,
   `src/picktech.cpp`, or a basename found in a subdirectory; lane FE_PFX_BASE).

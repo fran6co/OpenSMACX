@@ -8822,11 +8822,16 @@ Counters and tie arms (par-5 2026-11-20, councwin)
   form; when ours lays the label after its last site, rewrite that site
   (e.g. `if (x < 0) goto fail; S` -> `if (x >= 0) { S } else goto fail;`).
   Applied: proposal_menu's commlink `FA5C < 0` site (85 -> 78 rows, `fail:`
-  back at the ATTACK fall-through). Open: there `done:` then goes to the end
-  of the function (after the final return) although its last site is a
+  back at the ATTACK fall-through). `done:` then went to the end of the
+  function (after the final return) although its last site is a
   non-claiming `||` goto; the probe reproduces it (d2, e1-e7) only when the
   fail site is nested in an `if (c == 13) { ... }` whose false edge joins at
   the done site (k1/k3, without that nesting or without fail:, keep it).
+  Un-nesting it fixes it: `if (c != 13) { goto skip; } ... skip:` keeps
+  done: at its fall-through (proposal_menu 78 -> 1 rows). An if-block
+  wrapping a fail site whose false edge joins the label's last site is the
+  form to remove; an empty then-arm (`if (!f()) {} else goto L;`) is not a
+  non-claiming site (shoot 0x00500560: no change).
   upgrade_prototype: our last site is the no_energy `if (set_flag && ...)
   goto fail;` (claims; 27 rows, one extra `ret`); every rewrite of those
   sites tried (else-goto, `||` else, nested, returns, no_energy inline or
