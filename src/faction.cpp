@@ -4156,22 +4156,21 @@ void __cdecl make_gift(int giver, int receiver) {
         gift_result_key[0] = 0;
         strcat(gift_result_key, "BASEGIFT");
         if (favored) {
-            const BOOL existing_pact_or_treaty =
-                has_treaty(receiver, giver, DTREATY_WANT_REVENGE | DTREATY_UNK_40) != 0;
-            const char *suffix = (existing_pact_or_treaty ||
-                                  great_satan(giver, 0) != 0) ? "2" : "1";
-            strcat(gift_result_key, suffix);
+            if (has_treaty(receiver, giver, DTREATY_WANT_REVENGE | DTREATY_UNK_40)
+                || great_satan(giver, 0)) {
+                strcat(gift_result_key, "2");
+            } else {
+                strcat(gift_result_key, "1");
+            }
 
             net_treaty_off(giver, receiver, 0x60, 0);
-            int &gift_counter = PlayersData[giver].diplo_unk1[receiver];
-            if (gift_counter < PlayersData[giver].integrity_blemishes)
-                gift_counter = diplo_add(gift_counter, 1);
+            if (PlayersData[giver].diplo_unk1[receiver] < PlayersData[giver].integrity_blemishes)
+                PlayersData[giver].diplo_unk1[receiver]++;
         }
 
-        int &gift_counter = PlayersData[giver].diplo_unk1[receiver];
-        if (gift_counter < PlayersData[giver].integrity_blemishes ||
+        if (PlayersData[giver].diplo_unk1[receiver] < PlayersData[giver].integrity_blemishes ||
             great_satan(giver, 0) != 0 || IsMultiplayerNet != 0) {
-            gift_counter = diplo_add(gift_counter, 1);
+            PlayersData[giver].diplo_unk1[receiver]++;
         }
 
         parse_says(0, get_title(giver), -1, -1);
@@ -4179,10 +4178,8 @@ void __cdecl make_gift(int giver, int receiver) {
         net_cede_base(DiploScratchFA30, receiver, 1);
 
         diplo_unlock();
-        char &patience = PlayersData[receiver].diplo_patience[giver];
-        patience = static_cast<char>(static_cast<unsigned char>(patience) + 0xFE - favored);
-        Sprite *portrait = FactionDiplomacyPortraits[receiver];
-        X_pops("BASEGIFT", 0x100000, portrait, pop_wait);
+        PlayersData[receiver].diplo_patience[giver] += -2 - favored;
+        X_pops("BASEGIFT", 0x100000, FactionDiplomacyPortraits[receiver], pop_wait);
     }
 
 }
@@ -5045,13 +5042,13 @@ void __cdecl propose_trade_maps(int faction_id, int faction_id_with) {
         parse_says(0, Players[faction_id_with].adj_name_faction, -1, -1);
 // Map-trade refusal and proposal use separate script topics.
 // Bounds cover the literal payload, not surrounding allocation or lifetime.
-// RECOVERY_LITERAL: v1 0x0068DA60 0x0068DA68 $SG64442 0x00545D60
+// RECOVERY_LITERAL: v1 0x0068DA60 0x0068DA68 $SG64437 0x00545D60
         X_pops("REJMAPS", 0x100000,
                      FactionDiplomacyPortraits[faction_id_with], pop_wait);
         return;
     }
 
-// RECOVERY_LITERAL: v1 0x0068DA68 0x0068DA72 $SG64443 0x00545D60
+// RECOVERY_LITERAL: v1 0x0068DA68 0x0068DA72 $SG64438 0x00545D60
     X_pops("TRADEMAPS", 0x100000,
                  FactionDiplomacyPortraits[faction_id_with], pop_wait);
 
@@ -5086,17 +5083,17 @@ void __cdecl demands_withdrawal(int faction_id, int faction_id_with) {
 
     switch (response) {
     case 0:
-// RECOVERY_LITERAL: v1 0x0068D68C 0x0068D697 $SG64457 0x0053E4C0
+// RECOVERY_LITERAL: v1 0x0068D68C 0x0068D697 $SG64452 0x0053E4C0
         NetMsgPrimary.pop("WITHSUNYES", 5000, 0, 0);
         break;
     case 1:
-// RECOVERY_LITERAL: v1 0x0068D680 0x0068D68A $SG64459 0x0053E4C0
+// RECOVERY_LITERAL: v1 0x0068D680 0x0068D68A $SG64454 0x0053E4C0
         NetMsgPrimary.pop("WITHSUNNO", 5000, 0, 0);
         break;
     case 2:
 // The withdrawal response selects the war, refusal or acceptance script topic.
 // Bounds cover the literal payload, not surrounding allocation or lifetime.
-// RECOVERY_LITERAL: v1 0x0068D674 0x0068D67F $SG64461 0x0053E4C0
+// RECOVERY_LITERAL: v1 0x0068D674 0x0068D67F $SG64456 0x0053E4C0
         NetMsgPrimary.pop("WITHSUNWAR", 5000, 0, 0);
         break;
     default:
@@ -7785,11 +7782,11 @@ static int communicate_budget_probe4(int x) {
 }
 // make_a_proposal's string operands, each read from the image's push operand
 // and checked against the literal text in the body (unpooled, one copy each).
-// RECOVERY_LITERAL: v1 0x0068DF20 0x0068DF2B $SG65551 0x0054F420
-// RECOVERY_LITERAL: v1 0x0068DF2C 0x0068DF3A $SG65553 0x0054F420
-// RECOVERY_LITERAL: v1 0x0068DF3C 0x0068DF3E $SG65582 0x0054F420
-// RECOVERY_LITERAL: v1 0x0068DF40 0x0068DF4C $SG65587 0x0054F420
-// RECOVERY_LITERAL: v1 0x0068DF4C 0x0068DF5B $SG65591 0x0054F420
+// RECOVERY_LITERAL: v1 0x0068DF20 0x0068DF2B $SG65546 0x0054F420
+// RECOVERY_LITERAL: v1 0x0068DF2C 0x0068DF3A $SG65548 0x0054F420
+// RECOVERY_LITERAL: v1 0x0068DF3C 0x0068DF3E $SG65577 0x0054F420
+// RECOVERY_LITERAL: v1 0x0068DF40 0x0068DF4C $SG65582 0x0054F420
+// RECOVERY_LITERAL: v1 0x0068DF4C 0x0068DF5B $SG65586 0x0054F420
 // RECOVERY_ASSOCIATED: v1 switch_targets 0x0054F420 0x0054FFAC 0x0054FFD0 0x0054FA67
 // RECOVERY_LITERAL: v2 merged 0x00682820 0x00682822 ??_C@_01FCOA@?5?$AA@ 0x0054F420
 // ORIGINAL: 0x0054F420 ?make_a_proposal@@YAXHHH@Z 0x0054F420-0x0054FFAB;0x0065FD5F-0x0065FF4F BYTE_EXACT
