@@ -3371,6 +3371,36 @@ What the model does not predict (2026-11-19)
   written over an existing say_tech helper is right, the same run
   open-coded overshoots to EH 9), is the only knob fine enough. Caller
   size (stripping `!= 0` tests, accessor spellings) does not move it.
+- **Text helpers per site, jointly with the probe count** (high; 2026-11-20
+  par-1, BaseWin::base_editor_proj 0x0041BBC0, 4f532784dc). Whole-family
+  screens (`spellsweep.py ... ALL:<rule>`) and single-site flips both read
+  "no effect" in base_editor_proj, because each helper site changes the
+  pass-2 room and the dead budget probes were tuned for the raw spelling.
+  Search the sites one by one AND the probe count in the same greedy pass:
+  one option per site (raw / `says` / `say_label` / `clear`, and `exec()`
+  against `exec(0, 0)`), plus one option "k probes" for k = 0..8. The
+  winning state (say_label at the first two owner-status labels, raw
+  elsewhere, probes 4 -> 2) gave the image's unwind map and named call
+  multiset (25 -> 7 rows); neither the helpers nor the probe change alone
+  moves a decision. Tool: a greedy coordinate descent over `sdeck.evaluate`
+  (OPTS = {site: [(label, [(old, new)...]), ...]}, first option current);
+  include every remaining dead probe of the host as its own "count" site.
+- **A ceiling-bound giant's closing teardown that the image calls needs
+  caller size, in a narrow window** (high; 2026-11-20 par-1, order_veh
+  0x005947C0, 2507df4823). order_veh is past rule 7's size stop; ours
+  expanded the closing-brace ??_DStringList where the image calls
+  ??1StringList, while an earlier return (vehicle count) expands it in
+  both. Probes alone cannot separate the two sites (an expanded probe moves
+  the stop for both). What works is a third probe before the vehicle-count
+  return (two -> three) plus plain dead size placed *after the last site
+  that must expand* and before the final return: 22..24
+  `if (0) { order_veh_size_pad = K; }` blocks (marked WORKAROUND(inline);
+  they fold to no code but count as caller size). 21 or fewer leave the
+  closing site expanded; 25 or more refuse the vehicle-count site too. So
+  for a giant whose last teardown is the only wrong decision, sweep a
+  size pad at the end of the body in steps of one block; the window is
+  a few blocks wide, and the real fix is the original's longer tail
+  (the missing statements), which the pad marks.
 - The units are approximate. Costs come from fitted counts, not node
   counts, so a prediction is good to about one expansion. Use it to choose
   the *kind* and *place* of a missing spend, then confirm with fe.
