@@ -3262,13 +3262,6 @@ static const int LandCornerId[12] = {
 // RECOVERY_OBJECT: v2 0x007D3AF0 0x007D3B70 _OceanCornerVerts 0x004632D0
 static Vert OceanCornerVerts[16];
 
-// Terrain sprite draws read the unsigned palette key at original member +8.
-// Use Sprite's actual member rather than walking its object representation.
-static inline unsigned char sprite_transparent(const Sprite &sprite) {
-    return sprite.transparent_index();
-}
-
-
 // Path::get has no out-of-line copy in the image: every caller expands it
 // with the (MapLongitudeBounds >> 1) row stride (0x466793 here, sensors in
 // path.cpp). path.h is included before map.h, so the body is repeated here.
@@ -4599,7 +4592,7 @@ LAB_00465605:;
         }
         if ((local_24 & 0x80000000) != 0 && -8 < a3) {
             g_TER1_SENSOR_ARRAY_SPRITE.draw_dest(
-                buffer, sprite_transparent(g_TER1_SENSOR_ARRAY_SPRITE),
+                buffer, g_TER1_SENSOR_ARRAY_SPRITE.transparent_index(),
                 a9, a10, ShadowColorTable);
         }
     }
@@ -4777,7 +4770,7 @@ nexus_done:
         }
         if ((MapTiles[MapLongitude * a8 + local_14].bit & 0x2000) != 0) {
             g_TER1_MONOLITH_SPRITE.draw_dest(
-                buffer, sprite_transparent(g_TER1_MONOLITH_SPRITE), a9,
+                buffer, g_TER1_MONOLITH_SPRITE.transparent_index(), a9,
                 a10, ShadowColorTable);
         }
     }
