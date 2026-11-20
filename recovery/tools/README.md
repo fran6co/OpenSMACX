@@ -136,6 +136,9 @@ an explicit `--pfx` is only needed to pick another lane.
   instruction and our source line (the values that keep a scratch register busy). Flags loops whose counter class or
   hoist count differs; validated with `--all`: no BYTE_EXACT function flags. Loops whose sizes differ much are paired
   wrongly (a different loop structure): read only pairs with similar `n`.
+  `CTR_GREADS=1` also flags paired loops (sizes within 1/8) whose per-use global reads differ, with the
+  in-loop non-frame store counts of both sides (`greads I/O stores I/O`): the aliasing-blocks-hoist screen
+  (2026-11-20: 27 loops in 17 functions; on reading, pressure or strength reduction, not aliasing).
 - `analysis/rotscan.py <unit> <addr[,..]> [--src ALT] [--track] | --tree [unit ..] [--from FEALL.json] [--all] [--json F]`
   scratch-rotation scan (MATCHING_GUIDE 3.2 S1/S7, 3.7 "Cross-jumping ground truth"; 40 s tree-wide with FE_JOBS=5):
   aligns both listings with eax/ecx/edx abstracted, pairs every scratch load (return-value `mov eax, K` excluded) and

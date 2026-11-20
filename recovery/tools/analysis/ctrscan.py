@@ -26,6 +26,8 @@ from rotscan import own_context
 STEP = re.compile(r'(inc|dec) (e\w\w)$|(add|sub) (e\w\w), (0x[0-9a-f]+|\d+)$|lea (e\w\w), \[(e\w\w) [-+] (0x[0-9a-f]+|\d+)\]$')
 GLOB = re.compile(r'(mov|movsx|movzx) (e\w\w), (?:byte |word |dword )?ptr \[<r>\]$')
 REGS = C.CS[:3] + C.SCR + ('ebp',)
+STORE = re.compile(r'(mov|add|sub|or|and|xor|inc|dec|neg|not|shl|shr|sar) (byte|word|dword) ptr \[')
+GREADS = os.environ.get('CTR_GREADS') == '1'
 
 
 def loops_of(code):
@@ -132,6 +134,8 @@ def analyse(code, lmap=None):
                         hoist.append((r, code.ins[min(w['defs'])][0]))
         d['hoist'] = hoist
         d['greads'] = sum(1 for i in I if '[<r>]' in code.ins[i][1] and not code.ins[i][1].startswith('call'))
+        # in-loop stores to memory other than the frame (global or through a pointer): what may alias a hoist
+        d['stores'] = sum(1 for i in I if STORE.match(code.ins[i][1]) and not re.match(r'\w+ \w+ ptr \[e[bs]p', code.ins[i][1]))
         # scratch registers held across the back edge (live into the header from a latch) in a call-free loop
         held = []
         if callfree:
@@ -191,6 +195,8 @@ def scan(unit, addr, text, c, cod):
             why.append('counter %s/%s' % (ci, co))
         if len(L['hoist']) != len(M['hoist']):
             why.append('hoist %d/%d' % (len(L['hoist']), len(M['hoist'])))
+        if GREADS and L['greads'] != M['greads'] and abs(L['n'] - M['n']) <= max(3, L['n'] // 8):
+            why.append('greads %d/%d stores %d/%d' % (L['greads'], M['greads'], L['stores'], M['stores']))
         if why:
             flagged.append(dict(why=why, img=L, ours=M))
     return dict(addr=addr, unit=unit, sym=r['sym'], diff=r['diff'], exact=r['exact'], lo=r['lo'], loops=len(IL),
