@@ -140,6 +140,12 @@ an explicit `--pfx` is only needed to pick another lane.
   no `call` instruction while the callee is called elsewhere in the function (`MERGED`, with the identifiers of its
   arguments and the lines that kept a copy), and every `goto`. Register allocation runs before tail merging, so each
   merged copy still counts for its operands: compare with candset.py's disputed pairs.
+- `analysis/flagscan.py list [unit ...] [--all]` / `deck <unit> <addr> [--var V] [--write]` MATCHING_GUIDE 3.7 Layout
+  "a flag skipping a shared tail is a goto": lists bool/int locals set to one constant at some sites and tested once by an
+  else-less `if` (form skip/enter; flow=ok when every set site falls straight, through if/else closings or a `break`, into
+  the test, so `goto <v>_past;` preserves behaviour); `deck` scores that rewrite with sdeck against the base. Tree-wide
+  2026-11-20: 33 flags, 3 flow=ok, none moves (good_sensor is already threaded by VC6); the other leads are flags the image
+  keeps (shoot tests `[ebp-0x10]`) or slot/param-home differences (crash_landing keeps tile_y in `[ebp+8]`).
 - `analysis/gotowo.py <unit> <addr>` rule (b) screen: writes each label's tail block (ending in a return or the
   function end) out at subsets of its goto sites and fes every variant (`OUT=` keeps the best). Tree-wide over the
   85 goto functions on 2026-11-19 it found stack_veh 0x005B8EE0 (67 -> 52); farm_click 0x0040A1D0 (269 -> 54) was
