@@ -813,11 +813,14 @@ void __cdecl enemy_strategy(int faction_id) {
             }
             if (!abandon) {
                 if (PlayersData[faction_id].region_base_plan[target_region] > 2) {
-                    if (PlayersData[faction_id].region_base_plan[target_region] == 8
-                        || !is_port(base_id, 0)) {
+                    // 0x5628A8: plan 8 and the non-port case store abandon
+                    // separately; the port test falls through to the flag.
+                    if (PlayersData[faction_id].region_base_plan[target_region] == 8) {
                         abandon = 1;
-                    } else {
+                    } else if (is_port(base_id, 0)) {
                         PlayersData[faction_id].flags |= 0x800;
+                    } else {
+                        abandon = 1;
                     }
                 } else {
                     PlayersData[faction_id].flags &= ~0x800;
