@@ -8693,6 +8693,39 @@ Counters and tie arms (par-5 2026-11-20, councwin)
   the arm last (the layout is local: truncating the function keeps it);
   `int go = A || B; if (go)`, the same `||` returned by an inline helper,
   or `A ? 1 : B` give the image's layout.
+- **Flag tests: threaded or materialised** (par-4 2026-11-20, probe
+  `analysis/probes/flagtest/run.py`, 60 variants). VC6 threads a flag set
+  to a constant on paths and tested at their join (`int shown = 0; if (a)
+  { if (b) { ...; shown = 1; } } if (shown) {...}`): each set jumps into
+  the arm, each miss past it, and the test disappears. Type (int, bool,
+  char), `== 1` / `!= 0`, else-assignments, `++`, a preset 1 cleared on
+  the misses, a label, an enclosing block or switch, `do { } while (0)`,
+  `for (;;) { ... break; }`, an inline helper returning 0/1, a global or a
+  static all thread the same. It is kept, as `mov r,1; test r,r; je` with
+  every miss jumping to the test, only when (a) a real loop sits between
+  the stores and the test: a one-trip `for (i = 0; i < 1; i++)` (or
+  while/do with `i < 1`) is removed after threading and leaves exactly
+  that shape in a scratch register, `xor r,r` hoisted before the first
+  test; (b) a call or other code separates the join from the test, or the
+  flag is read again later (callee-saved register; the FIRST test after
+  the stores is still threaded); (c) volatile or address-taken (reloaded
+  from the slot). A computed bool (`f = m != 0; if (f)`, `c ? (m != 0) :
+  0`) is `setcc; test; je`. Image fingerprint `mov ecx,1; test ecx,ecx;
+  je` after an arm whose misses all land on the test is (a): ReportWin::
+  draw_intel 0x004A2BE9 and social_ai 0x005B4B8B both read
+  `soc_ideology_*[0]` inside a one-trip loop (draw_intel 332 -> 249 rows
+  and the frame, social_ai 256 -> 197 and the frame). `analysis/mattest.py`
+  screens `mat`/`set` and the `||` layouts tree-wide (40 s).
+  Else-if re-tests of the same compare (`if (p == g && v > 0) {} else if
+  (p == g && f())`) are threaded in every probe spelling (inline compare
+  helpers, `!= 0`, `>= 1`); double_cross 0x0050BE1A keeps its re-test, so
+  that one is not explained yet.
+- **An `||` in an else-if chain whose arm the image lays in place
+  (`je arm; je arm; jne else; arm:`) is the same value form**: `(A || B ||
+  C) != 0`, a bool local or `A ? 1 : B` all compile alike (stack_veh
+  0x005B93D8, 10 -> 3 rows). `analysis/orsweep.py <unit.cpp> <addr>
+  [--and]` tries the `!= 0` form at every `||` (and `&&`) test of a
+  function alone, ranked by sdeck's structural key.
 - **Host orientation: the last-copy rule flips to first-copy with
   constructs elsewhere in the function** (probe
   `analysis/probes/xjhost/orient.py`, 2026-11-20 par-5). Three copies of
