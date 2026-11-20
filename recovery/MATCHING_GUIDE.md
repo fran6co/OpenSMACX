@@ -2721,6 +2721,40 @@ Member-address temporaries that live across calls (2026-11-19 par-6, round 11)
     pointer into a fresh register and pushes it before loading `this`; the
     inline's named local loads `this` between).
 
+Home reload of a register-held value (2026-11-20 par-1; standalone probes of
+the mon_* shape, about 45 spellings, plus decks on make_gift)
+
+The shape: the image reads a variable from its home (`mov ebx,[ebp+8]`) where
+VC6 knows a register holds it, ours copies the register. Instances:
+mon_* (eleven producers, the parameter in esi/edi everywhere else, reloaded
+once as the peer arm's default owner), make_gift 0x547DDE (`amount = value`
+right after `value = popup.exec()` was stored to giver's dead home and tested
+in eax; ours `mov ebx,eax`).
+
+- R1 (high). **No plain source form of a copy `x = param` reads the home.**
+  Copy before/after a store, in each arm or hoisted, declaration at the top,
+  after the call, before the if; a local copy of the parameter (int,
+  unsigned, long, enum, `const int &`) used everywhere but the arm; `const`
+  parameter; `f = f;` web splits; a pointer to the parameter; by-value,
+  `const int &` or `int &` inline helpers (scan only, or the whole body);
+  for-init, do-while, inverted if, a ternary: all are a register move, and
+  the extra copy relation also moves the parameter from esi to edx (it is
+  live across no call). A real address-take (`if (0) take(&f)`, a store of
+  `&f` to a global, a call after the last use) makes every use a memory read.
+- R2 (high). **`*(volatile int *)&param` reproduces the image exactly** (ten
+  mon_* producers byte-exact): the parameter keeps its register elsewhere and
+  only that read is memory. It stays as `WORKAROUND(volatile)`.
+- R3 (medium). The same stand-in does not carry to make_gift: a volatile read
+  of the homed `value` gives the reload but drops `amount`'s write-through
+  home (frame 4 smaller, 300 rows). Splitting `value` into selection/divisor
+  variables, `== 0`, a late `amount` declaration and wrapping the rest of the
+  arm in `if (value)` leave the 3 rows or worse.
+- mon_secrets_of_tech 0x00476DA0 (5 rows: the image defines the owner in each
+  arm, eax, reloaded in the peer arm) and mon_facility_built 0x00476FE0 (3
+  rows: the image stores the owner once at the join) stay at their minimum:
+  every arm-defined or join-stored spelling, plain or volatile, moves the
+  year/zero webs (12-47 rows).
+
 Write-through pieces (2026-11-19 par-5 round 14; `regalloc/c_wthru.spec`, about
 300 probes, and a scan of the image)
 
