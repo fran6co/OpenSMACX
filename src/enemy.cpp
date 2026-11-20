@@ -8036,10 +8036,10 @@ L_576d87:;
                 int ax = xrange(tx + VehMoveDeltaX[d]);
                 int ay = ty + VehMoveDeltaY[d];
                 if (!on_map(ax, ay)) continue;
-                if (!(PlayersData[faction_id].flags & PFLAG_STRAT_SEARCH_OBJECTIVES)) {
-                    if (is_known(ax, ay, faction_id)) continue;
-                } else {
+                if (PlayersData[faction_id].flags & PFLAG_STRAT_SEARCH_OBJECTIVES) {
                     if ((map_loc(ax, ay)->bit & 0x100000) && is_known(ax, ay, faction_id)) continue;
+                } else {
+                    if (is_known(ax, ay, faction_id)) continue;
                 }
                 score += 2;
                 if (ay >= 2 && ay < MapLatitudeBounds - 3) score += 4;
