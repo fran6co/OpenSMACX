@@ -6666,7 +6666,7 @@ void Console::editor_natural(int place) {
         // Find the feature's centre tile (landmark code 0) near the cursor;
         // the clearing pass is centred on it.
         for (int probe_offset = 0; probe_offset < limit; ++probe_offset) {
-            const int tile_x = wrap_map_x(x + RadiusOffsetX[probe_offset]);
+            const int tile_x = xrange_inline(x + RadiusOffsetX[probe_offset]);
             const int tile_y = y + RadiusOffsetY[probe_offset];
             if (on_map(tile_x, tile_y)) {
                 const uint32_t bits = map_loc(tile_x, tile_y)->bit2;
