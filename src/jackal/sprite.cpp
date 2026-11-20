@@ -119,15 +119,12 @@ void Sprite::close() {
         free(ppszFileName_);
         ppszFileName_ = 0;
     }
-    // The type byte at 0x08 is deliberately preserved.
-    iSpriteWidth2_ = 0;
-    iSpriteWidth_ = 0;
-    iSpriteHeight_ = 0;
-    iWidth_ = 0;
-    iHeight_ = 0;
-    iLeftOffset_ = 0;
-    iTopOffset_ = 0;
-    fObj1Exists_ = 0;
+    // The type byte at 0x08 is deliberately preserved. One chained statement
+    // (stored right to left, so iSpriteWidth2_ first): written as eight
+    // statements close() is over /Ob2's per-callee auto-inline cap
+    // (MATCHING_GUIDE 2.1), yet the image expands it in extract and load.
+    fObj1Exists_ = iTopOffset_ = iLeftOffset_ = iHeight_ = iWidth_ = iSpriteHeight_
+        = iSpriteWidth_ = iSpriteWidth2_ = 0;
 }
 
 /*
@@ -212,31 +209,9 @@ int Sprite::extract(Buffer *buffer, int transparent, int left, int top,
     // the `return 3` tail with the four guards further down. NESTED, not `||`:
     // the nesting is what ends `buffer`'s live range at the test.
     if ((buffer != 0 && buffer->get_data() != 0) != 0) {
-        // Free the previous contents exactly as Sprite::close opens: the pixel
-        // block is only owned, accounted, and released while the borrowed flag is
-        // clear, and the image re-tests `pcBits_` before the free.
-        if (fObj1Exists_ == 0 && pcBits_ != 0) {
-            SpriteMemoryUsed = static_cast<int>(
-                static_cast<uint32_t>(SpriteMemoryUsed)
-                - static_cast<uint32_t>(iSpriteHeight_)
-                      * static_cast<uint32_t>(iSpriteWidth_));
-            if (pcBits_ != 0) {
-                free(pcBits_);
-            }
-            pcBits_ = 0;
-        }
-        if (ppszFileName_ != 0) {
-            free(ppszFileName_);
-            ppszFileName_ = 0;
-        }
-        iSpriteWidth2_ = 0;
-        iSpriteWidth_ = 0;
-        iSpriteHeight_ = 0;
-        iWidth_ = 0;
-        iHeight_ = 0;
-        iLeftOffset_ = 0;
-        iTopOffset_ = 0;
-        fObj1Exists_ = 0;
+        // Sprite::close, expanded here by /Ob2 (0x005E39C4..0x005E3A22 is its
+        // body instruction for instruction).
+        close();
 
         if (width == 0) {
             return 3;
@@ -10509,30 +10484,8 @@ int Sprite::save(const char *filename) {
 // 0x006283E0 (dtor) 0x006287C0 (close) 0x00644EF2 (free) 0x00645930 (memcpy).
 int Sprite::load(const char *filename) {
     Filemap fm;
-    if (fObj1Exists_ == 0 && pcBits_ != 0) {
-        SpriteMemoryUsed = static_cast<int>(
-            static_cast<uint32_t>(SpriteMemoryUsed)
-            - static_cast<uint32_t>(iSpriteHeight_)
-                  * static_cast<uint32_t>(iSpriteWidth_));
-        // close()'s second test of the same pointer, kept: the zero store
-        // sits outside the inner guard in the image as well.
-        if (pcBits_ != 0) {
-            free(pcBits_);
-        }
-        pcBits_ = 0;
-    }
-    if (ppszFileName_ != 0) {
-        free(ppszFileName_);
-        ppszFileName_ = 0;
-    }
-    iSpriteWidth2_ = 0;
-    iSpriteWidth_ = 0;
-    iSpriteHeight_ = 0;
-    iWidth_ = 0;
-    iHeight_ = 0;
-    iLeftOffset_ = 0;
-    iTopOffset_ = 0;
-    fObj1Exists_ = 0;
+    // Sprite::close, expanded by /Ob2 as in extract.
+    close();
     const SpriteFileHeader *header = static_cast<const SpriteFileHeader *>(
         fm.open(filename, 1));
     if (header == 0) {
