@@ -3304,13 +3304,7 @@ void ReportWin::draw_ops() {
         field_C0F8_ = 0;
     }
     if (field_E270_ != 0) {
-        field_C108_ = rows - 1;
-        field_C0FC_ = field_C100_ = 0;
-        field_C104_ = PlayersData[faction].current_num_bases - 1;
-        scroll_.set_range(0, PlayersData[faction].current_num_bases - 1);
-        scroll_.paging_ = field_C108_;
-        scroll_.set_pos(field_C0FC_);
-        field_E270_ = 0;
+        UNK1(0, 0, PlayersData[faction].current_num_bases - 1, rows - 1);
     }
     spot_.kill_type(0);
     spot_.reset_count();
@@ -3688,14 +3682,7 @@ void ReportWin::draw_projects() {
         field_C0F8_ = 0;
     }
     if (field_E270_ != 0) {
-        field_C0FC_ = 0;
-        field_C100_ = 0;
-        field_C104_ = half;
-        field_C108_ = rows - 1;
-        scroll_.set_range(0, half);
-        scroll_.paging_ = field_C108_;
-        scroll_.set_pos(field_C0FC_);
-        field_E270_ = 0;
+        UNK1(0, 0, half, rows - 1);
         draw_projects();
     }
 
@@ -4293,14 +4280,7 @@ void ReportWin::draw_security() {
         field_C0F8_ = 0;
     }
     if (field_E270_ != 0) {
-        field_C108_ = rows - 1;
-        field_C0FC_ = 0;
-        field_C100_ = 0;
-        field_C104_ = last_row;
-        scroll_.set_range(0, last_row);
-        scroll_.set_paging(field_C108_);
-        scroll_.set_pos(field_C0FC_);
-        field_E270_ = 0;
+        UNK1(0, 0, last_row, rows - 1);
     }
     if (last_row + 1 == 0) return;
     last_row = -1;
