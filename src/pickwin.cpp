@@ -187,18 +187,13 @@ struct PickWinListAccess : ListBox {
 // - 0x488A17..0x488A30 reads width, x and height, stores x + width + 1 and
 //   only then reads y for the same rectangle: the advanced x is one argument
 //   of set_rectangle_dimensions, produced by an inline that takes the width.
-//   Written in place (`field_A14_ += field_A1C_ + 1` as the argument) or with
+//   Written in place (`cursor_.x += cursor_.width + 1` as the argument) or with
 //   the +1 at the call site the image is not reproduced (162 and 129 rows
 //   against 92).
-// - 0x488E0E..0x488E26 reads both edges before either store: set_pos(x, y).
-// Names and owner unknown; the other windows with fields at 0xA14 show no
-// site of either shape (PrefWin uses those words as page state).
+// Name and owner unknown; the other windows with fields at 0xA14 show no
+// site of this shape (PrefWin uses those words as page state).
 static inline int pickwin_next_x(PickWin *window, int width) {
-  return window->field_A14_ += width + 1;
-}
-static inline void pickwin_set_pos(PickWin *window, int x, int y) {
-  window->field_A14_ = x;
-  window->field_A18_ = y;
+  return window->cursor_.x += width + 1;
 }
 
 // ORIGINAL: 0x004887A0 ?init@PickWin@@QAEXP6AXH@ZHH@Z 0x004887A0-0x0048965F;0x00657F70-0x00657F85
@@ -255,59 +250,66 @@ void PickWin::init(void (__cdecl *callback)(int), int mode, int faction) {
   // whatever the original read it through. The second and third rectangles
   // go through pickwin_next_x (above).
   int h = 0x5A;
-  field_A1C_ = 0x102;
-  field_A20_ = h;
-  field_A18_ = 1;
+  cursor_.width = 0x102;
+  cursor_.height = h;
+  cursor_.y = 1;
   for (i = 0; i < 3; ++i) {
-    set_rectangle_dimensions(&area, field_A14_ = 1, field_A18_, field_A1C_, h);
+    set_rectangle_dimensions(&area, cursor_.x = 1, cursor_.y, cursor_.width, h);
     sprites1_[i].extract(&source, WinFillColour, &area, 0);
-    set_rectangle_dimensions(&area, pickwin_next_x(this, field_A1C_), field_A18_, field_A1C_,
-                             field_A20_);
+    set_rectangle_dimensions(&area, pickwin_next_x(this, cursor_.width), cursor_.y, cursor_.width,
+                             cursor_.height);
     sprites2_[i].extract(&source, WinFillColour, &area, 0);
-    set_rectangle_dimensions(&area, pickwin_next_x(this, field_A1C_), field_A18_, field_A1C_,
-                             field_A20_);
+    set_rectangle_dimensions(&area, pickwin_next_x(this, cursor_.width), cursor_.y, cursor_.width,
+                             cursor_.height);
     sprites3_[i].extract(&source, WinFillColour, &area, 0);
-    h = field_A20_;
-    field_A18_ += h + 1;
+    h = cursor_.height;
+    cursor_.y += h + 1;
   }
 
-  field_A14_ = 1;
-  field_A1C_ = 0x10;
-  field_A20_ = h = 0x10;
-  field_A18_ = 0x139;
+  cursor_.x = 1;
+  cursor_.width = 0x10;
+  cursor_.height = h = 0x10;
+  cursor_.y = 0x139;
   for (i = 0; i < 3; ++i) {
-    set_rectangle_dimensions(&area, field_A14_, field_A18_, field_A1C_, h);
+    set_rectangle_dimensions(&area, cursor_.x, cursor_.y, cursor_.width, h);
     sprites4_[i].extract(&source, WinFillColour, &area, 0);
-    h = field_A20_;
-    field_A18_ += h + 1;
+    h = cursor_.height;
+    cursor_.y += h + 1;
   }
-  int x = field_A14_;
-  sprite5_.extract(&source, WinFillColour, x, field_A18_, 7, 0xD, 0);
+  int x = cursor_.x;
+  sprite5_.extract(&source, WinFillColour, x, cursor_.y, 7, 0xD, 0);
 
-  field_A1C_ = 0x316;
-  field_A20_ = 0x12C;
-  field_A14_ = 5;
-  field_A18_ = 5;
+  cursor_.width = 0x316;
+  cursor_.height = 0x12C;
+  cursor_.x = 5;
+  cursor_.y = 5;
   GraphicWin::init(5, 5, 0x316, 0x12C, PickWinCaptionBuffer,
                    0x01000000, 0, 0, 0);
   Buffer::set_font(MainInterfaceGlobal.primary_font(), 0, 0, 0);
   Buffer::set_text_color(TextColourTable[68], TextColourTable[69], 1, 1);
 
-  set_rectangle_dimensions(&frame_rect_, 0, 0, field_A1C_, field_A20_);
+  set_rectangle_dimensions(&frame_rect_, 0, 0, cursor_.width, cursor_.height);
   header_panel_rect_ = frame_rect_;
   expand_rect(&header_panel_rect_, -4, -4);
   header_panel_rect_.bottom = header_panel_rect_.top + 0x1E;
-  field_A14_ = header_panel_rect_.left + 1;
-  field_A18_ = header_panel_rect_.bottom + 4;
-  field_A20_ = 0x16;
-  field_A1C_ = (header_panel_rect_.right - header_panel_rect_.left - 6) / 3;
-  set_rectangle_dimensions(&field_625C_rect_, field_A14_, field_A18_, 0x102, 0x5A);
-  set_rectangle_dimensions(&field_626C_rect_, field_625C_rect_.right + 2, field_A18_, 0x102, 0x5A);
-  set_rectangle_dimensions(&field_627C_rect_, field_626C_rect_.right + 2, field_A18_, 0x102, 0x5A);
+  cursor_.x = header_panel_rect_.left + 1;
+  cursor_.y = header_panel_rect_.bottom + 4;
+  // WORKAROUND(decl): `c` stands in for whatever reached the cursor through
+  // a pointer in the original (an inline taking it, most likely). The image
+  // reloads x and y after the width/height stores (0x00488CC4, 0x00488CD0),
+  // reloads x after the y store below (0x00488E42) and keeps y in a register,
+  // which is what mixing the member and pointer forms produces; all-member
+  // or all-pointer spellings forward or reload everything.
+  PickWinCursor *c = &cursor_;
+  c->width = (rect_width(&header_panel_rect_) - 6) / 3;
+  c->height = 0x16;
+  set_rectangle_dimensions(&field_625C_rect_, c->x, c->y, 0x102, 0x5A);
+  set_rectangle_dimensions(&field_626C_rect_, field_625C_rect_.right + 2, cursor_.y, 0x102, 0x5A);
+  set_rectangle_dimensions(&field_627C_rect_, field_626C_rect_.right + 2, cursor_.y, 0x102, 0x5A);
 
-  field_A14_ = header_panel_rect_.left + 0x159;
+  cursor_.x = header_panel_rect_.left + 0x159;
   set_rectangle_dimensions(&list_area_rect_, header_panel_rect_.left + 0x15B, field_625C_rect_.bottom + 3,
-                           header_panel_rect_.right - header_panel_rect_.left - 0x15E, 0x88);
+                           rect_width(&header_panel_rect_) - 0x15E, 0x88);
   expand_rect(&list_area_rect_, -3, -3);
   offset_rect(&list_area_rect_, -0x12, 0);
 
@@ -317,19 +319,24 @@ void PickWin::init(void (__cdecl *callback)(int), int mode, int faction) {
                              i + list_area_rect_.top, 0x10, 0x10);
   }
 
-  pickwin_set_pos(this, header_panel_rect_.left + 1, list_area_rect_.bottom + 7);
-  field_A1C_ = static_cast<int>(field_A1C_) * 3 / 4 - 1;
-  set_rectangle_dimensions(&field_9220_rect_, field_A14_, field_A18_, field_A1C_, field_A20_);
-  set_rectangle_dimensions(&field_9210_rect_, field_9220_rect_.right + 2, field_A18_, field_A1C_, field_A20_);
-  set_rectangle_dimensions(&field_9260_rect_, field_9210_rect_.right + 2, field_A18_, field_A1C_, field_A20_);
-  set_rectangle_dimensions(&field_9230_rect_, field_9260_rect_.right + 2, field_A18_, field_A1C_, field_A20_);
+  // WORKAROUND(decl): both edges are read before either store (0x00488E0E..
+  // 0x00488E1A); x goes through the pointer, y through the member.
+  int px = header_panel_rect_.left + 1;
+  int py = list_area_rect_.bottom + 7;
+  c->x = px;
+  cursor_.y = py;
+  cursor_.width = cursor_.width * 3 / 4 - 1;
+  set_rectangle_dimensions(&field_9220_rect_, cursor_.x, cursor_.y, cursor_.width, cursor_.height);
+  set_rectangle_dimensions(&field_9210_rect_, field_9220_rect_.right + 2, cursor_.y, cursor_.width, cursor_.height);
+  set_rectangle_dimensions(&field_9260_rect_, field_9210_rect_.right + 2, cursor_.y, cursor_.width, cursor_.height);
+  set_rectangle_dimensions(&field_9230_rect_, field_9260_rect_.right + 2, cursor_.y, cursor_.width, cursor_.height);
 
-  field_A1C_ = 0xD8;
-  field_A18_ = list_area_rect_.top - 2;
-  field_A14_ = header_panel_rect_.left + 2;
-  set_rectangle_dimensions(&field_9240_rect_, field_A14_, field_A18_, field_A1C_, field_A20_);
-  field_A18_ += 0x19;
-  set_rectangle_dimensions(&field_9250_rect_, field_A14_, field_A18_, field_A1C_, field_A20_);
+  cursor_.width = 0xD8;
+  cursor_.x = header_panel_rect_.left + 2;
+  cursor_.y = list_area_rect_.top - 2;
+  set_rectangle_dimensions(&field_9240_rect_, cursor_.x, cursor_.y, cursor_.width, cursor_.height);
+  cursor_.y += 0x19;
+  set_rectangle_dimensions(&field_9250_rect_, cursor_.x, cursor_.y, cursor_.width, cursor_.height);
 
   for (i = 0; i < 7; ++i) {
     RECT &button = picker_button_rects_[i];

@@ -36,6 +36,20 @@
   * Ordinary C++ construction/destruction owns their lifetimes; measured class
   * footprint does not establish the original complete allocation extent.
   */
+// WORKAROUND(type): name and member names are descriptive. init's layout
+// cursor at 0xA14..0xA20 (x, y, width, height) is one aggregate: init reaches
+// it both as members and through a pointer to it, and VC6 neither forwards
+// stored values between the two forms nor keeps the dead stores out (stores
+// kept and reloaded at 0x00488C93..0x00488CD0 and 0x00488E1A..0x00488E42).
+// Four separate ints give no pointer form. The original's type is unknown
+// (a RECT used as x/y/w/h compiles the same).
+struct PickWinCursor {
+  int x;       // 0x0
+  int y;       // 0x4
+  int width;   // 0x8
+  int height;  // 0xC
+};
+
 class PickWin : public GraphicWin {
  public:
   PickWin();
@@ -87,10 +101,7 @@ class PickWin : public GraphicWin {
   // Extent only - this class carries no size assertion, and the bound is a floor.
   // 393 member(s) from the IDA database, 18 named; it starts a member at 0xA14, which is where src/ ends.
 
-  uint32_t field_A14_;  // 0xA14
-  uint32_t field_A18_;  // 0xA18
-  uint32_t field_A1C_;  // 0xA1C
-  uint32_t field_A20_;  // 0xA20
+  PickWinCursor cursor_;  // 0xA14..0xA24
   // Native construction is GraphicWin base, Popup, string/control storage,
   // sprites, ListBox, remaining controls, then ButtonGroup.
   Popup popup_;  // 0xA24
