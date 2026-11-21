@@ -36,6 +36,14 @@ add_library(jackal STATIC
     env_open.cpp filebox.cpp texheap.cpp ddinit.cpp video.cpp cursor.cpp
     trig.cpp net_session_picker.cpp video_queue.cpp)
 target_include_directories(jackal PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}")
+# JACKAL.LIB was built with the VC6 SP3 back end (build 8447), the game with
+# RTM (8168): the image's Rich header has 66 C++ objects at 8447 beside 126 at
+# 8168, and a paired whole-tree screen (2026-11-21) lost no Jackal function
+# under SP3 and gained JackalVoiceRx::add_player 0x00633180, while the
+# application lost 30. The wrapper's explicit recipe option selects the SP3
+# BIN (recovery/environment/wine.py, ~/opt/vc6sp3/PROVENANCE.md).
+get_target_property(_jackal_sources jackal SOURCES)
+set_property(SOURCE ${_jackal_sources} APPEND PROPERTY COMPILE_OPTIONS "--compiler=vc6sp3")
 target_compile_definitions(jackal PRIVATE $<$<CONFIG:Debug>:BUILD_DEBUG>)
 target_compile_options(jackal PRIVATE /W4 "--repro-root=${PROJECT_SOURCE_DIR}")
 # Firaxis's Caviar wrapper (caviar.cpp) drives the AnimaTek library and

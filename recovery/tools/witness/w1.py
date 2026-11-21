@@ -47,7 +47,9 @@ def msvc_name(sym):
 
 
 def norm(name):
-    return name.lower()
+    # C runtime names differ only in leading underscores (MSVC `__itoa`,
+    # CodeWarrior's MSL `itoa`).
+    return name.lower().lstrip('_')
 
 
 def markers(units):

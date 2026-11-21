@@ -16,10 +16,13 @@ def ordinary_frontend(monkeypatch, tmp_path):
     monkeypatch.setattr(wine, "ML_ROOT", tmp_path / "masm")
     # So is the VC5 compiler that builds the Caviar library objects.
     monkeypatch.setattr(wine, "VC5_ROOT", tmp_path / "vc5")
+    # And the VC6 SP3 back end that builds the Jackal library objects.
+    monkeypatch.setattr(wine, "VC6SP3_ROOT", tmp_path / "vc6sp3")
 
 
 def vc5(tmp_path):
-    return {"compiler-vc5": str(tmp_path / "vc5" / "BIN")}
+    return {"compiler-vc5": str(tmp_path / "vc5" / "BIN"),
+            "compiler-vc6sp3": str(tmp_path / "vc6sp3" / "BIN")}
 
 
 def assembler(tmp_path):

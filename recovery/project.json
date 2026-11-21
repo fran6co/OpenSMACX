@@ -127,7 +127,8 @@
       "VC6_INCLUDE",
       "VC6_LIB",
       "ML_ROOT",
-      "VC5_ROOT"
+      "VC5_ROOT",
+      "VC6SP3_ROOT"
     ]
   },
   "compiler": {
@@ -167,7 +168,8 @@
       "CPLUS_INCLUDE_PATH",
       "ML_ROOT",
       "VC5_ROOT",
-      "VC5_PREFIX"
+      "VC5_PREFIX",
+      "VC6SP3_ROOT"
     ]
   },
   "measurement": {

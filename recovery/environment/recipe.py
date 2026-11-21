@@ -92,8 +92,9 @@ def invocation(entry: CompilationEntry) -> list[str]:
             continue
         if word.startswith("--compiler="):
             # The unit's compiler is part of its recipe (VC5 for Caviar's
-            # library objects); the wrapper validates the choice.
-            if word != "--compiler=vc5":
+            # library objects, the VC6 SP3 back end for Jackal's); the
+            # wrapper validates the choice.
+            if word not in ("--compiler=vc5", "--compiler=vc6sp3"):
                 raise ValueError("unsupported explicit compiler selection")
             kept.append(word)
             continue

@@ -47,13 +47,23 @@ ML_ROOT = Path(os.environ.get("ML_ROOT", Path.home() / "opt" / "masm" / "6.11d")
 VC5_ROOT = Path(os.environ.get("VC5_ROOT", Path.home() / "opt" / "vc5"))
 VC5_PREFIX = Path(os.environ.get("VC5_PREFIX", VC5_ROOT / "wineprefix"))
 TOOLS["cl5"] = "CL.EXE"
-COMPILER_OPTIONS = {"--compiler=vc5": "cl5"}
-ROOT_VARIABLES = {"ml": "ML_ROOT", "cl5": "VC5_ROOT"}
+# Jackal (JACKAL.LIB) was compiled with the VC6 SP3 back end: the image's Rich
+# header has 66 C++ objects at build 8447 beside 126 at RTM 8168, and a paired
+# whole-tree screen (2026-11-21) lost no Jackal function under SP3 while the
+# application lost 30. Its recipes carry `--compiler=vc6sp3`, which selects the
+# SP3 BIN (same CL.EXE driver, SP3 C1/C1XX/C2) with the unchanged VC6 SDK and
+# prefix. ~/opt/vc6sp3/PROVENANCE.md pins it.
+VC6SP3_ROOT = Path(os.environ.get("VC6SP3_ROOT", Path.home() / "opt" / "vc6sp3"))
+TOOLS["cl6sp3"] = "CL.EXE"
+COMPILER_OPTIONS = {"--compiler=vc5": "cl5", "--compiler=vc6sp3": "cl6sp3"}
+ROOT_VARIABLES = {"ml": "ML_ROOT", "cl5": "VC5_ROOT", "cl6sp3": "VC6SP3_ROOT"}
 
 
 def tool_executable(tool: str) -> Path:
     if tool == "ml":
         return ML_ROOT / "bin" / TOOLS[tool]
+    if tool == "cl6sp3":
+        return VC6SP3_ROOT / "BIN" / TOOLS[tool]
     return (VC5_ROOT if tool == "cl5" else VC6_ROOT) / "BIN" / TOOLS[tool]
 
 

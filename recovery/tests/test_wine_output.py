@@ -195,3 +195,17 @@ def test_assembler_environment_clears_ml_options(monkeypatch):
     result = wine.run_tool([sys.executable, "-c", "import os; print(repr(os.environ.get('ML')))"],
                            explicit_assembler=True)
     assert result.stdout.strip() == "''"
+
+
+def test_explicit_compiler_selection_names_vc5_and_vc6_sp3():
+    from recovery.environment import wine
+    assert wine.take_compiler("cl", ["/c", "--compiler=vc6sp3", "a.cpp"]) == ("cl6sp3", ["/c", "a.cpp"])
+    assert wine.take_compiler("cl", ["--compiler=vc5", "a.cpp"]) == ("cl5", ["a.cpp"])
+    assert wine.take_compiler("cl", ["a.cpp"]) == ("cl", ["a.cpp"])
+    assert wine.tool_executable("cl6sp3") == wine.VC6SP3_ROOT / "BIN" / "CL.EXE"
+    import pytest
+    for bad in (["--compiler=vc6sp3", "--compiler=vc5"], ["--compiler=sp4"]):
+        with pytest.raises(ValueError):
+            wine.take_compiler("cl", bad)
+    with pytest.raises(ValueError):
+        wine.take_compiler("link", ["--compiler=vc6sp3"])
