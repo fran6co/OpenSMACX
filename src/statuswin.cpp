@@ -1295,7 +1295,7 @@ void StatusWin::draw(int tile_x, int tile_y, int city_index, int unit_index,
 // expands both proto_power reactor ranges and calls veh_health's two ranges
 // (0x4B5A1A, 0x4B5A39); written directly all four expand, and with the
 // whole percentage behind one helper all four are called (since the
-// separators became header inlines, 38ed1c55a8). Only this level gives the
+// separators became header inlines, 36c2f5c31a). Only this level gives the
 // image's split (fe 418 -> 60 rows). Name and owner are unknown.
 static inline int status_damage_taken(int veh_id) {
     return proto_power(veh_id) - veh_health(veh_id);

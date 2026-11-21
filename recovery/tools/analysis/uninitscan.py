@@ -7,7 +7,7 @@ Decompiler transcriptions name locals by frame slot, so where the original packe
 slot a read can be attributed to the wrong one. That read then has no definition on its path: VC6 /W4 with
 the optimiser on reports it as C4701 ("may be used without having been initialized"; C4700 when certain).
 Example: base_build 0x004F81A0 read the supply-convoy counter l_34 where the image reads the unit score w
-from their shared [ebp-0x34] (093c0ce64d, 4821 -> 3657 rows).
+from their shared [ebp-0x34] (124a9cf722, 4821 -> 3657 rows).
 
 Every optimised game/Jackal/UV unit is compiled with its build flags plus /W4. VC6 reports each variable
 only once per function, so by default each reported read gets `V = 0;` inserted at the start of its statement

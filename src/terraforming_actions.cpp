@@ -79,13 +79,13 @@
 // After the dead-helper batch (d64959c815), whole-unit fe sweep: both exact at 19, 21-24, 26 and 38, so 22.
 // Re-tuned 2026-11-19 against the sprite.h/popup.h headers (extern block swept with the function block at 26):
 // action_airdrop exact at 6, 8, 14-15, 24, 26-29, 34, 36, 40, 42-45, 47, 52-55, 59, 61-62, so 53.
-// After par-1's header batch (015360dbf5), whole-unit fe sweep of the extern block: every
+// After par-1's header batch (3974fcd826), whole-unit fe sweep of the extern block: every
 // fe-exact function of the unit stays exact at 2-4, 28, 39-44, 48, 50, 54, 56-61, so 58.
-// After MapWin::reset_cursor (mapwin.h, 27e8a32f76), whole-unit fe sweep of the extern block (function block 42):
+// After MapWin::reset_cursor (mapwin.h, 358818d1c3), whole-unit fe sweep of the extern block (function block 42):
 // every fe-exact function stays exact at 15, 33, 36-38, 43-44, 49, 51-54, 56 and 61-63, so 53.
 // After the par-6 r24 orphan batch (basewin.h/path.h): every fe-exact function stays exact at 4-6, 22, 42-45, 50-51, 56, 58-61 and 63, so 44.
 // After veh_stack_top (veh.h, 2026-11-20): every fe-exact function stays exact at 13, 35-36, 43, 47, 49-52, 54 and 59-62, so 50.
-// Re-swept on e5c5b38da5 (50 flips action_airdrop): every fe-exact function stays exact at 0, 8, 17, 35, 37-39,
+// Re-swept on 0534fe63f5 (50 flips action_airdrop): every fe-exact function stays exact at 0, 8, 17, 35, 37-39,
 // 45-46, 51, 53-56, 58 and 63, so 51.
 // CANARY: 0x004CEDE0 ?action_give@@YAXHH@Z residues 17-20,25-27
 // CANARY-PADS: extern TerraformingActionsExternPad

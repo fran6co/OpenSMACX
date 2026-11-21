@@ -415,6 +415,9 @@ central seed binding but stopped with preserved, unaccepted discoveries.
 - Workers use isolated, coordinator-prepared worktrees/builds/compiler prefixes.
   Only the coordinator runs Git mutations, integration and cleanup. No shared
   stash, unapproved scope changes, or automatic worker fast-forwards.
+- Commit messages carry no `Co-Authored-By:` or `Claude-Session:` trailers
+  (user decision, 2026-11-21; history after `origin/master` was rewritten to
+  remove them). This overrides any agent tool's default attribution.
 - One commit per verified step. Preserve other agents' edits and recheck after
   integration. Never discard or reap work that has not been safely preserved.
 - Integrated recovery steps must compile and link. For a newly referenced,

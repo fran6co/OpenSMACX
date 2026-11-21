@@ -608,7 +608,7 @@ raw field access where the original used inline accessors.
   At one revision, the function is exact when the residue of its first
   relocated `$SGn` (mod 64) is in a set. That set is not fixed across
   revisions (see the drift caveat below). The first sets measured
-  (wip 2088402dcf, against each function's own exact bytes):
+  (wip a9dc4f2b44, against each function's own exact bytes):
 
   | canary | residues |
   |---|---|
@@ -1015,7 +1015,7 @@ raw field access where the original used inline accessors.
     bucket 0 and something of the function itself holds fixed buckets. The
     two loads that swap are locals; the symbols that decide are globals the
     function merely passes as arguments.
-  - *Per-function table (`declpad.py who`, wip 6a088e1769; residue = symbol
+  - *Per-function table (`declpad.py who`, wip 419005f393; residue = symbol
     number mod 64 in that unit, with the unit's pads in place).*
 
     | function | symbols the tie follows | allowed |
@@ -1558,7 +1558,7 @@ loop2d and armd were the "ties"). Rerun: `python3 ties.py ties.spec --n 1-30`.
    pushes the parameters past disp8 does not move `this` against a
    parameter. Served-in-order greedy plus 4j stands.
    4j from source (2026-11-20 par-5, Buffer::write_vertical 0x005DB450,
-   a3295b4331, 51 -> 44): when the image's ebp web (and its `push ebp; push
+   5d12eef47f, 51 -> 44): when the image's ebp web (and its `push ebp; push
    esi` save class) needs a byte web that ours lacks, the byte web is often
    a char LOCAL the original read the value into (`char c = *p; ... buf[0] =
    c`), not a cast: a direct `buf[0] = *p++` copy forms no byte web, so `this`
@@ -1787,7 +1787,7 @@ not see, and those are the levers:
     GameDataStateStorage; the image hoists `mov dl, byte ptr [mask]` before
     the loop. A probe with the store into a separate extern array hoists
     the mask and gives the image's esi counter / edx `humans` (22 -> 17).
-    Resolved 2026-11-20 (par-2, 93e53d619a, rankings exact, no header
+    Resolved 2026-11-20 (par-2, f4a1a59a43, rankings exact, no header
     change): the culprit was the named `int humans = human_mask;` local, not
     aliasing. **A global byte read once before a loop and kept in a register
     can be VC6's hoist of an in-place read, not a named local.** The image's
@@ -1986,7 +1986,7 @@ Zero webs on one side only (2026-11-20 par-1; candset.py over the 288 rung
   (&dialogs_, rule (a)) referenced in the zero's blocks (raises their `n_b`);
   the image forms that temporary only around `attach`/`show` (0x6025C7). Not
   yet resolved; the receiver spellings of set_width/set_height that give the
-  per-arm `lea ecx,[edx+esi+0x21D0]` (58eb11f165) are the place to look.
+  per-arm `lea ecx,[edx+esi+0x21D0]` (936143c275) are the place to look.
 - Z8 (high, PickTech::draw_tech 0x00484C60). **The image's zero register can
   be the loser's absence, not the zero's strength.** Image ebx = 0 over
   0x484C82-0x484DBB (10 refs: `cmp eax,ebx` for `tech < 0`, `cmp edx,ebx` for
@@ -3027,7 +3027,7 @@ we cannot see, so the numbers are fitted within about 0.3 unit.
      (18 s tree-wide with `--all`). `Ec` = ceiling-bound; `--bisect --addr A`
      spreads `CEIL_PROBES` (default 12) probes over the body and prints the
      last expanded one (each expanded probe adds size: use few). At head
-     a61619e09f + round 16: exactly four functions are ceiling-bound, the
+     bdbc3c9f6e + round 16: exactly four functions are ceiling-bound, the
      four largest giants: base_build 0x004F81A0 (its has_fac_built/range
      calls from 0x4FC6xx on are this stop, in the image too), battle_fight
      0x00506AF0 (stop between source lines 3763 and 3838 with 24 probes),
@@ -3091,7 +3091,7 @@ we cannot see, so the numbers are fitted within about 0.3 unit.
      after the vulnerable call) to non-inline twins also expands x_dist:
      the division by later_j is the lever, not B.
    - **An orphan whose body is calls puts those calls at depth 2 in every
-     host** (high; Win z-order, ad0dc1c26a, 2026-11-20 par-6). A function
+     host** (high; Win z-order, 826812e289, 2026-11-20 par-6). A function
      with no image callers (every use expands it) whose body is a few inline
      calls, such as bring_to_top 0x005F4AB0 = `parent ?
      parent->bring_child_to_top(this) : bring_parent_to_top(this)`, makes
@@ -3220,7 +3220,7 @@ Using it
   Free inlines written before the first refused site do not move it.
 - **Image refuses a run of late pass-1 sites that ours expands: put the
   dead spend right before the image's FIRST refused pass-1 site** (high in
-  probe 0x0059F120, 6ae5d5819b, 2026-11-20 par-4). A ceiling-bound or
+  probe 0x0059F120, 89c310ac47, 2026-11-20 par-4). A ceiling-bound or
   budget-tight giant whose image calls a run of later first-level sites
   (probe: parse_set, get_name, BasePop::item, BasePop::exec in the
   accomplice loop 0x005A302B..0x005A30A4) while ours expands them takes a
@@ -3443,7 +3443,7 @@ size or the order of its decisions:
   guard (2.3).
 - **Teardown decisions move with sibling-evidenced spellings of earlier
   statements, not with object order or scope** (2026-11-20 par-1;
-  BaseWin::base_editor_proj 0x0041BBC0, commit d696e5d5f7). Object order,
+  BaseWin::base_editor_proj 0x0041BBC0, commit 882f40854e). Object order,
   declaration scope, probe counts and owner screens left base_editor_proj's
   unwind map 2 states off (37 against 35). What moved it was copying two
   spellings from its exact sibling base_editor_copy 0x0041C240, which builds
@@ -3480,7 +3480,7 @@ size or the order of its decisions:
   - **C, the unwind map differs** (EH distance > 0, a scope or teardown
     site missing or extra): NetWin::pick_player 0x0047BBF0 (??_DStringList
     sites 3-4), order_veh 0x005947C0 (one state), and base_editor_proj
-    before d696e5d5f7. Fix rung 1 first. As base_editor_proj shows, the
+    before 882f40854e. Fix rung 1 first. As base_editor_proj shows, the
     cause can be a non-teardown statement, so screen the sibling spellings
     before any restructuring.
   - **D, teardowns equal but other callees or layout differ**:
@@ -3773,7 +3773,7 @@ What the model does not predict (2026-11-19)
   popb or save_game (all single-site and ALL rows equal or worse).
 - **Late free helpers reserve by count, and in a ceiling-bound caller they
   must be paired with a size pad** (high; probe 0x0059F120, 2026-11-20
-  par-4, ce5ae6b8ee). The reservation that refuses the early level-2 sites
+  par-4, 227958fba9). The reservation that refuses the early level-2 sites
   grows with the number of free expansions laid after them, not with
   their size or kind: probe's 52 human/alive/treaty tests (each a few
   bytes) refuse ~Scroll at the first nine ~Popup teardowns (EH 27 -> 0,
@@ -3836,7 +3836,7 @@ What the model does not predict (2026-11-19)
   FEALL.json` (20 s tree-wide). It is evidence, not a screen: apply it and
   keep it when rows rise. 2026-11-20 tree pass after the separator rounds:
   ReportIf::draw_sat's first paragraph `" "` pushes a draw_sat-local copy
-  (0x4AAB18), so it is `strcat(paragraph, " ")` (6cad1c0b04's rows-based
+  (0x4AAB18), so it is `strcat(paragraph, " ")` (662f58578c's rows-based
   `strcat_space` reverted, 54 -> 55 rows). The same test reaches beyond the
   separators: AlphaNetStringStruct::add pushes the shared out-of-heap texts
   (0x00682700/0x00682724, referenced by three units) at all four sites, so
@@ -3852,7 +3852,7 @@ What the model does not predict (2026-11-19)
 - **A shared-COMDAT separator that costs what the raw literal costs is a
   text-RETURNING inline in the caller's own strcat** (high in one real
   function; 2026-11-20 par-4, DesignWin::select_special 0x0043AC70,
-  f6fcf7075b). The rule above says a push of the shared address is an
+  2d38b847a7). The rule above says a push of the shared address is an
   inline; it does not say which inline. select_special pushes the shared
   " " ": " "(" ")" at all 28 separator sites, yet every destination-taking
   form (`strcat_X(StringTemp)` from strings.h, a unit-local copy, a
@@ -3896,7 +3896,7 @@ What the model does not predict (2026-11-19)
   (and the AGENTS.md summary of it) is not borne out in real functions.
 - **Frame-slot order follows the expansion counts: judge a spelling by its
   decisions, not its rows** (high; 2026-11-19 par-4, PickTech::pick
-  64a5fb2ca3). Every expanded destructor or helper brings its own locals and
+  fa48682ea6). Every expanded destructor or helper brings its own locals and
   temporaries, and VC6 numbers frame slots by first appearance in the
   expanded tree, so one more or one fewer expansion at an early site shifts
   every later slot. fe aligns those shifted `[ebp-N]` operands as differing
@@ -3923,7 +3923,7 @@ What the model does not predict (2026-11-19)
   more or less budget. Screen: `sdeck.py` with a per-site flag
   (state store followed by a call).
 - **A suffix shortfall can need two owners: each restores half** (draft,
-  medium; Console::terraform 0x004D3470, 2026-11-19 par-4, caf3479a1a).
+  medium; Console::terraform 0x004D3470, 2026-11-19 par-4, bfc43fdbe9).
   The image called ~Scroll 17 times then expanded 13; ours 14/16 (three
   ~Scroll costs of pass-2 room too many). `ownerhunt` found two inline
   owners (the closing "issue the orders" block, the unavailable-tech
@@ -3938,7 +3938,7 @@ What the model does not predict (2026-11-19)
   open-coded overshoots to EH 9), is the only knob fine enough. Caller
   size (stripping `!= 0` tests, accessor spellings) does not move it.
 - **Text helpers per site, jointly with the probe count** (high; 2026-11-20
-  par-1, BaseWin::base_editor_proj 0x0041BBC0, 4f532784dc). Whole-family
+  par-1, BaseWin::base_editor_proj 0x0041BBC0, e5b7d8096d). Whole-family
   screens (`spellsweep.py ... ALL:<rule>`) and single-site flips both read
   "no effect" in base_editor_proj, because each helper site changes the
   pass-2 room and the dead budget probes were tuned for the raw spelling.
@@ -3953,7 +3953,7 @@ What the model does not predict (2026-11-19)
   include every remaining dead probe of the host as its own "count" site.
 - **A ceiling-bound giant's closing teardown that the image calls needs
   caller size, in a narrow window** (high; 2026-11-20 par-1, order_veh
-  0x005947C0, 2507df4823). order_veh is past rule 7's size stop; ours
+  0x005947C0, 71ed79cb96). order_veh is past rule 7's size stop; ours
   expanded the closing-brace ??_DStringList where the image calls
   ??1StringList, while an earlier return (vehicle count) expands it in
   both. Probes alone cannot separate the two sites (an expanded probe moves
@@ -3969,8 +3969,8 @@ What the model does not predict (2026-11-19)
   (the missing statements), which the pad marks.
 - **A header change that shortens member paths shrinks every caller; restore
   its decisions with caller statements, not new probes** (high; 2026-11-20
-  par-5, the lock-mask batch: call_council 1018b42c1e, order_veh
-  ecbf2ffe8f, probe a5da0294c2). Removing one member level at each mask
+  par-5, the lock-mask batch: call_council 21f285520f, order_veh
+  474e4573d9, probe 1e5c20f23e). Removing one member level at each mask
   test lowers the caller's own size, so B (rule 2) drops and pass 2 refuses
   sites the image expands (call_council's ~Scroll at the SIMULNO return) or
   a ceiling-bound giant's closing teardown flips (order_veh). Before
@@ -4084,10 +4084,10 @@ Conclusions
   original wrote the expression out at each use or used a macro. A
   `const short &` parameter re-reads, but only where every caller's field has
   that type; a helper that restores the call multiset with the wrong reload
-  shape is not the original (2858bb1c47 reverted fd3923ed2a).
+  shape is not the original (1175675a16 reverted 7ab94b04f6).
 
 Header inlines behind dead probes (2026-11-19, par-1; clear/says/space/
-say_label/say_tech batch, 86cc2f1fd4..39c52fa497, 89 probe calls retired)
+say_label/say_tech batch, 63b050af48..85f726cffe, 89 probe calls retired)
 - **A small helper whose out-of-line copy is called only by budget-exhausted
   giants, and whose copy sits next to their code, is a header inline** (high).
   The giants (base_build, battle_fight, communicate, probe, ...) refuse it for
@@ -7144,7 +7144,7 @@ result over 64 symbol-counter pads, so none of these is a counter canary.
     does not separate them (the packing takes any dead 16-byte area).
   - NetSessionPickerWin::initialize 0x0063BF10 (-12): `rect` is a RECT in
     memory ([esp+0x14], left/right stored at 0x63C06A/0x63C064, top in ebx,
-    bottom in edi) and margin_y is in ebp. Solved (4aa216e1f5, 173 -> 78):
+    bottom in edi) and margin_y is in ebp. Solved (7e6607e744, 173 -> 78):
     see "A RECT dissolves into registers" below.
 - **An allocated slot that nothing reads or writes, between homes of one
   type, is an array element** (par-6 2026-11-19, slide_show 0x0045D440).
@@ -9346,13 +9346,13 @@ Re-tests and stack loops (par-2 2026-11-19, enemy_move 0x0056B5B0)
   a helper against its expansion) keeps the second compare and its block.
   So a compare in the image that ours threads away names a second spelling,
   not a reordered condition (the radius_move guard after the order-9 block,
-  7710690f98).
+  2f8e64ca9a).
 - **A stack loop that tests the id for `< 0` again before reading the next
   link is `veh_next_stack_id(id)`**, not `id = Vehs[id].next_veh_id_stack`:
   the inline's own `id >= 0 ? … : id` adds the re-test (`test reg,reg; jl`
   before the `mov reg,[reg*0x34+next]`). Look for it in every walk the image
   shows with two sign tests per step (enemy_move's sea-transport scan
-  0x56F0BD and coast-region passenger check 0x576183, 3134ae26b7).
+  0x56F0BD and coast-region passenger check 0x576183, a684cdb7cc).
 - **`jcc TARGET | jmp JOIN` at the end of an if-arm is a separate last
   statement; `jncc JOIN | jmp TARGET` is an `||` chain.** When an arm ends
   in `if (A || B || C) continue;` (or `goto X;`) and its join is not the
@@ -9383,7 +9383,7 @@ Re-tests and stack loops (par-2 2026-11-19, enemy_move 0x0056B5B0)
   with `case 1:` (or `case K:`): the switch widens the byte into a register
   copy and lowers to a subtract chain ("Switch lowering" above). Write
   `switch (field) { case 1: ...; break; }` even for a single case
-  (Console::go_to 0x004D6C4E, bbc27d1969: 286 -> 266 rows).
+  (Console::go_to 0x004D6C4E, a9fb6b57a1: 286 -> 266 rows).
 Accessors, ternaries, accumulation, shared exits (par-5 2026-11-19, library)
 - **A null-testing accessor costs one `test; je` per call site.** An inline
   like `current_entry()` (`head ? head->payload : 0`) re-tests the pointer
@@ -9412,14 +9412,14 @@ Counters and tie arms (par-5 2026-11-20, councwin)
   stand-ins and every pad count; writing the three sequential faction-count
   loops with one reused counter variable and one reused loop index (instead
   of a fresh local per loop) gave the image order and made it exact
-  (1f82d2697e). When a `lea` or `add` over two locals is mirrored and
+  (8ffe44bcfb). When a `lea` or `add` over two locals is mirrored and
   reordering the expression does nothing, merge sequential same-role locals.
 - **A `do { } while (++i < N)` array clear supplies the 3.4 node counter.**
   CouncWin::make_resolution 0x00424410's remaining PlayersData loop printed
   the add order of `[a1c] + i*0x833` mirrored; any member stand-in before
   the earlier `option_votes` clear fixed it, and the original-looking fix is
   that clear written `i = 0; do { votes[i] = 0; } while (++i < MaxPlayerNum);`
-  instead of a `for` (5f28ecbb58). Before adding a stand-in node, try the
+  instead of a `for` (a5c2f02b97). Before adding a stand-in node, try the
   do-while form of a nearby constant-count loop.
 - **A tie arm that jumps into the middle of the other arm's store is nested
   under `count == greatest` and stores the same value.** make_resolution's
@@ -9601,7 +9601,7 @@ Counters and tie arms (par-5 2026-11-20, councwin)
 - **A loop whose test failure and whose last arm end in the same tail:
   `for (;;) { if (!c) { T } ... T }` and `while (c) { ... break; } T` give
   different cross-jump hosts** (par-5 2026-11-20, Net::send_packet_type
-  0x0062F8A0, 615ec1a082). With `while (c)` and `break` there is one copy
+  0x0062F8A0, cf2e1878fb). With `while (c)` and `break` there is one copy
   of T after the loop, every exit jumps to it and it hosts. The image's
   `free(packet); return 0;` is hosted in the MIDDLE copy (the retry
   failure inside the loop) and the loop-top `NetDirectPlay` test jumps to
@@ -9987,7 +9987,7 @@ registration), 4 layout (block count, return tails, block-order signature,
 prologue-save class), 5 slots (frame-slot map), 6 regs (saved set, or rows
 that vanish with register names masked), 7 bytes (same registers: operand
 order, selection, schedule). Rerun it after a batch; the numbers below are
-head fbbf5b225e.
+head 29035e4a43.
 
 Non-exact functions (347 functions, 59227 rows):
 
@@ -10026,7 +10026,7 @@ Broken claims (4 functions, 42 rows):
 | 7 bytes | 1 | 3 | Credits::unload 0x00428830 (3) |
 
 Rung 4 by cause (`rungs.py`, the `4x` column and `layout.sub`; head
-47c61fb0bc + this split). a = return-tail count; b = block count with
+1fc9f19470 + this split). a = return-tail count; b = block count with
 equal tails (`jcc` a conditional branch more or less, `jmp` an unconditional
 one = a tail merged or duplicated, `mix` both, `tgt` the same branches but a
 jump lands inside a block = a tail cross-jumped at another depth); c = same
@@ -10263,7 +10263,7 @@ reads each evidence comment for the rule most likely to retire it. A
 `wide` item is a header/type stand-in whose identifier more than 25
 functions use.
 
-Counts at e62b283824 + this batch (all-exact = every served function
+Counts at 4333bb51ba + this batch (all-exact = every served function
 fe-exact; the stand-in may be tuning debt or dead):
 
 | kind | items | all-exact | mixed | none-exact |
@@ -10322,7 +10322,7 @@ helper gives 4 -> 7 named-callee distance), StatusWin::draw_active (any
 site: 161 -> 395, calls unchanged: allocation), upgrade's four sites of
 its first label block, and DesignWin::select_special (par-2).
 Update 2026-11-20 (par-4): select_special's row above is stale. Since
-f6fcf7075b its 28 separator sites push the shared texts through
+2d38b847a7 its 28 separator sites push the shared texts through
 text-returning inlines (`strcat(StringTemp, f())`, WORKAROUND(inline)),
 and editor_edit_veh, draw_active and upgrade were re-measured with that
 form (2.8, "A shared-COMDAT separator that costs what the raw literal

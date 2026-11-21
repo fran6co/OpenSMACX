@@ -45,7 +45,7 @@
 // set is unknown; re-tune after header batches.
 // After the dead-helper batch (d64959c815), whole-unit fe sweep: exact at 0, 5-28 and 58-63, so 16.
 // Re-tuned 2026-11-19 against the sprite.h/popup.h headers (declpad padfree): draw_armor exact at 20-35 and 40-63, so 51.
-// After par-1's header batch (015360dbf5), whole-unit fe sweep: every fe-exact function of the unit exact at 2-20 and 24-42, so 33.
+// After par-1's header batch (3974fcd826), whole-unit fe sweep: every fe-exact function of the unit exact at 2-20 and 24-42, so 33.
 // HEADER-PADS: function DesignWinHeaderPad
 void DesignWinHeaderPad0();
 void DesignWinHeaderPad1();

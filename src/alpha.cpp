@@ -29,7 +29,7 @@
 // pointer locals for the two addresses read 84 rows at best, so they are not
 // the original spelling. Left: i and the two address homes permuted. The
 // original header declaration set is unknown; re-tune after header batches.
-// After par-1's header batch (015360dbf5): 11 rows at 0-10, 12, 15-16, 21-22, 25, 27, 29-35, 38,
+// After par-1's header batch (3974fcd826): 11 rows at 0-10, 12, 15-16, 21-22, 25, 27, 29-35, 38,
 // 41-44, 47 and 50-63 (373-412 elsewhere), every other function of the unit exact at all counts, so 56.
 // HEADER-PADS: function NewGameHeaderPad
 void NewGameHeaderPad0();

@@ -61,7 +61,7 @@
 // After the faction.h label externs left (2026-11-19): exact at 0, 3, 5, 7, 8, 10-12, 15, 18-21, ..., so no pads.
 // After the dead-helper batch (d64959c815), whole-unit fe sweep: exact at 2-5, 8-9, 12, 14, 16-17, 19-21, 24, 27-30,
 // 32, 36, 38-41, 44-49 and 51-63 (0 and 1 flip it), so 57, the middle of the widest run.
-// After MapWin::reset_cursor (mapwin.h, 27e8a32f76), whole-unit fe sweep: exact at 0-6, 9-12, 15-16, 19, 21, 23-24,
+// After MapWin::reset_cursor (mapwin.h, 358818d1c3), whole-unit fe sweep: exact at 0-6, 9-12, 15-16, 19, 21, 23-24,
 // 26-28, 31, 34-37, 39, 43, 45-48, 51-56 and 58-63, so 3.
 // CANARY-PADS: function PrefWinDeclFnPad
 void PrefWinDeclFnPad0();

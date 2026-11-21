@@ -30,10 +30,10 @@
 // old position after help_link.h).
 // Whole-unit fe sweep of this block (after par-2's draw_ops/draw_sat edits): exact at 12-21, 27-46, 48-55 and 58;
 // sat_attack 0x004A0260 keeps 15 rows and draw_sat 0x004AA970 55 at 36, so 36.
-// After par-1's header batch (015360dbf5): every other fe-exact function of the unit stays exact and
+// After par-1's header batch (3974fcd826): every other fe-exact function of the unit stays exact and
 // 0x004A6330 is exact at 4-13, 16-19, 25-29, 40-45 and 55, so 9.
 // After close_ops calls close_projects (par-6 r24): exact at 0, 16-25, 36-40 and 50-55, so 16.
-// After the strings.h extern retirement and veh_stack_top (e5c5b38da5): every fe-exact function of the
+// After the strings.h extern retirement and veh_stack_top (0534fe63f5): every fe-exact function of the
 // unit stays exact at 6-9, 19, 29-33 and 50-55, so 19.
 // After draw_labs' goto-target rewrite (f734a4927b): every fe-exact function of the unit stays exact at
 // 6-9, 30-34 and 50-55, so 31.
@@ -96,7 +96,7 @@ void ReportIfDeclFnPad5();
 // 35-43 and 50-58; sat_attack 0x004A0260 (not exact) keeps 15 rows and draw_sat 0x004AA970 54 at 32, 36, 51, 55, 57-58, so 36.
 // After sat_attack's function-scope attack_target, whole-unit fe sweep: on_iface_button_clicked exact at 26-34, 37-45, 52-60;
 // sat_attack keeps 15 rows and draw_sat 54 at 34, 37, 55, 56, 58, 60, so 37.
-// After the in-place field reads (63095921b1), whole-unit fe sweep: on_iface_button_clicked exact at 27-35, 38-46, 53-61;
+// After the in-place field reads (a6ad496be0), whole-unit fe sweep: on_iface_button_clicked exact at 27-35, 38-46, 53-61;
 // sat_attack keeps 15 rows and draw_sat 54 only at 35, so 35.
 // After Scroll::set_field_A64 and BaseButton::set_bevel_upper (Gamma::exec), whole-unit fe sweep: on_iface_button_clicked
 // exact at 0-18, 29, 40-44, 55-63; sat_attack 15 and draw_sat 54 at 0-3, 29, 43, 55-58, 60-63, so 0: no pads.
@@ -7485,7 +7485,7 @@ void ReportIf::close_sat() {
 void ReportIf::draw_security() {
     // WORKAROUND(decl): five dead locals. The inset block's `right - inset -
     // left` order (0x004ABAE8) is a tie VC6 breaks by the function's count
-    // of referenced locals mod 8 (7147a9a7e4, draw_intel); with the width
+    // of referenced locals mod 8 (781bedc58e, draw_intel); with the width
     // through the &field_50_ pointer (left reloaded through ebx, top read
     // direct, 0x004ABADA) only +5 (mod 8) gives the image. No natural
     // spelling of the missing locals found (loop-scope moves do not count;
