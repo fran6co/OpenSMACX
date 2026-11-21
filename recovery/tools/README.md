@@ -65,6 +65,9 @@ an explicit `--pfx` is only needed to pick another lane.
   is over 15 bytes and the copy is not, with the copy as the joining block's tail. 70 s over the non-exact set.
   2026-11-20: 16 functions, 3 SIZE rows (menu_proc, pulldown_update, communicate), all known or register noise; the
   image's prefix copies (editor, enemy_planet_buster, MATCHING_GUIDE 3.7) read `tail differs`.
+- `analysis/lastblock.py <unit> <0xADDR[,..]>|--all` / `--tree [unit ..] [--json F]` "block laid after all exits" screen
+  (MATCHING_GUIDE 3.7, "An `||` goto site moves its label block last", par-4 2026-11-20): pairs unaligned fe runs across the
+  sides and reports a return-ending block that one side lays after every other exit and the other at its flow position.
 - `analysis/armsplit.py splitvar|armcopy [unit ..] [--addr A] [--src ALT.cpp] [--show] [--json F]` the two config_game
   rules (MATCHING_GUIDE 3.7, round 54) as screens, one compile per unit (35-50 s tree-wide). `splitvar`: copy stores of
   ebx/esi/edi into a frame slot the function also reads (`mov [ebp-N], ebx`), per fe row; `SIG` = the image has more
