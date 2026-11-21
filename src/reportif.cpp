@@ -4646,7 +4646,8 @@ void ReportWin::draw_intel() {
     strcat(StringTemp, "]");
     CharUpperA(StringTemp);
     report_topic_line(this, rect1_, text_x);
-    rect1_.top += field_E268_ * 2;
+    rect1_.top += field_E268_;
+    rect1_.top += field_E268_;
     diplomacy_check(viewer, subject, 0);
     report_intel_label(0xE98 / 4);
     const unsigned int relation = PlayersData[viewer].diplo_treaties[subject];

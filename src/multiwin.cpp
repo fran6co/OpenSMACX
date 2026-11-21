@@ -360,7 +360,7 @@ void MultiWin::draw_player(int faction_id, int row, RECT *bounds) {
   RECT icon_rect;
   if (IsMultiplayerNet) {
     icon_rect = text_rect;
-    int height = rect_height(&icon_rect);
+    int height = icon_rect.bottom - icon_rect.top;
     text_rect.left += height;
     icon_rect.right = icon_rect.left + height;
   }

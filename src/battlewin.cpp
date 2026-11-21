@@ -383,8 +383,10 @@ again:
                 && (!(flags & 2)
                     || Chassis[VehPrototypes[Vehs[first_vehicle_id].proto_id].chassis_id].triad == 1)) {
                 if (psi_label) {
-                    say_num(Rules.psi_combat_ratio_def[
-                        Chassis[VehPrototypes[Vehs[second_vehicle_id].proto_id].chassis_id].triad]);
+                    char number[0x50];
+                    _itoa(Rules.psi_combat_ratio_def[
+                        Chassis[VehPrototypes[Vehs[second_vehicle_id].proto_id].chassis_id].triad], number, 10);
+                    strcat(StringTemp, number);
                 } else {
                     say_num(armor_proto(Vehs[first_vehicle_id].proto_id, -1, 0));
                 }
