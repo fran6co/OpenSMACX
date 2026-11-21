@@ -4578,8 +4578,8 @@ result over 64 symbol-counter pads, so none of these is a counter canary.
   value (`xor eax,eax`) between the epilogue pops (`pop edi; pop esi; pop
   ebp; xor eax,eax; pop ebx`) where VC6 sets it before them (sub_5cae80,
   setup_sound_device); /G4-/G6, /Oy-, /Oi, /Ob2, /Os, /Oa, /Ow, /Op are no
-  closer for the unit. Its compiler identity is open (VC5 needs the unit's
-  forced-include header adapted before it can be tried).
+  closer for the unit. The later VC5 comparison below found 7 exact bodies
+  against VC6's 29. Keep the VC6 recipe when investigating these epilogues.
 - **S4. Which operand a two-operand expression allocates first follows the
   order the operands were first referenced, not the spelling** (high for
   members, locals and fields; p03, p04, p04c, p01_fieldorder). For `x + y`,
